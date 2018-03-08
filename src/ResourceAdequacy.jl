@@ -1,5 +1,7 @@
 module ResourceAdequacy
 
-# package code goes here
+include("metrics.jl")
+include("reliabilitymethods.jl")
+include("valuationmethods.jl")
 
 end # module
