@@ -1,3 +1,5 @@
+type REPRA <: ReliabilityAssessmentMethod end
+
 function to_distr(vs::Vector)
     p = 1/length(vs)
     cmap = countmap(vs)
@@ -5,7 +7,7 @@ function to_distr(vs::Vector)
                    [p * w for w in values(cmap)])
 end
 
-function solve_copperplate(sys::SystemDistribution{T}) where T
+function assess(::Type{REPRA}, sys::SystemDistribution{T}) where T
 
     n_samples = size(sys.loadsamples, 2)
     netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))
@@ -16,18 +18,21 @@ function solve_copperplate(sys::SystemDistribution{T}) where T
         supply = add_dists(supply, sys.gen_distributions[i])
     end
 
-    return SimulationResult(NormalResultEstimate(lolp(supply, netload),0.))
+    #TODO: Obtain energy (E) and time period info (N,P) from SystemDistribution
+    lolp_result = lolp{N,P}(supply, netload)
+    eue_result = EUE{E,N,P}(NaN, 0.)
+    return SinglePeriodReliabilityAssessmentResult(lolp_result, eue_result)
 
 end
 
-function solve_copperplate(systemset::SystemDistributionSet{T}) where T
+function assess(::Type{REPRA}, systemset::SystemDistributionSet{T}) where T
 
     collapsed = collapse(systemset)
     dts = unique(collapsed.timestamps)
     batchsize = ceil(Int, length(dts)/nworkers())
-    results = pmap(dt -> solve_copperplate(extract(dt, collapsed)),
+    results = pmap(dt -> assess(REPRA, extract(dt, collapsed)),
                    dts, batch_size=batchsize)
 
-    return SimulationResultSet(dts, results)
+    return MutliPeriodReliabilityAssessmentResult(dts, results)
 
 end

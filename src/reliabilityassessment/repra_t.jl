@@ -1,3 +1,5 @@
+type REPRA_T <: ReliabilityAssessmentMethod end
+
 function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     served = true
     i = 1
@@ -8,7 +10,7 @@ function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     return served
 end
 
-function simulate(system::SystemDistribution{Float64}, iters::Int=10_000)
+function assess(::Type{REPRA_T}, system::SystemDistribution{Float64}, iters::Int=10_000)
 
     systemsampler = SystemSampler(system)
     sink_idx = nv(systemsampler.graph)
@@ -35,17 +37,20 @@ function simulate(system::SystemDistribution{Float64}, iters::Int=10_000)
 
     μ = lol_count/iters
     σ² = μ * (1-μ)
-    return SimulationResult(NormalResultEstimate(μ, sqrt(σ²/iters)))
+
+    lolp_result = LOLP{N,P}(μ, sqrt(σ²/iters))
+    eue_result = EUE{E,N,P}(NaN, 0.)
+    return SinglePeriodReliabilityAssessmentResult(lolp_result, eue_result)
 
 end
 
-function simulate(systemset::SystemDistributionSet, iters::Int=10_000)
+function assess(::Type{REPRA_T}, systemset::SystemDistributionSet, iters::Int=10_000)
 
     dts = unique(systemset.timestamps)
     batchsize = ceil(Int, length(dts)/nworkers())
     results = pmap(dt -> simulate(extract(dt, systemset), iters),
                    dts, batch_size=batchsize)
 
-    return SimulationResultSet(dts, results)
+    return MultiPeriodReliabilityAssessmentResult(dts, results)
 
 end
