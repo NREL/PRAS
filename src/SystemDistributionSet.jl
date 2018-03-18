@@ -62,16 +62,3 @@ function window_periods(dt::DateTime, hour_window::Int, day_window::Int)
             if daytype(dt + day_offset + hour_offset) == dt_type]
 
 end
-
-# """
-# data's first column should be a timestamp, and subsequent columns
-# should be the system regions, in index order
-# """
-# function distributions(dt::DateTime, hour_window::Int, day_window::Int,
-#                        data::DataFrame)
-#     periods = DataFrame(Timestamp = window_periods(dt, hour_window, day_window))
-#     data = join(data, periods, on=:Timestamp, kind=:semi)
-#     prob = 1 ./ size(data, 1)
-#     return [to_distr(Vector{Int}(data[region]), prob)
-#             for region in names(data)[2:end]]
-# end

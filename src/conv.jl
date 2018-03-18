@@ -86,8 +86,6 @@ end
 
 function add_dists(a::Generic, b::Generic)
 
-    # TODO: Something much smarter than this...
-
     values = vec(support(a) .+ support(b)')
     probs  = vec(Distributions.probs(a) .* Distributions.probs(b)')
 
@@ -116,11 +114,6 @@ function add_dists(a::Generic, b::Generic)
         end
 
     end
-
-    # println(values)
-    # println(out_values)
-    # println(probs)
-    # println(out_probs)
 
     return Generic(out_values, out_probs)
 
