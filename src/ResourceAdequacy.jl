@@ -1,19 +1,28 @@
 module ResourceAdequacy
 
 using Base.Dates
+using StatsBase
 using Distributions
 using LightGraphs
 
 export
+
+    assess,
 
     # Units
     Year, Month, Week, Day, Hour, Minute,
     MWh, GWh, TWh,
 
     # Metrics
-    LOLP, LOLE, EUE
+    LOLP, LOLE, EUE, # Types
+    lolp, lole, eue, # Getter methods
+    val, stderr,
 
-# Types and methods
+    # RA Methods
+    REPRA, REPRA_T
+
+
+# Types and type methods
 include("units.jl")
 include("metrics.jl")
 include("SystemDistribution.jl")

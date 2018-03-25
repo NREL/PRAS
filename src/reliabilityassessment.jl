@@ -15,17 +15,23 @@ eue(x::SinglePeriodReliabilityAssessmentResult) = x.eue
 
 # Multi-period reliability results
 
-# Decision: Should this carry the period-level results as well?
 struct MultiPeriodReliabilityAssessmentResult{
     N1,P1<:Period,N2,P2<:Period,
     E<:EnergyUnit,V<:AbstractFloat} <: ReliabilityAssessmentResult{N2,P2,E,V}
     timestamps::Vector{DateTime}
     results::Vector{SinglePeriodReliabilityAssessmentResult{N1,P1,E,V}}
-    # TODO: Constructor to enforce equal vector lengths and determine N2,P2
+
+    function MultiPeriodReliabilityAssessmentResult(
+        timestamps::Vector{DateTime},
+        results::Vector{SinglePeriodReliabilityAssessmentResult{N1,P1,E,V}}) where {N1,P1,E,V}
+        n = length(timestamps)
+        @assert n == length(results)
+        new{N1,P1,N1*n,P1,E,V}(timestamps, results)
+    end
 end
 
-lole(x::MultiPeriodReliabilityAssessmentResult) = LOLE(x.results)
-eue(x::MultiPeriodReliabilityAssessmentResult) = EUE(x.results)
+lole(x::MultiPeriodReliabilityAssessmentResult) = LOLE(LOLP[lolp(r) for r in x.results])
+eue(x::MultiPeriodReliabilityAssessmentResult) = EUE(EUE[eue(r) for r in x.results])
 
 
 # Assessment methods

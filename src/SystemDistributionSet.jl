@@ -1,15 +1,15 @@
-struct SystemDistributionSet{T <: Real}
+struct SystemDistributionSet{N1,P1<:Period,N2,P2<:Period,E<:EnergyUnit,V<:Real}
     timestamps::Vector{DateTime}
-    gen_distrs::LimitDistributions{T}
-    vgsamples::Matrix{T}
+    gen_distrs::LimitDistributions{V}
+    vgsamples::Matrix{V}
     interface_labels::Vector{Tuple{Int,Int}}
-    interface_distrs::LimitDistributions{T}
-    loadsamples::Matrix{T}
+    interface_distrs::LimitDistributions{V}
+    loadsamples::Matrix{V}
     hourwindow::Int
     daywindow::Int
 end
 
-function collapse(systemset::SystemDistributionSet{T}) where T
+function collapse(systemset::SystemDistributionSet{N1,P1,N2,P2,E,V}) where {N1,P1,N2,P2,E,V}
 
     vgsamples = sum(systemset.vgsamples, 1)
     loadsamples = sum(systemset.loadsamples, 1)
@@ -20,9 +20,9 @@ function collapse(systemset::SystemDistributionSet{T}) where T
         gen_distr = add_dists(gen_distr, systemset.gen_distrs[i])
     end
 
-    return SystemDistributionSet(
+    return SystemDistributionSet{N1,P1,N2,P2,E,V}(
         systemset.timestamps, [gen_distr], vgsamples,
-        Tuple{Int,Int}[], Generic{T,Float64,Vector{T}}[],
+        Tuple{Int,Int}[], Generic{V,Float64,Vector{V}}[],
         loadsamples, systemset.hourwindow, systemset.daywindow)
 
 end

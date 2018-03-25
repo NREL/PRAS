@@ -1,33 +1,33 @@
 LimitDistributions{T} = Vector{Generic{T,Float64,Vector{T}}}
 LimitSamplers{T} = Vector{Distributions.GenericSampler{T, Vector{T}}}
 
-struct SystemDistribution{T <: Real}
-    gen_distributions::LimitDistributions{T}
-    vgsamples::Matrix{T}
+struct SystemDistribution{N,P<:Period,E<:EnergyUnit,V<:Real}
+    gen_distributions::LimitDistributions{V}
+    vgsamples::Matrix{V}
     interface_labels::Vector{Tuple{Int,Int}}
-    interface_distributions::LimitDistributions{T}
-    loadsamples::Matrix{T}
+    interface_distributions::LimitDistributions{V}
+    loadsamples::Matrix{V}
 
-    function SystemDistribution(gen_dists::LimitDistributions{T},
-                                vgsamples::Matrix{T},
+    function SystemDistribution{N,P,E}(gen_dists::LimitDistributions{V},
+                                vgsamples::Matrix{V},
                                 interface_labels::Vector{Tuple{Int,Int}},
-                                interface_dists::LimitDistributions{T},
-                                loadsamples::Matrix{T}
-                                ) where T
+                                interface_dists::LimitDistributions{V},
+                                loadsamples::Matrix{V}
+                                ) where {N,P,E,V}
 
         @assert length(gen_dists) == size(vgsamples, 1)
         @assert size(vgsamples) == size(loadsamples)
         @assert length(interface_dists) == length(interface_labels)
 
-        new{T}(gen_dists, vgsamples,
+        new{N,P,E,V}(gen_dists, vgsamples,
                interface_labels, interface_dists, loadsamples)
 
     end
 
-    function SystemDistribution(gd::Generic{T,Float64,Vector{T}},
-                                vg::Vector{T}, ld::Vector{T}) where T
-        new{T}([gd], reshape(vg, 1, length(vg)),
-               Vector{Tuple{Int,Int}}[], Generic{T,Float64,Vector{T}}[],
+    function SystemDistribution{N,P,E}(gd::Generic{V,Float64,Vector{V}},
+                                vg::Vector{V}, ld::Vector{V}) where {N,P,E,V}
+        new{N,P,E,V}([gd], reshape(vg, 1, length(vg)),
+               Vector{Tuple{Int,Int}}[], Generic{V,Float64,Vector{V}}[],
                reshape(ld, 1, length(ld)))
     end
 end
@@ -43,7 +43,7 @@ struct SystemSampler{T <: Real}
     timesample_idxs::UnitRange{Int}
     graph::DiGraph{Int}
 
-    function SystemSampler(sys::SystemDistribution{T}) where T
+    function SystemSampler(sys::SystemDistribution{N,P,E,V}) where {N,P,E,V}
 
         n_nodes = length(sys.gen_distributions)
         n_interfaces = length(sys.interface_distributions)
@@ -77,7 +77,7 @@ struct SystemSampler{T <: Real}
 
         end
 
-        new{T}(sampler.(sys.gen_distributions), sys.vgsamples,
+        new{V}(sampler.(sys.gen_distributions), sys.vgsamples,
                sys.interface_labels,
                sampler.(sys.interface_distributions),
                sys.loadsamples,

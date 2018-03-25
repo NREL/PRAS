@@ -10,7 +10,7 @@ function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     return served
 end
 
-function assess(::Type{REPRA_T}, system::SystemDistribution{Float64}, iters::Int=10_000)
+function assess(::Type{REPRA_T}, system::SystemDistribution{N,P,E,Float64}, iters::Int=10_000) where {N,P,E}
 
     systemsampler = SystemSampler(system)
     sink_idx = nv(systemsampler.graph)
@@ -39,7 +39,7 @@ function assess(::Type{REPRA_T}, system::SystemDistribution{Float64}, iters::Int
     σ² = μ * (1-μ)
 
     lolp_result = LOLP{N,P}(μ, sqrt(σ²/iters))
-    eue_result = EUE{E,N,P}(NaN, 0.)
+    eue_result = EUE{E,N,P}(Inf, 0.)
     return SinglePeriodReliabilityAssessmentResult(lolp_result, eue_result)
 
 end
