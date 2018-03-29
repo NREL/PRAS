@@ -11,6 +11,7 @@ export
 
     # Units
     Year, Month, Week, Day, Hour, Minute,
+    MW, GW,
     MWh, GWh, TWh,
 
     # Metrics

@@ -1,7 +1,7 @@
 using Distributions
 
 println("Single-node system A")
-sys = ResourceAdequacy.SystemDistribution{1,Hour,MWh}(
+sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     [Generic([2.,3,4], [.3, .4, .3])],
     zeros(1, 10),
     Tuple{Int,Int}[],
@@ -16,7 +16,7 @@ println("REPRA-T: ", lolp(assess(REPRA_T, sys, 100_000)))
 println()
 
 println("Single-node system B")
-sys = ResourceAdequacy.SystemDistribution{1,Hour,MWh}(
+sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     Generic([2.,3,4], [.001, .4, .599]),
     zeros(100),
     [ones(59); fill(2., 40); 3]
@@ -41,7 +41,7 @@ line_dists = [Generic([0., 1], [.1, .9]),
               Generic([0., 1], [.3, .7]),
               Generic([0., 1], [.3, .7])]
 
-sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MWh}(
+sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     gen_dists, vg,
     line_labels, line_dists,
     load
@@ -66,7 +66,7 @@ line_dists = [Generic([0, 1.], [.2, .8]),
               Generic([0, 1.], [.2, .8]),
               Generic([0, 1.], [.2, .8])]
 load = [.5 1.5; .5 1.5; .5 1.5]
-sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MWh}(
+sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     gen_dists, vg,
     line_labels, line_dists,
     load

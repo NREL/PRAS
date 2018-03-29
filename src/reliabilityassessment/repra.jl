@@ -7,7 +7,7 @@ function to_distr(vs::Vector)
                    [p * w for w in values(cmap)])
 end
 
-function assess(::Type{REPRA}, sys::SystemDistribution{N,P,E,V}) where {N,P,E,V}
+function assess(::Type{REPRA}, sys::SystemDistribution{N,T,P,V}) where {N,T,P,V}
 
     n_samples = size(sys.loadsamples, 2)
     netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))
@@ -18,9 +18,14 @@ function assess(::Type{REPRA}, sys::SystemDistribution{N,P,E,V}) where {N,P,E,V}
         supply = add_dists(supply, sys.gen_distributions[i])
     end
 
-    lolp_result = LOLP{N,P}(lolp(supply, netload), 0.)
-    eue_result = EUE{E,N,P}(Inf, 0.)
-    return SinglePeriodReliabilityAssessmentResult(lolp_result, eue_result)
+    lolp_val, eul_val = assess(supply, netload)
+    eue_val, E = to_energy(eul_val, P, N, T)
+
+    return SinglePeriodReliabilityAssessmentResult(
+        LOLP{N,T}(lolp_val, 0.),
+        EUE{E,N,T}(eue_val, 0.)
+    )
+
 
 end
 

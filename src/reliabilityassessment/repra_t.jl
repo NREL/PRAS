@@ -10,7 +10,7 @@ function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     return served
 end
 
-function assess(::Type{REPRA_T}, system::SystemDistribution{N,P,E,Float64}, iters::Int=10_000) where {N,P,E}
+function assess(::Type{REPRA_T}, system::SystemDistribution{N,T,P,Float64}, iters::Int=10_000) where {N,T,P}
 
     systemsampler = SystemSampler(system)
     sink_idx = nv(systemsampler.graph)
@@ -19,6 +19,7 @@ function assess(::Type{REPRA_T}, system::SystemDistribution{N,P,E,Float64}, iter
 
     state_matrix = zeros(sink_idx, sink_idx)
     lol_count = 0
+    lol_sum = 0.
 
     flow_matrix = Array{Float64}(sink_idx, sink_idx)
     height = Array{Int}(sink_idx)
@@ -37,10 +38,13 @@ function assess(::Type{REPRA_T}, system::SystemDistribution{N,P,E,Float64}, iter
 
     μ = lol_count/iters
     σ² = μ * (1-μ)
+    # eue_val, E = to_energy(lol_sum/iters, P, N, T)
+    eue_val, E = to_energy(Inf, P, N, T)
 
-    lolp_result = LOLP{N,P}(μ, sqrt(σ²/iters))
-    eue_result = EUE{E,N,P}(Inf, 0.)
-    return SinglePeriodReliabilityAssessmentResult(lolp_result, eue_result)
+    return SinglePeriodReliabilityAssessmentResult(
+        LOLP{N,T}(μ, sqrt(σ²/iters)),
+        EUE{E,N,T}(eue_val, 0.)
+    )
 
 end
 

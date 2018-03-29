@@ -122,8 +122,8 @@ end
 subtract_dists(a::Generic, b::Generic) =
     REPRA.add_dists(a, Generic(-b.support, b.p))
 
-function lolp(supply::Generic{T,Float64,Vector{T}},
-              demand::Generic{T,Float64,Vector{T}}) where T
+function assess(supply::Generic{T,Float64,Vector{T}},
+                demand::Generic{T,Float64,Vector{T}}) where T
 
     s = support(supply)
     ps = Distributions.probs(supply)
@@ -134,11 +134,14 @@ function lolp(supply::Generic{T,Float64,Vector{T}},
     j_min = 1
 
     p = 0.
+    eul = 0.
 
     for i in 1:length(s)
         while j >= j_min
             if s[i] < d[j]
-                p += ps[i]*pd[j]
+                psd = ps[i] * pd[j]
+                p += psd
+                eul += psd * d[j]
                 j -= 1
             else
                 j_min = j+1
@@ -148,6 +151,6 @@ function lolp(supply::Generic{T,Float64,Vector{T}},
         j = j_max
     end
 
-    return p
+    return p, eul
 
 end
