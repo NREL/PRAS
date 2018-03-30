@@ -44,7 +44,7 @@ function assess(extractionmethod::SinglePeriodExtractionMethod,
     # What to do with this? Preprocess step?
     # systemset_collapsed = collapse(systemset)
 
-    dts = unique(collapsed.timestamps)
+    dts = unique(systemset.timestamps)
     batchsize = ceil(Int, length(dts)/nworkers())
     results = pmap(dt -> assess(assessmentmethod,
                                 extract(extractionmethod, dt, systemset)),

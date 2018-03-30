@@ -1,5 +1,5 @@
 struct REPRA <: SinglePeriodExtractionMethod
-    hourwindow::Int,
+    hourwindow::Int
     daywindow::Int
 
     function REPRA(h::Int, d::Int)
@@ -27,8 +27,8 @@ function extract(params::REPRA, dt::DateTime,
                  systemset::SystemDistributionSet{N1,T1,N2,T2,P}) where {N1,T1,N2,T2,P}
 
     sample_idxs = extract(dt, systemset.timestamps,
-                          systemset.hourwindow,
-                          systemset.daywindow)
+                          params.hourwindow,
+                          params.daywindow)
 
     return SystemDistribution{1,Hour,P}(systemset.gen_distrs,
                                        systemset.vgsamples[:, sample_idxs],

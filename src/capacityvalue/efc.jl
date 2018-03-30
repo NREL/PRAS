@@ -1,62 +1,63 @@
-struct EFC{
-    M<:ReliabilityMetric,
-    AM<:ReliabilityAssessmentMethod
-} <: CapacityValuationMethod{M,AM} end
+struct EFC <: CapacityValuationMethod
+    nameplatecapacity::Float64
+    p::Float64
+    tol_mw::Float64
+    nodes::Generic{Int,Float64,Vector{Int}}
+end
 
-function assess(::Type{EFC{LOLE,AM}},
-                sys_before::SystemDistributionSet{N1,T1,N2,T2,P,V},
-                sys_after::SystemDistributionSet{N1,T1,N2,T2,P,V},
-                nameplatecapacity::Float64;
-                p::Float64=0.95,
-                tol_mw::Float64=1.,
-                iters::Int=10_000
-                ) where {AM, N1, T1, N2, T2, P, V}
+#TODO: Generalize this (metaprogramming?) for the SystemDistribution case as well
+function assess(params::EFC,
+                metric::Type{<:ReliabilityMetric},
+                extractionmethod::SinglePeriodExtractionMethod,
+                assessmentmethod::ReliabilityAssessmentMethod,
+                sys_before::S, sys_after::S) where {S <: SystemDistributionSet}
 
-    node = 1 #TODO: Very problematic for non copperplate analyses!
+    metric_target = metric(assess(extractionmethod, assessmentmethod, sys_after))
 
-    lole_target = lole(assess(AM, sys_after))
-
-    lole_a = lole(assess(AM, sys_before))
+    metric_a = metric(assess(extractionmethod, assessmentmethod, sys_before))
     fc_a = 0.
 
-    lole_b = lole(assess(AM, addfirmcapacity(sys_before, node, nameplatecapacity)))
+    metric_b = metric(assess(extractionmethod, assessmentmethod,
+        addfirmcapacity(sys_before, node, nameplatecapacity)))
     fc_b = nameplatecapacity
 
     while true
 
-        println("LOLE(", fc_b, ") < ",
-                lole_target,
-                " <  LOLE(", fc_a, ")")
-        println(lole_b, " < ",
-                lole_target, " < ",
-                lole_a)
+        println("(", fc_b, ", ", metric_b, ")",
+                " < ", metric_target, " < ",
+                "(", fc_a, ", ", metric_a, ")")
 
         # Stopping conditions
 
-        ## Return midpoint if bounds are within
-        ## solution tolerance of each other
-        (fc_b - fc_a < tol_mw) && return (fc_a + fc_b)/2
-
-        ## If either bound LOLE exceeds the null hypothesis
-        ## probability threshold, return the most probable bound
-        p_a = pequal(lole_target, lole_a)
-        p_b = pequal(lole_target, lole_b)
-        if (p_a >= p) || (p_b >= p)
-            return p_a > p_b ? lole_a : lole_b
+        ## Return midpoint if bounds are within solution tolerance of each other
+        if fc_b - fc_a < tol_mw
+            println("Capacity difference within tolerance, stopping.")
+            return (fc_a + fc_b)/2
         end
 
-        # Evaluate LOLE at midpoint
+        ## If either bound exceeds the null hypothesis
+        ## probability threshold, return the most probable bound
+        p_a = pequal(metric_target, metric_a)
+        p_b = pequal(metric_target, metric_b)
+        if (p_a >= p) || (p_b >= p)
+            println("Equality probability within tolerance, stopping.")
+            return p_a > p_b ? metric_a : metric_b
+        end
+
+        # Evaluate metric at midpoint
         fc_x = (fc_a + fc_b) / 2
-        lole_x = lole(assess(AM, addfirmcapacity(
-            sys_before, node, fc_x)))
+        metric_x = metric(assess(
+            extractionmethod,
+            assessmentmethod,
+            addfirmcapacity(sys_before, node, fc_x)))
 
         # Tighten FC bounds
-        if val(lole_x) > val(lole_target)
+        if val(metric_x) > val(metric_target)
             fc_a = fc_x
-            lole_a = lole_x
-        else # lole_x <= lole_target
+            metric_a = metric_x
+        else # metric_x <= metric_target
             fc_b = fc_x
-            lole_b = lole_x
+            metric_b = metric_x
         end
 
     end

@@ -8,11 +8,11 @@ sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     Generic{Float64, Float64, Vector{Float64}}[],
     [1. 1 1 1 2 2 2 2 3 3]
 )
-x = LOLP(assess(REPRA,sys))
+x = LOLP(assess(Copperplate(),sys))
 @test val(x) ≈ 0.06
 @test stderr(x) ≈ 0.
-println("REPRA: ", x)
-println("REPRA-T: ", LOLP(assess(REPRA_T, sys, 100_000)))
+println("Copper Plate: ", x)
+println("Network Flow: ", LOLP(assess(NetworkFlow(100_000), sys)))
 println()
 
 println("Single-node system B")
@@ -21,11 +21,11 @@ sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     zeros(100),
     [ones(59); fill(2., 40); 3]
 )
-x = LOLP(assess(REPRA, sys))
+x = LOLP(assess(Copperplate(), sys))
 @test val(x) ≈ 1e-5
 @test stderr(x) ≈ 0.
-println("REPRA: ", x)
-println("REPRA-T: ", LOLP(assess(REPRA_T, sys, 1_000_000)))
+println("Copper Plate: ", x)
+println("Network Flow: ", LOLP(assess(NetworkFlow(1_000_000), sys)))
 println()
 
 println("Three-node system A")
@@ -46,13 +46,13 @@ sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     line_labels, line_dists,
     load
 )
-x = LOLP(assess(REPRA, sys_dist))
+x = LOLP(assess(Copperplate(), sys_dist))
 @test val(x) ≈ 0.1408
 @test stderr(x) ≈ 0.
-println("REPRA: ", x)
+println("Copper Plate: ", x)
 #TODO: Network case is tractable, calculate true LOLP
-println("REPRA-T: ",
-        LOLP(assess(REPRA_T, sys_dist, 100_000)),
+println("Network Flow: ",
+        LOLP(assess(NetworkFlow(100_000), sys_dist)),
         " (exact is _)")
 println()
 
@@ -73,9 +73,9 @@ sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
 )
 
 #TODO: Network case is tractable, calculate true LOLP
-println("REPRA: ", LOLP(assess(REPRA, sys_dist)))
-println("REPRA-T: ",
-        LOLP(assess(REPRA_T, sys_dist, 100_000)),
+println("Copper Plate: ", LOLP(assess(Copperplate(), sys_dist)))
+println("Network Flow: ",
+        LOLP(assess(NetworkFlow(100_000), sys_dist)),
         " (exact is _)")
 
 if false

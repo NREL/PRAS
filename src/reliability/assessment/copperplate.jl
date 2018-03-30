@@ -1,4 +1,4 @@
-struct CopperPlate <: ReliabilityAssessmentMethod end
+struct Copperplate <: ReliabilityAssessmentMethod end
 
 function to_distr(vs::Vector)
     p = 1/length(vs)
@@ -7,8 +7,7 @@ function to_distr(vs::Vector)
                    [p * w for w in values(cmap)])
 end
 
-
-function assess(::Type{CopperPlate}, sys::SystemDistribution{N,T,P}) where {N,T,P}
+function assess(::Copperplate, sys::SystemDistribution{N,T,P}) where {N,T,P}
 
     # Collapse net load
     netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))

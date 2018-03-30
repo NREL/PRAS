@@ -18,8 +18,11 @@ export
     LOLP, LOLE, EUE,
     val, stderr,
 
-    # RA Methods
-    REPRA, REPRA_T,
+    # System distribution extraction methods
+    Backcast, REPRA,
+
+    # System assessment methods
+    Copperplate, NetworkFlow,
 
     # CV Methods
     EFC
