@@ -32,7 +32,7 @@ type LOLE{N1,P1<:Period,N2,P2<:Period,V<:AbstractFloat} <: ReliabilityMetric{V}
 
 end
 
-function LOLE(lolps::Vector{LOLP{N,P,V}}) where {N,P<:Period,V<:AbstractFloat}
+function LOLE(lolps::Vector{LOLP{N,T,V}}) where {N,T<:Period,V<:AbstractFloat}
 
     n = length(lolps)
     lole = zero(V)
@@ -43,7 +43,7 @@ function LOLE(lolps::Vector{LOLP{N,P,V}}) where {N,P<:Period,V<:AbstractFloat}
         s += stderr(lolp)^2
     end
 
-    return LOLE{N,P,n*N,P}(lole, sqrt(s))
+    return LOLE{N,T,n*N,T}(lole, sqrt(s))
 
 end
 

@@ -1,4 +1,4 @@
-type REPRA <: ReliabilityAssessmentMethod end
+struct REPRA <: ReliabilityAssessmentMethod end
 
 function to_distr(vs::Vector)
     p = 1/length(vs)
@@ -29,7 +29,7 @@ function assess(::Type{REPRA}, sys::SystemDistribution{N,T,P,V}) where {N,T,P,V}
 
 end
 
-function assess(::Type{REPRA}, systemset::SystemDistributionSet{T}) where T
+function assess(::Type{REPRA}, systemset::SystemDistributionSet)
 
     collapsed = collapse(systemset)
     dts = unique(collapsed.timestamps)
@@ -37,6 +37,6 @@ function assess(::Type{REPRA}, systemset::SystemDistributionSet{T}) where T
     results = pmap(dt -> assess(REPRA, extract(dt, collapsed)),
                    dts, batch_size=batchsize)
 
-    return MutliPeriodReliabilityAssessmentResult(dts, results)
+    return MultiPeriodReliabilityAssessmentResult(dts, results)
 
 end

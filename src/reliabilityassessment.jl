@@ -30,8 +30,8 @@ struct MultiPeriodReliabilityAssessmentResult{
     end
 end
 
-lole(x::MultiPeriodReliabilityAssessmentResult) = LOLE(LOLP[lolp(r) for r in x.results])
-eue(x::MultiPeriodReliabilityAssessmentResult) = EUE(EUE[eue(r) for r in x.results])
+lole(x::MultiPeriodReliabilityAssessmentResult) = LOLE([lolp(r) for r in x.results])
+eue(x::MultiPeriodReliabilityAssessmentResult) = EUE([eue(r) for r in x.results])
 
 
 # Assessment methods

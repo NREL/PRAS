@@ -1,4 +1,4 @@
-struct SystemDistributionSet{N1,P1<:Period,N2,P2<:Period,E<:EnergyUnit,V<:Real}
+struct SystemDistributionSet{N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
     timestamps::Vector{DateTime}
     gen_distrs::LimitDistributions{V}
     vgsamples::Matrix{V}
@@ -9,7 +9,7 @@ struct SystemDistributionSet{N1,P1<:Period,N2,P2<:Period,E<:EnergyUnit,V<:Real}
     daywindow::Int
 end
 
-function collapse(systemset::SystemDistributionSet{N1,P1,N2,P2,E,V}) where {N1,P1,N2,P2,E,V}
+function collapse(systemset::SystemDistributionSet{N1,T1,N2,T2,P,V}) where {N1,T1,N2,T2,P,V}
 
     vgsamples = sum(systemset.vgsamples, 1)
     loadsamples = sum(systemset.loadsamples, 1)
@@ -20,24 +20,28 @@ function collapse(systemset::SystemDistributionSet{N1,P1,N2,P2,E,V}) where {N1,P
         gen_distr = add_dists(gen_distr, systemset.gen_distrs[i])
     end
 
-    return SystemDistributionSet{N1,P1,N2,P2,E,V}(
+    return SystemDistributionSet{N1,T1,N2,T2,P,V}(
         systemset.timestamps, [gen_distr], vgsamples,
         Tuple{Int,Int}[], Generic{V,Float64,Vector{V}}[],
         loadsamples, systemset.hourwindow, systemset.daywindow)
 
 end
 
-function extract(dt::DateTime, systemset::SystemDistributionSet)
+"""
+Extract a single hourly SystemDistribution corresponding to dt
+from SystemDistributionSet data
+"""
+function extract(dt::DateTime, systemset::SystemDistributionSet{N1,T1,N2,T2,P}) where {N1,T1,N2,T2,P}
 
     sample_idxs = extract(dt, systemset.timestamps,
                           systemset.hourwindow,
                           systemset.daywindow)
 
-    return SystemDistribution(systemset.gen_distrs,
-                              systemset.vgsamples[:, sample_idxs],
-                              systemset.interface_labels,
-                              systemset.interface_distrs,
-                              systemset.loadsamples[:, sample_idxs])
+    return SystemDistribution{1,Hour,P}(systemset.gen_distrs,
+                                       systemset.vgsamples[:, sample_idxs],
+                                       systemset.interface_labels,
+                                       systemset.interface_distrs,
+                                       systemset.loadsamples[:, sample_idxs])
 
 end
 

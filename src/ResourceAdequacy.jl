@@ -20,7 +20,10 @@ export
     val, stderr,
 
     # RA Methods
-    REPRA, REPRA_T
+    REPRA, REPRA_T,
+
+    # CV Methods
+    EFC
 
 
 # Types and type methods

@@ -52,7 +52,7 @@ function assess(::Type{REPRA_T}, systemset::SystemDistributionSet, iters::Int=10
 
     dts = unique(systemset.timestamps)
     batchsize = ceil(Int, length(dts)/nworkers())
-    results = pmap(dt -> simulate(extract(dt, systemset), iters),
+    results = pmap(dt -> assess(REPRA_T, extract(dt, systemset), iters),
                    dts, batch_size=batchsize)
 
     return MultiPeriodReliabilityAssessmentResult(dts, results)

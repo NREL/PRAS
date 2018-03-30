@@ -16,7 +16,8 @@ unitsymbol(::Type{MWh}) = "MWh"
 unitsymbol(::Type{GWh}) = "GWh"
 unitsymbol(::Type{TWh}) = "TWh"
 
-unitsymbol(x::Period) = string(Period)
+unitsymbol(T::Type{<:Period}) = string(T)
+unitsymbol(::Type{Minute}) = "min"
 unitsymbol(::Type{Hour}) = "h"
 unitsymbol(::Type{Day}) = "d"
 unitsymbol(::Type{Year}) = "y"
