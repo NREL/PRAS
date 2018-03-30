@@ -15,8 +15,7 @@ export
     MWh, GWh, TWh,
 
     # Metrics
-    LOLP, LOLE, EUE, # Types
-    lolp, lole, eue, # Getter methods
+    LOLP, LOLE, EUE,
     val, stderr,
 
     # RA Methods
@@ -25,18 +24,13 @@ export
     # CV Methods
     EFC
 
-
-# Types and type methods
 include("units.jl")
-include("metrics.jl")
 include("SystemDistribution.jl")
 include("SystemDistributionSet.jl")
-
-# Helper functions
 include("conv.jl")
 
-# Adequacy assessment techniques and result types
-include("reliabilityassessment.jl")
-include("valuationmethods.jl")
+include("metrics.jl")
+include("reliability.jl")
+include("capacityvalue.jl")
 
 end # module

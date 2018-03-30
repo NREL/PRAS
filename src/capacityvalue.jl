@@ -3,5 +3,5 @@ abstract type CapacityValuationMethod{
     AM<:ReliabilityAssessmentMethod}
 end
 
-include("valuationmethods/utils.jl")
-include("valuationmethods/efc.jl")
+include("capacityvalue/utils.jl")
+include("capacityvalue/efc.jl")

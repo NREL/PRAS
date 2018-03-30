@@ -8,11 +8,11 @@ sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     Generic{Float64, Float64, Vector{Float64}}[],
     [1. 1 1 1 2 2 2 2 3 3]
 )
-x = lolp(assess(REPRA,sys))
+x = LOLP(assess(REPRA,sys))
 @test val(x) ≈ 0.06
 @test stderr(x) ≈ 0.
 println("REPRA: ", x)
-println("REPRA-T: ", lolp(assess(REPRA_T, sys, 100_000)))
+println("REPRA-T: ", LOLP(assess(REPRA_T, sys, 100_000)))
 println()
 
 println("Single-node system B")
@@ -21,11 +21,11 @@ sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     zeros(100),
     [ones(59); fill(2., 40); 3]
 )
-x = lolp(assess(REPRA, sys))
+x = LOLP(assess(REPRA, sys))
 @test val(x) ≈ 1e-5
 @test stderr(x) ≈ 0.
 println("REPRA: ", x)
-println("REPRA-T: ", lolp(assess(REPRA_T, sys, 1_000_000)))
+println("REPRA-T: ", LOLP(assess(REPRA_T, sys, 1_000_000)))
 println()
 
 println("Three-node system A")
@@ -46,13 +46,13 @@ sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     line_labels, line_dists,
     load
 )
-x = lolp(assess(REPRA, sys_dist))
+x = LOLP(assess(REPRA, sys_dist))
 @test val(x) ≈ 0.1408
 @test stderr(x) ≈ 0.
 println("REPRA: ", x)
 #TODO: Network case is tractable, calculate true LOLP
 println("REPRA-T: ",
-        lolp(assess(REPRA_T, sys_dist, 100_000)),
+        LOLP(assess(REPRA_T, sys_dist, 100_000)),
         " (exact is _)")
 println()
 
@@ -73,9 +73,9 @@ sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
 )
 
 #TODO: Network case is tractable, calculate true LOLP
-println("REPRA: ", lolp(assess(REPRA, sys_dist)))
+println("REPRA: ", LOLP(assess(REPRA, sys_dist)))
 println("REPRA-T: ",
-        lolp(assess(REPRA_T, sys_dist, 100_000)),
+        LOLP(assess(REPRA_T, sys_dist, 100_000)),
         " (exact is _)")
 
 if false
