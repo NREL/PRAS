@@ -18,8 +18,8 @@ function assess(params::EFC,
     fc_a = 0.
 
     metric_b = metric(assess(extractionmethod, assessmentmethod,
-        addfirmcapacity(sys_before, node, nameplatecapacity)))
-    fc_b = nameplatecapacity
+        addfirmcapacity(sys_before, params.nodes, params.nameplatecapacity)))
+    fc_b = params.nameplatecapacity
 
     while true
 
@@ -30,7 +30,7 @@ function assess(params::EFC,
         # Stopping conditions
 
         ## Return midpoint if bounds are within solution tolerance of each other
-        if fc_b - fc_a < tol_mw
+        if fc_b - fc_a < params.tol_mw
             println("Capacity difference within tolerance, stopping.")
             return (fc_a + fc_b)/2
         end
@@ -39,7 +39,7 @@ function assess(params::EFC,
         ## probability threshold, return the most probable bound
         p_a = pequal(metric_target, metric_a)
         p_b = pequal(metric_target, metric_b)
-        if (p_a >= p) || (p_b >= p)
+        if (p_a >= params.p) || (p_b >= params.p)
             println("Equality probability within tolerance, stopping.")
             return p_a > p_b ? metric_a : metric_b
         end
@@ -49,7 +49,7 @@ function assess(params::EFC,
         metric_x = metric(assess(
             extractionmethod,
             assessmentmethod,
-            addfirmcapacity(sys_before, node, fc_x)))
+            addfirmcapacity(sys_before, params.nodes, fc_x)))
 
         # Tighten FC bounds
         if val(metric_x) > val(metric_target)

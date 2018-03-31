@@ -6,18 +6,24 @@ function pequal(x::T, y::T) where {T<:ReliabilityMetric}
 end
 
 function addfirmcapacity(x::SystemDistributionSet{N1,T1,N2,T2,P,V},
-                         node::Int, capacity::Float64) where {N1,T1,N2,T2,P,V}
+                         nodes::Generic{Int,Float64,Vector{Int}},
+                         capacity::Float64) where {N1,T1,N2,T2,P,V}
 
-    old_distr = x.gen_distrs[node]
-    new_distr = Generic(support(old_distr) .+ capacity,
-                        Distributions.probs(old_distr))
+    gen_distrs = copy(x.gen_distrs)
 
-    newdispatchabledistrs = copy(x.gen_distrs)
-    newdispatchabledistrs[node] = new_distr
+    for (node, weight) in zip(support(nodes), Distributions.probs(nodes))
+
+        old_distr = gen_distrs[node]
+        new_distr = Generic(support(old_distr) .+ weight*capacity,
+                            Distributions.probs(old_distr))
+
+        gen_distrs[node] = new_distr
+
+    end
 
     return SystemDistributionSet{N1,T1,N2,T2,P,V}(
         x.timestamps,
-        newdispatchabledistrs,
+        gen_distrs,
         x.vgsamples,
         x.interface_labels,
         x.interface_distrs,
