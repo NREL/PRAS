@@ -1,4 +1,5 @@
 using Distributions
+using PRAS2HDF5
 
 println("Single-node system A")
 sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
@@ -51,15 +52,18 @@ x = LOLP(assess(Copperplate(), sys_dist))
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
 #TODO: Network case is tractable, calculate true LOLP
+result = assess(NetworkFlow(100_000, true), sys_dist)
 println("Network Flow: ",
-        LOLP(assess(NetworkFlow(100_000), sys_dist)),
+        LOLP(result),
         " (exact is _)")
-println()
+
+# multiresult = ResourceAdequacy.MultiPeriodReliabilityAssessmentResult([DateTime(2017,6,1,18)], [result])
+# savefailures("test.h5", multiresult)
 
 println("Three-node system B")
 gen_dists = [Generic([0., 1, 2], [.1, .3, .6]),
-            Generic([0., 1, 2], [.1, .3, .6]),
-            Generic([0., 1, 2], [.1, .3, .6])]
+             Generic([0., 1, 2], [.1, .3, .6]),
+             Generic([0., 1, 2], [.1, .3, .6])]
 vg = [.2 .4; 0 0; .1 .15]
 line_labels = [(1,2), (2,3), (1,3)]
 line_dists = [Generic([0, 1.], [.2, .8]),

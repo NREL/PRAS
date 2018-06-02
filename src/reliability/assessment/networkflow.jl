@@ -1,9 +1,10 @@
 struct NetworkFlow <: ReliabilityAssessmentMethod
     iters::Int
+    persist::Bool
 
-    function NetworkFlow(iters::Int)
+    function NetworkFlow(iters::Int, persist::Bool=false)
         @assert iters > 0
-        new(iters)
+        new(iters, persist)
     end
 end
 
@@ -27,6 +28,7 @@ function assess(params::NetworkFlow, system::SystemDistribution{N,T,P,Float64}) 
     state_matrix = zeros(sink_idx, sink_idx)
     lol_count = 0
     lol_sum = 0.
+    failure_states = FailureResult{Float64}[]
 
     flow_matrix = Array{Float64}(sink_idx, sink_idx)
     height = Array{Int}(sink_idx)
@@ -35,12 +37,22 @@ function assess(params::NetworkFlow, system::SystemDistribution{N,T,P,Float64}) 
     active = Array{Bool}(sink_idx)
 
     for i in 1:params.iters
+
         rand!(state_matrix, systemsampler)
         systemload, flow_matrix =
             LightGraphs.push_relabel!(flow_matrix, height, count, excess, active,
                           systemsampler.graph, source_idx, sink_idx, state_matrix)
-        # TODO: Check whether generator or transmission constraints are to blame
-        !all_load_served(state_matrix, flow_matrix, sink_idx, n) && (lol_count += 1)
+
+        if !all_load_served(state_matrix, flow_matrix, sink_idx, n)
+
+            # TODO: Save whether generator or transmission constraints are to blame?
+            lol_count += 1
+            #lol_sum += 0
+
+            params.persist && push!(failure_states, FailureResult(state_matrix, flow_matrix, system.interface_labels, n))
+
+        end
+
     end
 
     μ = lol_count/params.iters
@@ -48,9 +60,12 @@ function assess(params::NetworkFlow, system::SystemDistribution{N,T,P,Float64}) 
     # eue_val, E = to_energy(lol_sum/params.iters, P, N, T)
     eue_val, E = to_energy(Inf, P, N, T)
 
+    detailed_results = FailureResultSet(failure_states, system.interface_labels)
+
     return SinglePeriodReliabilityAssessmentResult(
         LOLP{N,T}(μ, sqrt(σ²/params.iters)),
-        EUE{E,N,T}(eue_val, 0.)
+        EUE{E,N,T}(eue_val, 0.),
+        params.persist ? detailed_results : nothing
     )
 
 end

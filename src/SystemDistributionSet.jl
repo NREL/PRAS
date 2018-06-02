@@ -5,8 +5,26 @@ struct SystemDistributionSet{N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
     interface_labels::Vector{Tuple{Int,Int}}
     interface_distrs::LimitDistributions{V}
     loadsamples::Matrix{V}
-    hourwindow::Int
-    daywindow::Int
+    hourwindow::Int #TODO: Remove
+    daywindow::Int #TODO: Remove
+
+    function SystemDistributionSet{N1,T1,N2,T2,P,V}(
+        timestamps::Vector{DateTime}, gen_distrs::LimitDistributions{V}, vgsamples::Matrix{V},
+        interface_labels::Vector{Tuple{Int,Int}}, interface_distrs::LimitDistributions{V},
+        loadsamples::Matrix{V}, hourwindow::Int, daywindow::Int
+    ) where {N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
+
+        n_regions = length(gen_distrs)
+        n_periods = length(timestamps)
+        @assert size(vgsamples) == (n_periods, n_regions)
+        @assert size(loadsamples) == (n_periods, n_regions)
+
+        new{N1,T1,N2,T2,P,V}(
+            timestamps, gen_distrs, vgsamples,
+            interface_labels, interface_distrs,
+            loadsamples, hourwindow, daywindow)
+
+    end
 end
 
 function collapse(systemset::SystemDistributionSet{N1,T1,N2,T2,P,V}) where {N1,T1,N2,T2,P,V}

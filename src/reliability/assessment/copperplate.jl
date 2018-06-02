@@ -24,7 +24,8 @@ function assess(::Copperplate, sys::SystemDistribution{N,T,P}) where {N,T,P}
 
     return SinglePeriodReliabilityAssessmentResult(
         LOLP{N,T}(lolp_val, 0.),
-        EUE{E,N,T}(eue_val, 0.)
+        EUE{E,N,T}(eue_val, 0.),
+        nothing
     )
 
 end
