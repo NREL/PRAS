@@ -16,8 +16,8 @@ struct SystemDistributionSet{N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
 
         n_regions = length(gen_distrs)
         n_periods = length(timestamps)
-        @assert size(vgsamples) == (n_periods, n_regions)
-        @assert size(loadsamples) == (n_periods, n_regions)
+        @assert size(vgsamples) == (n_regions, n_periods)
+        @assert size(loadsamples) == (n_regions, n_periods)
 
         new{N1,T1,N2,T2,P,V}(
             timestamps, gen_distrs, vgsamples,
