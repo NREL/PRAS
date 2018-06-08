@@ -1,88 +1,51 @@
-using Distributions
-using PRAS2HDF5
-
 println("Single-node system A")
-sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
-    [Generic([2.,3,4], [.3, .4, .3])],
-    zeros(1, 10),
-    Tuple{Int,Int}[],
-    Generic{Float64, Float64, Vector{Float64}}[],
-    [1. 1 1 1 2 2 2 2 3 3]
-)
-x = LOLP(assess(Copperplate(),sys))
+x = LOLP(assess(Copperplate(), singlenode_a))
 @test val(x) ≈ 0.06
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
-println("Network Flow: ", LOLP(assess(NetworkFlow(100_000), sys)))
+println("Network Flow: ", LOLP(assess(NetworkFlow(100_000), singlenode_a)))
 println()
 
+
 println("Single-node system B")
-sys = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
-    Generic([2.,3,4], [.001, .4, .599]),
-    zeros(100),
-    [ones(59); fill(2., 40); 3]
-)
-x = LOLP(assess(Copperplate(), sys))
+x = LOLP(assess(Copperplate(), singlenode_b))
 @test val(x) ≈ 1e-5
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
-println("Network Flow: ", LOLP(assess(NetworkFlow(1_000_000), sys)))
+println("Network Flow: ", LOLP(assess(NetworkFlow(1_000_000), singlenode_b)))
 println()
 
-println("Three-node system A")
-gen_dists = [Generic([2., 3], [.4, .6]),
-             Generic([2., 3], [.4, .6]),
-             Generic([2., 3], [.4, .6])]
-vg = zeros(3,5)
-load = Matrix{Float64}(3,5)
-load[:, 1:3] = 2.
-load[:, 4:5] = 2.5
-line_labels = [(1,2), (2,3), (1,3)]
-line_dists = [Generic([0., 1], [.1, .9]),
-              Generic([0., 1], [.3, .7]),
-              Generic([0., 1], [.3, .7])]
 
-sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
-    gen_dists, vg,
-    line_labels, line_dists,
-    load
-)
-x = LOLP(assess(Copperplate(), sys_dist))
+println("Three-node system A")
+x = LOLP(assess(Copperplate(), threenode_a))
 @test val(x) ≈ 0.1408
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
 #TODO: Network case is tractable, calculate true LOLP
-result = assess(NetworkFlow(100_000, true), sys_dist)
-println("Network Flow: ",
-        LOLP(result),
-        " (exact is _)")
+result = assess(NetworkFlow(100_000, true), threenode_a)
+println("Network Flow: ", LOLP(result), " (exact is _)")
+println()
 
-# multiresult = ResourceAdequacy.MultiPeriodReliabilityAssessmentResult([DateTime(2017,6,1,18)], [result])
-# savefailures("test.h5", multiresult)
 
 println("Three-node system B")
-gen_dists = [Generic([0., 1, 2], [.1, .3, .6]),
-             Generic([0., 1, 2], [.1, .3, .6]),
-             Generic([0., 1, 2], [.1, .3, .6])]
-vg = [.2 .4; 0 0; .1 .15]
-line_labels = [(1,2), (2,3), (1,3)]
-line_dists = [Generic([0, 1.], [.2, .8]),
-              Generic([0, 1.], [.2, .8]),
-              Generic([0, 1.], [.2, .8])]
-load = [.5 1.5; .5 1.5; .5 1.5]
-sys_dist = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
-    gen_dists, vg,
-    line_labels, line_dists,
-    load
-)
-
-#TODO: Network case is tractable, calculate true LOLP
-println("Copper Plate: ", LOLP(assess(Copperplate(), sys_dist)))
+println("Copper Plate: ", LOLP(assess(Copperplate(), threenode_b)))
+#TODO: Network case is tractable, calculate analytical LOLP
 println("Network Flow: ",
-        LOLP(assess(NetworkFlow(100_000), sys_dist)),
+        LOLP(assess(NetworkFlow(100_000), threenode_b)),
         " (exact is _)")
+println()
 
-if false
+
+println("Multi-period three-node system")
+println("Copper Plate: ", LOLE(assess(Backcast(), Copperplate(),
+                                      threenode_multiperiod)))
+#TODO: Network case is tractable, calculate analytical LOLE
+println("Network Flow: ", LOLE(assess(Backcast(), NetworkFlow(100_000),
+                                      threenode_multiperiod)))
+println()
+
+
+if false # Check convolution
     Base.isapprox(x::Generic, y::Generic) =
         isapprox(support(x), support(y)) && isapprox(probs(x), probs(y))
     @test ResourceAdequacy.add_dists(Generic([0, 1], [0.7, 0.3]),
