@@ -37,11 +37,15 @@ println()
 
 
 println("Multi-period three-node system")
-println("Copper Plate: ", LOLE(assess(Backcast(), Copperplate(),
-                                      threenode_multiperiod)))
+println("Copper Plate, Backcast: ",
+        LOLE(assess(Backcast(), Copperplate(), threenode_multiperiod)))
+println("Copper Plate, REPRA(1,1): ",
+        LOLE(assess(REPRA(1,1), Copperplate(), threenode_multiperiod)))
 #TODO: Network case is tractable, calculate analytical LOLE
-println("Network Flow: ", LOLE(assess(Backcast(), NetworkFlow(100_000),
-                                      threenode_multiperiod)))
+println("Network Flow, Backcast: ",
+        LOLE(assess(Backcast(), NetworkFlow(100_000), threenode_multiperiod)))
+println("Network Flow, REPRA(1,1): ",
+        LOLE(assess(REPRA(1,1), NetworkFlow(100_000), threenode_multiperiod)))
 println()
 
 

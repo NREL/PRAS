@@ -8,19 +8,21 @@ struct SystemDistribution{N,T<:Period,P<:PowerUnit,V<:Real}
     interface_distributions::LimitDistributions{V}
     loadsamples::Matrix{V}
 
-    function SystemDistribution{N,T,P}(gen_dists::LimitDistributions{V},
-                                vgsamples::Matrix{V},
-                                interface_labels::Vector{Tuple{Int,Int}},
-                                interface_dists::LimitDistributions{V},
-                                loadsamples::Matrix{V}
-                                ) where {N,T,P,V}
+    function SystemDistribution{N,T,P}(
+        gen_dists::LimitDistributions{V},
+        vgsamples::Matrix{V},
+        interface_labels::Vector{Tuple{Int,Int}},
+        interface_dists::LimitDistributions{V},
+        loadsamples::Matrix{V}) where {N,T,P,V}
 
-        @assert length(gen_dists) == size(vgsamples, 1)
-        @assert size(vgsamples) == size(loadsamples)
+        n_regions = length(gen_dists)
+        @assert size(vgsamples, 1) == n_regions
+        @assert size(loadsamples, 1) == n_regions
         @assert length(interface_dists) == length(interface_labels)
 
         new{N,T,P,V}(gen_dists, vgsamples,
-               interface_labels, interface_dists, loadsamples)
+                     interface_labels, interface_dists,
+                     loadsamples)
 
     end
 
@@ -40,18 +42,21 @@ struct SystemSampler{T <: Real}
     loadsamples::Matrix{T}
     node_idxs::UnitRange{Int}
     interface_idxs::UnitRange{Int}
-    timesample_idxs::UnitRange{Int}
+    loadsample_idxs::UnitRange{Int}
+    vgsample_idxs::UnitRange{Int}
     graph::DiGraph{Int}
 
     function SystemSampler(sys::SystemDistribution{N,T,P,V}) where {N,T,P,V}
 
         n_nodes = length(sys.gen_distributions)
         n_interfaces = length(sys.interface_distributions)
-        n_netloadsamples = size(sys.loadsamples, 2)
+        n_vgsamples = size(sys.vgsamples, 2)
+        n_loadsamples = size(sys.loadsamples, 2)
 
         node_idxs = Base.OneTo(n_nodes)
         interface_idxs = Base.OneTo(n_interfaces)
-        timesample_idxs = Base.OneTo(n_netloadsamples)
+        loadsample_idxs = Base.OneTo(n_loadsamples)
+        vgsample_idxs = Base.OneTo(n_vgsamples)
 
         source_node = n_nodes + 1
         sink_node   = n_nodes + 2
@@ -81,7 +86,8 @@ struct SystemSampler{T <: Real}
                sys.interface_labels,
                sampler.(sys.interface_distributions),
                sys.loadsamples,
-               node_idxs, interface_idxs, timesample_idxs,
+               node_idxs, interface_idxs,
+               loadsample_idxs, vgsample_idxs,
                graph)
 
     end
@@ -92,14 +98,16 @@ function Base.rand!(A::Matrix{T}, system::SystemSampler{T}) where T
     node_idxs = system.node_idxs
     source_idx = last(node_idxs) + 1
     sink_idx = last(node_idxs) + 2
-    timesample_idx = rand(system.timesample_idxs)
+
+    vgsample_idx = rand(system.vgsample_idxs)
+    loadsample_idx = rand(system.loadsample_idxs)
 
     # Assign random generation capacities and loads
     for i in node_idxs
         A[source_idx, i] =
             rand(system.gen_samplers[i]) +
-            system.vgsamples[i, timesample_idx]
-        A[i, sink_idx] = system.loadsamples[i, timesample_idx]
+            system.vgsamples[i, vgsample_idx]
+        A[i, sink_idx] = system.loadsamples[i, loadsample_idx]
     end
 
     # Assign random line limits
