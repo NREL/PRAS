@@ -24,13 +24,15 @@ function extract(params::REPRA, dt::DateTime,
     vg_sample_idxs = extract(dt, systemset.timestamps,
                              params.hourwindow,
                              params.daywindow)
-    load_sample_idx = searchsorted(systemset.timestamps, dt)[1]
+    load_sample_idxs = findin(systemset.timestamps, [dt])
 
-    return SystemDistribution{1,Hour,P}(systemset.gen_distrs,
-                                        systemset.vgsamples[:, vg_sample_idxs],
-                                        systemset.interface_labels,
-                                        systemset.interface_distrs,
-                                        systemset.loadsamples[:, [load_sample_idx]])
+    return SystemDistribution{1,Hour,P}(
+        systemset.region_labels,
+        systemset.region_maxdispatchabledistrs,
+        systemset.vgsamples[:, vg_sample_idxs],
+        systemset.interface_labels,
+        systemset.interface_maxflowdistrs,
+        systemset.loadsamples[:, load_sample_idxs])
 
 end
 

@@ -14,9 +14,9 @@ function assess(::Copperplate, sys::SystemDistribution{N,T,P}) where {N,T,P}
     netload = to_distr(netloadsamples)
 
     # Collapse transmission nodes
-    supply = sys.gen_distributions[1]
-    for i in 2:length(sys.gen_distributions)
-        supply = add_dists(supply, sys.gen_distributions[i])
+    supply = sys.region_maxdispatchabledistrs[1]
+    for i in 2:length(sys.region_maxdispatchabledistrs)
+        supply = add_dists(supply, sys.region_maxdispatchabledistrs[i])
     end
 
     lolp_val, eul_val = assess(supply, netload)

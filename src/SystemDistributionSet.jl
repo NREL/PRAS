@@ -1,41 +1,49 @@
 struct SystemDistributionSet{N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
     timestamps::Vector{DateTime}
-    gen_distrs::LimitDistributions{V}
+    region_labels::Vector{String}
+    region_maxdispatchabledistrs::Vector{CapacityDistribution{V}}
     vgsamples::Matrix{V}
     interface_labels::Vector{Tuple{Int,Int}}
-    interface_distrs::LimitDistributions{V}
+    interface_maxflowdistrs::Vector{CapacityDistribution{V}}
     loadsamples::Matrix{V}
-    hourwindow::Int #TODO: Remove
-    daywindow::Int #TODO: Remove
 
     function SystemDistributionSet{N1,T1,N2,T2,P,V}(
-        timestamps::Vector{DateTime}, gen_distrs::LimitDistributions{V}, vgsamples::Matrix{V},
-        interface_labels::Vector{Tuple{Int,Int}}, interface_distrs::LimitDistributions{V},
-        loadsamples::Matrix{V}, hourwindow::Int, daywindow::Int
+        timestamps::Vector{DateTime},
+        region_labels::Vector{String},
+        region_maxdispatchabledistrs::Vector{CapacityDistribution{V}},
+        vgsamples::Matrix{V},
+        interface_labels::Vector{Tuple{Int,Int}},
+        interface_maxflowdistrs::Vector{CapacityDistribution{V}},
+        loadsamples::Matrix{V}
     ) where {N1,T1<:Period,N2,T2<:Period,P<:PowerUnit,V<:Real}
 
-        n_regions = length(gen_distrs)
+        n_regions = length(region_labels)
         n_periods = length(timestamps)
         @assert size(vgsamples) == (n_regions, n_periods)
         @assert size(loadsamples) == (n_regions, n_periods)
 
         new{N1,T1,N2,T2,P,V}(
-            timestamps, gen_distrs, vgsamples,
-            interface_labels, interface_distrs,
-            loadsamples, hourwindow, daywindow)
+            timestamps,
+            region_labels, region_maxdispatchabledistrs,
+            vgsamples,
+            interface_labels, interface_maxflowdistrs,
+            loadsamples)
 
     end
+
 end
 
-function collapse(systemset::SystemDistributionSet{N1,T1,N2,T2,P,V}) where {N1,T1,N2,T2,P,V}
+function collapse(systemset::SystemDistributionSet{N1,T1,N2,T2,P,V}
+                  ) where {N1,T1,N2,T2,P,V}
 
     vgsamples = sum(systemset.vgsamples, 1)
     loadsamples = sum(systemset.loadsamples, 1)
 
-    gen_distr = systemset.gen_distrs[1]
+    gen_distr = systemset.region_maxdispatchabledistrs[1]
 
-    for i in 2:length(systemset.gen_distrs)
-        gen_distr = add_dists(gen_distr, systemset.gen_distrs[i])
+    for i in 2:length(systemset.region_maxdispatchabledistrs)
+        gen_distr = add_dists(
+            gen_distr, systemset.region_maxdispatchabledistrs[i])
     end
 
     return SystemDistributionSet{N1,T1,N2,T2,P,V}(

@@ -11,10 +11,12 @@ function extract(params::Backcast, dt::DateTime,
 
     sample_idxs = findin(systemset.timestamps, [dt])
 
-    return SystemDistribution{N1,T1,P}(systemset.gen_distrs,
-                                       systemset.vgsamples[:, sample_idxs],
-                                       systemset.interface_labels,
-                                       systemset.interface_distrs,
-                                       systemset.loadsamples[:, sample_idxs])
+    return SystemDistribution{N1,T1,P}(
+        systemset.region_labels,
+        systemset.region_maxdispatchabledistrs,
+        systemset.vgsamples[:, sample_idxs],
+        systemset.interface_labels,
+        systemset.interface_maxflowdistrs,
+        systemset.loadsamples[:, sample_idxs])
 
 end
