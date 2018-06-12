@@ -18,7 +18,8 @@ function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     return served
 end
 
-function assess(params::NetworkFlow, system::SystemDistribution{N,T,P,Float64}) where {N,T,P}
+function assess(params::NetworkFlow,
+                system::SystemDistribution{N,T,P,Float64}) where {N,T,P}
 
     systemsampler = SystemSampler(system)
     sink_idx = nv(systemsampler.graph)

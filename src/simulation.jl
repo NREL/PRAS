@@ -1,3 +1,4 @@
+abstract type ReliabilityAssessmentMethod end
 abstract type ReliabilityAssessmentResult{N,P<:Period,E<:EnergyUnit,V<:Real} end
 
 struct NodeResult{V<:Real}
@@ -71,9 +72,8 @@ end
 LOLE(x::MultiPeriodReliabilityAssessmentResult) = LOLE([LOLP(r) for r in x.results])
 EUE(x::MultiPeriodReliabilityAssessmentResult) = EUE([EUE(r) for r in x.results])
 
-
-include("reliability/extraction.jl")
-include("reliability/assessment.jl")
+include("simulation/copperplate.jl")
+include("simulation/networkflow.jl")
 
 function assess(extractionmethod::SinglePeriodExtractionMethod,
                 assessmentmethod::ReliabilityAssessmentMethod,

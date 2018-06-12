@@ -11,7 +11,11 @@ end
 
 function window_periods(dt::DateTime, hour_window::Int, day_window::Int)
 
-    # dt time should be xx:00:00 TODO: Assert that
+    # TODO: This approach is fragile - switch to something that uses
+    #       continuous windows instead of generating and matching
+    #       discrete points in time
+
+    # dt time should be xx:00:00
     return [dt + day_offset + hour_offset
             for day_offset in Day(-day_window):Day(1):Day(day_window)
             for hour_offset in Hour(-hour_window):Hour(1):Hour(hour_window)]
