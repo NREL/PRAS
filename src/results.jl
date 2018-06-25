@@ -1,6 +1,3 @@
-abstract type AbstractResultSpec end
-
-
 abstract type AbstractReliabilityResult{
     N, # Length of a single simulation time interval
     P<:Period, # Units for simulation interval duration
@@ -45,12 +42,12 @@ abstract type MultiPeriodReliabilityResult{
     P2 <: Period, # Units for the total simulation duration
     E <: EnergyUnit, # Units for reported energy values
     V <: Real, # Numeric type of value data
-    SS <: SimulationSpec, # Type of simulation that produced the result
-    ES <: ExtractionSpec # Type of extraction that produced interval distibutions
+    ES <: ExtractionSpec, # Type of extraction that produced interval distibutions
+    SS <: SimulationSpec # Type of simulation that produced the result
 } <: AbstractReliabilityResult{N1,P1,E,V,SS} end
 
 LOLE(x::MultiPeriodReliabilityResult) = LOLE([LOLP(x[dt]) for dt in timestamps(x)])
 EUE(x::MultiPeriodReliabilityResult) = EUE([EUE(x[dt]) for dt in timestamps(x)])
 
 include("results/minimal.jl")
-include("results/networkfailures.jl")
+include("results/network.jl")

@@ -1,44 +1,44 @@
 println("Single-node system A")
-x = LOLP(assess(Copperplate(), MinimalResult(), singlenode_a))
+x = LOLP(assess(NonSequentialCopperplate(), MinimalResult(), singlenode_a))
 @test val(x) ≈ 0.06
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
-println("Network Flow: ", LOLP(assess(NetworkFlow(100_000),
+println("Network Flow: ", LOLP(assess(NonSequentialNetworkFlow(100_000),
                                       MinimalResult(),
                                       singlenode_a)))
 println()
 
 
 println("Single-node system B")
-x = LOLP(assess(Copperplate(), MinimalResult(), singlenode_b))
+x = LOLP(assess(NonSequentialCopperplate(), MinimalResult(), singlenode_b))
 @test val(x) ≈ 1e-5
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
-println("Network Flow: ", LOLP(assess(NetworkFlow(1_000_000),
+println("Network Flow: ", LOLP(assess(NonSequentialNetworkFlow(1_000_000),
                                       MinimalResult(),
                                       singlenode_b)))
 println()
 
 
 println("Three-node system A")
-x = LOLP(assess(Copperplate(), MinimalResult(), threenode_a))
+x = LOLP(assess(NonSequentialCopperplate(), MinimalResult(), threenode_a))
 @test val(x) ≈ 0.1408
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
 #TODO: Network case is tractable, calculate true LOLP
-result = assess(NetworkFlow(100_000, true),
+result = assess(NonSequentialNetworkFlow(100_000, true),
                 MinimalResult(), threenode_a)
 println("Network Flow: ", LOLP(result), " (exact is _)")
 println()
 
 
 println("Three-node system B")
-println("Copper Plate: ", LOLP(assess(Copperplate(),
+println("Copper Plate: ", LOLP(assess(NonSequentialCopperplate(),
                                       MinimalResult(),
                                       threenode_b)))
 #TODO: Network case is tractable, calculate analytical LOLP
 println("Network Flow: ",
-        LOLP(assess(NetworkFlow(100_000),
+        LOLP(assess(NonSequentialNetworkFlow(100_000),
                     MinimalResult(),
                     threenode_b)),
         " (exact is _)")
@@ -48,18 +48,18 @@ println()
 println("Multi-period three-node system")
 println("Copper Plate, Backcast: ",
         LOLE(assess(Backcast(),
-                    Copperplate(),
+                    NonSequentialCopperplate(),
                     MinimalResult(),
                     threenode_multiperiod)))
 println("Copper Plate, REPRA(1,1): ",
-        LOLE(assess(REPRA(1,1), Copperplate(),
+        LOLE(assess(REPRA(1,1), NonSequentialCopperplate(),
                     MinimalResult(), threenode_multiperiod)))
 #TODO: Network case is tractable, calculate analytical LOLE
 println("Network Flow, Backcast: ",
-        LOLE(assess(Backcast(), NetworkFlow(100_000), MinimalResult(),
+        LOLE(assess(Backcast(), NonSequentialNetworkFlow(100_000), MinimalResult(),
                     threenode_multiperiod)))
 println("Network Flow, REPRA(1,1): ",
-        LOLE(assess(REPRA(1,1), NetworkFlow(100_000), MinimalResult(),
+        LOLE(assess(REPRA(1,1), NonSequentialNetworkFlow(100_000), MinimalResult(),
                     threenode_multiperiod)))
 println()
 

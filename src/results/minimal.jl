@@ -1,4 +1,4 @@
-struct MinimalResult <: AbstractResultSpec end
+struct MinimalResult <: ResultSpec end
 
 # Single-period reliability results
 
@@ -24,22 +24,26 @@ struct MultiPeriodMinimalResult{
     P2<:Period,
     E<:EnergyUnit,
     V<:AbstractFloat,
-    SS<:SimulationSpec,
-    ES<:ExtractionSpec
-} <: MultiPeriodReliabilityResult{N1,P1,N2,P2,E,V,SS,ES}
+    ES<:ExtractionSpec,
+    SS<:SimulationSpec
+} <: MultiPeriodReliabilityResult{N1,P1,N2,P2,E,V,ES,SS}
 
     timestamps::Vector{DateTime}
     results::Vector{SinglePeriodMinimalResult{N1,P1,E,V}}
-    simulationspec::SS
     extractionspec::ES
+    simulationspec::SS
 
     function MultiPeriodMinimalResult(
         timestamps::Vector{DateTime},
-        results::Vector{SinglePeriodMinimalResult{N1,P1,E,V}}) where {N1,P1,E,V}
+        results::Vector{SinglePeriodMinimalResult{N1,P1,E,V}},
+        extractionspec::ES,
+        simulationspec::SS
+    ) where {N1,P1,E,V,ES<:ExtractionSpec,SS<:SimulationSpec}
         n = length(timestamps)
         @assert n == length(results)
         @assert uniquesorted(timestamps)
-        new{N1,P1,N1*n,P1,E,V}(timestamps, results)
+        new{N1,P1,N1*n,P1,E,V,ES,SS}(
+            timestamps, results, extractionspec, simulationspec)
     end
 end
 

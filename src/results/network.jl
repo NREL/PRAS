@@ -1,3 +1,7 @@
+struct NetworkResult <: ResultSpec
+    failuresonly::Bool
+end
+
 struct NodeResult{V<:Real}
     generation_available::V
     generation::V
@@ -34,61 +38,67 @@ end
 
 NetworkStateSet{V} = Vector{NetworkState{V}}
 
-
-abstract type PersistenceMethod end
-struct FailuresOnly <: PersistenceMethod end
-struct AllResults <: PersistenceMethod end
-
 struct SinglePeriodNetworkResult{
-    PM<:PersistenceMethod,
     N,P<:Period,E<:EnergyUnit,V<:Real,
-    SS<:SimulationSpec} <: ReliabilityAssessmentResult{N,P,E,V}
+    SS<:SimulationSpec} <: SinglePeriodReliabilityResult{N,P,E,V,SS}
 
+    failuresonly::Bool
     node_labels::Vector{String}
     edge_labels::Vector{Tuple{Int,Int}}
     states::NetworkStateSet{V}
     simulationspec::SS
 
-    function SinglePeriodNetworkResult{PM,N,P,E}(
-        node_labels::Vector{String}
-        edge_labels::Vector{Tuple{Int,Int}}
-        states::NetworkStateSet{V}) where {
-            PM<:PersistenceMethod, N,
-            P<:Period, E<:EnergyUnit, V}
+    function SinglePeriodNetworkResult{N,P,E}(
+        node_labels::Vector{String},
+        edge_labels::Vector{Tuple{Int,Int}},
+        states::NetworkStateSet{V},
+        simulationspec::SS
+    ) where {
+        N, P<:Period, E<:EnergyUnit, V,
+        SS<:SimulationSpec
+    }
 
         @assert length(node_labels) == length(edge_labels)
 
-        new{PM,N,P,E,V}(node_labels, edge_labels, states)
+        new{N,P,E,V,SS}(node_labels, edge_labels,
+                           states, simulationspec)
 
     end
 end
 
 struct MultiPeriodNetworkResult{
-    PM<:PersistenceMethod,
     N1,P1<:Period,N2,P2<:Period,
     E<:EnergyUnit,V<:Real,
     SS<:SimulationSpec,
-    ES<:ExtractionSpec} <: ReliabilityAssessmentResult{N2,P2,E,V}
+    ES<:ExtractionSpec} <: MultiPeriodReliabilityResult{N1,P1,N2,P2,E,V,ES,SS}
 
+    failuresonly::Bool
     timestamps::Vector{DateTime}
     nodelabels::Vector{String}
     edgelabels::Vector{Tuple{Int,Int}}
     statesets::Vector{NetworkStateSet{V}}
-    simulationspec::SS
     extractionspec::ES
+    simulationspec::SS
 
-    function MultiPeriodNetworkResult{PM,N1,P1,N2,P2,E}(
+    function MultiPeriodNetworkResult{N1,P1,N2,P2,E}(
         timestamps::Vector{DateTime},
         nodelabels::Vector{String},
         edgellabels::Vector{Tuple{Int,Int}},
-        statesets::Vector{NetworkStateSet{V}}
-    ) where {PM<:PersistenceMethod,N1,P1<:Period,E<:EnergyUnit}
+        statesets::Vector{NetworkStateSet{V}},
+        extractionspec::ES,
+        simulationspec::SS
+    ) where {N1,P1<:Period,N2,P2<:Period,
+             E<:EnergyUnit,V,
+             ES<:ExtractionSpec,
+             SS<:SimulationSpec}
 
         n = length(timestamps)
         @assert n == length(statesets)
         @assert uniquesorted(timestamps)
 
-        new{}(timestamps, nodelabels, edgelabels, statesets)
+        new{N1,P1,N2,P2,E,V,ES,SS}(
+            timestamps, nodelabels, edgelabels,
+            statesets, extractonspec, simulationspec)
 
     end
 
