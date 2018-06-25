@@ -52,5 +52,5 @@ abstract type MultiPeriodReliabilityResult{
 LOLE(x::MultiPeriodReliabilityResult) = LOLE([LOLP(x[dt]) for dt in timestamps(x)])
 EUE(x::MultiPeriodReliabilityResult) = EUE([EUE(x[dt]) for dt in timestamps(x)])
 
-include("results/basic.jl")
+include("results/minimal.jl")
 include("results/networkfailures.jl")

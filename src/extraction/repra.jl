@@ -1,4 +1,4 @@
-struct REPRA <: SinglePeriodExtractionMethod
+struct REPRA <: ExtractionSpec
     hourwindow::Int
     daywindow::Int
 

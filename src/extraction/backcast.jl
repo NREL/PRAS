@@ -1,4 +1,4 @@
-struct Backcast <: SinglePeriodExtractionMethod end
+struct Backcast <: ExtractionSpec end
 
 """
 Backcast extraction:
