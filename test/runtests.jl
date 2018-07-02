@@ -2,7 +2,12 @@ using ResourceAdequacy
 using Base.Test
 using Distributions
 
-include("metrics.jl")
+@testset "ResourceAdequacy" begin
 
-include("systems.jl")
-include("reliabilityassessment.jl")
+    include("metrics.jl")
+    include("results.jl")
+
+    include("systems.jl")
+    include("reliabilityassessment.jl")
+
+end

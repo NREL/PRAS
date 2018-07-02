@@ -27,7 +27,10 @@ export
     # Result specifications
     MinimalResult, NetworkResult,
 
-    # CV Methods
+    # Result methods
+    timestamps,
+
+    # CV metrics
     EFC
 
 CapacityDistribution{T} = Distributions.Generic{T,Float64,Vector{T}}
