@@ -2,43 +2,69 @@ struct NetworkResult <: ResultSpec
     failuresonly::Bool
 end
 
-struct NodeResult{V<:Real}
+struct NodeResult{N,T<:Period,P<:PowerUnit,V<:Real}
+
     generation_available::V
     generation::V
     demand::V
     demand_served::V
+
+    function NodeResult{N,T,P}(
+        gen_av::V, gen::V, dem::V, dem_served::V
+    ) where {N,T<:Period,P<:PowerUnit,V<:Real}
+        @assert gen_av >= gen
+        @assert dem >= dem_served
+        new{N,T,P,V}(gen_av, gen, dem, dem_served)
+    end
+
 end
 
-struct EdgeResult{V<:Real}
+struct EdgeResult{N,T<:Period,P<:PowerUnit,V<:Real}
+
     max_transfer_magnitude::V
     transfer::V
+
+    function EdgeResult{N,T,P}(
+        max::V, actual::V) where {N,T,P,V}
+        @assert max >= abs(actual)
+        new{N,T,P,V}(max, actual)
+    end
+
 end
 
-struct NetworkState{V}
-    nodes::Vector{NodeResult{V}}
-    edges::Vector{EdgeResult{V}}
+struct NetworkState{N,T,P,V}
+    nodes::Vector{NodeResult{N,T,P,V}}
+    edges::Vector{EdgeResult{N,T,P,V}}
+    edgelabels::Vector{Tuple{Int,Int}}
+
+    function NetworkState(
+        nodes::Vector{NodeResult{N,T,P,V}},
+        edges::Vector{EdgeResult{N,T,P,V}},
+        edgelabels::Vector{Tuple{Int,Int}}
+    ) where {N,T,P,V}
+        @assert length(edges) == length(edgelabels)
+        new{N,T,P,V}(nodes, edges, edgelabels)
+    end
 end
 
-function NetworkState(state_matrix::Matrix{V}, flow_matrix::Matrix{V},
+function NetworkState{N,T,P}(state_matrix::Matrix{V}, flow_matrix::Matrix{V},
                       edge_labels::Vector{Tuple{Int,Int}}, n::Int) where {V<:Real}
 
     source = n+1
     sink = n+2
-    nodes = [NodeResult(state_matrix[source,i],
+    nodes = [NodeResult{N,T,P}(state_matrix[source,i],
                         flow_matrix[source,i],
                         state_matrix[i,sink],
                         flow_matrix[i,sink]) for i in 1:n]
 
-    edges = [EdgeResult(state_matrix[i,j],
+    edges = [EdgeResult{N,T,P}(state_matrix[i,j],
                         flow_matrix[i,j]) for (i,j) in edge_labels]
 
-    return NetworkState{V}(nodes, edges)
+    return NetworkState(nodes, edges, edge_labels)
 
 end
 
-NetworkStateSet{V} = Vector{NetworkState{V}}
-
-function droppedload(ns::NetworkState{V}) where V
+function droppedload(ns::NetworkState{N,T,P,V}) where {N,T,P,V}
     result = zero(V)
     for node in ns.nodes
         if !(node.demand ≈ node.demand_served)
@@ -48,16 +74,33 @@ function droppedload(ns::NetworkState{V}) where V
     return result
 end
 
-function LOLP(nss::NetworkStateSet)
-    μ = mean(droppedload.(nss) .> 0)
-    σ² = μ * (1-μ)
-    return LOLP(μ, sqrt(σ²/length(nss)))
+struct NetworkStateSet{N,T,P,V}
+    nodesset::Vector{Vector{NodeResult{N,T,P,V}}}
+    edgesset::Vector{Vector{EdgeResult{N,T,P,V}}}
+    edgelabels::Vector{Tuple{Int,Int}}
+
+    function NetworkStateSet(nodesset::Vector{Vector{NodeResult{N,T,P,V}}},
+                             edgesset::Vector{Vector{EdgeResult{N,T,P,V}}},
+                             edgelabels::Vector{Tuple{Int,Int}})
+        @assert length(nodesset) == length(edgesset)
+        new{N,T,P,V}(nodesset, edgesset, edgelabels)
+    end
 end
 
-function LOLP(nss::NetworkStateSet, ntrials::Int)
+droppedload(nss::NetworkStateSet) =
+    [droppedload(NetworkState(edges, nodes, nss.edgelabels))
+    for edges, nodes in zip(nss.nodesset, nss.edgesset)]
+
+function LOLP(nss::NetworkStateSet{N,T,P,V}) where {N,T,P,V}
+    μ = mean(droppedload(nss) .> 0)
+    σ² = μ * (1-μ)
+    return LOLP{N,T,V}(μ, sqrt(σ²/length(nss)))
+end
+
+function LOLP(nss::NetworkStateSet{N,T,P,V}, ntrials::Int) where {N,T,P,V}
     μ = length(nss) / ntrials
     σ² = μ * (1-μ)
-    return LOLP(μ, sqrt(σ²/ntrials))
+    return LOLP{N,T,V}(μ, sqrt(σ²/ntrials))
 end
 
 function EUE(nss::NetworkStateSet)
