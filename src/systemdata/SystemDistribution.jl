@@ -33,7 +33,7 @@ struct SystemDistribution{N,T<:Period,P<:PowerUnit,V<:Real}
     ) where {N,T,P,V}
 
         new{N,T,P,V}(["Region"], [maxdispatchable], reshape(vgsamples, 1, :),
-                     Vector{Tuple{Int,Int}}[], CapacityDistribution[],
+                     Tuple{Int,Int}[], CapacityDistribution[],
                      reshape(loadsamples, 1, :))
 
     end

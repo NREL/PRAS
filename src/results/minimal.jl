@@ -29,13 +29,13 @@ struct MultiPeriodMinimalResult{
 } <: MultiPeriodReliabilityResult{N1,P1,N2,P2,E,V,ES,SS}
 
     timestamps::Vector{DateTime}
-    results::Vector{SinglePeriodMinimalResult{N1,P1,E,V}}
+    results::Vector{SinglePeriodMinimalResult{N1,P1,E,V,SS}}
     extractionspec::ES
     simulationspec::SS
 
     function MultiPeriodMinimalResult(
         timestamps::Vector{DateTime},
-        results::Vector{SinglePeriodMinimalResult{N1,P1,E,V}},
+        results::Vector{SinglePeriodMinimalResult{N1,P1,E,V,SS}},
         extractionspec::ES,
         simulationspec::SS
     ) where {N1,P1,E,V,ES<:ExtractionSpec,SS<:SimulationSpec}
@@ -49,7 +49,8 @@ end
 
 timestamps(x::MultiPeriodMinimalResult) = x.timestamps
 
-function getindex(x::MultiPeriodMinimalResult, dt::DateTime)
+function Base.getindex(x::MultiPeriodReliabilityResult,
+                       dt::DateTime)
     idxs = searchsorted(x.timestamps, dt)
     if length(idxs) > 0
         return x.results[first(idxs)]
@@ -57,6 +58,7 @@ function getindex(x::MultiPeriodMinimalResult, dt::DateTime)
         throw(BoundsError(x, dt))
     end
 end
+
 
 LOLE(x::MultiPeriodMinimalResult) = LOLE([LOLP(r) for r in x.results])
 EUE(x::MultiPeriodMinimalResult) = EUE([EUE(r) for r in x.results])

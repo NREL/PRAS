@@ -28,7 +28,7 @@ one of the following sets of methods.
 Timestamp indexing:
  - a `timestamps` method to retreive a `Vector{DateTime}` of spanned
    time periods
- - a `getindex` method for looking up the `SinglePeriodResult`
+ - a `Base.getindex` method for looking up the `SinglePeriodResult`
    corresponding to a DateTime
 
 Metric constructors:

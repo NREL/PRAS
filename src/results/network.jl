@@ -38,6 +38,45 @@ end
 
 NetworkStateSet{V} = Vector{NetworkState{V}}
 
+function droppedload(ns::NetworkState{V}) where V
+    result = zero(V)
+    for node in ns.nodes
+        if !(node.demand ≈ node.demand_served)
+            result += node.demand - node.demand_served
+        end
+    end
+    return result
+end
+
+function LOLP(nss::NetworkStateSet)
+    μ = mean(droppedload.(nss) .> 0)
+    σ² = μ * (1-μ)
+    return LOLP(μ, sqrt(σ²/length(nss)))
+end
+
+function LOLP(nss::NetworkStateSet, ntrials::Int)
+    μ = length(nss) / ntrials
+    σ² = μ * (1-μ)
+    return LOLP(μ, sqrt(σ²/ntrials))
+end
+
+function EUE(nss::NetworkStateSet)
+    results = droppedload.(nss)
+    μ = mean(results)
+    σ² = var(results)
+    return EUE(μ, sqrt(σ²/length(nss)))
+end
+
+function EUE(nss::NetworkStateSet, ntrials::Int)
+    nfails = length(nss)
+    nsuccess = ntrials - nfails
+    dropresults = droppedload.(nss)
+    μ = sum(dropresults) / ntrials
+    σ² = (sum((dropresults .- μ).^2) +
+          nsuccess*μ^2) / ntrials
+    return EUE(μ, sqrt(σ²/ntrials))
+end
+
 struct SinglePeriodNetworkResult{
     N,P<:Period,E<:EnergyUnit,V<:Real,
     SS<:SimulationSpec} <: SinglePeriodReliabilityResult{N,P,E,V,SS}
@@ -49,10 +88,11 @@ struct SinglePeriodNetworkResult{
     simulationspec::SS
 
     function SinglePeriodNetworkResult{N,P,E}(
+        failuresonly::Bool,
         node_labels::Vector{String},
         edge_labels::Vector{Tuple{Int,Int}},
         states::NetworkStateSet{V},
-        simulationspec::SS
+        simulationspec::SS;
     ) where {
         N, P<:Period, E<:EnergyUnit, V,
         SS<:SimulationSpec
@@ -60,11 +100,24 @@ struct SinglePeriodNetworkResult{
 
         @assert length(node_labels) == length(edge_labels)
 
-        new{N,P,E,V,SS}(node_labels, edge_labels,
-                           states, simulationspec)
+        new{N,P,E,V,SS}(failuresonly,
+                        node_labels, edge_labels,
+                        states, simulationspec)
 
     end
 end
+
+LOLP(x::SinglePeriodNetworkResult) =
+    x.failuresonly ?
+    LOLP(x.states, x.simulationspec.ntrials) :
+    LOLP(x.states)
+
+
+EUE(x::SinglePeriodNetworkResult) =
+    x.failuresonly ?
+    EUE(x.states, x.simulationspec.ntrials) :
+    EUE(x.states)
+
 
 struct MultiPeriodNetworkResult{
     N1,P1<:Period,N2,P2<:Period,
@@ -102,4 +155,34 @@ struct MultiPeriodNetworkResult{
 
     end
 
+end
+
+
+LOLE(x::MultiPeriodNetworkResult) = LOLE(
+    x.failuresonly ?
+    LOLP.(x.statesets, x.simulationspec.ntrials) :
+    LOLP.(x.statesets)
+)
+
+EUE(x::MultiPeriodNetworkResult) = EUE(
+    x.failuresonly ?
+    EUE.(x.statesets, x.simulationspec.ntrials) :
+    EUE.(x.statesets)
+)
+
+timestamps(x::MultiPeriodNetworkResult) = x.timestamps
+
+function Base.getindex(x::MultiPeriodNetworkResult,
+                       dt::DateTime)
+    idxs = searchsorted(x.timestamps, dt)
+    if length(idxs) > 0
+        return SinglePeriodNetworkResult(
+            x.failuresonly,
+            x.nodelabels, x.edgelabels,
+            x.statesets[first(idxs)],
+            x.simulationspec
+        )
+    else
+        throw(BoundsError(x, dt))
+    end
 end

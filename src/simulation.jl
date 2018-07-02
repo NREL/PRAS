@@ -1,9 +1,9 @@
 include("simulation/copperplate.jl")
 include("simulation/networkflow.jl")
 
-function assess(extractionspec::SinglePeriodExtractionMethod,
+function assess(extractionspec::ExtractionSpec,
                 simulationspec::SimulationSpec{NonSequential},
-                resultspec::AbstractResultSpec,
+                resultspec::ResultSpec,
                 systemset::SystemDistributionSet)
 
     # More efficient for copperplate assessment.
@@ -13,9 +13,12 @@ function assess(extractionspec::SinglePeriodExtractionMethod,
     dts = unique(systemset.timestamps)
     batchsize = ceil(Int, length(dts)/nworkers())
     results = pmap(dt -> assess(simulationspec,
+                                resultspec,
                                 extract(extractionspec, dt, systemset)),
                    dts, batch_size=batchsize)
 
-    return MultiPeriodMinimalResult(dts, results)
+    return MultiPeriodMinimalResult(dts, results,
+                                    extractionspec,
+                                    simulationspec)
 
 end

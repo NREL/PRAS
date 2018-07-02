@@ -26,7 +26,7 @@ x = LOLP(assess(NonSequentialCopperplate(), MinimalResult(), threenode_a))
 @test stderr(x) ≈ 0.
 println("Copper Plate: ", x)
 #TODO: Network case is tractable, calculate true LOLP
-result = assess(NonSequentialNetworkFlow(100_000, true),
+result = assess(NonSequentialNetworkFlow(100_000),
                 MinimalResult(), threenode_a)
 println("Network Flow: ", LOLP(result), " (exact is _)")
 println()

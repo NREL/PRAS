@@ -1,1 +1,1 @@
-uniquesorted(x::Vector) = sorted(x) && allunique(x)
+uniquesorted(x::Vector) = issorted(x) && allunique(x)
