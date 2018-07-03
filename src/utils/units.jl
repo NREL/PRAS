@@ -22,6 +22,14 @@ unitsymbol(::Type{Hour}) = "h"
 unitsymbol(::Type{Day}) = "d"
 unitsymbol(::Type{Year}) = "y"
 
-#TODO: Generalize these
-to_energy(p::Real, ::Type{MW}, n::Real, ::Type{Hour})  = (n*p, MWh)
+#TODO: Need to generalize all of this. Maybe define all relationships
+#      in terms of conversions to a common set of units (MW, MWh, Hour?)
+#      and ship all conversions through those?
+
+# TODO: Deprecate in favour of `powertoenergy`
+#       (prescribe energy units at the data level and take as an input)
+to_energy(p::Real, ::Type{MW}, n::Real, ::Type{Hour})   = (n*p, MWh)
 to_energy(p::Real, ::Type{MW}, n::Real, ::Type{Minute}) = (n*p/60, MWh)
+
+powertoenergy(p::Real, n::Real, ::Type{Hour}, ::Type{MW}, ::Type{MWh})   = n*p
+powertoenergy(p::Real, n::Real, ::Type{Minute}, ::Type{MW}, ::Type{MWh}) = n*p/60

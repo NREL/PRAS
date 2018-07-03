@@ -1,10 +1,8 @@
 abstract type AbstractReliabilityResult{
-    N, # Length of a single simulation time interval
-    P<:Period, # Units for simulation interval duration
-    E<:EnergyUnit, # Units for reported energy values
-    #TODO: Power units?
-    V<:Real, # Numeric type of value data
-    SS<:SimulationSpec # Type of simulation that produced the result
+    P <: PowerUnit, # Units for reported power values
+    E <: EnergyUnit, # Units for reported energy values
+    V <: Real, # Numeric type of value data
+    SS <: SimulationSpec # Type of simulation that produced the result
 } end
 
 
@@ -14,11 +12,12 @@ Types inheriting from `SinglePeriodReliabilityResult` should define:
 """
 abstract type SinglePeriodReliabilityResult{
     N, # Length of the single simulation time interval
-    P <: Period, # Units for the simulation interval duration
+    T <: Period, # Units for the simulation interval duration
+    P <: PowerUnit, # Units for reported power values
     E <: EnergyUnit, # Units for reported energy values
     V <: Real, # Numeric type of value data
     SS <: SimulationSpec # Type of simulation that produced the result
-} <: AbstractReliabilityResult{N,P,E,V,SS} end
+} <: AbstractReliabilityResult{P,E,V,SS} end
 
 
 """
@@ -37,14 +36,15 @@ Metric constructors:
 """
 abstract type MultiPeriodReliabilityResult{
     N1, # Length of the single simulation time interval
-    P1 <: Period, # Units for one simulation interval duration
+    T1 <: Period, # Units for one simulation interval duration
     N2, # Length of the total simulation duration
-    P2 <: Period, # Units for the total simulation duration
-    E <: EnergyUnit, # Units for reported energy values
+    T2 <: Period, # Units for the total simulation duration
+    P <: PowerUnit, # Units for reported power values
+    E <: EnergyUnit, # Units for reported power values
     V <: Real, # Numeric type of value data
     ES <: ExtractionSpec, # Type of extraction that produced interval distibutions
     SS <: SimulationSpec # Type of simulation that produced the result
-} <: AbstractReliabilityResult{N1,P1,E,V,SS} end
+} <: AbstractReliabilityResult{P,E,V,SS} end
 
 LOLE(x::MultiPeriodReliabilityResult) = LOLE([LOLP(x[dt]) for dt in timestamps(x)])
 EUE(x::MultiPeriodReliabilityResult) = EUE([EUE(x[dt]) for dt in timestamps(x)])
