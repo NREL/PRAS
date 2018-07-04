@@ -77,15 +77,15 @@ function droppedload(ns::NetworkState{N,T,P,E,V}) where {N,T,P,E,V}
 end
 
 struct NetworkStateSet{N,T,P,E,V}
-    nodesset::Vector{Vector{NodeResult{N,T,P,E,V}}}
-    edgesset::Vector{Vector{EdgeResult{N,T,P,E,V}}}
+    nodesset::Matrix{NodeResult{N,T,P,E,V}}
+    edgesset::Matrix{EdgeResult{N,T,P,E,V}}
     edgelabels::Vector{Tuple{Int,Int}}
 
     function NetworkStateSet{}(
-        nodesset::Vector{Vector{NodeResult{N,T,P,E,V}}},
-        edgesset::Vector{Vector{EdgeResult{N,T,P,E,V}}},
+        nodesset::Matrix{NodeResult{N,T,P,E,V}},
+        edgesset::Matrix{EdgeResult{N,T,P,E,V}},
         edgelabels::Vector{Tuple{Int,Int}}) where {N,T,P,E,V}
-        @assert length(nodesset) == length(edgesset)
+        @assert size(nodesset, 2) == size(edgesset, 2)
         new{N,T,P,E,V}(nodesset, edgesset, edgelabels)
     end
 end
@@ -94,14 +94,14 @@ function NetworkStateSet(nss::Vector{T}) where {T<:NetworkState}
     nodesset, edgesset, edgelabels =
         zip([(ns.nodes, ns.edges, ns.edgelabels) for ns in nss]...)
     @assert all(edgelabels[1] == edgelabels[i] for i in 2:length(edgelabels))
-    return NetworkStateSet(collect(nodesset), collect(edgesset), edgelabels[1])
+    return NetworkStateSet(hcat(nodesset...), hcat(edgesset...), edgelabels[1])
 end
 
-Base.length(nss::NetworkStateSet) = length(nss.nodesset)
+Base.length(nss::NetworkStateSet) = size(nss.nodesset, 2)
 
 droppedload(nss::NetworkStateSet) =
-    [droppedload(NetworkState(edges, nodes, nss.edgelabels))
-    for (edges, nodes) in zip(nss.nodesset, nss.edgesset)]
+    [droppedload(NetworkState(nss.nodesset[:,i], nss.edgesset[:, i], nss.edgelabels))
+    for i in 1:length(nss)]
 
 function LOLP(nss::NetworkStateSet{N,T}) where {N,T}
     μ = mean(droppedload(nss) .> 0)
@@ -109,10 +109,10 @@ function LOLP(nss::NetworkStateSet{N,T}) where {N,T}
     return LOLP{N,T}(μ, sqrt(σ²/length(nss)))
 end
 
-function LOLP(nss::NetworkStateSet{N,T}, ntrials::Int) where {N,T}
-    μ = length(nss) / ntrials
+function LOLP(nss::NetworkStateSet{N,T}, nsamples::Int) where {N,T}
+    μ = length(nss) / nsamples
     σ² = μ * (1-μ)
-    return LOLP{N,T}(μ, sqrt(σ²/ntrials))
+    return LOLP{N,T}(μ, sqrt(σ²/nsamples))
 end
 
 function EUE(nss::NetworkStateSet{N,T,P,E,V}) where {N,T,P,E,V}
@@ -123,121 +123,136 @@ function EUE(nss::NetworkStateSet{N,T,P,E,V}) where {N,T,P,E,V}
 end
 
 function EUE(nss::NetworkStateSet{N,T,P,E,V},
-             ntrials::Int) where {N,T,P,E,V}
+             nsamples::Int) where {N,T,P,E,V}
     dropresults = powertoenergy.(droppedload(nss), N, T, P, E)
     nfails = length(dropresults)
-    nsuccess = ntrials - nfails
-    μ = sum(dropresults) / ntrials
+    nsuccess = nsamples - nfails
+    μ = sum(dropresults) / nsamples
     σ² = (sum((dropresults .- μ).^2) +
-          nsuccess*μ^2) / ntrials
-    return EUE{E,N,T}(μ, sqrt(σ²/ntrials))
+          nsuccess*μ^2) / nsamples
+    return EUE{E,N,T}(μ, sqrt(σ²/nsamples))
 end
 
 struct SinglePeriodNetworkResult{
     N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real,
     SS<:SimulationSpec} <: SinglePeriodReliabilityResult{N,T,P,E,V,SS}
 
-    failuresonly::Bool
-    node_labels::Vector{String}
-    edge_labels::Vector{Tuple{Int,Int}}
-    states::NetworkStateSet{N,T,P,E,V}
+    nodelabels::Vector{String}
+    edgelabels::Vector{Tuple{Int,Int}}
+    nodesset::Matrix{NodeResult{N,T,P,E,V}}
+    edgesset::Matrix{EdgeResult{N,T,P,E,V}}
     simulationspec::SS
+    failuresonly::Bool
 
-    function SinglePeriodNetworkResult(
-        failuresonly::Bool,
-        node_labels::Vector{String},
-        edge_labels::Vector{Tuple{Int,Int}},
-        states::NetworkStateSet{N,T,P,E,V},
-        simulationspec::SS;
+    function SinglePeriodNetworkResult{}(
+        nodelabels::Vector{String},
+        edgelabels::Vector{Tuple{Int,Int}},
+        nodesset::Matrix{NodeResult{N,T,P,E,V}},
+        edgesset::Matrix{EdgeResult{N,T,P,E,V}},
+        simulationspec::SS,
+        failuresonly::Bool
     ) where {
         N, T<:Period, P<:PowerUnit, E<:EnergyUnit,
         V, SS<:SimulationSpec
     }
 
-        @assert length(node_labels) == length(edge_labels)
+        @assert size(nodesset,2) == size(edgesset,2)
 
-        new{N,T,P,E,V,SS}(failuresonly,
-                          node_labels, edge_labels,
-                          states, simulationspec)
+        new{N,T,P,E,V,SS}(nodelabels, edgelabels,
+                          nodesset, edgesset,
+                          simulationspec, failuresonly)
 
     end
 end
 
-LOLP(x::SinglePeriodNetworkResult) =
-    x.failuresonly ?
-    LOLP(x.states, x.simulationspec.ntrials) :
-    LOLP(x.states)
+function LOLP(x::SinglePeriodNetworkResult)
+    nss = NetworkStateSet(x.nodesset, x.edgesset, x.edgelabels)
+    return x.failuresonly ?
+        LOLP(nss, x.simulationspec.nsamples) :
+        LOLP(nss)
+end
 
 
-EUE(x::SinglePeriodNetworkResult) =
-    x.failuresonly ?
-    EUE(x.states, x.simulationspec.ntrials) :
-    EUE(x.states)
-
+function EUE(x::SinglePeriodNetworkResult)
+    nss = NetworkStateSet(x.nodesset, x.edgesset, x.edgelabels)
+    return x.failuresonly ?
+        EUE(nss, x.simulationspec.nsamples) :
+        EUE(nss)
+end
 
 struct MultiPeriodNetworkResult{
     N1,T1<:Period,N2,T2<:Period,
     P<:PowerUnit,E<:EnergyUnit,V<:Real,
-    SS<:SimulationSpec,
-    ES<:ExtractionSpec} <: MultiPeriodReliabilityResult{
-        N1,T1,N2,T2,P,E,V,ES,SS}
+    ES<:ExtractionSpec, SS<:SimulationSpec
+} <: MultiPeriodReliabilityResult{N1,T1,N2,T2,P,E,V,ES,SS}
 
-    failuresonly::Bool
     timestamps::Vector{DateTime}
     nodelabels::Vector{String}
     edgelabels::Vector{Tuple{Int,Int}}
-    statesets::Vector{NetworkStateSet{N1,T1,P,E,V}}
+    nodessets::Vector{Matrix{NodeResult{N1,T1,P,E,V}}}
+    edgessets::Vector{Matrix{EdgeResult{N1,T1,P,E,V}}}
+    # statesets::Vector{NetworkStateSet{N1,T1,P,E,V}}
     extractionspec::ES
     simulationspec::SS
+    failuresonly::Bool
 
-    function MultiPeriodNetworkResult{N1,T1,N2,T2,P,E}(
+    function MultiPeriodNetworkResult{}(
         timestamps::Vector{DateTime},
         nodelabels::Vector{String},
-        edgellabels::Vector{Tuple{Int,Int}},
-        statesets::Vector{NetworkStateSet{N1,T1,P,E,V}},
+        edgelabels::Vector{Tuple{Int,Int}},
+        nodessets::Vector{Matrix{NodeResult{N,T,P,E,V}}},
+        edgessets::Vector{Matrix{EdgeResult{N,T,P,E,V}}},
+        # statesets::Vector{NetworkStateSet{N1,T1,P,E,V}},
         extractionspec::ES,
-        simulationspec::SS
-    ) where {N1,T1<:Period,N2,T2<:Period,
-             P<:PowerUnit,E<:EnergyUnit,V,
-             ES<:ExtractionSpec,
-             SS<:SimulationSpec}
+        simulationspec::SS,
+        failuresonly::Bool
+    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V,
+             ES<:ExtractionSpec, SS<:SimulationSpec}
 
         n = length(timestamps)
-        @assert n == length(statesets)
+        @assert n == length(nodessets)
+        @assert n == length(edgessets)
         @assert uniquesorted(timestamps)
 
-        new{N1,T1,N2,T2,P,E,V,ES,SS}(
+        new{N,T,n*N,T,P,E,V,ES,SS}(
             timestamps, nodelabels, edgelabels,
-            statesets, extractionspec, simulationspec)
+            nodessets, edgessets,
+            extractionspec, simulationspec, failuresonly)
 
     end
 
 end
 
 
-LOLE(x::MultiPeriodNetworkResult) = LOLE(
-    x.failuresonly ?
-    LOLP.(x.statesets, x.simulationspec.ntrials) :
-    LOLP.(x.statesets)
-)
+function LOLE(x::MultiPeriodNetworkResult)
+    nsss = map((nodesset, edgesset) ->
+               NetworkStateSet(nodesset, edgesset, x.edgelabels),
+            x.nodessets, x.edgessets)
+    return LOLE(x.failuresonly ?
+                LOLP.(nsss, x.simulationspec.nsamples) :
+                LOLP.(nsss))
+end
 
-EUE(x::MultiPeriodNetworkResult) = EUE(
-    x.failuresonly ?
-    EUE.(x.statesets, x.simulationspec.ntrials) :
-    EUE.(x.statesets)
-)
+function EUE(x::MultiPeriodNetworkResult)
+    nsss = map((nodesset, edgesset) ->
+               NetworkStateSet(nodesset, edgesset, x.edgelabels),
+            x.nodessets, x.edgessets)
+    return EUE(x.failuresonly ?
+               EUE.(nsss, x.simulationspec.nsamples) :
+               EUE.(nsss))
+end
 
 timestamps(x::MultiPeriodNetworkResult) = x.timestamps
 
-function Base.getindex(x::MultiPeriodNetworkResult,
-                       dt::DateTime)
+function Base.getindex(x::MultiPeriodNetworkResult, dt::DateTime)
     idxs = searchsorted(x.timestamps, dt)
     if length(idxs) > 0
         return SinglePeriodNetworkResult(
-            x.failuresonly,
             x.nodelabels, x.edgelabels,
-            x.statesets[first(idxs)],
-            x.simulationspec
+            x.nodessets[first(idxs)],
+            x.edgessets[first(idxs)],
+            x.simulationspec,
+            x.failuresonly
         )
     else
         throw(BoundsError(x, dt))

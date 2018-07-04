@@ -1,9 +1,9 @@
 struct NonSequentialNetworkFlow <: SimulationSpec{NonSequential}
-    iters::Int
+    nsamples::Int
 
-    function NonSequentialNetworkFlow(iters::Int)
-        @assert iters > 0
-        new(iters)
+    function NonSequentialNetworkFlow(nsamples::Int)
+        @assert nsamples > 0
+        new(nsamples)
     end
 end
 
@@ -37,7 +37,7 @@ function assess(simulationspec::NonSequentialNetworkFlow,
     excess = Array{Float64}(sink_idx)
     active = Array{Bool}(sink_idx)
 
-    for i in 1:simulationspec.iters
+    for i in 1:simulationspec.nsamples
 
         rand!(state_matrix, systemsampler)
         systemload, flow_matrix =
@@ -56,15 +56,15 @@ function assess(simulationspec::NonSequentialNetworkFlow,
 
     end
 
-    μ = lol_count/simulationspec.iters
+    μ = lol_count/simulationspec.nsamples
     σ² = μ * (1-μ)
-    # eue_val, E = to_energy(lol_sum/simulationspec.iters, P, N, T)
+    # eue_val, E = to_energy(lol_sum/simulationspec.nsamples, P, N, T)
     eue_val, E = to_energy(Inf, P, N, T)
 
     # detailed_results = FailureResultSet(failure_states, system.interface_labels)
 
     return SinglePeriodMinimalResult{P}(
-        LOLP{N,T}(μ, sqrt(σ²/simulationspec.iters)),
+        LOLP{N,T}(μ, sqrt(σ²/simulationspec.nsamples)),
         EUE{E,N,T}(eue_val, 0.),
         simulationspec
     )
