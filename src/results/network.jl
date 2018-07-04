@@ -81,10 +81,10 @@ struct NetworkStateSet{N,T,P,E,V}
     edgesset::Vector{Vector{EdgeResult{N,T,P,E,V}}}
     edgelabels::Vector{Tuple{Int,Int}}
 
-    function NetworkStateSet(
+    function NetworkStateSet{}(
         nodesset::Vector{Vector{NodeResult{N,T,P,E,V}}},
         edgesset::Vector{Vector{EdgeResult{N,T,P,E,V}}},
-        edgelabels::Vector{Tuple{Int,Int}})
+        edgelabels::Vector{Tuple{Int,Int}}) where {N,T,P,E,V}
         @assert length(nodesset) == length(edgesset)
         new{N,T,P,E,V}(nodesset, edgesset, edgelabels)
     end
@@ -93,8 +93,8 @@ end
 function NetworkStateSet(nss::Vector{T}) where {T<:NetworkState}
     nodesset, edgesset, edgelabels =
         zip([(ns.nodes, ns.edges, ns.edgelabels) for ns in nss]...)
-    @assert all(edgelabels[1] .== edgelabels[2:end])
-    return NetworkStateSet(nodesset, edgesset, edgelabels)
+    @assert all(edgelabels[1] == edgelabels[i] for i in 2:length(edgelabels))
+    return NetworkStateSet(collect(nodesset), collect(edgesset), edgelabels[1])
 end
 
 Base.length(nss::NetworkStateSet) = length(nss.nodesset)
@@ -118,7 +118,7 @@ end
 function EUE(nss::NetworkStateSet{N,T,P,E,V}) where {N,T,P,E,V}
     results = powertoenergy.(droppedload(nss), N, T, P, E)
     μ = mean(results)
-    σ² = var(results)
+    σ² = var(results, corrected=false, mean=μ)
     return EUE{E,N,T}(μ, sqrt(σ²/length(results)))
 end
 

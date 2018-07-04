@@ -17,16 +17,16 @@ singlenode_b = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
 
 # Three-Node System A
 gen_dists = [Generic([2., 3], [.4, .6]),
-             Generic([2., 3], [.4, .6]),
-             Generic([2., 3], [.4, .6])]
+            Generic([2., 3], [.4, .6]),
+            Generic([2., 3], [.4, .6])]
 vg = zeros(3,5)
 load = Matrix{Float64}(3,5)
 load[:, 1:3] = 2.
 load[:, 4:5] = 2.5
 line_labels = [(1,2), (2,3), (1,3)]
 line_dists = [Generic([0., 1], [.1, .9]),
-              Generic([0., 1], [.3, .7]),
-              Generic([0., 1], [.3, .7])]
+            Generic([0., 1], [.3, .7]),
+            Generic([0., 1], [.3, .7])]
 
 threenode_a = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
     ["A", "B", "C"],
@@ -37,13 +37,13 @@ threenode_a = ResourceAdequacy.SystemDistribution{1,Hour,MW}(
 
 # Three-Node System B
 gen_dists = [Generic([0., 1, 2], [.1, .3, .6]),
-             Generic([0., 1, 2], [.1, .3, .6]),
-             Generic([0., 1, 2], [.1, .3, .6])]
+            Generic([0., 1, 2], [.1, .3, .6]),
+            Generic([0., 1, 2], [.1, .3, .6])]
 vg = [.2 .4; 0 0; .1 .15]
 line_labels = [(1,2), (2,3), (1,3)]
 line_dists = [Generic([0, 1.], [.2, .8]),
-              Generic([0, 1.], [.2, .8]),
-              Generic([0, 1.], [.2, .8])]
+            Generic([0, 1.], [.2, .8]),
+            Generic([0, 1.], [.2, .8])]
 load = [.5 1.5; .5 1.5; .5 1.5]
 
 threenode_b = ResourceAdequacy.SystemDistribution{1,Hour,MW}(

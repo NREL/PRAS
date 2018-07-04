@@ -10,6 +10,14 @@ struct SinglePeriodMinimalResult{
     eue::EUE{E,N,T,V}
     simulationspec::SS
 
+    function SinglePeriodMinimalResult{P}(
+        lolp::LOLP{N,T,V},
+        eue::EUE{E,N,T,V},
+        simulationspec::SS) where {
+            N,T,P<:PowerUnit,E,V,SS<:SimulationSpec}
+        new{N,T,P,E,V,SS}(lolp, eue, simulationspec)
+    end
+
 end
 
 LOLP(x::SinglePeriodMinimalResult) = x.lolp

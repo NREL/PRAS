@@ -24,7 +24,7 @@ function assess(simulationspec::NonSequentialCopperplate,
     lolp_val, eul_val = assess(supply, netload)
     eue_val, E = to_energy(eul_val, P, N, T)
 
-    return SinglePeriodMinimalResult(
+    return SinglePeriodMinimalResult{P}(
         LOLP{N,T}(lolp_val, 0.),
         EUE{E,N,T}(eue_val, 0.),
         simulationspec

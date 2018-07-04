@@ -63,7 +63,7 @@ function assess(simulationspec::NonSequentialNetworkFlow,
 
     # detailed_results = FailureResultSet(failure_states, system.interface_labels)
 
-    return SinglePeriodMinimalResult(
+    return SinglePeriodMinimalResult{P}(
         LOLP{N,T}(μ, sqrt(σ²/simulationspec.iters)),
         EUE{E,N,T}(eue_val, 0.),
         simulationspec

@@ -7,11 +7,11 @@
         eue1 = EUE{MWh,1,Hour}(1.2, 0.)
 
         # Single-period constructor
-        singleresult = ResourceAdequacy.SinglePeriodMinimalResult(
+        singleresult = ResourceAdequacy.SinglePeriodMinimalResult{MW}(
             lolp1, eue1, NonSequentialCopperplate())
 
         # Disallow metrics defined over different time periods
-        @test_throws MethodError ResourceAdequacy.SinglePeriodMinimalResult(
+        @test_throws MethodError ResourceAdequacy.SinglePeriodMinimalResult{MW}(
             lolp2, eue1, NonSequentialCopperplate())
 
         # Metric constructors
@@ -29,7 +29,7 @@
         tstamps = collect(DateTime(2012,4,1):Hour(1):DateTime(2012,4,7, 23))
         multiresult = ResourceAdequacy.MultiPeriodMinimalResult(
             tstamps,
-            ResourceAdequacy.SinglePeriodMinimalResult.(
+            ResourceAdequacy.SinglePeriodMinimalResult{MW}.(
                 lolps, eues, NonSequentialNetworkFlow(1000)),
             Backcast(),
             NonSequentialNetworkFlow(1000)
@@ -50,8 +50,9 @@
         @test EUE(multiresult) ≈ EUE(eues)
 
         @test timestamps(multiresult) == tstamps
-        @test multiresult[tstamps[1]] == ResourceAdequacy.SinglePeriodMinimalResult(
-            lolps[1], eues[1], multiresult.simulationspec)
+        @test multiresult[tstamps[1]] ==
+            ResourceAdequacy.SinglePeriodMinimalResult{MW}(
+                lolps[1], eues[1], multiresult.simulationspec)
         @test_throws BoundsError multiresult[DateTime(2013,1,1,12)]
 
     end
