@@ -7,6 +7,16 @@ struct NonSequentialNetworkFlow <: SimulationSpec{NonSequential}
     end
 end
 
+function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
+    served = true
+    i = 1
+    while served && (i <= n)
+        served = A[i, sink] ≈ B[i, sink]
+        i += 1
+    end
+    return served
+end
+
 mutable struct SinglePeriodNetworkMinimalResultAccumulator{
     N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
 
@@ -91,16 +101,6 @@ end
 accumulator(ss::NonSequentialNetworkFlow, rs::NetworkResult,
             sys::SystemDistribution) =
                 SinglePeriodNetworkResultAccumulator(ss, rs, sys)
-
-function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
-    served = true
-    i = 1
-    while served && (i <= n)
-        served = A[i, sink] == B[i, sink]
-        i += 1
-    end
-    return served
-end
 
 function update!(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,Float64},
                  statematrix::Matrix{Float64},
