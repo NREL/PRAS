@@ -120,11 +120,19 @@ function update!(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,Float64},
 
 end
 
-finalize(acc::SinglePeriodNetworkResultAccumulator) =
-    SinglePeriodNetworkResult(
+function finalize(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,V}) where {N,T,P,E,V}
+    if length(acc.nodestates) == 0
+        nodemtx = Matrix{NodeResult{N,T,P,E,V}}(length(acc.nodelabels), 0)
+        edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(length(acc.edgelabels), 0)
+    else
+        nodemtx = hcat(acc.nodestates...)
+        edgemtx = hcat(acc.edgestates...)
+    end
+    return SinglePeriodNetworkResult(
         acc.nodelabels, acc.edgelabels,
-        hcat(acc.nodestates...), hcat(acc.edgestates...),
+        nodemtx, edgemtx,
         acc.simulationspec, acc.resultspec)
+end
 
 
 function assess(simulationspec::NonSequentialNetworkFlow,
