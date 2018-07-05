@@ -42,7 +42,7 @@ struct MultiPeriodMinimalResult{
     extractionspec::ES
     simulationspec::SS
 
-    function MultiPeriodMinimalResult(
+    function MultiPeriodMinimalResult{}(
         timestamps::Vector{DateTime},
         results::Vector{SinglePeriodMinimalResult{N1,T1,P,E,V,SS}},
         extractionspec::ES,
@@ -55,6 +55,17 @@ struct MultiPeriodMinimalResult{
             timestamps, results, extractionspec, simulationspec)
     end
 end
+
+function MultiPeriodMinimalResult(
+    dts::Vector{DateTime}, results::Vector{R},
+    extrspec::ES) where {R<:SinglePeriodMinimalResult, ES<:ExtractionSpec}
+
+    simulationspec = results[1].simulationspec
+    return MultiPeriodMinimalResult(dts, results, extrspec, simulationspec)
+
+end
+
+aggregator(::MinimalResult) = MultiPeriodMinimalResult
 
 timestamps(x::MultiPeriodMinimalResult) = x.timestamps
 

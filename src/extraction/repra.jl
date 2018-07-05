@@ -23,14 +23,15 @@ function window_periods(dt::DateTime, hour_window::Int, day_window::Int)
 end
 
 function extract(params::REPRA, dt::DateTime,
-                 systemset::SystemDistributionSet{N1,T1,N2,T2,P}) where {N1,T1,N2,T2,P}
+                 systemset::SystemDistributionSet{N1,T1,N2,T2,P,E}
+                 ) where {N1,T1,N2,T2,P,E}
 
     vg_sample_idxs = extract(dt, systemset.timestamps,
                              params.hourwindow,
                              params.daywindow)
     load_sample_idxs = findin(systemset.timestamps, [dt])
 
-    return SystemDistribution{1,Hour,P}(
+    return SystemDistribution{N1,T1,P,E}(
         systemset.region_labels,
         systemset.region_maxdispatchabledistrs,
         systemset.vgsamples[:, vg_sample_idxs],

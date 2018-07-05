@@ -17,8 +17,6 @@ function assess(extractionspec::ExtractionSpec,
                                 extract(extractionspec, dt, systemset)),
                    dts, batch_size=batchsize)
 
-    return MultiPeriodMinimalResult(dts, results,
-                                    extractionspec,
-                                    simulationspec)
+    return aggregator(resultspec)(dts, results, extractionspec)
 
 end

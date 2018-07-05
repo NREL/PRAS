@@ -1,4 +1,4 @@
-struct SystemDistribution{N,T<:Period,P<:PowerUnit,V<:Real}
+struct SystemDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     region_labels::Vector{String}
     region_maxdispatchabledistrs::Vector{CapacityDistribution{V}}
     vgsamples::Matrix{V}
@@ -7,13 +7,13 @@ struct SystemDistribution{N,T<:Period,P<:PowerUnit,V<:Real}
     loadsamples::Matrix{V}
 
     # Multi-region constructor
-    function SystemDistribution{N,T,P}(
+    function SystemDistribution{N,T,P,E}(
         region_labels::Vector{String},
         region_maxdispatchabledistrs::Vector{CapacityDistribution{V}},
         vgsamples::Matrix{V},
         interface_labels::Vector{Tuple{Int,Int}},
         interface_maxflowdistrs::Vector{CapacityDistribution{V}},
-        loadsamples::Matrix{V}) where {N,T,P,V}
+        loadsamples::Matrix{V}) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
         n_regions = length(region_labels)
         @assert length(region_maxdispatchabledistrs) == n_regions
@@ -21,18 +21,18 @@ struct SystemDistribution{N,T<:Period,P<:PowerUnit,V<:Real}
         @assert size(loadsamples, 1) == n_regions
         @assert length(interface_labels) == length(interface_maxflowdistrs)
 
-        new{N,T,P,V}(region_labels, region_maxdispatchabledistrs, vgsamples,
+        new{N,T,P,E,V}(region_labels, region_maxdispatchabledistrs, vgsamples,
                      interface_labels, interface_maxflowdistrs, loadsamples)
 
     end
 
     # Single-region constructor
-    function SystemDistribution{N,T,P}(
+    function SystemDistribution{N,T,P,E}(
         maxdispatchable::CapacityDistribution{V},
         vgsamples::Vector{V}, loadsamples::Vector{V}
-    ) where {N,T,P,V}
+    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-        new{N,T,P,V}(["Region"], [maxdispatchable], reshape(vgsamples, 1, :),
+        new{N,T,P,E,V}(["Region"], [maxdispatchable], reshape(vgsamples, 1, :),
                      Tuple{Int,Int}[], CapacityDistribution[],
                      reshape(loadsamples, 1, :))
 
@@ -52,7 +52,7 @@ struct SystemSampler{T <: Real}
     vgsample_idxs::UnitRange{Int}
     graph::DiGraph{Int}
 
-    function SystemSampler(sys::SystemDistribution{N,T,P,V}) where {N,T,P,V}
+    function SystemSampler(sys::SystemDistribution{N,T,P,E,V}) where {N,T,P,E,V}
 
         n_nodes = length(sys.region_labels)
         n_interfaces = length(sys.interface_labels)

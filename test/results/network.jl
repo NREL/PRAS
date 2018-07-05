@@ -102,11 +102,11 @@
     spr1 = ResourceAdequacy.SinglePeriodNetworkResult(
         nodelabels, edgelabels,
         hcat(nodes1, nodes2, nodes3), hcat(edges1, edges2, edges3),
-        simspec, false)
+        simspec, NetworkResult(failuresonly=false))
 
     spr2 = ResourceAdequacy.SinglePeriodNetworkResult(
         nodelabels, edgelabels, reshape(nodes2, :, 1), reshape(edges2, :, 1),
-        simspec, true)
+        simspec, NetworkResult(failuresonly=true))
 
 
     @testset "Single Period" begin
@@ -130,7 +130,7 @@
              hcat(nodes3, nodes4, nodes1)],
             [hcat(edges1, edges2, edges3), hcat(edges2, edges3, edges4),
              hcat(edges3, edges4, edges1)],
-            extrspec, simspec, false)
+            extrspec, simspec, NetworkResult(failuresonly=false))
 
         @test timestamps(mpr1) == tstamps
 
@@ -142,7 +142,7 @@
         @test x.edgelabels == y.edgelabels
         @test x.nodesset == y.nodesset
         @test x.simulationspec == y.simulationspec
-        @test x.failuresonly == y.failuresonly
+        @test x.resultspec == y.resultspec
 
         @test LOLP(mpr1[tstamps[1]]) ≈ lolp1
         @test EUE(mpr1[tstamps[1]]) ≈ eue1
@@ -159,7 +159,7 @@
             tstamps, nodelabels, edgelabels,
             [hcat(nodes2), hcat(nodes2, nodes4), hcat(nodes4)],
             [hcat(edges2), hcat(edges2, edges4), hcat(edges4)],
-            extrspec, simspec, true)
+            extrspec, simspec, NetworkResult(failuresonly=true))
 
         @test LOLE(mpr2) ≈ loletotal
         @test EUE(mpr2) ≈ euetotal
@@ -171,7 +171,7 @@
         @test x.edgelabels == y.edgelabels
         @test x.nodesset == y.nodesset
         @test x.simulationspec == y.simulationspec
-        @test x.failuresonly == y.failuresonly
+        @test x.resultspec == y.resultspec
 
     end
 

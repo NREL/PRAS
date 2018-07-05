@@ -9,7 +9,7 @@ end
 
 function assess(simulationspec::NonSequentialCopperplate,
                 resultspec::MinimalResult,
-                sys::SystemDistribution{N,T,P}) where {N,T,P}
+                sys::SystemDistribution{N,T,P,E}) where {N,T,P,E}
 
     # Collapse net load
     netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))
@@ -22,7 +22,7 @@ function assess(simulationspec::NonSequentialCopperplate,
     end
 
     lolp_val, eul_val = assess(supply, netload)
-    eue_val, E = to_energy(eul_val, P, N, T)
+    eue_val = powertoenergy(eul_val, N, T, P, E)
 
     return SinglePeriodMinimalResult{P}(
         LOLP{N,T}(lolp_val, 0.),

@@ -2,6 +2,7 @@ module ResourceAdequacy
 
 using Base.Dates
 using StatsBase
+using OnlineStats
 using Distributions
 using LightGraphs
 

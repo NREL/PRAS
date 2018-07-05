@@ -7,11 +7,12 @@ Returns a `SystemDistribution` with vg/load samples exactly associated with
 single vg/load sample included in the returned value.
 """
 function extract(params::Backcast, dt::DateTime,
-                 systemset::SystemDistributionSet{N1,T1,N2,T2,P}) where {N1,T1,N2,T2,P}
+                 systemset::SystemDistributionSet{N1,T1,N2,T2,P,E}
+                 ) where {N1,T1,N2,T2,P,E}
 
     sample_idxs = findin(systemset.timestamps, [dt])
 
-    return SystemDistribution{N1,T1,P}(
+    return SystemDistribution{N1,T1,P,E}(
         systemset.region_labels,
         systemset.region_maxdispatchabledistrs,
         systemset.vgsamples[:, sample_idxs],
