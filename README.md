@@ -21,7 +21,7 @@ system distribution, with simple LOLP and EUE reporting, one would run:
 
 ```julia
 singleperiod_system # A single-period system distribution
-assess(Copperplate(), MinimalResult(), singleperiod_system)
+assess(NonSequentialCopperplate(), MinimalResult(), singleperiod_system)
 ```
 
 To run a network flow simulation instead with 100,000 Monte Carlo samples,
@@ -37,7 +37,7 @@ To use REPRA-style windowing (with a +/- 1-hour, +/- 10-day window):
 
 ```julia
 multiperiod_system # A multi-period system specification
-assess(REPRA(1, 10), NetworkFlow(100_000), MinimalResult(), multiperiod_system)
+assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(), multiperiod_system)
 ```
 
 Finally, to assess the equivalent firm capacity a new resource added
@@ -46,7 +46,7 @@ to the system in region 3:
 ```julia
 multiperiod_system_new_resource # The previous system augmented with a new resource
 assess(EFC(1000, 0.95, 1, Generic([3], [1.0])),
-       LOLE, REPRA(1, 10), NetworkFlow(100_000), MinimalResult(),
+       LOLE, REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(),
 	   multiperiod_system, multiperiod_system_new_resource)
 ```
 
@@ -56,7 +56,7 @@ assess(EFC(1000, 0.95, 1, Generic([3], [1.0])),
 ### Simulation Method
 
 Currently supported:
- - Non-sequential copper plate (`NonSequentialCopperPlate`)
+ - Non-sequential copper plate (`NonSequentialCopperplate`)
  - Non-sequential network flow (`NonSequentialNetworkFlow`)
  - Sequential network flow under development
 
