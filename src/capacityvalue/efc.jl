@@ -8,16 +8,17 @@ end
 #TODO: Generalize this (metaprogramming?) for the SystemDistribution case as well
 function assess(params::EFC,
                 metric::Type{<:ReliabilityMetric},
-                extractionmethod::SinglePeriodExtractionMethod,
-                assessmentmethod::ReliabilityAssessmentMethod,
+                extractionspec::ExtractionSpec,
+                simulationspec::SimulationSpec,
+                resultspec::ResultSpec,
                 sys_before::S, sys_after::S) where {S <: SystemDistributionSet}
 
-    metric_target = metric(assess(extractionmethod, assessmentmethod, sys_after))
+    metric_target = metric(assess(extractionspec, simulationspec, resultspec, sys_after))
 
-    metric_a = metric(assess(extractionmethod, assessmentmethod, sys_before))
+    metric_a = metric(assess(extractionspec, simulationspec, resultspec, sys_before))
     fc_a = 0.
 
-    metric_b = metric(assess(extractionmethod, assessmentmethod,
+    metric_b = metric(assess(extractionspec, simulationspec, resultspec,
         addfirmcapacity(sys_before, params.nodes, params.nameplatecapacity)))
     fc_b = params.nameplatecapacity
 
@@ -47,8 +48,9 @@ function assess(params::EFC,
         # Evaluate metric at midpoint
         fc_x = (fc_a + fc_b) / 2
         metric_x = metric(assess(
-            extractionmethod,
-            assessmentmethod,
+            extractionspec,
+            simulationspec,
+            resultspec,
             addfirmcapacity(sys_before, params.nodes, fc_x)))
 
         # Tighten FC bounds

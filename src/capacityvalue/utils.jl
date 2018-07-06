@@ -9,7 +9,7 @@ function addfirmcapacity(x::SystemDistributionSet{N1,T1,N2,T2,P,V},
                          nodes::Generic{Int,Float64,Vector{Int}},
                          capacity::Float64) where {N1,T1,N2,T2,P,V}
 
-    gen_distrs = copy(x.gen_distrs)
+    gen_distrs = copy(x.region_maxdispatchabledistrs)
 
     for (node, weight) in zip(support(nodes), Distributions.probs(nodes))
 
@@ -23,11 +23,11 @@ function addfirmcapacity(x::SystemDistributionSet{N1,T1,N2,T2,P,V},
 
     return SystemDistributionSet{N1,T1,N2,T2,P,V}(
         x.timestamps,
+        x.region_labels,
         gen_distrs,
         x.vgsamples,
         x.interface_labels,
-        x.interface_distrs,
-        x.loadsamples,
-        x.hourwindow, x.daywindow)
+        x.interface_maxflowdistrs,
+        x.loadsamples)
 
 end
