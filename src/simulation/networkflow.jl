@@ -121,13 +121,16 @@ function update!(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,Float64},
 end
 
 function finalize(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,V}) where {N,T,P,E,V}
-    if length(acc.nodestates) == 0
-        nodemtx = Matrix{NodeResult{N,T,P,E,V}}(length(acc.nodelabels), 0)
-        edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(length(acc.edgelabels), 0)
-    else
-        nodemtx = hcat(acc.nodestates...)
-        edgemtx = hcat(acc.edgestates...)
+
+    n_states = length(acc.nodestates)
+    nodemtx = Matrix{NodeResult{N,T,P,E,V}}(length(acc.nodelabels), n_states)
+    edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(length(acc.edgelabels), n_states)
+
+    for i in 1:n_states
+        nodemtx[:, i] = acc.nodestates[i]
+        edgemtx[:, i] = acc.edgestates[i]
     end
+
     return SinglePeriodNetworkResult(
         acc.nodelabels, acc.edgelabels,
         nodemtx, edgemtx,
