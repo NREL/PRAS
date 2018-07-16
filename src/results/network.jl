@@ -226,7 +226,6 @@ function MultiPeriodNetworkResult(
     extrspec::ExtractionSpec
 ) where {N,T,P,E,V,SS}
     n_results = length(results)
-    println("Before 228.")
     nodessets = Vector{Matrix{NodeResult{N,T,P,E,V}}}(n_results)
     edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(n_results)	
    
@@ -236,7 +235,6 @@ function MultiPeriodNetworkResult(
     end
     #nodessets, edgessets = zip([(r.nodesset, r.edgesset) for r in results]...)
     result = results[1]
-    println("after.")
     return MultiPeriodNetworkResult(
         dts, result.nodelabels, result.edgelabels,
         nodessets, edgessets,
