@@ -11,12 +11,11 @@ function assess(extractionspec::ExtractionSpec,
     # systemset_collapsed = collapse(systemset)
 
     dts = unique(systemset.timestamps)
-    batchsize = ceil(Int, length(dts)/nworkers())
+    batchsize = ceil(Int, length(dts)/nworkers()/2)
     results = pmap(dt -> assess(simulationspec,
                                 resultspec,
                                 extract(extractionspec, dt, systemset)),
                    dts, batch_size=batchsize)
-
     return aggregator(resultspec)(dts, results, extractionspec)
 
 end

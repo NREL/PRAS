@@ -14,8 +14,8 @@ struct NodeResult{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     function NodeResult{N,T,P,E}(
         gen_av::V, gen::V, dem::V, dem_served::V
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
-        @assert gen_av >= gen
-        @assert dem >= dem_served
+        @assert gen_av > gen || isapprox(gen_av, gen)
+        @assert dem > dem_served || isapprox(dem, dem_served)
         new{N,T,P,E,V}(gen_av, gen, dem, dem_served)
     end
 
@@ -28,7 +28,7 @@ struct EdgeResult{N,T<:Period, P<:PowerUnit,E<:EnergyUnit, V<:Real}
 
     function EdgeResult{N,T,P,E}(
         max::V, actual::V) where {N,T,P,E,V<:Real}
-        @assert max >= abs(actual)
+        @assert max > abs(actual) || isapprox(max, abs(actual))
         new{N,T,P,E,V}(max, actual)
     end
 
@@ -221,14 +221,23 @@ struct MultiPeriodNetworkResult{
 end
 
 function MultiPeriodNetworkResult(
-    dts::Vector{DateTime}, results::Vector{R}, extrspec::ES
-) where {R<:SinglePeriodNetworkResult, ES<:ExtractionSpec}
-
+    dts::Vector{DateTime},
+    results::Vector{SinglePeriodNetworkResult{N,T,P,E,V,SS}},
+    extrspec::ExtractionSpec
+) where {N,T,P,E,V,SS}
+    n_results = length(results)
+    nodessets = Vector{Matrix{NodeResult{N,T,P,E,V}}}(n_results)
+    edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(n_results)	
+   
+    for (i,r) in enumerate(results)
+        nodessets[i] = r.nodesset
+        edgessets[i] = r.edgesset
+    end
+    #nodessets, edgessets = zip([(r.nodesset, r.edgesset) for r in results]...)
     result = results[1]
-    nodessets, edgessets = zip([(r.nodesset, r.edgesset) for r in results]...)
     return MultiPeriodNetworkResult(
         dts, result.nodelabels, result.edgelabels,
-        collect(nodessets), collect(edgessets),
+        nodessets, edgessets,
         extrspec, result.simulationspec, result.resultspec)
 
 end
