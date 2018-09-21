@@ -26,7 +26,7 @@
         eues = EUE{MWh,1,Hour}.(rand(168), 0.)
 
         # Multi-period constructor
-        tstamps = collect(DateTime(2012,4,1):Hour(1):DateTime(2012,4,7, 23))
+        tstamps = DateTime(2012,4,1):Hour(1):DateTime(2012,4,7, 23)
         multiresult = ResourceAdequacy.MultiPeriodMinimalResult(
             tstamps,
             ResourceAdequacy.SinglePeriodMinimalResult{MW}.(

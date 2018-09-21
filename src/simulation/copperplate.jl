@@ -1,5 +1,7 @@
 struct NonSequentialCopperplate <: SimulationSpec{NonSequential} end
 
+iscopperplate(::NonSequentialCopperplate) = true
+
 function to_distr(vs::Vector)
     p = 1/length(vs)
     cmap = countmap(vs)
@@ -9,7 +11,7 @@ end
 
 function assess(simulationspec::NonSequentialCopperplate,
                 resultspec::MinimalResult,
-                sys::SystemDistribution{N,T,P,E}) where {N,T,P,E}
+                sys::SystemStateDistribution{N,T,P,E}) where {N,T,P,E}
 
     # Collapse net load
     netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))

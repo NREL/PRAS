@@ -122,7 +122,7 @@
 
     @testset "Multi Period" begin
 
-        tstamps = collect(DateTime(1993,1,1,3):Hour(1):DateTime(1993,1,1,5))
+        tstamps = DateTime(1993,1,1,3):Hour(1):DateTime(1993,1,1,5)
 
         mpr1 = ResourceAdequacy.MultiPeriodNetworkResult(
             tstamps, nodelabels, edgelabels,
