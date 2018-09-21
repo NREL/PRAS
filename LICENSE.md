@@ -1,6 +1,6 @@
-The CapacityValue.jl package is licensed under the MIT "Expat" License:
+The CapacityValue.jl package is licensed under a modified MIT "Expat" License:
 
-> Copyright (c) 2018: Gord Stephen.
+> Copyright 2018 Alliance for Sustainable Energy, LLC
 >
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
@@ -15,7 +15,8 @@ The CapacityValue.jl package is licensed under the MIT "Expat" License:
 > THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 > IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 > FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-> AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+> AUTHORS, THE COPYRIGHT HOLDERS, THE UNITED STATES, THE UNITED STATES DEPARTMENT
+> OF ENERGY, OR ANY OF THEIR EMPLOYEES BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 > LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 > OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 > SOFTWARE.
