@@ -37,31 +37,67 @@ struct MultiPeriodMinimalResult{
     SS<:SimulationSpec
 } <: MultiPeriodReliabilityResult{N1,T1,N2,T2,P,E,V,ES,SS}
 
-    timestamps::Vector{DateTime}
+    timestamps::StepRange{DateTime,T1}
     results::Vector{SinglePeriodMinimalResult{N1,T1,P,E,V,SS}}
     extractionspec::ES
     simulationspec::SS
 
     function MultiPeriodMinimalResult{}(
-        timestamps::Vector{DateTime},
+        timestamps::StepRange{DateTime,T1},
         results::Vector{SinglePeriodMinimalResult{N1,T1,P,E,V,SS}},
         extractionspec::ES,
         simulationspec::SS
     ) where {N1,T1,P,E,V,ES<:ExtractionSpec,SS<:SimulationSpec}
         n = length(timestamps)
         @assert n == length(results)
-        @assert uniquesorted(timestamps)
+        @assert step(timestamps) == T1(N1)
         new{N1,T1,N1*n,T1,P,E,V,ES,SS}(
             timestamps, results, extractionspec, simulationspec)
     end
 end
 
 function MultiPeriodMinimalResult(
-    dts::Vector{DateTime}, results::Vector{R},
-    extrspec::ES) where {R<:SinglePeriodMinimalResult, ES<:ExtractionSpec}
+    dts::StepRange{DateTime,T}, results::Vector{R},
+    extrspec::ES) where {T<:Period,R<:SinglePeriodMinimalResult, ES<:ExtractionSpec}
 
     simulationspec = results[1].simulationspec
     return MultiPeriodMinimalResult(dts, results, extrspec, simulationspec)
+
+end
+
+function MultiPeriodMinimalResult(
+    sys::SystemModel{N1,T1,N2,T2,P,E,V},
+    shortfalls::Matrix{V},
+    extractionspec::ExtractionSpec,
+    simulationspec::SimulationSpec
+) where {N1, T1<:Period, N2, T2<:Period,
+         P<:PowerUnit, E<:EnergyUnit, V<:Real}
+
+    n_periods, n_samples = size(shortfalls)
+    ps = zeros(V, n_periods)
+    eues = zeros(V, n_periods)
+
+    for i in 1:n_samples, t in 1:n_periods
+        shortfall = shortfalls[t, i]
+        if shortfall > 0
+            ps[t] += 1.
+            eues[t] += shortfall
+        end
+    end
+
+    ps ./= n_samples
+    eues ./= n_samples
+
+    p_stderrs = sqrt.(ps.*(1.-ps) ./ n_samples)
+    eue_stderrs = sqrt.(vec(var(shortfalls, 2, mean=eues))./n_samples)
+
+    return MultiPeriodMinimalResult(
+        sys.timestamps,
+        SinglePeriodMinimalResult{P}.(
+            LOLP{N1,T1}.(ps, p_stderrs),
+            EUE{E,N1,T1}.(eues, eue_stderrs),
+            simulationspec),
+        extractionspec)
 
 end
 

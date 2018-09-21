@@ -29,10 +29,7 @@ export
     MinimalResult, NetworkResult,
 
     # Result methods
-    timestamps,
-
-    # CV metrics
-    EFC
+    timestamps
 
 CapacityDistribution{T} = Distributions.Generic{T,Float64,Vector{T}}
 CapacitySampler{T} = Distributions.GenericSampler{T, Vector{T}}
@@ -53,6 +50,5 @@ include("systemdata.jl")
 include("results.jl")
 include("extraction.jl")
 include("simulation.jl")
-include("capacityvalue.jl")
 
 end # module

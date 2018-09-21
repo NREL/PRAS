@@ -7,6 +7,8 @@ struct NonSequentialNetworkFlow <: SimulationSpec{NonSequential}
     end
 end
 
+iscopperplate(::NonSequentialNetworkFlow) = false
+
 function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
     served = true
     i = 1
@@ -27,14 +29,14 @@ mutable struct SinglePeriodNetworkMinimalResultAccumulator{
 
     function SinglePeriodNetworkMinimalResultAccumulator{}(
         simulationspec::NonSequentialNetworkFlow,
-        sys::SystemDistribution{N,T,P,E,V}
+        sys::SystemStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
         new{N,T,P,E,V}(0, Variance(), sys.interface_labels, simulationspec)
     end
 end
 
 accumulator(ss::NonSequentialNetworkFlow, rs::MinimalResult,
-            sys::SystemDistribution) =
+            sys::SystemStateDistribution) =
                 SinglePeriodNetworkMinimalResultAccumulator(ss, sys)
 
 function update!(acc::SinglePeriodNetworkMinimalResultAccumulator{N,T,P,E,Float64},
@@ -86,7 +88,7 @@ struct SinglePeriodNetworkResultAccumulator{
     function SinglePeriodNetworkResultAccumulator{}(
         simspec::NonSequentialNetworkFlow,
         resultspec::NetworkResult,
-        system::SystemDistribution{N,T,P,E,V}
+        system::SystemStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
 
         new{N,T,P,E,V}(
@@ -99,7 +101,7 @@ struct SinglePeriodNetworkResultAccumulator{
 end
 
 accumulator(ss::NonSequentialNetworkFlow, rs::NetworkResult,
-            sys::SystemDistribution) =
+            sys::SystemStateDistribution) =
                 SinglePeriodNetworkResultAccumulator(ss, rs, sys)
 
 function update!(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,Float64},
@@ -140,7 +142,7 @@ end
 
 function assess(simulationspec::NonSequentialNetworkFlow,
                 resultspec::ResultSpec,
-                system::SystemDistribution{N,T,P,E,Float64}) where {N,T,P,E}
+                system::SystemStateDistribution{N,T,P,E,Float64}) where {N,T,P,E}
 
     systemsampler = SystemSampler(system)
     sink_idx = nv(systemsampler.graph)

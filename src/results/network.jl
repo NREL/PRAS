@@ -185,7 +185,7 @@ struct MultiPeriodNetworkResult{
     ES<:ExtractionSpec, SS<:SimulationSpec
 } <: MultiPeriodReliabilityResult{N1,T1,N2,T2,P,E,V,ES,SS}
 
-    timestamps::Vector{DateTime}
+    timestamps::StepRange{DateTime,T1}
     nodelabels::Vector{String}
     edgelabels::Vector{Tuple{Int,Int}}
     nodessets::Vector{Matrix{NodeResult{N1,T1,P,E,V}}}
@@ -195,7 +195,7 @@ struct MultiPeriodNetworkResult{
     resultspec::NetworkResult
 
     function MultiPeriodNetworkResult{}(
-        timestamps::Vector{DateTime},
+        timestamps::StepRange{DateTime,T},
         nodelabels::Vector{String},
         edgelabels::Vector{Tuple{Int,Int}},
         nodessets::Vector{Matrix{NodeResult{N,T,P,E,V}}},
@@ -209,7 +209,7 @@ struct MultiPeriodNetworkResult{
         n = length(timestamps)
         @assert n == length(nodessets)
         @assert n == length(edgessets)
-        @assert uniquesorted(timestamps)
+        @assert step(timestamps) == T(N)
 
         new{N,T,n*N,T,P,E,V,ES,SS}(
             timestamps, nodelabels, edgelabels,
@@ -221,19 +221,20 @@ struct MultiPeriodNetworkResult{
 end
 
 function MultiPeriodNetworkResult(
-    dts::Vector{DateTime},
+    dts::StepRange{DateTime,T},
     results::Vector{SinglePeriodNetworkResult{N,T,P,E,V,SS}},
     extrspec::ExtractionSpec
 ) where {N,T,P,E,V,SS}
+
     n_results = length(results)
     nodessets = Vector{Matrix{NodeResult{N,T,P,E,V}}}(n_results)
-    edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(n_results)	
-   
+    edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(n_results)
+
     for (i,r) in enumerate(results)
         nodessets[i] = r.nodesset
         edgessets[i] = r.edgesset
     end
-    #nodessets, edgessets = zip([(r.nodesset, r.edgesset) for r in results]...)
+
     result = results[1]
     return MultiPeriodNetworkResult(
         dts, result.nodelabels, result.edgelabels,
