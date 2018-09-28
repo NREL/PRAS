@@ -6,7 +6,6 @@ function extract(params::Backcast, dt_idx::Int,
 
     gendistrs, interfacedistrs = extract_regional_distributions(
         system, dt_idx, copperplate=copperplate)
-
     vg = system.vg[:, [dt_idx]]
     load = system.load[:, [dt_idx]]
 

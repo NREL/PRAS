@@ -7,11 +7,11 @@ function assess(extractionspec::ExtractionSpec,
                 system::SystemModel)
 
     batchsize = ceil(Int, length(system.timestamps)/nworkers()/2)
-    results = map(dt -> assess(simulationspec,
+    results = pmap(dt -> assess(simulationspec,
                                 resultspec,
                                 extract(extractionspec, dt, system,
                                 copperplate=iscopperplate(simulationspec))),
-                   system.timestamps) #, batch_size=batchsize)
+                   system.timestamps, batch_size=batchsize)
 
     return aggregator(resultspec)(system.timestamps, results, extractionspec)
 
