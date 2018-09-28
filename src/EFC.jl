@@ -54,7 +54,7 @@ function RA.assess(params::EFC,
 
         # Tighten FC bounds
         if RA.val(metric_x) > RA.val(metric_target)
-            fc_a = fc_e
+            fc_a = fc_x
             metric_a = metric_x
         else # metric_x <= metric_target
             fc_b = fc_x
