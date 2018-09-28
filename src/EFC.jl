@@ -5,19 +5,19 @@ struct EFC <: CapacityValuationMethod
     nodes::Generic{Int,Float64,Vector{Int}}
 end
 
-function assess(params::EFC,
-                metric::Type{<:RA.ReliabilityMetric},
-                extractionspec::RA.ExtractionSpec,
-                simulationspec::RA.SimulationSpec,
-                resultspec::RA.ResultSpec,
-                sys_before::S, sys_after::S) where {S <: RA.SystemDistributionSet}
+function RA.assess(params::EFC,
+                   metric::Type{<:RA.ReliabilityMetric},
+                   extractionspec::RA.ExtractionSpec,
+                   simulationspec::RA.SimulationSpec,
+                   resultspec::RA.ResultSpec,
+                   sys_before::S, sys_after::S) where {S <: RA.SystemModel}
 
-    metric_target = metric(assess(extractionspec, simulationspec, resultspec, sys_after))
+    metric_target = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_after))
 
-    metric_a = metric(assess(extractionspec, simulationspec, resultspec, sys_before))
+    metric_a = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_before))
     fc_a = 0.
 
-    metric_b = metric(assess(extractionspec, simulationspec, resultspec,
+    metric_b = metric(RA.assess(extractionspec, simulationspec, resultspec,
         addfirmcapacity(sys_before, params.nodes, params.nameplatecapacity)))
     fc_b = params.nameplatecapacity
 
@@ -41,20 +41,20 @@ function assess(params::EFC,
         p_b = pequal(metric_target, metric_b)
         if (p_a >= params.p) || (p_b >= params.p)
             println("Equality probability within tolerance, stopping.")
-            return p_a > p_b ? metric_a : metric_b
+            return p_a > p_b ? fc_a : fc_b
         end
 
         # Evaluate metric at midpoint
         fc_x = (fc_a + fc_b) / 2
-        metric_x = metric(assess(
+        metric_x = metric(RA.assess(
             extractionspec,
             simulationspec,
             resultspec,
             addfirmcapacity(sys_before, params.nodes, fc_x)))
 
         # Tighten FC bounds
-        if val(metric_x) > val(metric_target)
-            fc_a = fc_x
+        if RA.val(metric_x) > RA.val(metric_target)
+            fc_a = fc_e
             metric_a = metric_x
         else # metric_x <= metric_target
             fc_b = fc_x

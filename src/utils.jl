@@ -1,34 +1,37 @@
 normdist = Normal()
 function pequal(x::T, y::T) where {T<:RA.ReliabilityMetric}
-    z = abs((val(x) - val(y)) /
-            sqrt(stderr(x)^2 + stderr(y)^2))
+    z = abs((RA.val(x) - RA.val(y)) /
+            sqrt(RA.stderr(x)^2 + RA.stderr(y)^2))
     return 2 * ccdf(normdist, z)
 end
 
-# TODO: Convert to MultiPeriodSystem
-function addfirmcapacity(x::RA.SystemDistributionSet{N1,T1,N2,T2,P,V},
+function addfirmcapacity(sys::RA.SystemModel{N1,T1,N2,T2,P,V},
                          nodes::Generic{Int,Float64,Vector{Int}},
                          capacity::Float64) where {N1,T1,N2,T2,P,V}
 
-    gen_distrs = copy(x.region_maxdispatchabledistrs)
+    gens_updated     = copy(sys.generators)
+    gens_regionstart = copy(sys.generators_regionstart)
+    n_gen_cols       = size(gens_updated, 2)
 
     for (node, weight) in zip(support(nodes), Distributions.probs(nodes))
 
-        old_distr = gen_distrs[node]
-        new_distr = Generic(support(old_distr) .+ weight*capacity,
-                            Distributions.probs(old_distr))
-
-        gen_distrs[node] = new_distr
+        firm_gen = ResourceAdequacy.DispatchableGeneratorSpec(
+                       weight*capacity, 0.0, 1.0)
+        regionstart_idx = gens_regionstart[node]
+        gens_updated = [gens_updated[1:(regionstart_idx-1), :];
+                        fill(firm_gen, 1, n_gen_cols);
+                        gens_updated[regionstart_idx:end, :]
+                       ]
+        gens_regionstart[(node+1):end] .+= 1
 
     end
 
-    return RA.SystemDistributionSet{N1,T1,N2,T2,P,V}(
-        x.timestamps,
-        x.region_labels,
-        gen_distrs,
-        x.vgsamples,
-        x.interface_labels,
-        x.interface_maxflowdistrs,
-        x.loadsamples)
+    return RA.SystemModel{N1,T1,N2,T2,P,V}(
+        sys.regions, gens_updated, gens_regionstart,
+        sys.storages, sys.storages_regionstart,
+        sys.interfaces, sys.lines, sys.lines_interfacestart,
+        sys.timestamps, sys.timestamps_generatorset,
+        sys.timestamps_storageset, sys.timestamps_lineset,
+        sys.vg, sys.load)
 
 end
