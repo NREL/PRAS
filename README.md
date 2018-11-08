@@ -3,8 +3,9 @@
 _Note: This package is still very much a work in progress and is subject to change. Email Gord for the latest status._
 
 The Probabilistic Resource Adequacy Suite (PRAS) provides a modular collection
-of data processing and system simulation tools to assess power system reliability
-and calculate the capacity value of individual or aggregated resources.
+of data processing and system simulation tools to assess power system reliability.
+
+To use this functionality for capacity valuation, see [CapacityValue.jl](https://github.nrel.gov/PRAS/CapacityValue.jl). To import systems from PLEXOS, see the [PLEXOS2PRAS](https://github.nrel.gov/PRAS/PLEXOS2PRAS) collection of scripts. To save out detailed results to a file for postprocessing or visualization, see [PRAS2HDF5.jl](https://github.nrel.gov/PRAS/PRAS2HDF5.jl).
 
 ## Getting Started
 
@@ -40,17 +41,6 @@ multiperiod_system # A multi-period system specification
 assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(), multiperiod_system)
 ```
 
-Finally, to assess the equivalent firm capacity a new resource added
-to the system in region 3:
-
-```julia
-multiperiod_system_new_resource # The previous system augmented with a new resource
-assess(EFC(1000, 0.95, 1, Generic([3], [1.0])),
-       LOLE, REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(),
-	   multiperiod_system, multiperiod_system_new_resource)
-```
-
-
 ## Single Period Reliability Assessment Components
 
 ### Simulation Method
@@ -81,21 +71,3 @@ for cases with dropped load - use with `failuresonly=false` to save all data
 (this will likely slow things down and require lots of memory).
 Use [PRAS2HDF5](https://github.nrel.gov/PRAS/PRAS2HDF5.jl) to save network data
 out to disk for post-processing and visualization.
-
-## Capacity Valuation Components
-
-Capacity valuation requires specifying all of the components required for a single- or multi-period reliability assessment, as well as a reliability and capacity value metric to use:
-
-### Capacity Value Metric
-
-Currently supported:
- - EFC
-
-ELCC coming soon, hopefully.
-
-### Reliability Assessment / Comparison Metric
-
-Currently supported:
- - LOLP (single-period assessment)
- - LOLE (multi-period assessment)
- - EUE
