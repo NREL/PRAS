@@ -10,8 +10,8 @@ function extract(params::Backcast, dt_idx::Int,
     load = system.load[:, [dt_idx]]
 
     if copperplate
-        vg = sum(vg, 1)
-        load = sum(load, 1)
+        vg = vec(sum(vg, 1))
+        load = vec(sum(load, 1))
         result = SystemStateDistribution{N1,T1,P,E}(gendistrs[1], vg, load)
     else
         result = SystemStateDistribution{N1,T1,P,E}(

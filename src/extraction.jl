@@ -4,7 +4,7 @@ include("extraction/repra.jl")
 function extract(params::ExtractionSpec, dt::DateTime,
                  system::SystemModel; copperplate::Bool=false)
     dt_idx = findfirstunique(system.timestamps, dt)
-    return extract(params, dt_idx, system)
+    return extract(params, dt_idx, system, copperplate=copperplate)
 end
 
 function extract_regional_distributions(
