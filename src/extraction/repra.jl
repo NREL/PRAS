@@ -9,12 +9,12 @@ struct REPRA <: ExtractionSpec
     end
 end
 
-function extract(params::REPRA, dt_idx::Int,
-                 system::SystemModel{N1,T1,N2,T2,P,E};
-                 copperplate::Bool=false) where {N1,T1,N2,T2,P,E}
-
-    gendistrs, interfacedistrs = extract_regional_distributions(
-        system, dt_idx, copperplate=copperplate)
+function SystemStateDistribution(
+    params::REPRA, dt_idx::Int,
+    system::SystemModel{N1,T1,N2,T2,P,E,V},
+    region_distrs::Vector{CapacityDistribution{V}},
+    interface_distrs::Vector{CapacityDistribution{V}},
+    copperplate::Bool=false) where {N1,T1,N2,T2,P,E,V}
 
     dt = system.timestamps[dt_idx]
     vg_sample_idxs = window_idxs(
@@ -26,11 +26,11 @@ function extract(params::REPRA, dt_idx::Int,
     if copperplate
         vg = vec(sum(vg, 1))
         load = vec(sum(load, 1))
-        result = SystemStateDistribution{N1,T1,P,E}(gendistrs[1], vg, load)
+        result = SystemStateDistribution{N1,T1,P,E}(region_distrs[1], vg, load)
     else
         result = SystemStateDistribution{N1,T1,P,E}(
-            system.regions, gendistrs, vg,
-            system.interfaces, interfacedistrs, load)
+            system.regions, region_distrs, vg,
+            system.interfaces, interface_distrs, load)
     end
 
     return result
