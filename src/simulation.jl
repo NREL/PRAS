@@ -7,11 +7,14 @@ function assess(extractionspec::ExtractionSpec,
                 system::SystemModel)
 
     batchsize = ceil(Int, length(system.timestamps)/nworkers()/2)
-    results = pmap(dt -> assess(simulationspec,
-                                resultspec,
-                                extract(extractionspec, dt, system,
-                                copperplate=iscopperplate(simulationspec))),
-                   system.timestamps, batch_size=batchsize)
+
+    systemstatedistrs = extract(
+        extractionspec, system, copperplate=iscopperplate(simulationspec))
+
+    # TODO: Could convert this to a multithreaded for-loop (less overhead?)
+    results = pmap(
+        state -> assess(simulationspec, resultspec, state),
+        systemstatedistrs, batch_size=batchsize)
 
     return aggregator(resultspec)(system.timestamps, results, extractionspec)
 
@@ -42,8 +45,8 @@ function assess(extractionspec::ES,
 
 end
 
+"Allocate each RNG on its own thread"
 function init_rngs(seed::UInt=rand(UInt))
-    # Allocating each RNG on its own thread
     nthreads = Threads.nthreads()
     rngs = Vector{MersenneTwister}(nthreads)
     rngs_temp = randjump(MersenneTwister(seed),nthreads)

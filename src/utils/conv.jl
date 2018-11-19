@@ -83,10 +83,14 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
                     current_values, current_probs, current_n)
     end
 
-    resize!(current_probs, current_n)
     resize!(current_values, current_n)
+    resize!(current_probs, current_n)
+    nonzeroprob_idxs = find(current_probs)
 
-    return Generic{Int,Float64,Vector{Int}}(current_values, current_probs, Distributions.NoArgCheck())
+    return Generic{Int,Float64,Vector{Int}}(
+        current_values[nonzeroprob_idxs],
+        current_probs[nonzeroprob_idxs],
+        Distributions.NoArgCheck())
 
 end
 
