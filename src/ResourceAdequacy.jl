@@ -5,6 +5,7 @@ using StatsBase
 using OnlineStats
 using Distributions
 using LightGraphs
+using Decimals
 
 export
 
@@ -23,32 +24,27 @@ export
     Backcast, REPRA,
 
     # Simulation specifications
-    NonSequentialCopperplate, NonSequentialNetworkFlow,
+    NonSequentialCopperplate, SequentialCopperplate,
+    NonSequentialNetworkFlow, SequentialNetworkFlow,
 
     # Result specifications
-    MinimalResult, NetworkResult,
+    Minimal, Spatial, Temporal, SpatioTemporal, FullNetwork
 
-    # Result methods
-    timestamps
 
-CapacityDistribution{T} = Distributions.Generic{T,Float64,Vector{T}}
-CapacitySampler{T} = Distributions.GenericSampler{T, Vector{T}}
+# Basic functionality
+include("utils/utils.jl")
+include("systemdata/systemdata.jl")
+include("metrics/metrics.jl")
+include("abstractspecs/abstractspecs.jl")
 
-# Parametrize simulation specs by sequentiality
-abstract type SimulationSequentiality end
-struct NonSequential <: SimulationSequentiality end
-struct Sequential <: SimulationSequentiality end
-
-# Abstract component specifications
-abstract type ExtractionSpec end
-abstract type SimulationSpec{T<:SimulationSequentiality} end
-abstract type ResultSpec end
-
-include("utils.jl")
-include("metrics.jl")
-include("systemdata.jl")
-include("results.jl")
-include("extraction.jl")
-include("simulation.jl")
+# Spec instances
+spec_instances = [
+    ("extraction", ["backcast", "repra"]),
+    ("simulation", ["nonsequentialcopperplate", "nonsequentialnetworkflow"]),
+    ("result", ["minimal", "temporal", "spatial"])  # "spatiotemporal", "network"])
+]
+for (spec, instances) in spec_instances, instance in instances
+    include(spec * "s/" * instance * ".jl")
+end
 
 end # module

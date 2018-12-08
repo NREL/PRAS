@@ -151,7 +151,7 @@ function assess(supply::Generic{T,Float64,Vector{T}},
             if s[i] < d[j]
                 psd = ps[i] * pd[j]
                 p += psd
-                eul += psd * d[j]
+                eul += psd * (d[j] - s[i])
                 j -= 1
             else
                 j_min = j+1

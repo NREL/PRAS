@@ -1,4 +1,4 @@
-struct SystemStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     region_labels::Vector{String}
     region_maxdispatchabledistrs::Vector{CapacityDistribution{V}}
     vgsamples::Matrix{V}
@@ -7,7 +7,7 @@ struct SystemStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     loadsamples::Matrix{V}
 
     # Multi-region constructor
-    function SystemStateDistribution{N,T,P,E}(
+    function SystemInputStateDistribution{N,T,P,E}(
         region_labels::Vector{String},
         region_maxdispatchabledistrs::Vector{CapacityDistribution{V}},
         vgsamples::Matrix{V},
@@ -27,7 +27,7 @@ struct SystemStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     end
 
     # Single-region constructor
-    function SystemStateDistribution{N,T,P,E}(
+    function SystemInputStateDistribution{N,T,P,E}(
         maxdispatchable::CapacityDistribution{V},
         vgsamples::Vector{V}, loadsamples::Vector{V}
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
@@ -40,7 +40,7 @@ struct SystemStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
 
 end
 
-struct SystemSampler{T <: Real}
+struct SystemInputStateSampler{T <: Real}
     maxdispatchable_samplers::Vector{CapacitySampler{T}}
     vgsamples::Matrix{T}
     interface_labels::Vector{Tuple{Int,Int}}
@@ -52,7 +52,7 @@ struct SystemSampler{T <: Real}
     vgsample_idxs::UnitRange{Int}
     graph::DiGraph{Int}
 
-    function SystemSampler(sys::SystemStateDistribution{N,T,P,E,V}) where {N,T,P,E,V}
+    function SystemInputStateSampler(sys::SystemInputStateDistribution{N,T,P,E,V}) where {N,T,P,E,V}
 
         n_nodes = length(sys.region_labels)
         n_interfaces = length(sys.interface_labels)
@@ -99,7 +99,7 @@ struct SystemSampler{T <: Real}
     end
 end
 
-function Base.rand!(A::Matrix{T}, system::SystemSampler{T}) where T
+function Base.rand!(A::Matrix{T}, system::SystemInputStateSampler{T}) where T
 
     node_idxs = system.node_idxs
     source_idx = last(node_idxs) + 1
@@ -128,7 +128,7 @@ function Base.rand!(A::Matrix{T}, system::SystemSampler{T}) where T
 
 end
 
-function Base.rand(system::SystemSampler{T}) where T
+function Base.rand(system::SystemInputStateSampler{T}) where T
     n = nv(system.graph)
     A = zeros(T, n, n)
     return rand!(A, system)

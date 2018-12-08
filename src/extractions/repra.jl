@@ -9,12 +9,12 @@ struct REPRA <: ExtractionSpec
     end
 end
 
-function SystemStateDistribution(
+function SystemInputStateDistribution(
     params::REPRA, dt_idx::Int,
-    system::SystemModel{N1,T1,N2,T2,P,E,V},
+    system::SystemModel{N,L,T,P,E,V},
     region_distrs::Vector{CapacityDistribution{V}},
     interface_distrs::Vector{CapacityDistribution{V}},
-    copperplate::Bool=false) where {N1,T1,N2,T2,P,E,V}
+    copperplate::Bool=false) where {N,L,T,P,E,V}
 
     dt = system.timestamps[dt_idx]
     vg_sample_idxs = window_idxs(
@@ -26,9 +26,9 @@ function SystemStateDistribution(
     if copperplate
         vg = vec(sum(vg, 1))
         load = vec(sum(load, 1))
-        result = SystemStateDistribution{N1,T1,P,E}(region_distrs[1], vg, load)
+        result = SystemInputStateDistribution{L,T,P,E}(region_distrs[1], vg, load)
     else
-        result = SystemStateDistribution{N1,T1,P,E}(
+        result = SystemInputStateDistribution{L,T,P,E}(
             system.regions, region_distrs, vg,
             system.interfaces, interface_distrs, load)
     end

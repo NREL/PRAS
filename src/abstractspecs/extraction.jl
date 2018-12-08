@@ -1,18 +1,34 @@
-include("extraction/backcast.jl")
-include("extraction/repra.jl")
+"""
+
+    SystemInputStateDistribution(::ExtractionSpec, timestep::Int, ::SystemModel,
+                            regionalsupply::Vector{CapacityDistribution},
+                            interregionalflow::Vector{CapacityDistribution},
+                            copperplate::Bool)
+
+Returns a `SystemInputStateDistribution` for the given `timestep` of the
+`SystemModel`. As the dispatchable generation and interface available capacity
+distributions are provided, this just amounts to determining the VG and load
+distributions.
+
+If `copperplate` is true, the VG and load distributions should be for a single
+(collapsed / aggregated) region.
+"""
+SystemInputStateDistribution(::ExtractionSpec, ::Int, ::SystemModel,
+                        ::Vector{CapacityDistribution}, ::Vector{CapacityDistribution}, ::Bool)
 
 """
-extract(::ExtractionSpec, system::SystemModel, dt::DateTime; copperplate::Bool=false)
 
-Extracts a `SystemStateDistribution` from `system` corresponding to the point
+    extract(::ExtractionSpec, system::SystemModel, dt::DateTime; copperplate::Bool=false)
+
+Extracts a `SystemInputStateDistribution` from `system` corresponding to the point
 in time `dt`, as prescribed by the supplied `ExtractionSpec`.
 
 The optional keyword argument `copperplate` indicates whether or not to
 collapse transmission as part of the extraction (for copperplate simulations,
 this is much more efficient than collapsing the network on-the-fly).
 """
-function extract(extractionspec::ExtractionSpec, dt::DateTime,
-                 system::SystemModel; copperplate::Bool=false)
+function extract(extractionspec::ExtractionSpec, system::SystemModel,
+                 dt::DateTime, copperplate::Bool)
 
     dt_idx = findfirstunique(system.timestamps, dt)
     genset_idx = system.timestamps_generatorset[dt_idx]
@@ -27,7 +43,7 @@ function extract(extractionspec::ExtractionSpec, dt::DateTime,
     lineset = view(system.lines, :, i)
     interface_distrs = convolvepartitions(lineset, interface_starts)
 
-    return SystemStateDistribution(
+    return SystemInputStateDistribution(
         extractionspec, dt_idx, system,
         region_distrs, interface_distrs,
         copperplate)
@@ -35,9 +51,10 @@ function extract(extractionspec::ExtractionSpec, dt::DateTime,
 end
 
 """
-extract(::ExtractionSpec, system::SystemModel; copperplate::Bool=false)
 
-Extracts a vector of `SystemStateDistribution`s from `system` for each time
+    extract(::ExtractionSpec, system::SystemModel, copperplate::Bool=false)
+
+Extracts a vector of `SystemInputStateDistribution`s from `system` for each time
 period in the simulation, as prescribed by the supplied `ExtractionSpec`. This
 method is generally much faster than extracting each time period seperately.
 
@@ -46,8 +63,8 @@ collapse transmission as part of the extraction (for copperplate simulations,
 this is much more efficient than collapsing the network on-the-fly).
 """
 function extract(extractionspec::ExtractionSpec,
-                 system::SystemModel{N1,T1,N2,T2,P,E,V};
-                 copperplate::Bool=false) where {N1,T1,N2,T2,P,E,V}
+                 system::SystemModel{N,L,T,P,E,V},
+                 copperplate::Bool) where {N,L,T,P,E,V}
 
     region_starts = copperplate ? [1] : system.generators_regionstart
     interface_starts = copperplate ? Int[] : system.lines_interfacestart
@@ -72,9 +89,9 @@ function extract(extractionspec::ExtractionSpec,
         convolvepartitions!(lineset_interfaces, lineset, interface_starts)
     end
 
-    results = Vector{SystemStateDistribution{N1,T1,P,E,V}}(n_timestamps)
+    results = Vector{SystemInputStateDistribution{L,T,P,E,V}}(n_timestamps)
     Threads.@threads for t in 1:n_timestamps
-        results[t] = SystemStateDistribution(
+        results[t] = SystemInputStateDistribution(
             extractionspec, t, system,
             region_distrs[:, system.timestamps_generatorset[t]],
             interface_distrs[:, system.timestamps_lineset[t]],

@@ -4,80 +4,6 @@ struct NetworkResult <: ResultSpec
     NetworkResult(;failuresonly::Bool=true) = new(failuresonly)
 end
 
-struct NodeResult{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
-
-    generation_available::V
-    generation::V
-    demand::V
-    demand_served::V
-
-    function NodeResult{N,T,P,E}(
-        gen_av::V, gen::V, dem::V, dem_served::V
-    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
-        @assert gen_av > gen || isapprox(gen_av, gen)
-        @assert dem > dem_served || isapprox(dem, dem_served)
-        new{N,T,P,E,V}(gen_av, gen, dem, dem_served)
-    end
-
-end
-
-struct EdgeResult{N,T<:Period, P<:PowerUnit,E<:EnergyUnit, V<:Real}
-
-    max_transfer_magnitude::V
-    transfer::V
-
-    function EdgeResult{N,T,P,E}(
-        max::V, actual::V) where {N,T,P,E,V<:Real}
-        @assert max > abs(actual) || isapprox(max, abs(actual))
-        new{N,T,P,E,V}(max, actual)
-    end
-
-end
-
-struct NetworkState{N,T,P,E,V}
-    nodes::Vector{NodeResult{N,T,P,E,V}}
-    edges::Vector{EdgeResult{N,T,P,E,V}}
-    edgelabels::Vector{Tuple{Int,Int}}
-
-    function NetworkState(
-        nodes::Vector{NodeResult{N,T,P,E,V}},
-        edges::Vector{EdgeResult{N,T,P,E,V}},
-        edgelabels::Vector{Tuple{Int,Int}}
-    ) where {N,T,P,E,V}
-        @assert length(edges) == length(edgelabels)
-        new{N,T,P,E,V}(nodes, edges, edgelabels)
-    end
-end
-
-function NetworkState{N,T,P,E}(
-    state_matrix::Matrix{V}, flow_matrix::Matrix{V},
-    edge_labels::Vector{Tuple{Int,Int}}, n::Int
-) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
-
-    source = n+1
-    sink = n+2
-    nodes = [NodeResult{N,T,P,E}(state_matrix[source,i],
-                        flow_matrix[source,i],
-                        state_matrix[i,sink],
-                        flow_matrix[i,sink]) for i in 1:n]
-
-    edges = [EdgeResult{N,T,P,E}(state_matrix[i,j],
-                        flow_matrix[i,j]) for (i,j) in edge_labels]
-
-    return NetworkState(nodes, edges, edge_labels)
-
-end
-
-function droppedload(ns::NetworkState{N,T,P,E,V}) where {N,T,P,E,V}
-    result = zero(V)
-    for node in ns.nodes
-        if !(node.demand ≈ node.demand_served)
-            result += node.demand - node.demand_served
-        end
-    end
-    return result
-end
-
 struct NetworkStateSet{N,T,P,E,V}
     nodesset::Matrix{NodeResult{N,T,P,E,V}}
     edgesset::Matrix{EdgeResult{N,T,P,E,V}}
@@ -218,6 +144,66 @@ struct MultiPeriodNetworkResult{
 
     end
 
+end
+
+struct SinglePeriodNetworkResultAccumulator{
+    N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+
+    nodelabels::Vector{String}
+    edgelabels::Vector{Tuple{Int,Int}}
+    nodestates::Vector{Vector{NodeResult{N,T,P,E,V}}}
+    edgestates::Vector{Vector{EdgeResult{N,T,P,E,V}}}
+    simulationspec::NonSequentialNetworkFlow
+    resultspec::NetworkResult
+
+    function SinglePeriodNetworkResultAccumulator{}(
+        simspec::NonSequentialNetworkFlow,
+        resultspec::NetworkResult,
+        system::SystemStateDistribution{N,T,P,E,V}
+    ) where {N,T,P,E,V}
+
+        new{N,T,P,E,V}(
+            system.region_labels, system.interface_labels,
+            Vector{NodeResult{N,T,P,E,V}}[],
+            Vector{EdgeResult{N,T,P,E,V}}[],
+            simspec, resultspec)
+    end
+
+end
+
+function update!(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,Float64},
+                 statematrix::Matrix{Float64},
+                 flowmatrix::Matrix{Float64},
+                 sink_idx::Int, n_regions::Int) where {N,T,P,E}
+
+    if !(acc.resultspec.failuresonly &&
+         all_load_served(statematrix, flowmatrix, sink_idx, n_regions))
+
+        ns = NetworkState{N,T,P,E}(statematrix, flowmatrix, acc.edgelabels, n_regions)
+        push!(acc.nodestates, ns.nodes)
+        push!(acc.edgestates, ns.edges)
+
+    end
+
+    return acc
+
+end
+
+function finalize(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,V}) where {N,T,P,E,V}
+
+    n_states = length(acc.nodestates)
+    nodemtx = Matrix{NodeResult{N,T,P,E,V}}(length(acc.nodelabels), n_states)
+    edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(length(acc.edgelabels), n_states)
+
+    for i in 1:n_states
+        nodemtx[:, i] = acc.nodestates[i]
+        edgemtx[:, i] = acc.edgestates[i]
+    end
+
+    return SinglePeriodNetworkResult(
+        acc.nodelabels, acc.edgelabels,
+        nodemtx, edgemtx,
+        acc.simulationspec, acc.resultspec)
 end
 
 function MultiPeriodNetworkResult(

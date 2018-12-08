@@ -1,73 +1,80 @@
 # ResourceAdequacy
 
-_Note: This package is still very much a work in progress and is subject to change. Email Gord for the latest status._
+_Note: This package is still very much a work in progress and is subject
+to change. Email Gord for the latest status._
 
 The Probabilistic Resource Adequacy Suite (PRAS) provides a modular collection
 of data processing and system simulation tools to assess power system reliability.
 
-To use this functionality for capacity valuation, see [CapacityValue.jl](https://github.nrel.gov/PRAS/CapacityValue.jl). To import systems from PLEXOS, see the [PLEXOS2PRAS](https://github.nrel.gov/PRAS/PLEXOS2PRAS) collection of scripts. To save out detailed results to a file for postprocessing or visualization, see [PRAS2HDF5.jl](https://github.nrel.gov/PRAS/PRAS2HDF5.jl).
+To use this functionality for capacity valuation, see
+[CapacityValue.jl](https://github.nrel.gov/PRAS/CapacityValue.jl).
+To import systems from PLEXOS, see the
+[PLEXOS2PRAS](https://github.nrel.gov/PRAS/PLEXOS2PRAS) collection of scripts.
+To save out detailed results to a file for postprocessing or visualization, see
+[PRAS2HDF5.jl](https://github.nrel.gov/PRAS/PRAS2HDF5.jl).
 
 ## Getting Started
 
-RAS functionality is distributed across a range of different types of modules that can
-be mixed and matched to support the needs of a particular analysis.
-When assessing reliability or capacity value, one can define the modules to be used
-while passing along any associated parameters or options.
+### Unleash your CPU cores
+
+First, know that PRAS uses multi-threading, so be
+sure to set the environment variable controlling the number of threads
+available to Julia (72 in this Bash example, which is a good choice for
+Eagle nodes - on a laptop you would probably only want 4) before running
+scripts or launching the REPL:
+
+```sh
+export JULIA_NUM_THREADS=72
+```
+
+### Architecture Overview
+
+PRAS functionality is distributed across a range of different types of
+modules that can be mixed, matched, and extended to support the needs of a
+particular analysis. When assessing reliability or capacity value, one can
+define the modules to be used while passing along any associated parameters
+or options.
+
+The categories of modules are:
+
+**Extractions**: How should VG or load data be extracted from historical
+time-series data to create probability distributions at each timestep?
+Options are `Backcast` or `REPRA`.
+
+**Simulations**: How should power system operations be simulated?
+Options are `NonSequentialCopperplate` or `NonSequentialNetworkFlow`.
+
+**Results**: What level of detail should be saved out during simulations?
+Options are `Minimal`, `Temporal`, or `Spatial`.
 
 ### Running an analysis
+
 Analysis centers around the `assess` method with different arguments passed
 depending on the desired analysis to run.
-For a simple example, to run a copper plate reliability assessment on a single-period
-system distribution, with simple LOLP and EUE reporting, one would run:
+For example, to run a convolution-based reliability assessment
+(`NonSequentialCopperplate`) with VG distributions derived from simple
+backcasts (`Backcast`) and aggregate LOLE and EUE reporting (`Minimal`),
+one would run:
 
 ```julia
-singleperiod_system # A single-period system distribution
-assess(NonSequentialCopperplate(), MinimalResult(), singleperiod_system)
+assess(Backcast(), NonSequentialCopperplate(), Minimal(), mysystemmodel)
 ```
 
 To run a network flow simulation instead with 100,000 Monte Carlo samples,
 the method call becomes:
 
 ```julia
-assess(NonSequentialNetworkFlow(100_000), MinimalResult(), singleperiod_system)
+assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), mysystemmodel)
 ```
 
-Assessing a multi-period system requires specifying some way of decomposing
-time series data into individual single-period distributions.
-To use REPRA-style windowing (with a +/- 1-hour, +/- 10-day window):
+To use REPRA-style windowing (with a +/- 1-hour, +/- 10-day window)
+to generate VG distributions, the call becomes:
 
 ```julia
-multiperiod_system # A multi-period system specification
-assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(), multiperiod_system)
+assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Minimal(), mysystemmodel)
 ```
 
-## Single Period Reliability Assessment Components
-
-### Simulation Method
-
-Currently supported:
- - Non-sequential copper plate (`NonSequentialCopperplate`)
- - Non-sequential network flow (`NonSequentialNetworkFlow`)
- - Sequential network flow under development
-
-## Multi-Period Reliability Assessment Components
-
-Multi-period reliability assessment requires the same components as a single-period reliability assessment, as well as a time series decomposition method.
-
-### Decomposition Method
-
-Currently supported:
- - Deterministic backcasting (`Backcast`)
- - REPRA windowing (`REPRA`)
-
-## Results
-
-Different result formats can be specified depending on the desired level of detail:
-
-`MinimalResult`: just stores enough information to report LOLP/LOLE and EUE
-
-`NetworkResult`: stores full network states from simulations, by default only
-for cases with dropped load - use with `failuresonly=false` to save all data
-(this will likely slow things down and require lots of memory).
-Use [PRAS2HDF5](https://github.nrel.gov/PRAS/PRAS2HDF5.jl) to save network data
-out to disk for post-processing and visualization.
+To save regional results in a multi-area system, change `Minimal` to `Spatial`:
+```julia
+assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Spatial(), mysystemmodel)
+```

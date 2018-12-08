@@ -2,6 +2,8 @@ using ResourceAdequacy
 using Base.Test
 using Distributions
 
+const RA = ResourceAdequacy
+
 @testset "ResourceAdequacy" begin
 
     include("utils.jl")
