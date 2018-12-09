@@ -5,13 +5,19 @@ struct NodeResult{L,T<:Period,P<:PowerUnit,V<:Real}
     demand::V
     demand_served::V
 
-    function NodeResult{L,T,P}(
-        gen_av::V, gen::V, dem::V, dem_served::V
+    NodeResult{L,T,P}(
+        gen_av::V, gen::V, dem::V, dem_served::V, ::NoCheck
+    ) where {L,T<:Period,P<:PowerUnit,V<:Real} =
+    new{L,T,P,V}(gen_av, gen, dem, dem_served)
+
+end
+
+function NodeResult{L,T,P}(gen_av::V, gen::V, dem::V, dem_served::V
     ) where {L,T<:Period,P<:PowerUnit,V<:Real}
-        @assert gen_av > gen || isapprox(gen_av, gen)
-        @assert dem > dem_served || isapprox(dem, dem_served)
-        new{L,T,P,V}(gen_av, gen, dem, dem_served)
-    end
+
+    @assert gen_av > gen || isapprox_stable(gen_av, gen)
+    @assert dem > dem_served || isapprox_stable(dem, dem_served)
+    return NodeResult{L,T,P}(gen_av, gen, dem, dem_served, NoCheck())
 
 end
 
@@ -21,11 +27,16 @@ struct EdgeResult{L,T<:Period,P<:PowerUnit,V<:Real}
     transfer::V
 
     function EdgeResult{L,T,P}(
-        max::V, actual::V) where {L,T<:Period,P<:PowerUnit,V<:Real}
-        @assert max > abs(actual) || isapprox(max, abs(actual))
+        max::V, actual::V, ::NoCheck) where {L,T<:Period,P<:PowerUnit,V<:Real}
         new{L,T,P,V}(max, actual)
     end
 
+end
+
+function EdgeResult{L,T,P}(
+    max::V, actual::V) where {L,T<:Period,P<:PowerUnit,V<:Real}
+    @assert max > abs(actual) || isapprox_stable(max, abs(actual))
+    return EdgeResult{L,T,P}(max, actual, NoCheck())
 end
 
 struct SystemOutputStateSample{L,T,P,V}
@@ -43,50 +54,74 @@ struct SystemOutputStateSample{L,T,P,V}
     end
 end
 
-function SystemOutputStateSample{L,T,P}(
+function SystemOutputStateSample{L,T,P,V}(
+    edge_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
+
+    nodes = Vector{NodeResult{L,T,P,V}}(n)
+    edges = Vector{EdgeResult{L,T,P,V}}(length(edge_labels))
+    return SystemOutputStateSample(nodes, edges, edge_labels)
+
+end
+
+
+function update!(
+    sample::SystemOutputStateSample{L,T,P,V},
     state_matrix::Matrix{V}, flow_matrix::Matrix{V},
-    edge_labels::Vector{Tuple{Int,Int}}, n::Int
 ) where {L,T<:Period,P<:PowerUnit,V<:Real}
 
+    n = length(sample.nodes)
     source = n+1
     sink = n+2
-    nodes = [NodeResult{L,T,P}(state_matrix[source,i],
-                        flow_matrix[source,i],
-                        state_matrix[i,sink],
-                        flow_matrix[i,sink]) for i in 1:n]
 
-    edges = [EdgeResult{L,T,P}(state_matrix[i,j],
-                        flow_matrix[i,j]) for (i,j) in edge_labels]
+    for i in 1:n
+        sample.nodes[i] = NodeResult{L,T,P}(
+            state_matrix[source,i], flow_matrix[source,i],
+            state_matrix[i,sink], flow_matrix[i,sink], NoCheck())
+    end
 
-    return SystemOutputStateSample(nodes, edges, edge_labels)
+    for e in 1:length(sample.edgelabels)
+        i, j = sample.edgelabels[e]
+        sample.edges[e] = EdgeResult{L,T,P}(
+            state_matrix[i,j], flow_matrix[i,j], NoCheck())
+    end
 
 end
 
 function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
-    result = zero(V)
+    isshortfall = false
+    totalshortfall = zero(V)
 
     for node in sample.nodes
-        (node.demand ≈ node.demand_served) ||
-            (result += node.demand - node.demand_served)
+        different, difference = checkdifference(node.demand, node.demand_served)
+        if different 
+            isshortfall = true
+            totalshortfall += difference
+        end
     end
 
-    return result
+    return isshortfall, totalshortfall
 
 end
 
 function droppedloads(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
     nnodes = length(sample.nodes)
-    results = zeros(V, nnodes)
+    isshortfall = false
+    totalshortfall = zero(V)
+    localshortfalls = zeros(V, nnodes)
 
     for i in 1:nnodes
         node = sample.nodes[i]
-        (node.demand ≈ node.demand_served) ||
-            (results[i] = node.demand - node.demand_served)
+        different, difference = checkdifference(node.demand, node.demand_served)
+        if different
+            isshortfall = true
+            totalshortfall += difference
+            localshortfalls[i] = difference
+        end
     end
 
-    return results
+    return isshortfall, totalshortfall, localshortfalls
 
 end
 

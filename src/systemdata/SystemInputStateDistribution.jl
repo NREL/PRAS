@@ -1,10 +1,18 @@
 struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+    region_idxs::Base.OneTo{Int}
     region_labels::Vector{String}
     region_maxdispatchabledistrs::Vector{CapacityDistribution{V}}
+    region_maxdispatchablesamplers::Vector{CapacitySampler{V}}
+    vgsample_idxs::Base.OneTo{Int}
     vgsamples::Matrix{V}
+    interface_idxs::Base.OneTo{Int}
     interface_labels::Vector{Tuple{Int,Int}}
     interface_maxflowdistrs::Vector{CapacityDistribution{V}}
+    interface_maxflowsamplers::Vector{CapacitySampler{V}}
+    loadsample_idxs::Base.OneTo{Int}
     loadsamples::Matrix{V}
+    graph::DiGraph{Int}
+
 
     # Multi-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
@@ -16,66 +24,33 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         loadsamples::Matrix{V}) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
         n_regions = length(region_labels)
+        region_idxs = Base.OneTo(n_regions)
         @assert length(region_maxdispatchabledistrs) == n_regions
         @assert size(vgsamples, 1) == n_regions
         @assert size(loadsamples, 1) == n_regions
-        @assert length(interface_labels) == length(interface_maxflowdistrs)
 
-        new{N,T,P,E,V}(region_labels, region_maxdispatchabledistrs, vgsamples,
-                     interface_labels, interface_maxflowdistrs, loadsamples)
-
-    end
-
-    # Single-region constructor
-    function SystemInputStateDistribution{N,T,P,E}(
-        maxdispatchable::CapacityDistribution{V},
-        vgsamples::Vector{V}, loadsamples::Vector{V}
-    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
-
-        new{N,T,P,E,V}(["Region"], [maxdispatchable], reshape(vgsamples, 1, :),
-                     Tuple{Int,Int}[], CapacityDistribution[],
-                     reshape(loadsamples, 1, :))
-
-    end
-
-end
-
-struct SystemInputStateSampler{T <: Real}
-    maxdispatchable_samplers::Vector{CapacitySampler{T}}
-    vgsamples::Matrix{T}
-    interface_labels::Vector{Tuple{Int,Int}}
-    interface_samplers::Vector{CapacitySampler{T}}
-    loadsamples::Matrix{T}
-    node_idxs::UnitRange{Int}
-    interface_idxs::UnitRange{Int}
-    loadsample_idxs::UnitRange{Int}
-    vgsample_idxs::UnitRange{Int}
-    graph::DiGraph{Int}
-
-    function SystemInputStateSampler(sys::SystemInputStateDistribution{N,T,P,E,V}) where {N,T,P,E,V}
-
-        n_nodes = length(sys.region_labels)
-        n_interfaces = length(sys.interface_labels)
-        n_vgsamples = size(sys.vgsamples, 2)
-        n_loadsamples = size(sys.loadsamples, 2)
-
-        node_idxs = Base.OneTo(n_nodes)
+        n_interfaces = length(interface_labels)
         interface_idxs = Base.OneTo(n_interfaces)
-        loadsample_idxs = Base.OneTo(n_loadsamples)
+        @assert n_interfaces == length(interface_maxflowdistrs)
+
+        n_vgsamples = size(vgsamples, 2)
         vgsample_idxs = Base.OneTo(n_vgsamples)
 
-        source_node = n_nodes + 1
-        sink_node   = n_nodes + 2
+        n_loadsamples = size(loadsamples, 2)
+        loadsample_idxs = Base.OneTo(n_loadsamples)
+
+        source_node = n_regions + 1
+        sink_node   = n_regions + 2
         graph = DiGraph(sink_node)
 
         # Populate graph with interface edges
-        for (from, to) in sys.interface_labels
+        for (from, to) in interface_labels
             add_edge!(graph, from, to)
             add_edge!(graph, to, from)
         end
 
         # Populate graph with source and sink edges
-        for i in node_idxs
+        for i in region_idxs
 
             add_edge!(graph, source_node, i)
             add_edge!(graph, i, sink_node)
@@ -88,30 +63,57 @@ struct SystemInputStateSampler{T <: Real}
 
         end
 
-        new{V}(sampler.(sys.region_maxdispatchabledistrs), sys.vgsamples,
-               sys.interface_labels,
-               sampler.(sys.interface_maxflowdistrs),
-               sys.loadsamples,
-               node_idxs, interface_idxs,
-               loadsample_idxs, vgsample_idxs,
-               graph)
+        new{N,T,P,E,V}(
+            region_idxs, region_labels,
+            region_maxdispatchabledistrs,
+            sampler.(region_maxdispatchabledistrs),
+            vgsample_idxs, vgsamples,
+	    interface_idxs, interface_labels,
+            interface_maxflowdistrs,
+            sampler.(interface_maxflowdistrs),
+            loadsample_idxs, loadsamples, graph)
 
     end
+
+    # Single-region constructor
+    function SystemInputStateDistribution{N,T,P,E}(
+        maxdispatchable::CapacityDistribution{V},
+        vgsamples::Vector{V}, loadsamples::Vector{V}
+    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
+
+        graph = DiGraph(3)
+        add_edge!(graph, 1, 2)
+        add_edge!(graph, 2, 1)
+        add_edge!(graph, 1, 3)
+        add_edge!(graph, 3, 1)
+
+        new{N,T,P,E,V}(
+            Base.OneTo(1), ["Region"],
+            [maxdispatchable], [sampler(maxdispatchable)],
+            Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),
+            Base.OneTo(0), Tuple{Int,Int}[],
+            CapacityDistribution{V}[], CapacitySampler{V}[],
+            Base.OneTo(length(loadsamples)), reshape(loadsamples, 1, :), graph)
+
+    end
+
 end
 
-function Base.rand!(A::Matrix{T}, system::SystemInputStateSampler{T}) where T
+function Base.rand!(rng::MersenneTwister, A::Matrix{V},
+                    system::SystemInputStateDistribution{N,T,P,E,V}
+    ) where {N,T,P,E,V}
 
-    node_idxs = system.node_idxs
-    source_idx = last(node_idxs) + 1
-    sink_idx = last(node_idxs) + 2
+    region_idxs = system.region_idxs
+    source_idx = last(region_idxs) + 1
+    sink_idx = last(region_idxs) + 2
 
-    vgsample_idx = rand(system.vgsample_idxs)
-    loadsample_idx = rand(system.loadsample_idxs)
+    vgsample_idx = rand(rng, system.vgsample_idxs)
+    loadsample_idx = rand(rng, system.loadsample_idxs)
 
     # Assign random generation capacities and loads
-    for i in node_idxs
+    for i in region_idxs
         A[source_idx, i] =
-            rand(system.maxdispatchable_samplers[i]) +
+            rand(rng, system.region_maxdispatchablesamplers[i]) +
             system.vgsamples[i, vgsample_idx]
         A[i, sink_idx] = system.loadsamples[i, loadsample_idx]
     end
@@ -119,7 +121,7 @@ function Base.rand!(A::Matrix{T}, system::SystemInputStateSampler{T}) where T
     # Assign random line limits
     for ij in system.interface_idxs
         i, j = system.interface_labels[ij]
-        flowlimit = rand(system.interface_samplers[ij])
+        flowlimit = rand(rng, system.interface_maxflowsamplers[ij])
         A[i,j] = flowlimit
         A[j,i] = flowlimit
     end
@@ -128,8 +130,10 @@ function Base.rand!(A::Matrix{T}, system::SystemInputStateSampler{T}) where T
 
 end
 
-function Base.rand(system::SystemInputStateSampler{T}) where T
+function Base.rand(rng::MersenneTwister,
+                   system::SystemInputStateDistribution{N,T,P,E,V}
+    ) where {N,T,P,E,V}
     n = nv(system.graph)
-    A = zeros(T, n, n)
-    return rand!(A, system)
+    A = zeros(V, n, n)
+    return rand!(rng, A, system)
 end

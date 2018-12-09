@@ -11,7 +11,7 @@ struct NonSequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,
         system::S, extractionspec::ES, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {V,S,ES,SS} =
         new{V,S,ES,SS}(droppedcount, droppedsum, system,
-                       extractionspec, simulationspec)
+                       extractionspec, simulationspec, rngs)
 
 end
 
@@ -56,9 +56,8 @@ end
 function update!(acc::NonSequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
-    shortfall = droppedload(sample)
-    isshortfall = !isapprox(shortfall, 0.)
-    droppedenergy = powertoenergy(shortfall, L, T, P, E)
+    isshortfall, droppedpower  = droppedload(sample)
+    droppedenergy = powertoenergy(droppedpower, L, T, P, E)
 
     fit!(acc.droppedcount[t], V(isshortfall))
     fit!(acc.droppedsum[t], droppedenergy)

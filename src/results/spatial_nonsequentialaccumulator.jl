@@ -122,18 +122,17 @@ function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,
 
     end
 
-    shortfalls = droppedloads(sample)
-    shortfall = sum(shortfalls)
+    isshortfall, totalshortfall, localshortfalls = droppedloads(sample)
 
-    fit!(acc.droppedcount_overall_period[thread], approxnonzero(shortfall))
+    fit!(acc.droppedcount_overall_period[thread], V(isshortfall))
     fit!(acc.droppedsum_overall_period[thread],
-         powertoenergy(shortfall, L, T, P, E))
+         powertoenergy(totalshortfall, L, T, P, E))
 
     for r in 1:nregions
         fit!(acc.droppedcount_region_period[r, thread],
-             approxnonzero(shortfalls[r]))
+             approxnonzero(localshortfalls[r]))
         fit!(acc.droppedsum_region_period[r, thread],
-             powertoenergy(shortfalls[r], L, T, P, E))
+             powertoenergy(localshortfalls[r], L, T, P, E))
     end
 
     return
@@ -147,7 +146,7 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L
     nregions = length(regions)
 
     # Transfer the final thread-local results
-    for thread in 1:Threads.threadid()
+    for thread in 1:Threads.nthreads()
 
         transferperiodresults!(
             acc.droppedcount_overall_valsum, acc.droppedcount_overall_varsum,

@@ -47,7 +47,7 @@ function assess(extractionspec::ExtractionSpec,
     #      should work first though...
 
     statedistrs = extract(extractionspec, system, iscopperplate(simulationspec))
-    for (t, statedistr) in collect(enumerate(statedistrs))
+    Threads.@threads for (t, statedistr) in collect(enumerate(statedistrs))
         assess!(acc, simulationspec, statedistr, t)
     end
 
@@ -63,7 +63,7 @@ function assess(extractionspec::ExtractionSpec,
 
     acc = accumulator(extractionspec, simulationspec, resultspec, system, seed)
 
-    for i in 1:simulationspec.nsamples
+    Threads.@threads for i in 1:simulationspec.nsamples
         assess!(acc, extractionspec, simulationspec, system, i)
     end
 

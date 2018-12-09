@@ -57,7 +57,7 @@ function update!(acc::NonSequentialMinimalResultAccumulator,
 end
 
 function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+                 sample::SystemOutputStateSample{L,T,P,V}, t::Int, i::Int) where {N,L,T,P,E,V}
 
     thread = Threads.threadid()
 
@@ -78,9 +78,8 @@ function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,
 
     end
 
-    shortfall = droppedload(sample)
-    isshortfall = !isapprox(shortfall, 0.)
-    droppedenergy = powertoenergy(shortfall, L, T, P, E)
+    isshortfall, droppedpower = droppedload(sample)
+    droppedenergy = powertoenergy(droppedpower, L, T, P, E)
 
     fit!(acc.droppedcount_period[thread], V(isshortfall))
     fit!(acc.droppedsum_period[thread], droppedenergy)
@@ -93,7 +92,7 @@ function finalize(acc::NonSequentialMinimalResultAccumulator{V,<:SystemModel{N,L
                   ) where {N,L,T,P,E,V}
 
     # Add the final local results
-    for thread in 1:Threads.threadid()
+    for thread in 1:Threads.nthreads()
 
         transferperiodresults!(
             acc.droppedcount_valsum, acc.droppedcount_varsum,

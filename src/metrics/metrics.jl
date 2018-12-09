@@ -2,15 +2,24 @@ abstract type ReliabilityMetric{V<:Real} end
 
 function roundresults(x::ReliabilityMetric)
 
-    s = Decimal(stderr(x))
-    s_sigfigs = length(string(s.c))
-    s_c = round(Int, s.c / 10^(s_sigfigs-1))
-    s_q = s.q + s_sigfigs - 1
-    s_rounded = string(Decimal(s.s, s_c, s_q))
+    if stderr(x) == 0
 
-    v = Decimal(val(x))
-    v_c = round(Int, v.c / 10^(s_q - v.q))
-    v_rounded = string(Decimal(v.s, v_c, s_q))
+        v_rounded = string(val(x))
+        s_rounded = "0"
+
+    else
+
+        s = Decimal(stderr(x))
+        s_sigfigs = length(string(s.c))
+        s_c = round(Int, s.c / 10^(s_sigfigs-1))
+        s_q = s.q + s_sigfigs - 1
+        s_rounded = string(Decimal(s.s, s_c, s_q))
+
+        v = Decimal(val(x))
+        v_c = round(Int, v.c / 10^(s_q - v.q))
+        v_rounded = string(Decimal(v.s, v_c, s_q))
+
+    end
 
     return v_rounded, s_rounded
 

@@ -83,19 +83,25 @@ function extract(extractionspec::ExtractionSpec,
     end
 
     interface_distrs = Matrix{CapacityDistribution{V}}(n_interfaces, n_linesets)
+    # Ugly hack to get the compiler to infer types
+    let interface_distrs=interface_distrs, interface_starts=interface_starts, lines=system.lines
     Threads.@threads for i in 1:n_linesets
-        lineset = view(system.lines, :, i)
+        lineset = view(lines, :, i)
         lineset_interfaces = view(interface_distrs, :, i)
         convolvepartitions!(lineset_interfaces, lineset, interface_starts)
     end
+    end
 
     results = Vector{SystemInputStateDistribution{L,T,P,E,V}}(n_timestamps)
+    # Same ugly hack as above
+    let results=results, interface_distrs=interface_distrs
     Threads.@threads for t in 1:n_timestamps
         results[t] = SystemInputStateDistribution(
             extractionspec, t, system,
             region_distrs[:, system.timestamps_generatorset[t]],
             interface_distrs[:, system.timestamps_lineset[t]],
             copperplate)
+    end
     end
 
     return results

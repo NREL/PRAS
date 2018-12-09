@@ -15,8 +15,8 @@ function assess!(acc::ResultAccumulator,
                  system::SystemInputStateDistribution{L,T,P,E,Float64},
                  t::Int) where {L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    systemsampler = SystemInputStateSampler(system)
-    sink_idx = nv(systemsampler.graph)
+    thread = Threads.threadid()
+    sink_idx = nv(system.graph)
     source_idx = sink_idx-1
     n = sink_idx-2
 
@@ -26,16 +26,16 @@ function assess!(acc::ResultAccumulator,
     count = Array{Int}(2*sink_idx+1)
     excess = Array{Float64}(sink_idx)
     active = Array{Bool}(sink_idx)
+    outputsample = SystemOutputStateSample{L,T,P,Float64}(system.interface_labels, n)
 
     for i in 1:simulationspec.nsamples
 
-        rand!(statematrix, systemsampler)
-        LightGraphs.push_relabel!(
+        rand!(acc.rngs[thread], statematrix, system)
+        LightGraphs.push_relabel!( # Performance bottleneck
             flowmatrix, height, count, excess, active,
-            systemsampler.graph, source_idx, sink_idx, statematrix)
+            system.graph, source_idx, sink_idx, statematrix)
 
-        outputsample = SystemOutputStateSample{L,T,P}(
-            statematrix, flowmatrix, system.interface_labels, n)
+        update!(outputsample, statematrix, flowmatrix)
         update!(acc, outputsample, t, i)
 
     end

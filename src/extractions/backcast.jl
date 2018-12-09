@@ -13,7 +13,8 @@ function SystemInputStateDistribution(
     if copperplate
         vg = vec(sum(vg, 1))
         load = vec(sum(load, 1))
-        result = SystemInputStateDistribution{L,T,P,E}(region_distrs[1], vg, load)
+        result = SystemInputStateDistribution{L,T,P,E}(
+            region_distrs[1], vg, load)
     else
         result = SystemInputStateDistribution{L,T,P,E}(
             system.regions, region_distrs, vg,

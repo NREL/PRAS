@@ -1,6 +1,8 @@
 CapacityDistribution{T} = Distributions.Generic{T,Float64,Vector{T}}
 CapacitySampler{T} = Distributions.GenericSampler{T, Vector{T}}
 
+struct NoCheck end # For bypassing constructor checks
+
 SumVariance{T} = OnlineStats.Series{
     Number,
     Tuple{OnlineStats.Sum{T},
@@ -86,4 +88,12 @@ function transferperiodresults!(
 
 end
 
-approxnonzero(x::V) where V = V(!isapprox(x, zero(V)))
+function checkdifference(x::V, y::V) where {V<:AbstractFloat}
+    diff = x - y
+    return abs(diff) > sqrt(eps(V))*max(abs(x), abs(y)), diff
+end
+
+function approxnonzero(x::V, T::Type=V) where {V<:AbstractFloat}
+    absx = abs(x)
+    return T(absx > sqrt(eps(V))*absx)
+end
