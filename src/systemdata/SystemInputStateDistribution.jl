@@ -18,9 +18,11 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
     function SystemInputStateDistribution{N,T,P,E}(
         region_labels::Vector{String},
         region_maxdispatchabledistrs::Vector{CapacityDistribution{V}},
+        region_maxdispatchablesamplers::Vector{CapacitySampler{V}},
         vgsamples::Matrix{V},
         interface_labels::Vector{Tuple{Int,Int}},
         interface_maxflowdistrs::Vector{CapacityDistribution{V}},
+        interface_maxflowsamplers::Vector{CapacitySampler{V}},
         loadsamples::Matrix{V}) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
         n_regions = length(region_labels)
@@ -66,18 +68,19 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         new{N,T,P,E,V}(
             region_idxs, region_labels,
             region_maxdispatchabledistrs,
-            sampler.(region_maxdispatchabledistrs),
+            region_maxdispatchablesamplers,
             vgsample_idxs, vgsamples,
 	    interface_idxs, interface_labels,
             interface_maxflowdistrs,
-            sampler.(interface_maxflowdistrs),
+            interface_maxflowsamplers,
             loadsample_idxs, loadsamples, graph)
 
     end
 
     # Single-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
-        maxdispatchable::CapacityDistribution{V},
+        maxdispatchable_distr::CapacityDistribution{V},
+        maxdispatchable_sampler::CapacitySampler{V},
         vgsamples::Vector{V}, loadsamples::Vector{V}
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
@@ -89,7 +92,7 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 
         new{N,T,P,E,V}(
             Base.OneTo(1), ["Region"],
-            [maxdispatchable], [sampler(maxdispatchable)],
+            [maxdispatchable_distr], [maxdispatchable_sampler],
             Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),
             Base.OneTo(0), Tuple{Int,Int}[],
             CapacityDistribution{V}[], CapacitySampler{V}[],

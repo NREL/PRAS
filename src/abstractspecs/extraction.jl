@@ -76,19 +76,25 @@ function extract(extractionspec::ExtractionSpec,
     n_linesets = size(system.lines, 2)
 
     region_distrs = Matrix{CapacityDistribution{V}}(n_regions, n_gensets)
+    region_samplers = Matrix{CapacitySampler{V}}(n_regions, n_gensets)
     Threads.@threads for i in 1:n_gensets
         genset = view(system.generators, :, i)
-        genset_regions = view(region_distrs, :, i)
-        convolvepartitions!(genset_regions, genset, region_starts)
+        genset_region_distrs = view(region_distrs, :, i)
+        genset_region_samplers = view(region_samplers, :, i)
+        convolvepartitions!(genset_region_distrs, genset_region_samplers,
+                            genset, region_starts)
     end
 
     interface_distrs = Matrix{CapacityDistribution{V}}(n_interfaces, n_linesets)
+    interface_samplers = Matrix{CapacitySampler{V}}(n_interfaces, n_linesets)
     # Ugly hack to get the compiler to infer types
     let interface_distrs=interface_distrs, interface_starts=interface_starts, lines=system.lines
     Threads.@threads for i in 1:n_linesets
         lineset = view(lines, :, i)
-        lineset_interfaces = view(interface_distrs, :, i)
-        convolvepartitions!(lineset_interfaces, lineset, interface_starts)
+        lineset_interface_distrs = view(interface_distrs, :, i)
+        lineset_interface_samplers = view(interface_samplers, :, i)
+        convolvepartitions!(lineset_interface_distrs, lineset_interface_samplers,
+                            lineset, interface_starts)
     end
     end
 
@@ -99,7 +105,9 @@ function extract(extractionspec::ExtractionSpec,
         results[t] = SystemInputStateDistribution(
             extractionspec, t, system,
             region_distrs[:, system.timestamps_generatorset[t]],
+            region_samplers[:, system.timestamps_generatorset[t]],
             interface_distrs[:, system.timestamps_lineset[t]],
+            interface_samplers[:, system.timestamps_lineset[t]],
             copperplate)
     end
     end
@@ -111,10 +119,12 @@ end
 function convolvepartitions(assets::AbstractVector{<:AssetSpec{T}},
                            partitionstarts::Vector{Int}) where {T}
     distrs = Vector{CapacityDistribution{T}}(length(partitionstarts))
-    return convolvepartitions!(distrs, assets, partitionstarts)
+    samplers = Vector{CapacitySampler{T}}(length(partitionstarts))
+    return convolvepartitions!(distrs, samplers, assets, partitionstarts)
 end
 
 function convolvepartitions!(distrs::AbstractVector{CapacityDistribution{T}},
+                             samplers::AbstractVector{CapacitySampler{T}},
                              assets::AbstractVector{<:AssetSpec{T}},
                              partitionstarts::Vector{Int}) where {T}
 
@@ -126,10 +136,13 @@ function convolvepartitions!(distrs::AbstractVector{CapacityDistribution{T}},
         partitionstart = partitionstarts[i]
         partitionend = i < n_partitions ? partitionstarts[i+1]-1 : n_assets
         partitionassets = assets[partitionstart:partitionend]
-        distrs[i] = spconv([round(Int, a.capacity) for a in partitionassets],
-                           [a.μ / (a.μ + a.λ) for a in partitionassets])
+        distr = CapacityDistribution{T}(
+            spconv([round(Int, a.capacity) for a in partitionassets],
+                   [a.μ / (a.μ + a.λ) for a in partitionassets]))
+        distrs[i] = distr
+        samplers[i] = sampler(distr)
     end
 
-    return distrs
+    return distrs, samplers
 
 end

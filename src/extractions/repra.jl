@@ -13,7 +13,9 @@ function SystemInputStateDistribution(
     params::REPRA, dt_idx::Int,
     system::SystemModel{N,L,T,P,E,V},
     region_distrs::Vector{CapacityDistribution{V}},
+    region_samplers::Vector{CapacitySampler{V}},
     interface_distrs::Vector{CapacityDistribution{V}},
+    interface_samplers::Vector{CapacitySampler{V}},
     copperplate::Bool=false) where {N,L,T,P,E,V}
 
     dt = system.timestamps[dt_idx]
@@ -26,11 +28,12 @@ function SystemInputStateDistribution(
     if copperplate
         vg = vec(sum(vg, 1))
         load = vec(sum(load, 1))
-        result = SystemInputStateDistribution{L,T,P,E}(region_distrs[1], vg, load)
+        result = SystemInputStateDistribution{L,T,P,E}(
+            region_distrs[1], region_samplers[1], vg, load)
     else
         result = SystemInputStateDistribution{L,T,P,E}(
-            system.regions, region_distrs, vg,
-            system.interfaces, interface_distrs, load)
+            system.regions, region_distrs, region_samplers, vg,
+            system.interfaces, interface_distrs, interface_samplers, load)
     end
 
     return result
