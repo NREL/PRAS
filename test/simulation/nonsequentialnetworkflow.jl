@@ -30,6 +30,16 @@
             EUE.(result_1ab, singlenode_a.timestamps)))
     println()
 
+    println("SpatioTemporal:")
+    result_1ab =
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_a)
+    println(LOLE(result_1ab))
+    println(EUE(result_1ab))
+    display(hcat(singlenode_a.timestamps,
+            LOLP.(result_1ab, singlenode_a.timestamps),
+            EUE.(result_1ab, singlenode_a.timestamps)))
+    println()
+
 
     println("\nSingle-region system B")
     println("Theoretical:")
@@ -58,6 +68,15 @@
             EUE.(result_1bb, singlenode_b.timestamps)))
     println()
 
+    println("SpatioTemporal:")
+    result_1bb =
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_b)
+    println(LOLE(result_1bb))
+    println(EUE(result_1bb))
+    display(hcat(singlenode_b.timestamps,
+            LOLP.(result_1bb, singlenode_b.timestamps),
+            EUE.(result_1bb, singlenode_b.timestamps)))
+    println()
 
     println("\nThree-region system")
     println("Theoretical:")
@@ -78,8 +97,9 @@
     display(hcat(threenode.regions,
                  LOLE.(result_3mb, threenode.regions),
                  EUE.(result_3mb, threenode.regions)))
+    println()
 
-    println("\nTemporal:")
+    println("Temporal:")
     result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
                         Temporal(), threenode)
     println(LOLE(result_3mb))
@@ -88,5 +108,29 @@
             LOLP.(result_3mb, threenode.timestamps),
             EUE.(result_3mb, threenode.timestamps)))
     println()
+
+    println("SpatioTemporal:")
+    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+                        SpatioTemporal(), threenode)
+    println(LOLE(result_3mb))
+    println(EUE(result_3mb))
+
+    println("SpatioTemporal LOLPs:")
+    regionsrow = reshape(threenode.regions, 1, :)
+    timestampcol = collect(threenode.timestamps)
+    display(
+        vcat(
+            hcat("", regionsrow),
+            hcat(threenode.timestamps,
+                 LOLP.(result_3mb, regionsrow, timestampcol))
+    )); println()
+
+    println("SpatioTemporal EUEs:")
+    display(
+        vcat(
+            hcat("", regionsrow),
+            hcat(threenode.timestamps,
+                 EUE.(result_3mb, regionsrow, timestampcol))
+    )); println()
 
 end

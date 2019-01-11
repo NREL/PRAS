@@ -12,17 +12,6 @@ for T in [LOLP, LOLE, EUE] # LOLF would go here too
         error("$T(::$R, region::AbstractString) not defined: $R may not " *
               "support regional results")
 
-    # Metric over specific timestep range and all regions
-    (::Type{T})(::R, ::DateTime, ::DateTime) where {R<:Result} =
-        error("$T(::$R, start::DateTime, end::DateTime) not defined: $R " *
-              "may not support timestep sub-interval results")
-
-    # Metric over specific region and specific timestep range
-    (::Type{T})(::R, ::DateTime, ::DateTime, ::AbstractString) where {R<:Result} =
-        error("$T(::$R, start::DateTime, end::DateTime, " *
-              "region::AbstractString) not defined: $R may not support " *
-              "regional timestep sub-interval results")
-
 end
 
 # Metrics defined over single timesteps
@@ -35,7 +24,7 @@ for T in [LOLP, EUE]
 
    
     # Metric at a specific timestep and region
-    (::Type{T})(::R, ::DateTime, ::AbstractString) where {R<:Result} = 
+    (::Type{T})(::R, ::AbstractString, ::DateTime) where {R<:Result} = 
         error("$T(::$R, period::DateTime, region::AbstractString) " *
               "not yet defined: $R may not support regional " *
               "timestep-specific results")

@@ -56,7 +56,7 @@ end
 function update!(acc::NonSequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
-    isshortfall, droppedpower  = droppedload(sample)
+    isshortfall, droppedpower = droppedload(sample)
     droppedenergy = powertoenergy(droppedpower, L, T, P, E)
 
     fit!(acc.droppedcount[t], V(isshortfall))
@@ -69,12 +69,11 @@ end
 function finalize(acc::NonSequentialTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
                   ) where {N,L,T,P,E,V}
 
-    timestamps = acc.system.timestamps
     lolps = makemetric.(LOLP{L,T}, acc.droppedcount)
     eues = makemetric.(EUE{1,L,T,E}, acc.droppedsum)
 
     return TemporalResult(
-        timestamps, LOLE(lolps), lolps, EUE(eues), eues,
+        acc.system.timestamps, LOLE(lolps), lolps, EUE(eues), eues,
         acc.extractionspec, acc.simulationspec)
 
 end
