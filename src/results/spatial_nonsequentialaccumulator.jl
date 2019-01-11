@@ -143,7 +143,6 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L
                   ) where {N,L,T,P,E,V}
 
     regions = acc.system.regions
-    nregions = length(regions)
 
     # Transfer the final thread-local results
     for thread in 1:Threads.nthreads()
@@ -156,7 +155,7 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L
             acc.droppedsum_overall_valsum, acc.droppedsum_overall_varsum,
             acc.droppedsum_overall_period, thread)
 
-        for r in 1:length(acc.system.regions)
+        for r in 1:length(regions)
 
             transferperiodresults!(
                 acc.droppedcount_region_valsum, acc.droppedcount_region_varsum,

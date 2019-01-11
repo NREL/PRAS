@@ -12,7 +12,7 @@
     )
 
     # Disallow metrics defined over different time periods
-    @test_throws MethodError ResourceAdequacy.MinimalResult(
+    @test_throws MethodError ResourceAdequacy.TemporalResult(
         tstamps, lole, lolps,
         EUE{168,30,Minute,MWh}(val(eue), stderr(eue)),
         EUE{1,30,Minute,MWh}.(val.(eues), stderr.(eues)),
