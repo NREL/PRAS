@@ -19,19 +19,19 @@ To save out detailed results to a file for postprocessing or visualization, see
 
 First, know that PRAS uses multi-threading, so be
 sure to set the environment variable controlling the number of threads
-available to Julia (72 in this Bash example, which is a good choice for
+available to Julia (36 in this Bash example, which is a good choice for
 Eagle nodes - on a laptop you would probably only want 4) before running
 scripts or launching the REPL:
 
 ```sh
-export JULIA_NUM_THREADS=72
+export JULIA_NUM_THREADS=36
 ```
 
 ### Architecture Overview
 
 PRAS functionality is distributed across a range of different types of
-modules that can be mixed, matched, and extended to support the needs of a
-particular analysis. When assessing reliability or capacity value, one can
+modules that can be mixed, matched, extended, or replaced to support the needs
+of a particular analysis. When assessing reliability or capacity value, one can
 define the modules to be used while passing along any associated parameters
 or options.
 
@@ -45,7 +45,7 @@ Options are `Backcast` or `REPRA`.
 Options are `NonSequentialCopperplate` or `NonSequentialNetworkFlow`.
 
 **Results**: What level of detail should be saved out during simulations?
-Options are `Minimal`, `Temporal`, or `Spatial`.
+Options are `Minimal`, `Temporal`, `Spatial`, and `SpatioTemporal`.
 
 ### Running an analysis
 
@@ -77,4 +77,46 @@ assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Minimal(), mysystemmodel
 To save regional results in a multi-area system, change `Minimal` to `Spatial`:
 ```julia
 assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Spatial(), mysystemmodel)
+```
+
+To save regional results for each simulation period, use the `SpatioTemporal`
+result specification instead:
+```julia
+assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), SpatioTemporal(), mysystemmodel)
+```
+
+### Querying Results
+
+After running an analysis, metrics of interest can be obtained by calling the
+appropriate metric's constructor with the result object.
+
+For example, to obtain the system-wide LOLE over the simulation period:
+
+```julia
+result = assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), mysystemmodel)
+lole = LOLE(result)
+```
+Single-period metrics such as LOLP can also be extracted if the appropriate
+information was saved (i.e. if `Temporal` or `SpatioTemporal` result
+specifications were used). For example, to get system-wide LOLP for April 27th,
+2024 at 1pm:
+
+```julia
+lolp = LOLP(result, DateTime(2024, 4, 27, 13))
+```
+
+Similarly, if per-region information was saved (i.e. if `Spatial` or
+`SpatioTemporal` result specifications were used), region-specific metrics
+can be extracted. For example, to obtain the EUE of Region A across the entire
+simulation period:
+
+```julia
+eue_a = EUE(result, "Region A")
+```
+
+Finally, if the results specification supports it (e.g. `SpatioTemporal`), metrics can be
+obtained for both a specific region and time:
+
+```julia
+eue_a = EUE(result, "Region A", DateTime(2024, 4, 27, 13))
 ```
