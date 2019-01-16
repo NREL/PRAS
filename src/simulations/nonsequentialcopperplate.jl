@@ -28,6 +28,6 @@ end
 function to_distr(vs::Vector)
     p = 1/length(vs)
     cmap = countmap(vs)
-    return Generic(collect(keys(cmap)),
+    return DiscreteNonParametric(collect(keys(cmap)),
                    [p * w for w in values(cmap)])
 end

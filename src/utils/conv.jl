@@ -65,7 +65,7 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     hvs = hvsraw[zeroidxs]
     hps = hpsraw[zeroidxs]
 
-    length(hvs) == 0 && return Generic([0.], [1.])
+    length(hvs) == 0 && return DiscreteNonParametric([0.], [1.])
 
     max_n = sum(hvs) + 1
     current_probs  = Vector{Float64}(max_n)
@@ -87,14 +87,14 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     resize!(current_probs, current_n)
     nonzeroprob_idxs = find(current_probs)
 
-    return Generic{Int,Float64,Vector{Int}}(
+    return DiscreteNonParametric{Int,Float64,Vector{Int}}(
         current_values[nonzeroprob_idxs],
         current_probs[nonzeroprob_idxs],
         Distributions.NoArgCheck())
 
 end
 
-function add_dists(a::Generic, b::Generic)
+function add_dists(a::DiscreteNonParametric, b::DiscreteNonParametric)
 
     values = vec(support(a) .+ support(b)')
     probs  = vec(Distributions.probs(a) .* Distributions.probs(b)')
@@ -125,15 +125,15 @@ function add_dists(a::Generic, b::Generic)
 
     end
 
-    return Generic(out_values, out_probs)
+    return DiscreteNonParametric(out_values, out_probs)
 
 end
 
-subtract_dists(a::Generic, b::Generic) =
-    REPRA.add_dists(a, Generic(-b.support, b.p))
+subtract_dists(a::DiscreteNonParametric, b::DiscreteNonParametric) =
+    add_dists(a, DiscreteNonParametric(-b.support, b.p))
 
-function assess(supply::Generic{T,Float64,Vector{T}},
-                demand::Generic{T,Float64,Vector{T}}) where T
+function assess(supply::DiscreteNonParametric{T,Float64,Vector{T}},
+                demand::DiscreteNonParametric{T,Float64,Vector{T}}) where T
 
     s = support(supply)
     ps = Distributions.probs(supply)

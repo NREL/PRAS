@@ -1,5 +1,5 @@
-CapacityDistribution{T} = Distributions.Generic{T,Float64,Vector{T}}
-CapacitySampler{T} = Distributions.GenericSampler{T, Vector{T}}
+CapacityDistribution{T} = Distributions.DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
+CapacitySampler{T} = Distributions.DiscreteNonParametricSampler{T, Vector{T}}
 
 struct NoCheck end # For bypassing constructor checks
 

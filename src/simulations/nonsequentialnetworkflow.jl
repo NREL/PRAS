@@ -31,9 +31,11 @@ function assess!(acc::ResultAccumulator,
     for i in 1:simulationspec.nsamples
 
         rand!(acc.rngs[thread], statematrix, system)
-        LightGraphs.push_relabel!( # Performance bottleneck
-            flowmatrix, height, count, excess, active,
-            system.graph, source_idx, sink_idx, statematrix)
+
+        solveflows!(fp)
+        # LightGraphs.push_relabel!( # Performance bottleneck
+        #    flowmatrix, height, count, excess, active,
+        #    system.graph, source_idx, sink_idx, statematrix)
 
         update!(outputsample, statematrix, flowmatrix)
         update!(acc, outputsample, t, i)
