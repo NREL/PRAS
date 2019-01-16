@@ -13,7 +13,6 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
     loadsamples::Matrix{V}
     graph::DiGraph{Int}
 
-
     # Multi-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
         region_labels::Vector{String},
@@ -102,41 +101,101 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 
 end
 
-function Base.rand!(rng::MersenneTwister, A::Matrix{V},
+"""
+Create a min-cost flow problem for the max power delivery problem. This involves
+a supplementary "slack" node in the network that can absorb undispatched power
+or pass unserved energy through to satisfy power balance constraints.
+Flows to the slack node are free, but flows from the slack node incur the lost
+load penalty of 9999. Flows on transmission interfaces assume a hurdle rate of 1
+to keep unserved energy close to the source of the shortage and eliminate
+loop flows.
+
+Nodes in the problem are indexed in the system's region order, with the slack node
+included last. Edges are ordered as: forward transmission (interface order),
+backwards transmission (interface order), excess capacity (region order),
+unserved energy (region order).
+"""
+function MinCostFlows.FlowProblem(sys::SystemInputStateDistribution)
+
+    nregions = length(sys.region_labels)
+    ninterfaceedges = 2 * length(sys.interface_labels)
+    nedges = 2*ninterfaces + 2*nregions
+
+    regions = 1:nregions
+    slacknode = nregions + 1
+
+    nodesfrom = Vector{Int}(undef, nedges)
+    nodesto = Vector{Int}(undef, nedges)
+    costs = Vector{Int}(undef, nedges)
+    limits = Vector{Int}(undef, nedges)
+    injections = zeros(Int, slacknode)
+
+    # Forward transmission edges
+    forwardtransmission = 1:ninterfaceedges
+    nodesfrom[forwardtransmission] = first.(sys.edge_labels)
+    nodesto[forwardtransmission] = last.(sys.edge_labels)
+    limits[forwardtransmission] = 0
+    costs[forwardtransmission] = 1
+
+    # Reverse transmission edges
+    reversetranmsission = forwardtransmission .+ ninterfaceedges
+    nodesfrom[reversetranmsission] = last.(sys.edge_labels)
+    nodesto[reversetransmission] = first.(sys.edge_labels)
+    limits[reversetransmission] = 0
+    costs[reversetransmission] = 1
+
+    # Surplus capacity edges
+    surpluscapacityedges = (1:nregions) .+ 2*ninterfacedges
+    nodesfrom[surpluscapacityedges] = regions
+    nodesto[surpluscapacityedges] = slacknode
+    limits[surpluscapacityedges] = 999999
+    costs[surpluscapacityedges] = 0
+
+    # Unserved energy edges
+    unservedenergyedges = surpluscapacityedges .+ nregions
+    nodesfrom[unservedenergyedges] = slacknode
+    nodesto[unservedenergyedges] = regions
+    limits[unservedenergyedges] = 999999
+    costs[unservedenergyedges] = 9999
+
+    return FlowProblem(nodesfrom, nodesto, limits, costs, injections)
+
+end
+
+function Base.rand!(rng::MersenneTwister, fp::FlowProblem,
                     system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
 
-    region_idxs = system.region_idxs
-    source_idx = last(region_idxs) + 1
-    sink_idx = last(region_idxs) + 2
+    slacknode = fp.nodes[end]
+    ninterfaces = length(system.interface_labels)
 
     vgsample_idx = rand(rng, system.vgsample_idxs)
     loadsample_idx = rand(rng, system.loadsample_idxs)
 
-    # Assign random generation capacities and loads
-    for i in region_idxs
-        A[source_idx, i] =
-            rand(rng, system.region_maxdispatchablesamplers[i]) +
-            system.vgsamples[i, vgsample_idx]
-        A[i, sink_idx] = system.loadsamples[i, loadsample_idx]
+    # Draw random capacity surplus / deficits
+    for i in system.region_idxs
+        updateinjection!(
+            fp.nodes[i], slacknode,
+            rand(rng, system.region_maxdispatchablesamplers[i]) + # Dispatchable generation
+            system.vgsamples[i, vgsample_idx] - # Variable generation
+            system.loadsamples[i, loadsample_idx] # Load
+        )
     end
 
     # Assign random line limits
     for ij in system.interface_idxs
         i, j = system.interface_labels[ij]
         flowlimit = rand(rng, system.interface_maxflowsamplers[ij])
-        A[i,j] = flowlimit
-        A[j,i] = flowlimit
+        updateflowlimit!(fp.edges[ij], flowlimit) # Forward transmission
+        updateflowlimit!(fp.edges[ninterfaces + ij], flowlimit) # Reverse transmission
     end
 
     return A
 
 end
 
-function Base.rand(rng::MersenneTwister,
+function Base.rand(rng::MersenneTwister, fp::FlowProblem
                    system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
-    n = nv(system.graph)
-    A = zeros(V, n, n)
-    return rand!(rng, A, system)
+    return rand!(rng, FlowProblem(system), system)
 end
