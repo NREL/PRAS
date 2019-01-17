@@ -20,16 +20,16 @@ function accumulator(extractionspec::ExtractionSpec,
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
 
-    droppedcount_overall = Vector{SumVariance{V}}(nthreads)
-    droppedsum_overall = Vector{SumVariance{V}}(nthreads)
-    droppedcount_period = Matrix{SumVariance{V}}(nperiods, nthreads)
-    droppedsum_period = Matrix{SumVariance{V}}(nperiods, nthreads)
+    droppedcount_overall = Vector{SumVariance{V}}(undef, nthreads)
+    droppedsum_overall = Vector{SumVariance{V}}(undef, nthreads)
+    droppedcount_period = Matrix{SumVariance{V}}(undef, nperiods, nthreads)
+    droppedsum_period = Matrix{SumVariance{V}}(undef, nperiods, nthreads)
 
-    rngs = Vector{MersenneTwister}(nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = randjump(MersenneTwister(seed), nthreads)
     localidx = zeros(Int, nthreads)
-    localcount = Vector{V}(nthreads)
-    localsum = Vector{V}(nthreads)
+    localcount = Vector{V}(undef, nthreads)
+    localsum = Vector{V}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Sum(), Variance())

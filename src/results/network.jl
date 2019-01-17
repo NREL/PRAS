@@ -192,8 +192,8 @@ end
 function finalize(acc::SinglePeriodNetworkResultAccumulator{N,T,P,E,V}) where {N,T,P,E,V}
 
     n_states = length(acc.nodestates)
-    nodemtx = Matrix{NodeResult{N,T,P,E,V}}(length(acc.nodelabels), n_states)
-    edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(length(acc.edgelabels), n_states)
+    nodemtx = Matrix{NodeResult{N,T,P,E,V}}(undef, length(acc.nodelabels), n_states)
+    edgemtx = Matrix{EdgeResult{N,T,P,E,V}}(undef, length(acc.edgelabels), n_states)
 
     for i in 1:n_states
         nodemtx[:, i] = acc.nodestates[i]
@@ -213,8 +213,8 @@ function MultiPeriodNetworkResult(
 ) where {N,T,P,E,V,SS}
 
     n_results = length(results)
-    nodessets = Vector{Matrix{NodeResult{N,T,P,E,V}}}(n_results)
-    edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(n_results)
+    nodessets = Vector{Matrix{NodeResult{N,T,P,E,V}}}(undef, n_results)
+    edgessets = Vector{Matrix{EdgeResult{N,T,P,E,V}}}(undef, n_results)
 
     for (i,r) in enumerate(results)
         nodessets[i] = r.nodesset

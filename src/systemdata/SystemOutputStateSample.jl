@@ -41,8 +41,8 @@ end
 function SystemOutputStateSample{L,T,P,V}(
     edge_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
 
-    nodes = Vector{RegionResult{L,T,P,V}}(n)
-    edges = Vector{InterfaceResult{L,T,P,V}}(length(edge_labels))
+    nodes = Vector{RegionResult{L,T,P,V}}(undef, n)
+    edges = Vector{InterfaceResult{L,T,P,V}}(undef, length(edge_labels))
     return SystemOutputStateSample(nodes, edges, edge_labels)
 
 end

@@ -1,11 +1,12 @@
 module ResourceAdequacy
 
 using Dates
-using StatsBase
-using OnlineStats
+using Decimals
 using Distributions
 using MinCostFlows
-using Decimals
+using OnlineStats
+using Random
+using StatsBase
 
 export
 

@@ -4,8 +4,16 @@ authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
 version = "0.3.1"
 
 [deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 Decimals = "abce61dc-4473-55a0-ba07-351d65e31d42"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"
 OnlineStats = "a15396b6-48d5-5d58-9928-6d29437db91e"
+Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

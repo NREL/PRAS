@@ -41,12 +41,12 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedsum_region_varsum = zeros(nregions, nthreads)
 
     periodidx = zeros(Int, nthreads)
-    droppedcount_overall_period = Vector{MeanVariance}(nthreads)
-    droppedsum_overall_period = Vector{MeanVariance}(nthreads)
-    droppedcount_region_period = Matrix{MeanVariance}(nregions, nthreads)
-    droppedsum_region_period = Matrix{MeanVariance}(nregions, nthreads)
+    droppedcount_overall_period = Vector{MeanVariance}(undef, nthreads)
+    droppedsum_overall_period = Vector{MeanVariance}(undef, nthreads)
+    droppedcount_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
+    droppedsum_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
 
-    rngs = Vector{MersenneTwister}(nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = randjump(MersenneTwister(seed), nthreads)
 
     Threads.@threads for i in 1:nthreads

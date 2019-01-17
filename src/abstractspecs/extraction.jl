@@ -75,8 +75,8 @@ function extract(extractionspec::ExtractionSpec,
     n_interfaces = length(interface_starts)
     n_linesets = size(system.lines, 2)
 
-    region_distrs = Matrix{CapacityDistribution{V}}(n_regions, n_gensets)
-    region_samplers = Matrix{CapacitySampler{V}}(n_regions, n_gensets)
+    region_distrs = Matrix{CapacityDistribution{V}}(undef, n_regions, n_gensets)
+    region_samplers = Matrix{CapacitySampler{V}}(undef, n_regions, n_gensets)
     Threads.@threads for i in 1:n_gensets
         genset = view(system.generators, :, i)
         genset_region_distrs = view(region_distrs, :, i)
@@ -85,8 +85,8 @@ function extract(extractionspec::ExtractionSpec,
                             genset, region_starts)
     end
 
-    interface_distrs = Matrix{CapacityDistribution{V}}(n_interfaces, n_linesets)
-    interface_samplers = Matrix{CapacitySampler{V}}(n_interfaces, n_linesets)
+    interface_distrs = Matrix{CapacityDistribution{V}}(undef, n_interfaces, n_linesets)
+    interface_samplers = Matrix{CapacitySampler{V}}(undef, n_interfaces, n_linesets)
     # Ugly hack to get the compiler to infer types
     let interface_distrs=interface_distrs, interface_starts=interface_starts, lines=system.lines
     Threads.@threads for i in 1:n_linesets
@@ -98,7 +98,7 @@ function extract(extractionspec::ExtractionSpec,
     end
     end
 
-    results = Vector{SystemInputStateDistribution{L,T,P,E,V}}(n_timestamps)
+    results = Vector{SystemInputStateDistribution{L,T,P,E,V}}(undef, n_timestamps)
     # Same ugly hack as above
     let results=results, interface_distrs=interface_distrs
     Threads.@threads for t in 1:n_timestamps
@@ -118,8 +118,8 @@ end
 
 function convolvepartitions(assets::AbstractVector{<:AssetSpec{T}},
                            partitionstarts::Vector{Int}) where {T}
-    distrs = Vector{CapacityDistribution{T}}(length(partitionstarts))
-    samplers = Vector{CapacitySampler{T}}(length(partitionstarts))
+    distrs = Vector{CapacityDistribution{T}}(undef, length(partitionstarts))
+    samplers = Vector{CapacitySampler{T}}(undef, length(partitionstarts))
     return convolvepartitions!(distrs, samplers, assets, partitionstarts)
 end
 

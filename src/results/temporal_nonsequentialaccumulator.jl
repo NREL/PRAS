@@ -23,15 +23,15 @@ function accumulator(extractionspec::ExtractionSpec,
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
 
-    droppedcount = Vector{MeanVariance}(nperiods)
-    droppedsum = Vector{MeanVariance}(nperiods)
+    droppedcount = Vector{MeanVariance}(undef, nperiods)
+    droppedsum = Vector{MeanVariance}(undef, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
         droppedsum[t] = Series(Mean(), Variance())
     end
 
-    rngs = Vector{MersenneTwister}(nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = randjump(MersenneTwister(seed), nthreads)
 
     Threads.@threads for i in 1:nthreads

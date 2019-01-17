@@ -11,7 +11,6 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
     interface_maxflowsamplers::Vector{CapacitySampler{V}}
     loadsample_idxs::Base.OneTo{Int}
     loadsamples::Matrix{V}
-    graph::DiGraph{Int}
 
     # Multi-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
@@ -40,30 +39,6 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         n_loadsamples = size(loadsamples, 2)
         loadsample_idxs = Base.OneTo(n_loadsamples)
 
-        source_node = n_regions + 1
-        sink_node   = n_regions + 2
-        graph = DiGraph(sink_node)
-
-        # Populate graph with interface edges
-        for (from, to) in interface_labels
-            add_edge!(graph, from, to)
-            add_edge!(graph, to, from)
-        end
-
-        # Populate graph with source and sink edges
-        for i in region_idxs
-
-            add_edge!(graph, source_node, i)
-            add_edge!(graph, i, sink_node)
-
-            # Graph requires reverse edges as well,
-            # even if max flow is zero
-            # (why does LightGraphs use a DiGraph for this then?)
-            add_edge!(graph, i, source_node)
-            add_edge!(graph, sink_node, i)
-
-        end
-
         new{N,T,P,E,V}(
             region_idxs, region_labels,
             region_maxdispatchabledistrs,
@@ -72,7 +47,7 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 	    interface_idxs, interface_labels,
             interface_maxflowdistrs,
             interface_maxflowsamplers,
-            loadsample_idxs, loadsamples, graph)
+            loadsample_idxs, loadsamples)
 
     end
 
@@ -83,19 +58,13 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         vgsamples::Vector{V}, loadsamples::Vector{V}
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-        graph = DiGraph(3)
-        add_edge!(graph, 1, 2)
-        add_edge!(graph, 2, 1)
-        add_edge!(graph, 1, 3)
-        add_edge!(graph, 3, 1)
-
         new{N,T,P,E,V}(
             Base.OneTo(1), ["Region"],
             [maxdispatchable_distr], [maxdispatchable_sampler],
             Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),
             Base.OneTo(0), Tuple{Int,Int}[],
             CapacityDistribution{V}[], CapacitySampler{V}[],
-            Base.OneTo(length(loadsamples)), reshape(loadsamples, 1, :), graph)
+            Base.OneTo(length(loadsamples)), reshape(loadsamples, 1, :))
 
     end
 
@@ -194,7 +163,7 @@ function Base.rand!(rng::MersenneTwister, fp::FlowProblem,
 
 end
 
-function Base.rand(rng::MersenneTwister, fp::FlowProblem
+function Base.rand(rng::MersenneTwister, fp::FlowProblem,
                    system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
     return rand!(rng, FlowProblem(system), system)

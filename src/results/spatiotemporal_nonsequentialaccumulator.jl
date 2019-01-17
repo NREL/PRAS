@@ -36,11 +36,11 @@ function accumulator(extractionspec::ExtractionSpec,
     nperiods = length(sys.timestamps)
     nregions = length(sys.regions)
 
-    droppedcount = Vector{MeanVariance}(nperiods)
-    droppedcount_regions = Matrix{MeanVariance}(nregions, nperiods)
+    droppedcount = Vector{MeanVariance}(undef, nperiods)
+    droppedcount_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
-    droppedsum = Vector{MeanVariance}(nperiods)
-    droppedsum_regions = Matrix{MeanVariance}(nregions, nperiods)
+    droppedsum = Vector{MeanVariance}(undef, nperiods)
+    droppedsum_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -51,7 +51,7 @@ function accumulator(extractionspec::ExtractionSpec,
         end
     end
 
-    rngs = Vector{MersenneTwister}(nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = randjump(MersenneTwister(seed), nthreads)
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])

@@ -34,8 +34,8 @@ function searchsortedunique(a::AbstractVector{T}, i::T) where {T}
 end
 
 function findfirstunique(a::AbstractVector{T}, i::T) where T
-    i_idx = findfirst(a, i)
-    i_idx > 0 || BoundsError(a, i)
+    i_idx = findfirst(isequal(i), a)
+    i_idx === nothing && BoundsError(a, i)
     return i_idx
 end
 
@@ -47,8 +47,8 @@ count should be constant between runs.
 """
 function init_rngs(seed::UInt=rand(UInt))
     nthreads = Threads.nthreads()
-    rngs = Vector{MersenneTwister}(nthreads)
-    rngs_temp = randjump(MersenneTwister(seed),nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = randjump(MersenneTwister(seed), nthreads)
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])
     end
@@ -59,8 +59,8 @@ function unzip(xys::Vector{Tuple{X,Y}}) where {X,Y}
 
     n = length(xys)
 
-    xs = Vector{X}(n)
-    ys = Vector{Y}(n)
+    xs = Vector{X}(undef, n)
+    ys = Vector{Y}(undef, n)
 
     for i in 1:n
        x, y = xys[i]

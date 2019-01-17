@@ -8,7 +8,7 @@ gens2 = reshape(RA.DispatchableGeneratorSpec.(
 
 ## Storage device data
 #TODO: Create and test a system with storage
-stors1 = Matrix{RA.StorageDeviceSpec{Float64}}(0,1)
+stors1 = Matrix{RA.StorageDeviceSpec{Float64}}(undef, 0,1)
 storages1 = [ResourceAdequacy.StorageDeviceSpec(1., 4., 0.99, 0., 1.0)]
 storages2 = [ResourceAdequacy.StorageDeviceSpec(1., 4., 0.99, 0.05, 0.5)]
 
