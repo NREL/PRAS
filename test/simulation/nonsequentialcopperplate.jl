@@ -14,7 +14,7 @@
     # Hourly result - singlenode_a
     result_1ab = assess(Backcast(), NonSequentialCopperplate(), Temporal(), singlenode_a)
     @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
-    @test all(LOLP.(result_1ab, singlenode_a.timestamps) .≈
+    @test all(LOLP.(result_1ab, singlenode_a.timestamps) .≈ # TODO: Update broadcasting syntax?
               LOLP{1,Hour}.([0.028, 0.271, 0.028, 0.028], zeros(4)))
     @test EUE(result_1ab) ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
     @test all(EUE.(result_1ab, singlenode_a.timestamps) .≈

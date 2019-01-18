@@ -1,12 +1,12 @@
 struct NonSequentialSpatioTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
 
     # LOLP / LOLE
-    droppedcount::Vector{MeanVariance}
-    droppedcount_regions::Matrix{MeanVariance}
+    droppedcount::Vector{MeanVariance{V}}
+    droppedcount_regions::Matrix{MeanVariance{V}}
 
     # EUE
-    droppedsum::Vector{MeanVariance}
-    droppedsum_regions::Matrix{MeanVariance}
+    droppedsum::Vector{MeanVariance{V}}
+    droppedsum_regions::Matrix{MeanVariance{V}}
 
     system::S
     extractionspec::ES
@@ -14,10 +14,10 @@ struct NonSequentialSpatioTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumula
     rngs::Vector{MersenneTwister}
 
     NonSequentialSpatioTemporalResultAccumulator{V}(
-        droppedcount::Vector{MeanVariance},
-        droppedcount_regions::Matrix{MeanVariance},
-        droppedsum::Vector{MeanVariance},
-        droppedsum_regions::Matrix{MeanVariance},
+        droppedcount::Vector{MeanVariance{V}},
+        droppedcount_regions::Matrix{MeanVariance{V}},
+        droppedsum::Vector{MeanVariance{V}},
+        droppedsum_regions::Matrix{MeanVariance{V}},
         system::S, extractionspec::ES, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {
         V,S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
@@ -36,11 +36,11 @@ function accumulator(extractionspec::ExtractionSpec,
     nperiods = length(sys.timestamps)
     nregions = length(sys.regions)
 
-    droppedcount = Vector{MeanVariance}(undef, nperiods)
-    droppedcount_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
+    droppedcount = Vector{MeanVariance{V}}(undef, nperiods)
+    droppedcount_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
 
-    droppedsum = Vector{MeanVariance}(undef, nperiods)
-    droppedsum_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
+    droppedsum = Vector{MeanVariance{V}}(undef, nperiods)
+    droppedsum_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -52,7 +52,8 @@ function accumulator(extractionspec::ExtractionSpec,
     end
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
+
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])
     end

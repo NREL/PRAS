@@ -21,7 +21,7 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedcount = Vector{SumVariance{V}}(undef, nthreads)
     droppedsum = Vector{SumVariance{V}}(undef, nthreads)
     rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs_temp = initrngs(nthreads, seed)
 
     simidx = zeros(Int, nthreads)
     simcount = Vector{V}(undef, nthreads)

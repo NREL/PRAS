@@ -51,11 +51,15 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
 deps = ["Distributed", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "6f0fb95d3a0a3b941493728154384daec3dc6347"
-repo-rev = "master"
-repo-url = "https://github.com/JuliaStats/Distributions.jl.git"
+git-tree-sha1 = "1c7a7b867b7c3a3bbee1d8f7f6af6970fd4e1148"
+repo-rev = "pras-patches"
+repo-url = "https://github.com/GordStephen/Distributions.jl.git"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
 version = "0.16.4+"
+
+[[Future]]
+deps = ["Random"]
+uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[InteractiveUtils]]
 deps = ["LinearAlgebra", "Markdown"]
@@ -99,9 +103,9 @@ version = "0.1.0"
 
 [[Missings]]
 deps = ["Dates", "InteractiveUtils", "SparseArrays", "Test"]
-git-tree-sha1 = "adc26d2ee85a49c413464110d922cf21efc9d233"
+git-tree-sha1 = "d1d2585677f2bd93a97cfeb8faa7a0de0f982042"
 uuid = "e1d29d7a-bbdc-5cf2-9ac0-f12de2c33e28"
-version = "0.3.1"
+version = "0.4.0"
 
 [[Mmap]]
 uuid = "a63ad114-7e13-5084-954f-fe012c677804"

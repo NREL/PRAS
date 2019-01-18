@@ -18,7 +18,8 @@ function assess!(acc::ResultAccumulator,
     thread = Threads.threadid()
 
     flowproblem = FlowProblem(system)
-    outputsample = SystemOutputStateSample{L,T,P,Float64}(system.interface_labels, n)
+    outputsample = SystemOutputStateSample{L,T,P,Float64}(
+        system.interface_labels, length(system.region_labels))
 
     for i in 1:simulationspec.nsamples
         rand!(acc.rngs[thread], flowproblem, system)

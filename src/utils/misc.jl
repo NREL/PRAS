@@ -6,13 +6,13 @@ struct NoCheck end # For bypassing constructor checks
 SumVariance{T} = OnlineStats.Series{
     Number,
     Tuple{OnlineStats.Sum{T},
-          OnlineStats.Variance{OnlineStatsBase.EqualWeight}
+          OnlineStats.Variance{T, EqualWeight}
 }}
 
-MeanVariance = OnlineStats.Series{
+MeanVariance{T} = OnlineStats.Series{
     Number,
-    Tuple{OnlineStats.Mean{OnlineStatsBase.EqualWeight},
-          OnlineStats.Variance{OnlineStatsBase.EqualWeight}}
+    Tuple{OnlineStats.Mean{T, EqualWeight},
+          OnlineStats.Variance{T, EqualWeight}}
 }
 
 function makemetric(f, mv::MeanVariance)
@@ -28,31 +28,30 @@ end
 
 function searchsortedunique(a::AbstractVector{T}, i::T) where {T}
     idxs = searchsorted(a, i)
-    length(idxs) == 0 && BoundsError(a, i)
-    length(idxs) > 1 && error("Element $i occurs more than once in $a")
+    length(idxs) == 0 && throw(BoundsError(a))
+    length(idxs) > 1 && throw(ArgumentError("Element $i occurs more than once in $a"))
     return first(idxs)
 end
 
 function findfirstunique(a::AbstractVector{T}, i::T) where T
     i_idx = findfirst(isequal(i), a)
-    i_idx === nothing && BoundsError(a, i)
+    i_idx === nothing && throw(BoundsError(a))
     return i_idx
 end
 
 """
-Allocate each RNG on its own thread.
-Note that the seed alone is not enough to enforce determinism: the number of
-threads used will also affect results. For full reproducibility the thread
-count should be constant between runs.
+Generate a vector of `n` MersenneTwister random number generators, derived from
+a MersenneTwister seeded with `seed`, with `step` steps between each generated
+RNG.
 """
-function init_rngs(seed::UInt=rand(UInt))
-    nthreads = Threads.nthreads()
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
-    Threads.@threads for i in 1:nthreads
-        rngs[i] = copy(rngs_temp[i])
+function initrngs(n::Int; seed::UInt=rand(UInt), step::Integer=big(10)^20)
+    result = Vector{MersenneTwister}(undef, n)
+    prev = MersenneTwister(seed)
+    for i in 1:n
+        prev = Future.randjump(prev, step)
+        result[i] = prev
     end
-    return rngs
+    return result
 end
 
 function unzip(xys::Vector{Tuple{X,Y}}) where {X,Y}
@@ -74,7 +73,7 @@ end
 
 function transferperiodresults!(
     dest_sum::Array{V,N}, dest_var::Array{V,N},
-    src::Array{MeanVariance,N}, idxs::Vararg{Int,N}) where {V,N}
+    src::Array{MeanVariance{V},N}, idxs::Vararg{Int,N}) where {V,N}
 
     series = src[idxs...]
 

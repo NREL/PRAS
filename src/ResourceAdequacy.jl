@@ -6,6 +6,7 @@ using Distributions
 using MinCostFlows
 using OnlineStats
 using Random
+using Future # for randjump
 using StatsBase
 
 export

@@ -24,26 +24,26 @@ struct InterfaceResult{L,T<:Period,P<:PowerUnit,V<:Real}
 end
 
 struct SystemOutputStateSample{L,T,P,V}
-    nodes::Vector{RegionResult{L,T,P,V}}
-    edges::Vector{InterfaceResult{L,T,P,V}}
-    edgelabels::Vector{Tuple{Int,Int}}
+    regions::Vector{RegionResult{L,T,P,V}}
+    interfaces::Vector{InterfaceResult{L,T,P,V}}
+    interfacelabels::Vector{Tuple{Int,Int}}
 
     function SystemOutputStateSample(
-        nodes::Vector{RegionResult{L,T,P,V}},
-        edges::Vector{InterfaceResult{L,T,P,V}},
-        edgelabels::Vector{Tuple{Int,Int}}
+        regions::Vector{RegionResult{L,T,P,V}},
+        interfaces::Vector{InterfaceResult{L,T,P,V}},
+        interfacelabels::Vector{Tuple{Int,Int}}
     ) where {L,T,P,V}
-        @assert length(edges) == length(edgelabels)
-        new{L,T,P,V}(nodes, edges, edgelabels)
+        @assert length(interfaces) == length(interfacelabels)
+        new{L,T,P,V}(regions, interfaces, interfacelabels)
     end
 end
 
 function SystemOutputStateSample{L,T,P,V}(
-    edge_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
+    interface_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
 
-    nodes = Vector{RegionResult{L,T,P,V}}(undef, n)
-    edges = Vector{InterfaceResult{L,T,P,V}}(undef, length(edge_labels))
-    return SystemOutputStateSample(nodes, edges, edge_labels)
+    regions = Vector{RegionResult{L,T,P,V}}(undef, n)
+    interfaces = Vector{InterfaceResult{L,T,P,V}}(undef, length(interface_labels))
+    return SystemOutputStateSample(regions, interfaces, interface_labels)
 
 end
 
@@ -52,25 +52,25 @@ function update!(
     fp::FlowProblem
 ) where {L,T<:Period,P<:PowerUnit,V<:Real}
 
-    nnodes = length(sample.nodes)
-    nedges = length(sample.edges)
+    nregions = length(sample.regions)
+    ninterfaces = length(sample.interfaces)
 
     # Save gen available, gen dispatched, demand, demand served for each region
-    for i in 1:nnodes
+    for i in 1:nregions
         node = fp.nodes[i]
-        surplus_edge = fp.nodes[2*nedges + i]
-        shortfall_edge = fp.nodes[2*nedges + nnodes + i]
-        sample.nodes[i] = RegionResult{L,T,P}(
-            node.injection, surplus_edge.flow, shortfall_edge.flow)
+        surplus_edge = fp.edges[2*ninterfaces + i]
+        shortfall_edge = fp.edges[2*ninterfaces + nregions + i]
+        sample.regions[i] = RegionResult{L,T,P}(
+            V(node.injection), V(surplus_edge.flow), V(shortfall_edge.flow))
     end
 
     # Save flow available, flow for each interface
-    for e in 1:nedges
-        i, j = sample.edgelabels[e]
-        forwardflow = fp.edges[e].flow
-        reverseflow = fp.edges[e+nedges].flow
-        flow = forwardflow > reverseflow : forwardflow : -reverseflow
-        sample.edges[e] = InterfaceResult{L,T,P}(edgeforward.limit, flow)
+    for i in 1:ninterfaces
+        forwardedge = fp.edges[i]
+        forwardflow = forwardedge.flow
+        reverseflow = fp.edges[ninterfaces+i].flow
+        flow = forwardflow > reverseflow ? forwardflow : -reverseflow
+        sample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
     end
 
 end
@@ -80,11 +80,11 @@ function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
     isshortfall = false
     totalshortfall = zero(V)
 
-    for node in sample.nodes
-        different, difference = checkdifference(node.demand, node.demand_served)
-        if different 
+    for region in sample.regions
+        shortfall = region.shortfall
+        if !(shortfall ≈ 0)
             isshortfall = true
-            totalshortfall += difference
+            totalshortfall += shortfall
         end
     end
 
@@ -94,18 +94,17 @@ end
 
 function droppedloads(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
-    nnodes = length(sample.nodes)
+    nregions = length(sample.regions)
     isshortfall = false
     totalshortfall = zero(V)
-    localshortfalls = zeros(V, nnodes)
+    localshortfalls = zeros(V, nregions)
 
-    for i in 1:nnodes
-        node = sample.nodes[i]
-        different, difference = checkdifference(node.demand, node.demand_served)
-        if different
+    for i in 1:nregions
+        shortfall = sample.regions[i].shortfall
+        if !(shortfall ≈ 0)
             isshortfall = true
-            totalshortfall += difference
-            localshortfalls[i] = difference
+            totalshortfall += shortfall
+            localshortfalls[i] = shortfall
         end
     end
 

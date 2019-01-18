@@ -10,10 +10,10 @@ struct NonSequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S
     droppedsum_region_varsum::Matrix{V}
 
     periodidx::Vector{Int}
-    droppedcount_overall_period::Vector{MeanVariance}
-    droppedsum_overall_period::Vector{MeanVariance}
-    droppedcount_region_period::Matrix{MeanVariance}
-    droppedsum_region_period::Matrix{MeanVariance}
+    droppedcount_overall_period::Vector{MeanVariance{V}}
+    droppedsum_overall_period::Vector{MeanVariance{V}}
+    droppedcount_region_period::Matrix{MeanVariance{V}}
+    droppedsum_region_period::Matrix{MeanVariance{V}}
 
     system::S
     extractionspec::ES
@@ -41,13 +41,13 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedsum_region_varsum = zeros(nregions, nthreads)
 
     periodidx = zeros(Int, nthreads)
-    droppedcount_overall_period = Vector{MeanVariance}(undef, nthreads)
-    droppedsum_overall_period = Vector{MeanVariance}(undef, nthreads)
-    droppedcount_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
-    droppedsum_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
+    droppedcount_overall_period = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedsum_overall_period = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedcount_region_period = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
+    droppedsum_region_period = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall_period[i] = Series(Mean(), Variance())
@@ -170,17 +170,17 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L
     end
 
     lole = sum(acc.droppedcount_overall_valsum)
-    loles = vec(sum(acc.droppedcount_region_valsum, 2))
+    loles = vec(sum(acc.droppedcount_region_valsum, dims=2))
     eue = sum(acc.droppedsum_overall_valsum)
-    eues = vec(sum(acc.droppedsum_region_valsum, 2))
+    eues = vec(sum(acc.droppedsum_region_valsum, dims=2))
 
     if ismontecarlo(acc.simulationspec)
 
         nsamples = acc.simulationspec.nsamples
         lole_stderr = sqrt(sum(acc.droppedcount_overall_varsum) / nsamples)
-        loles_stderr = sqrt.(vec(sum(acc.droppedcount_region_varsum, 2)) ./ nsamples)
+        loles_stderr = sqrt.(vec(sum(acc.droppedcount_region_varsum, dims=2)) ./ nsamples)
         eue_stderr = sqrt(sum(acc.droppedsum_overall_varsum) / nsamples)
-        eues_stderr = sqrt.(vec(sum(acc.droppedsum_region_varsum, 2)) ./ nsamples)
+        eues_stderr = sqrt.(vec(sum(acc.droppedsum_region_varsum, dims=2)) ./ nsamples)
 
     else
 

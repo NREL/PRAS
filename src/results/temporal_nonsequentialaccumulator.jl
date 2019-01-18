@@ -1,13 +1,13 @@
 struct NonSequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount::Vector{MeanVariance}
-    droppedsum::Vector{MeanVariance}
+    droppedcount::Vector{MeanVariance{V}}
+    droppedsum::Vector{MeanVariance{V}}
     system::S
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
     NonSequentialTemporalResultAccumulator{V}(
-        droppedcount::Vector{MeanVariance}, droppedsum::Vector{MeanVariance},
+        droppedcount::Vector{MeanVariance{V}}, droppedsum::Vector{MeanVariance{V}},
         system::S, extractionspec::ES, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {V,S,ES,SS} =
         new{V,S,ES,SS}(droppedcount, droppedsum, system,
@@ -23,8 +23,8 @@ function accumulator(extractionspec::ExtractionSpec,
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
 
-    droppedcount = Vector{MeanVariance}(undef, nperiods)
-    droppedsum = Vector{MeanVariance}(undef, nperiods)
+    droppedcount = Vector{MeanVariance{V}}(undef, nperiods)
+    droppedsum = Vector{MeanVariance{V}}(undef, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -32,7 +32,7 @@ function accumulator(extractionspec::ExtractionSpec,
     end
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
 
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])

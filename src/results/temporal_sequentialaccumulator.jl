@@ -26,7 +26,8 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedsum_period = Matrix{SumVariance{V}}(undef, nperiods, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
+
     localidx = zeros(Int, nthreads)
     localcount = Vector{V}(undef, nthreads)
     localsum = Vector{V}(undef, nthreads)

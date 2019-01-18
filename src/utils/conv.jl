@@ -85,9 +85,9 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
 
     resize!(current_values, current_n)
     resize!(current_probs, current_n)
-    nonzeroprob_idxs = find(current_probs)
+    nonzeroprob_idxs = findall(x -> x>0, current_probs)
 
-    return DiscreteNonParametric{Int,Float64,Vector{Int}}(
+    return DiscreteNonParametric(
         current_values[nonzeroprob_idxs],
         current_probs[nonzeroprob_idxs],
         Distributions.NoArgCheck())

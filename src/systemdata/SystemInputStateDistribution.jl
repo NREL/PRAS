@@ -87,8 +87,10 @@ unserved energy (region order).
 function MinCostFlows.FlowProblem(sys::SystemInputStateDistribution)
 
     nregions = length(sys.region_labels)
-    ninterfaceedges = 2 * length(sys.interface_labels)
-    nedges = 2*ninterfaces + 2*nregions
+    ninterfaces = length(sys.interface_labels)
+
+    ninterfaceedges = 2 * ninterfaces
+    nedges = ninterfaceedges + 2*nregions
 
     regions = 1:nregions
     slacknode = nregions + 1
@@ -100,38 +102,38 @@ function MinCostFlows.FlowProblem(sys::SystemInputStateDistribution)
     injections = zeros(Int, slacknode)
 
     # Forward transmission edges
-    forwardtransmission = 1:ninterfaceedges
-    nodesfrom[forwardtransmission] = first.(sys.edge_labels)
-    nodesto[forwardtransmission] = last.(sys.edge_labels)
-    limits[forwardtransmission] = 0
-    costs[forwardtransmission] = 1
+    forwardtransmission = 1:ninterfaces
+    nodesfrom[forwardtransmission] = first.(sys.interface_labels)
+    nodesto[forwardtransmission] = last.(sys.interface_labels)
+    limits[forwardtransmission] .= 0
+    costs[forwardtransmission] .= 1
 
     # Reverse transmission edges
-    reversetranmsission = forwardtransmission .+ ninterfaceedges
-    nodesfrom[reversetranmsission] = last.(sys.edge_labels)
-    nodesto[reversetransmission] = first.(sys.edge_labels)
-    limits[reversetransmission] = 0
-    costs[reversetransmission] = 1
+    reversetransmission = forwardtransmission .+ ninterfaces
+    nodesfrom[reversetransmission] = last.(sys.interface_labels)
+    nodesto[reversetransmission] = first.(sys.interface_labels)
+    limits[reversetransmission] .= 0
+    costs[reversetransmission] .= 1
 
     # Surplus capacity edges
-    surpluscapacityedges = (1:nregions) .+ 2*ninterfacedges
+    surpluscapacityedges = (1:nregions) .+ ninterfaceedges
     nodesfrom[surpluscapacityedges] = regions
-    nodesto[surpluscapacityedges] = slacknode
-    limits[surpluscapacityedges] = 999999
-    costs[surpluscapacityedges] = 0
+    nodesto[surpluscapacityedges] .= slacknode
+    limits[surpluscapacityedges] .= 999999
+    costs[surpluscapacityedges] .= 0
 
     # Unserved energy edges
     unservedenergyedges = surpluscapacityedges .+ nregions
-    nodesfrom[unservedenergyedges] = slacknode
+    nodesfrom[unservedenergyedges] .= slacknode
     nodesto[unservedenergyedges] = regions
-    limits[unservedenergyedges] = 999999
-    costs[unservedenergyedges] = 9999
+    limits[unservedenergyedges] .= 999999
+    costs[unservedenergyedges] .= 9999
 
     return FlowProblem(nodesfrom, nodesto, limits, costs, injections)
 
 end
 
-function Base.rand!(rng::MersenneTwister, fp::FlowProblem,
+function Random.rand!(rng::MersenneTwister, fp::FlowProblem,
                     system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
 
@@ -144,26 +146,26 @@ function Base.rand!(rng::MersenneTwister, fp::FlowProblem,
     # Draw random capacity surplus / deficits
     for i in system.region_idxs
         updateinjection!(
-            fp.nodes[i], slacknode,
+            fp.nodes[i], slacknode, round(Int,
             rand(rng, system.region_maxdispatchablesamplers[i]) + # Dispatchable generation
             system.vgsamples[i, vgsample_idx] - # Variable generation
             system.loadsamples[i, loadsample_idx] # Load
-        )
+        ))
     end
 
     # Assign random line limits
     for ij in system.interface_idxs
         i, j = system.interface_labels[ij]
-        flowlimit = rand(rng, system.interface_maxflowsamplers[ij])
+        flowlimit = round(Int, rand(rng, system.interface_maxflowsamplers[ij]))
         updateflowlimit!(fp.edges[ij], flowlimit) # Forward transmission
         updateflowlimit!(fp.edges[ninterfaces + ij], flowlimit) # Reverse transmission
     end
 
-    return A
+    return fp
 
 end
 
-function Base.rand(rng::MersenneTwister, fp::FlowProblem,
+function Random.rand(rng::MersenneTwister, fp::FlowProblem,
                    system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
     return rand!(rng, FlowProblem(system), system)

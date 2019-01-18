@@ -9,7 +9,7 @@ function assess!(acc::ResultAccumulator,
                  t::Int) where {L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
 
     # Collapse net load
-    netloadsamples = vec(sum(sys.loadsamples, 1) .- sum(sys.vgsamples, 1))
+    netloadsamples = vec(sum(sys.loadsamples, dims=1) .- sum(sys.vgsamples, dims=1))
     netload = to_distr(netloadsamples)
 
     # Collapse regions
