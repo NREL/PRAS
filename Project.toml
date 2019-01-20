@@ -1,10 +1,10 @@
-authors = ["gstephen <gord.stephen@nrel.gov>"]
 name = "PRAS"
 uuid = "05348d26-1c52-11e9-35e3-9d51842d34b9"
+authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
 version = "0.4.0"
 
 [deps]
-Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"
+PLEXOS2PRAS = "23000632-8e99-4af6-adcc-f1f915ea3706"
 ResourceAdequacy = "f1bff6d7-bd5f-4f25-88ac-02781f2d51b7"
