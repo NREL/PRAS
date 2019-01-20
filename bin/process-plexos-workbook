@@ -1,0 +1,43 @@
+#! /usr/bin/env julia
+
+using ArgParse
+using PLEXOS2PRAS
+
+function parse_commandline(args::Vector{String}=ARGS)
+
+    s = ArgParseSettings()
+
+    @add_arg_table s begin
+
+        "inputfile"
+            help = "Name of the input Excel workbook"
+            action = :store_arg
+            arg_type = String
+            required = true
+
+        "outputfile"
+            help = "Name of the output Excel workbook containing the " *
+                    "modified system / models"
+            action = :store_arg
+            arg_type = String
+
+        "--suffix", "-s"
+            help = "Suffix to append to the names of modified PLEXOS models " +
+                    "in the output workbook"
+            action = :store_arg
+            arg_type = String
+            default = "PRAS"
+
+    return parse_args(args, s, as_symbols=true)
+
+args = parse_commandline(ARGS)
+
+outputfile = if args[:outputfile] == nothing
+    filepath, fileextension = splitdir(args[:inputfile])
+    filepath * "_" * args[:suffix] * fileextension
+else
+    args[:outputfile]
+end
+
+process_workbook(args[:inputfile], outputfile, args[:suffix])
+
