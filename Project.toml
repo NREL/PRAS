@@ -4,6 +4,8 @@ authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
 version = "0.4.0"
 
 [deps]
+ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"
 PLEXOS2PRAS = "23000632-8e99-4af6-adcc-f1f915ea3706"

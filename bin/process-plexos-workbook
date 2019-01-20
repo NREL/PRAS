@@ -22,13 +22,17 @@ function parse_commandline(args::Vector{String}=ARGS)
             arg_type = String
 
         "--suffix", "-s"
-            help = "Suffix to append to the names of modified PLEXOS models " +
+            help = "Suffix to append to the names of modified PLEXOS models " *
                     "in the output workbook"
             action = :store_arg
             arg_type = String
             default = "PRAS"
 
+    end
+
     return parse_args(args, s, as_symbols=true)
+
+end
 
 args = parse_commandline(ARGS)
 
