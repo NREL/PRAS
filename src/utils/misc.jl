@@ -1,5 +1,10 @@
-CapacityDistribution{T} = Distributions.DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
-CapacitySampler{T} = Distributions.DiscreteNonParametricSampler{T, Vector{T}}
+CapacityDistribution{T} =
+    Distributions.DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
+
+CapacitySampler{T} =
+    Distributions.DiscreteNonParametricSampler{
+        T, Vector{T},
+        Distributions.AliasTable{Random.SamplerRangeFast{UInt64,Int64}}}
 
 struct NoCheck end # For bypassing constructor checks
 

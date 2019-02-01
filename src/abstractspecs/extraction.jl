@@ -139,7 +139,9 @@ function convolvepartitions!(distrs::AbstractVector{CapacityDistribution{T}},
         # TODO: Consider just keeping data in Int form
         distr_int = spconv([round(Int, a.capacity) for a in partitionassets],
                            [a.μ / (a.μ + a.λ) for a in partitionassets])
-        distr = DiscreteNonParametric(T.(support(distr_int)), Distributions.probs(distr_int))
+        distr = DiscreteNonParametric(T.(support(distr_int)),
+                                      Distributions.probs(distr_int),
+                                      Distributions.NoArgCheck())
         distrs[i] = distr
         samplers[i] = sampler(distr)
     end

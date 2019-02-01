@@ -65,7 +65,7 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     hvs = hvsraw[zeroidxs]
     hps = hpsraw[zeroidxs]
 
-    length(hvs) == 0 && return DiscreteNonParametric([0.], [1.])
+    length(hvs) == 0 && return DiscreteNonParametric([0], [1.], Distributions.NoArgCheck())
 
     max_n = sum(hvs) + 1
     current_probs  = Vector{Float64}(undef, max_n)
@@ -125,7 +125,7 @@ function add_dists(a::DiscreteNonParametric, b::DiscreteNonParametric)
 
     end
 
-    return DiscreteNonParametric(out_values, out_probs)
+    return DiscreteNonParametric(out_values, out_probs, Distributions.NoArgCheck())
 
 end
 
