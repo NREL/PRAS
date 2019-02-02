@@ -66,15 +66,15 @@ version = "0.5.1"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "ec61a16eed883ad0cfa002d7489b3ce6d039bb9a"
+git-tree-sha1 = "49269e311ffe11ac5b334681d212329002a9832a"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.4.0"
+version = "1.5.1"
 
 [[Conda]]
 deps = ["Compat", "JSON", "VersionParsing"]
-git-tree-sha1 = "fb86fe40cb5b35990e368709bfdc1b46dbb99dac"
+git-tree-sha1 = "b625d802587c2150c279a40a646fba63f9bd8187"
 uuid = "8f4d0f93-b110-5947-807f-2305c1781a2d"
-version = "1.1.1"
+version = "1.2.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "CodecZlib", "Compat", "DataStreams", "Dates", "InteractiveUtils", "IteratorInterfaceExtensions", "LinearAlgebra", "Missings", "Printf", "Random", "Reexport", "SortingAlgorithms", "Statistics", "StatsBase", "TableTraits", "Tables", "Test", "TranscodingStreams", "Unicode", "WeakRefStrings"]
@@ -114,7 +114,7 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
 deps = ["Distributed", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "49c752c61d2ffaf8e6652e16cc08d76f9fbaa08f"
+git-tree-sha1 = "f3848571caff5d82f70cdeb7d5538ecfdf3c1779"
 repo-rev = "pras-patches"
 repo-url = "https://github.com/GordStephen/Distributions.jl.git"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -232,7 +232,7 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MinCostFlows]]
-git-tree-sha1 = "b2e76e2322fe5bc1ac68f51d762932cbddff3988"
+git-tree-sha1 = "3e350d27ce94973786533b4971b519ae50453b11"
 repo-rev = "master"
 repo-url = "https://github.nrel.gov/PRAS/MinCostFlows.jl.git"
 uuid = "62286e6e-1779-56f1-888a-1c0056788ce0"
@@ -249,9 +249,9 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[OnlineStats]]
 deps = ["DataStructures", "Dates", "LearnBase", "LinearAlgebra", "LossFunctions", "OnlineStatsBase", "PenaltyFunctions", "Random", "RecipesBase", "Reexport", "Statistics", "StatsBase", "SweepOperator", "Test"]
-git-tree-sha1 = "dd92feec34612b9dce42bf6ab18bf4cfa059a4b7"
+git-tree-sha1 = "99494c29cf153055f61ee1e84df232057ee059de"
 uuid = "a15396b6-48d5-5d58-9928-6d29437db91e"
-version = "0.20.2"
+version = "0.20.3"
 
 [[OnlineStatsBase]]
 deps = ["LearnBase", "Test"]
@@ -273,8 +273,8 @@ version = "0.9.6"
 
 [[PLEXOS2PRAS]]
 deps = ["DataFrames", "Dates", "HDF5", "JLD", "PyCall", "ResourceAdequacy"]
-git-tree-sha1 = "c04ab0272c843cb678a270eae38eb87531bed533"
-repo-rev = "julia-conversion"
+git-tree-sha1 = "5ab20e86e6fd03ecccc8b55a97e671e437e42313"
+repo-rev = "master"
 repo-url = "https://github.nrel.gov/PRAS/PLEXOS2PRAS.git"
 uuid = "23000632-8e99-4af6-adcc-f1f915ea3706"
 version = "0.3.0"
@@ -343,11 +343,11 @@ version = "0.5.2"
 
 [[ResourceAdequacy]]
 deps = ["Dates", "Decimals", "Distributions", "Future", "MinCostFlows", "OnlineStats", "Random", "StatsBase"]
-git-tree-sha1 = "afe53eef44b9f5fed03ae42246bc682706165728"
-repo-rev = "gs/julia1.0"
+git-tree-sha1 = "cd3618e69749eac78a9abf0863777b7bf1ad612a"
+repo-rev = "master"
 repo-url = "https://github.com/NREL/ResourceAdequacy.jl.git"
 uuid = "f1bff6d7-bd5f-4f25-88ac-02781f2d51b7"
-version = "0.3.1"
+version = "0.4.0"
 
 [[Rmath]]
 deps = ["BinaryProvider", "Libdl", "Random", "Statistics", "Test"]
@@ -396,9 +396,9 @@ version = "0.27.0"
 
 [[StatsFuns]]
 deps = ["Rmath", "SpecialFunctions", "Test"]
-git-tree-sha1 = "d14bb7b03defd2deaa5675646f6783089e0556f0"
+git-tree-sha1 = "7e7658a6adf28c91db1290c84483e07cc59ea3a4"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "0.7.0"
+version = "0.7.1"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays"]

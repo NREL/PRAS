@@ -37,7 +37,7 @@ end
 args = parse_commandline(ARGS)
 
 outputfile = if args[:outputfile] == nothing
-    filepath, fileextension = splitdir(args[:inputfile])
+    filepath, fileextension = splitext(args[:inputfile])
     filepath * "_" * args[:suffix] * fileextension
 else
     args[:outputfile]
