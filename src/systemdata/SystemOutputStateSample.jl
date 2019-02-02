@@ -1,88 +1,76 @@
-struct NodeResult{L,T<:Period,P<:PowerUnit,V<:Real}
+struct RegionResult{L,T<:Period,P<:PowerUnit,V<:Real}
 
-    generation_available::V
-    generation::V
-    demand::V
-    demand_served::V
+    net_injection::V
+    surplus::V
+    shortfall::V
 
-    NodeResult{L,T,P}(
-        gen_av::V, gen::V, dem::V, dem_served::V, ::NoCheck
+    RegionResult{L,T,P}(
+        net_injection::V, surplus::V, shortfall::V
     ) where {L,T<:Period,P<:PowerUnit,V<:Real} =
-    new{L,T,P,V}(gen_av, gen, dem, dem_served)
+    new{L,T,P,V}(net_injection, surplus, shortfall)
 
 end
 
-function NodeResult{L,T,P}(gen_av::V, gen::V, dem::V, dem_served::V
-    ) where {L,T<:Period,P<:PowerUnit,V<:Real}
-
-    @assert gen_av > gen || isapprox_stable(gen_av, gen)
-    @assert dem > dem_served || isapprox_stable(dem, dem_served)
-    return NodeResult{L,T,P}(gen_av, gen, dem, dem_served, NoCheck())
-
-end
-
-struct EdgeResult{L,T<:Period,P<:PowerUnit,V<:Real}
+struct InterfaceResult{L,T<:Period,P<:PowerUnit,V<:Real}
 
     max_transfer_magnitude::V
     transfer::V
 
-    function EdgeResult{L,T,P}(
-        max::V, actual::V, ::NoCheck) where {L,T<:Period,P<:PowerUnit,V<:Real}
+    function InterfaceResult{L,T,P}(
+        max::V, actual::V) where {L,T<:Period,P<:PowerUnit,V<:Real}
         new{L,T,P,V}(max, actual)
     end
 
 end
 
-function EdgeResult{L,T,P}(
-    max::V, actual::V) where {L,T<:Period,P<:PowerUnit,V<:Real}
-    @assert max > abs(actual) || isapprox_stable(max, abs(actual))
-    return EdgeResult{L,T,P}(max, actual, NoCheck())
-end
-
 struct SystemOutputStateSample{L,T,P,V}
-    nodes::Vector{NodeResult{L,T,P,V}}
-    edges::Vector{EdgeResult{L,T,P,V}}
-    edgelabels::Vector{Tuple{Int,Int}}
+    regions::Vector{RegionResult{L,T,P,V}}
+    interfaces::Vector{InterfaceResult{L,T,P,V}}
+    interfacelabels::Vector{Tuple{Int,Int}}
 
     function SystemOutputStateSample(
-        nodes::Vector{NodeResult{L,T,P,V}},
-        edges::Vector{EdgeResult{L,T,P,V}},
-        edgelabels::Vector{Tuple{Int,Int}}
+        regions::Vector{RegionResult{L,T,P,V}},
+        interfaces::Vector{InterfaceResult{L,T,P,V}},
+        interfacelabels::Vector{Tuple{Int,Int}}
     ) where {L,T,P,V}
-        @assert length(edges) == length(edgelabels)
-        new{L,T,P,V}(nodes, edges, edgelabels)
+        @assert length(interfaces) == length(interfacelabels)
+        new{L,T,P,V}(regions, interfaces, interfacelabels)
     end
 end
 
 function SystemOutputStateSample{L,T,P,V}(
-    edge_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
+    interface_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
 
-    nodes = Vector{NodeResult{L,T,P,V}}(n)
-    edges = Vector{EdgeResult{L,T,P,V}}(length(edge_labels))
-    return SystemOutputStateSample(nodes, edges, edge_labels)
+    regions = Vector{RegionResult{L,T,P,V}}(undef, n)
+    interfaces = Vector{InterfaceResult{L,T,P,V}}(undef, length(interface_labels))
+    return SystemOutputStateSample(regions, interfaces, interface_labels)
 
 end
 
-
 function update!(
     sample::SystemOutputStateSample{L,T,P,V},
-    state_matrix::Matrix{V}, flow_matrix::Matrix{V},
+    fp::FlowProblem
 ) where {L,T<:Period,P<:PowerUnit,V<:Real}
 
-    n = length(sample.nodes)
-    source = n+1
-    sink = n+2
+    nregions = length(sample.regions)
+    ninterfaces = length(sample.interfaces)
 
-    for i in 1:n
-        sample.nodes[i] = NodeResult{L,T,P}(
-            state_matrix[source,i], flow_matrix[source,i],
-            state_matrix[i,sink], flow_matrix[i,sink], NoCheck())
+    # Save gen available, gen dispatched, demand, demand served for each region
+    for i in 1:nregions
+        node = fp.nodes[i]
+        surplus_edge = fp.edges[2*ninterfaces + i]
+        shortfall_edge = fp.edges[2*ninterfaces + nregions + i]
+        sample.regions[i] = RegionResult{L,T,P}(
+            V(node.injection), V(surplus_edge.flow), V(shortfall_edge.flow))
     end
 
-    for e in 1:length(sample.edgelabels)
-        i, j = sample.edgelabels[e]
-        sample.edges[e] = EdgeResult{L,T,P}(
-            state_matrix[i,j], flow_matrix[i,j], NoCheck())
+    # Save flow available, flow for each interface
+    for i in 1:ninterfaces
+        forwardedge = fp.edges[i]
+        forwardflow = forwardedge.flow
+        reverseflow = fp.edges[ninterfaces+i].flow
+        flow = forwardflow > reverseflow ? forwardflow : -reverseflow
+        sample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
     end
 
 end
@@ -92,11 +80,11 @@ function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
     isshortfall = false
     totalshortfall = zero(V)
 
-    for node in sample.nodes
-        different, difference = checkdifference(node.demand, node.demand_served)
-        if different 
+    for region in sample.regions
+        shortfall = region.shortfall
+        if !(shortfall ≈ 0)
             isshortfall = true
-            totalshortfall += difference
+            totalshortfall += shortfall
         end
     end
 
@@ -104,20 +92,19 @@ function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
 end
 
-function droppedloads(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
+function droppedloads!(localshortfalls::Vector{V},
+                       sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
-    nnodes = length(sample.nodes)
+    nregions = length(sample.regions)
     isshortfall = false
     totalshortfall = zero(V)
-    localshortfalls = zeros(V, nnodes)
 
-    for i in 1:nnodes
-        node = sample.nodes[i]
-        different, difference = checkdifference(node.demand, node.demand_served)
-        if different
+    for i in 1:nregions
+        shortfall = sample.regions[i].shortfall
+        if !(shortfall ≈ 0)
             isshortfall = true
-            totalshortfall += difference
-            localshortfalls[i] = difference
+            totalshortfall += shortfall
+            localshortfalls[i] = shortfall
         end
     end
 

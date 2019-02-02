@@ -99,7 +99,7 @@ function SystemModel{N,L,T,P,E}(
 
     return SystemModel{N,L,T,P,E}(
         ["Region"], generators, [1], storages, [1],
-        Tuple{Int,Int}[], Matrix{LineSpec{V}}(0,1), Int[],
+        Tuple{Int,Int}[], Matrix{LineSpec{V}}(undef, 0,1), Int[],
         timestamps, timestamps_generatorset,
         timestamps_storageset, ones(Int, length(timestamps)),
         reshape(vg, 1, :), reshape(load, 1, :))

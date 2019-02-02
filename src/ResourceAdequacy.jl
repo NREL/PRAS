@@ -1,11 +1,13 @@
 module ResourceAdequacy
 
-using Base.Dates
-using StatsBase
-using OnlineStats
-using Distributions
-using LightGraphs
+using Dates
 using Decimals
+using Distributions
+using MinCostFlows
+using OnlineStats
+using Random
+using Future # for randjump
+using StatsBase
 
 export
 

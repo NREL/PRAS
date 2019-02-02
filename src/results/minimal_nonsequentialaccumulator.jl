@@ -4,8 +4,8 @@ struct NonSequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S
     droppedsum_valsum::Vector{V}
     droppedsum_varsum::Vector{V}
     periodidx::Vector{Int}
-    droppedcount_period::Vector{MeanVariance}
-    droppedsum_period::Vector{MeanVariance}
+    droppedcount_period::Vector{MeanVariance{V}}
+    droppedsum_period::Vector{MeanVariance{V}}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -24,12 +24,12 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedsum_valsum = zeros(V, nthreads)
     droppedsum_varsum = zeros(V, nthreads)
 
-    rngs = Vector{MersenneTwister}(nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
 
     periodidx = zeros(Int, nthreads)
-    periodcount = Vector{MeanVariance}(nthreads)
-    periodsum = Vector{MeanVariance}(nthreads)
+    periodcount = Vector{MeanVariance{V}}(undef, nthreads)
+    periodsum = Vector{MeanVariance{V}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         periodcount[i] = Series(Mean(), Variance())

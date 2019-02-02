@@ -7,15 +7,15 @@
     lole = LOLE{168,1,Hour}(sum(val.(periodlolps)), sqrt(sum(stderr.(periodlolps).^2)))
     regionalperiodlolps = LOLP{1,Hour}.(rand(3,168)/10, rand(3,168)/100)
     regionalloles = vec(LOLE{168,1,Hour}.(
-        sum(val.(regionalperiodlolps), 2),
-        sqrt.(sum(stderr.(regionalperiodlolps).^2, 2))))
+        sum(val.(regionalperiodlolps), dims=2),
+        sqrt.(sum(stderr.(regionalperiodlolps).^2, dims=2))))
 
     periodeues = EUE{1,1,Hour,MWh}.(rand(168), rand(168)/10)
     eue = EUE{168,1,Hour,MWh}(sum(val.(periodeues)), sqrt(sum(stderr.(periodeues).^2)))
     regionalperiodeues = EUE{1,1,Hour,MWh}.(rand(3,168)/10, rand(3,168)/100)
     regionaleues = vec(EUE{168,1,Hour,MWh}.(
-        sum(val.(regionalperiodeues), 2),
-        sqrt.(sum(stderr.(regionalperiodeues).^2, 2))))
+        sum(val.(regionalperiodeues), dims=2),
+        sqrt.(sum(stderr.(regionalperiodeues).^2, dims=2))))
 
     result = ResourceAdequacy.SpatioTemporalResult(
         regions, tstamps,

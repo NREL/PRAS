@@ -1,5 +1,6 @@
+using Test
 using ResourceAdequacy
-using Base.Test
+using Dates
 using Distributions
 
 const RA = ResourceAdequacy

@@ -8,12 +8,13 @@ struct NonSequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S
     droppedcount_region_varsum::Matrix{V}
     droppedsum_region_valsum::Matrix{V}
     droppedsum_region_varsum::Matrix{V}
+    localshortfalls::Vector{Vector{V}}
 
     periodidx::Vector{Int}
-    droppedcount_overall_period::Vector{MeanVariance}
-    droppedsum_overall_period::Vector{MeanVariance}
-    droppedcount_region_period::Matrix{MeanVariance}
-    droppedsum_region_period::Matrix{MeanVariance}
+    droppedcount_overall_period::Vector{MeanVariance{V}}
+    droppedsum_overall_period::Vector{MeanVariance{V}}
+    droppedcount_region_period::Matrix{MeanVariance{V}}
+    droppedsum_region_period::Matrix{MeanVariance{V}}
 
     system::S
     extractionspec::ES
@@ -41,13 +42,14 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedsum_region_varsum = zeros(nregions, nthreads)
 
     periodidx = zeros(Int, nthreads)
-    droppedcount_overall_period = Vector{MeanVariance}(nthreads)
-    droppedsum_overall_period = Vector{MeanVariance}(nthreads)
-    droppedcount_region_period = Matrix{MeanVariance}(nregions, nthreads)
-    droppedsum_region_period = Matrix{MeanVariance}(nregions, nthreads)
+    droppedcount_overall_period = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedsum_overall_period = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedcount_region_period = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
+    droppedsum_region_period = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
 
-    rngs = Vector{MersenneTwister}(nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
+    localshortfalls = Vector{Vector{V}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall_period[i] = Series(Mean(), Variance())
@@ -57,6 +59,7 @@ function accumulator(extractionspec::ExtractionSpec,
             droppedsum_region_period[r, i] = Series(Mean(), Variance())
         end
         rngs[i] = copy(rngs_temp[i])
+        localshortfalls[i] = zeros(V, nregions)
     end
 
     return NonSequentialSpatialResultAccumulator(
@@ -64,6 +67,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedsum_overall_valsum, droppedsum_overall_varsum,
         droppedcount_region_valsum, droppedcount_region_varsum,
         droppedsum_region_valsum, droppedsum_region_varsum,
+        localshortfalls,
         periodidx, droppedcount_overall_period, droppedsum_overall_period,
         droppedcount_region_period, droppedsum_region_period,
         sys, extractionspec, simulationspec, rngs)
@@ -122,7 +126,8 @@ function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,
 
     end
 
-    isshortfall, totalshortfall, localshortfalls = droppedloads(sample)
+    isshortfall, totalshortfall, localshortfalls =
+        droppedloads!(acc.localshortfalls[thread], sample)
 
     fit!(acc.droppedcount_overall_period[thread], V(isshortfall))
     fit!(acc.droppedsum_overall_period[thread],
@@ -170,17 +175,17 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L
     end
 
     lole = sum(acc.droppedcount_overall_valsum)
-    loles = vec(sum(acc.droppedcount_region_valsum, 2))
+    loles = vec(sum(acc.droppedcount_region_valsum, dims=2))
     eue = sum(acc.droppedsum_overall_valsum)
-    eues = vec(sum(acc.droppedsum_region_valsum, 2))
+    eues = vec(sum(acc.droppedsum_region_valsum, dims=2))
 
     if ismontecarlo(acc.simulationspec)
 
         nsamples = acc.simulationspec.nsamples
         lole_stderr = sqrt(sum(acc.droppedcount_overall_varsum) / nsamples)
-        loles_stderr = sqrt.(vec(sum(acc.droppedcount_region_varsum, 2)) ./ nsamples)
+        loles_stderr = sqrt.(vec(sum(acc.droppedcount_region_varsum, dims=2)) ./ nsamples)
         eue_stderr = sqrt(sum(acc.droppedsum_overall_varsum) / nsamples)
-        eues_stderr = sqrt.(vec(sum(acc.droppedsum_region_varsum, 2)) ./ nsamples)
+        eues_stderr = sqrt.(vec(sum(acc.droppedsum_region_varsum, dims=2)) ./ nsamples)
 
     else
 

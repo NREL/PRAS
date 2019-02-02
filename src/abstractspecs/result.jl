@@ -91,3 +91,7 @@ Returns a `Result` corresponding to the provided `ResultAccumulator`.
 finalize(::A) where {A <: ResultAccumulator} =
     error("finalize not defined for ResultAccumulator $A")
 
+"""
+Automatically wraps Result children in Ref to support convenient broadcasting.
+"""
+Base.broadcastable(x::Result) = Ref(x)

@@ -33,7 +33,7 @@ include("EUE.jl")
 for T in [LOLP, LOLE, EUE]
 
     @eval val(x::($T)) = x.val
-    @eval stderr(x::($T)) = x.stderr
+    @eval Base.stderr(x::($T)) = x.stderr
 
     @eval Base.isapprox(x::M, y::M) where {M<:($T)} =
         isapprox(x.val, y.val) &&

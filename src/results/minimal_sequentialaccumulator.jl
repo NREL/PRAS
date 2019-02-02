@@ -18,14 +18,14 @@ function accumulator(extractionspec::ExtractionSpec,
 
     nthreads = Threads.nthreads()
 
-    droppedcount = Vector{SumVariance{V}}(nthreads)
-    droppedsum = Vector{SumVariance{V}}(nthreads)
-    rngs = Vector{MersenneTwister}(nthreads)
-    rngs_temp = randjump(MersenneTwister(seed), nthreads)
+    droppedcount = Vector{SumVariance{V}}(undef, nthreads)
+    droppedsum = Vector{SumVariance{V}}(undef, nthreads)
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = initrngs(nthreads, seed)
 
     simidx = zeros(Int, nthreads)
-    simcount = Vector{V}(nthreads)
-    simsum = Vector{V}(nthreads)
+    simcount = Vector{V}(undef, nthreads)
+    simsum = Vector{V}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount[i] = Series(Sum(), Variance())

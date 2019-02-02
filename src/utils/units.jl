@@ -1,11 +1,11 @@
 abstract type PowerUnit end
-type MW <: PowerUnit end
-type GW <: PowerUnit end
+struct MW <: PowerUnit end
+struct GW <: PowerUnit end
 
 abstract type EnergyUnit end
-type MWh <: EnergyUnit end
-type GWh <: EnergyUnit end
-type TWh <: EnergyUnit end
+struct MWh <: EnergyUnit end
+struct GWh <: EnergyUnit end
+struct TWh <: EnergyUnit end
 
 unitsymbol(T::Type{<:PowerUnit}) = string(T)
 unitsymbol(::Type{MW}) = "MW"

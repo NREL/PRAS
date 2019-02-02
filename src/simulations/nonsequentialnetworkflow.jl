@@ -16,28 +16,16 @@ function assess!(acc::ResultAccumulator,
                  t::Int) where {L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     thread = Threads.threadid()
-    sink_idx = nv(system.graph)
-    source_idx = sink_idx-1
-    n = sink_idx-2
 
-    statematrix = zeros(sink_idx, sink_idx)
-    flowmatrix = Array{Float64}(sink_idx, sink_idx)
-    height = Array{Int}(sink_idx)
-    count = Array{Int}(2*sink_idx+1)
-    excess = Array{Float64}(sink_idx)
-    active = Array{Bool}(sink_idx)
-    outputsample = SystemOutputStateSample{L,T,P,Float64}(system.interface_labels, n)
+    flowproblem = FlowProblem(system)
+    outputsample = SystemOutputStateSample{L,T,P,Float64}(
+        system.interface_labels, length(system.region_labels))
 
     for i in 1:simulationspec.nsamples
-
-        rand!(acc.rngs[thread], statematrix, system)
-        LightGraphs.push_relabel!( # Performance bottleneck
-            flowmatrix, height, count, excess, active,
-            system.graph, source_idx, sink_idx, statematrix)
-
-        update!(outputsample, statematrix, flowmatrix)
+        rand!(acc.rngs[thread], flowproblem, system)
+        solveflows!(flowproblem)
+        update!(outputsample, flowproblem) # TODO
         update!(acc, outputsample, t, i)
-
     end
 
 end
