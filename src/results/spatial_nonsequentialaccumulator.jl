@@ -8,6 +8,7 @@ struct NonSequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S
     droppedcount_region_varsum::Matrix{V}
     droppedsum_region_valsum::Matrix{V}
     droppedsum_region_varsum::Matrix{V}
+    localshortfalls::Vector{Vector{V}}
 
     periodidx::Vector{Int}
     droppedcount_overall_period::Vector{MeanVariance{V}}
@@ -48,6 +49,7 @@ function accumulator(extractionspec::ExtractionSpec,
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
+    localshortfalls = Vector{Vector{V}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall_period[i] = Series(Mean(), Variance())
@@ -57,6 +59,7 @@ function accumulator(extractionspec::ExtractionSpec,
             droppedsum_region_period[r, i] = Series(Mean(), Variance())
         end
         rngs[i] = copy(rngs_temp[i])
+        localshortfalls[i] = zeros(V, nregions)
     end
 
     return NonSequentialSpatialResultAccumulator(
@@ -64,6 +67,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedsum_overall_valsum, droppedsum_overall_varsum,
         droppedcount_region_valsum, droppedcount_region_varsum,
         droppedsum_region_valsum, droppedsum_region_varsum,
+        localshortfalls,
         periodidx, droppedcount_overall_period, droppedsum_overall_period,
         droppedcount_region_period, droppedsum_region_period,
         sys, extractionspec, simulationspec, rngs)
@@ -122,7 +126,8 @@ function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,
 
     end
 
-    isshortfall, totalshortfall, localshortfalls = droppedloads(sample)
+    isshortfall, totalshortfall, localshortfalls =
+        droppedloads!(acc.localshortfalls[thread], sample)
 
     fit!(acc.droppedcount_overall_period[thread], V(isshortfall))
     fit!(acc.droppedsum_overall_period[thread],

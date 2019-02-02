@@ -92,12 +92,12 @@ function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
 end
 
-function droppedloads(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
+function droppedloads!(localshortfalls::Vector{V},
+                       sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
     nregions = length(sample.regions)
     isshortfall = false
     totalshortfall = zero(V)
-    localshortfalls = zeros(V, nregions)
 
     for i in 1:nregions
         shortfall = sample.regions[i].shortfall
