@@ -12,18 +12,18 @@ end
 function SystemInputStateDistribution(
     params::REPRA, dt_idx::Int,
     system::SystemModel{N,L,T,P,E,V},
-    region_distrs::Vector{CapacityDistribution{V}},
-    region_samplers::Vector{CapacitySampler{V}},
-    interface_distrs::Vector{CapacityDistribution{V}},
-    interface_samplers::Vector{CapacitySampler{V}},
+    region_distrs::AbstractVector{CapacityDistribution{V}},
+    region_samplers::AbstractVector{CapacitySampler{V}},
+    interface_distrs::AbstractVector{CapacityDistribution{V}},
+    interface_samplers::AbstractVector{CapacitySampler{V}},
     copperplate::Bool=false) where {N,L,T,P,E,V}
 
     dt = system.timestamps[dt_idx]
     vg_sample_idxs = window_idxs(
         dt, system.timestamps, params.hourwindow, params.daywindow)
 
-    vg = system.vg[:, vg_sample_idxs]
-    load = system.load[:, vg_sample_idxs]
+    vg = view(system.vg, :, vg_sample_idxs)
+    load = view(system.load, :, vg_sample_idxs)
 
     if copperplate
         vg = vec(sum(vg, dims=1))

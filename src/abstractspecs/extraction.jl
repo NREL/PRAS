@@ -102,12 +102,14 @@ function extract(extractionspec::ExtractionSpec,
     # Same ugly hack as above
     let results=results, interface_distrs=interface_distrs
     Threads.@threads for t in 1:n_timestamps
+        genset_idx = system.timestamps_generatorset[t]
+        lineset_idx = system.timestamps_lineset[t]
         results[t] = SystemInputStateDistribution(
             extractionspec, t, system,
-            region_distrs[:, system.timestamps_generatorset[t]],
-            region_samplers[:, system.timestamps_generatorset[t]],
-            interface_distrs[:, system.timestamps_lineset[t]],
-            interface_samplers[:, system.timestamps_lineset[t]],
+            view(region_distrs, :, genset_idx),
+            view(region_samplers, :, genset_idx),
+            view(interface_distrs, :, lineset_idx),
+            view(interface_samplers, :, lineset_idx),
             copperplate)
     end
     end

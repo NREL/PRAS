@@ -24,7 +24,7 @@ function assess!(acc::ResultAccumulator,
     for i in 1:simulationspec.nsamples
         rand!(acc.rngs[thread], flowproblem, system)
         solveflows!(flowproblem)
-        update!(outputsample, flowproblem) # TODO
+        update!(outputsample, flowproblem)
         update!(acc, outputsample, t, i)
     end
 

@@ -21,9 +21,9 @@ version = "0.5.3"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
-git-tree-sha1 = "ec61a16eed883ad0cfa002d7489b3ce6d039bb9a"
+git-tree-sha1 = "49269e311ffe11ac5b334681d212329002a9832a"
 uuid = "34da2185-b29b-5c13-b0c7-acf172513d20"
-version = "1.4.0"
+version = "1.5.1"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections", "Random", "Serialization", "Test"]
@@ -51,7 +51,7 @@ uuid = "8ba89e20-285c-5b6f-9357-94700520ee1b"
 
 [[Distributions]]
 deps = ["Distributed", "LinearAlgebra", "PDMats", "Printf", "QuadGK", "Random", "SpecialFunctions", "Statistics", "StatsBase", "StatsFuns", "Test"]
-git-tree-sha1 = "1c7a7b867b7c3a3bbee1d8f7f6af6970fd4e1148"
+git-tree-sha1 = "f3848571caff5d82f70cdeb7d5538ecfdf3c1779"
 repo-rev = "pras-patches"
 repo-url = "https://github.com/GordStephen/Distributions.jl.git"
 uuid = "31c24e10-a181-5473-b8eb-7969acd0382f"
@@ -95,7 +95,7 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MinCostFlows]]
-git-tree-sha1 = "b2e76e2322fe5bc1ac68f51d762932cbddff3988"
+git-tree-sha1 = "3e350d27ce94973786533b4971b519ae50453b11"
 repo-rev = "master"
 repo-url = "https://github.nrel.gov/PRAS/MinCostFlows.jl"
 uuid = "62286e6e-1779-56f1-888a-1c0056788ce0"
@@ -112,15 +112,15 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[OnlineStats]]
 deps = ["DataStructures", "Dates", "LearnBase", "LinearAlgebra", "LossFunctions", "OnlineStatsBase", "PenaltyFunctions", "Random", "RecipesBase", "Reexport", "Statistics", "StatsBase", "SweepOperator", "Test"]
-git-tree-sha1 = "dd92feec34612b9dce42bf6ab18bf4cfa059a4b7"
+git-tree-sha1 = "99494c29cf153055f61ee1e84df232057ee059de"
 uuid = "a15396b6-48d5-5d58-9928-6d29437db91e"
-version = "0.20.2"
+version = "0.20.3"
 
 [[OnlineStatsBase]]
 deps = ["LearnBase", "Test"]
-git-tree-sha1 = "520580a74e09378fb6665fa89339323d411d3df3"
+git-tree-sha1 = "b6feb4b0e2fc4e7fd3ac7e2cb3b151f5f7f59051"
 uuid = "925886fa-5bf2-5e8e-b522-a9147a512338"
-version = "0.9.1"
+version = "0.9.2"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
@@ -164,9 +164,9 @@ uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[RecipesBase]]
 deps = ["Random", "Test"]
-git-tree-sha1 = "b18c3d875ad6805e3db59c4e81f206f04df71d66"
+git-tree-sha1 = "0b3cb370ee4dc00f47f1193101600949f3dcf884"
 uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
-version = "0.5.0"
+version = "0.6.0"
 
 [[Reexport]]
 deps = ["Pkg"]
@@ -221,9 +221,9 @@ version = "0.27.0"
 
 [[StatsFuns]]
 deps = ["Rmath", "SpecialFunctions", "Test"]
-git-tree-sha1 = "d14bb7b03defd2deaa5675646f6783089e0556f0"
+git-tree-sha1 = "7e7658a6adf28c91db1290c84483e07cc59ea3a4"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "0.7.0"
+version = "0.7.1"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays"]

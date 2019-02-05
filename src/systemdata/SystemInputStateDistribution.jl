@@ -1,27 +1,35 @@
-struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real,
+    VCDV<:AbstractVector{CapacityDistribution{V}},
+    VCSV<:AbstractVector{CapacitySampler{V}},
+    MV<:AbstractMatrix{V}}
+
     region_idxs::Base.OneTo{Int}
     region_labels::Vector{String}
-    region_maxdispatchabledistrs::Vector{CapacityDistribution{V}}
-    region_maxdispatchablesamplers::Vector{CapacitySampler{V}}
+    region_maxdispatchabledistrs::VCDV
+    region_maxdispatchablesamplers::VCSV
     vgsample_idxs::Base.OneTo{Int}
-    vgsamples::Matrix{V}
+    vgsamples::MV
     interface_idxs::Base.OneTo{Int}
     interface_labels::Vector{Tuple{Int,Int}}
-    interface_maxflowdistrs::Vector{CapacityDistribution{V}}
-    interface_maxflowsamplers::Vector{CapacitySampler{V}}
+    interface_maxflowdistrs::VCDV
+    interface_maxflowsamplers::VCSV
     loadsample_idxs::Base.OneTo{Int}
-    loadsamples::Matrix{V}
+    loadsamples::MV
 
     # Multi-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
         region_labels::Vector{String},
-        region_maxdispatchabledistrs::Vector{CapacityDistribution{V}},
-        region_maxdispatchablesamplers::Vector{CapacitySampler{V}},
-        vgsamples::Matrix{V},
+        region_maxdispatchabledistrs::VCDV,
+        region_maxdispatchablesamplers::VCSV,
+        vgsamples::MV,
         interface_labels::Vector{Tuple{Int,Int}},
-        interface_maxflowdistrs::Vector{CapacityDistribution{V}},
-        interface_maxflowsamplers::Vector{CapacitySampler{V}},
-        loadsamples::Matrix{V}) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
+        interface_maxflowdistrs::VCDV,
+        interface_maxflowsamplers::VCSV,
+        loadsamples::MV) where {
+            N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V,
+            VCDV<:AbstractVector{CapacityDistribution{V}},
+            VCSV<:AbstractVector{CapacitySampler{V}},
+            MV<:AbstractMatrix{V}}
 
         n_regions = length(region_labels)
         region_idxs = Base.OneTo(n_regions)
@@ -39,7 +47,7 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         n_loadsamples = size(loadsamples, 2)
         loadsample_idxs = Base.OneTo(n_loadsamples)
 
-        new{N,T,P,E,V}(
+        new{N,T,P,E,V,VCDV,VCSV,MV}(
             region_idxs, region_labels,
             region_maxdispatchabledistrs,
             region_maxdispatchablesamplers,
@@ -58,7 +66,8 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         vgsamples::Vector{V}, loadsamples::Vector{V}
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-        new{N,T,P,E,V}(
+        new{N,T,P,E,V,Vector{CapacityDistribution{V}},
+                      Vector{CapacitySampler{V}},Matrix{V}}(
             Base.OneTo(1), ["Region"],
             [maxdispatchable_distr], [maxdispatchable_sampler],
             Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),

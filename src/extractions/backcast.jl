@@ -9,8 +9,9 @@ function SystemInputStateDistribution(
     interface_samplers::AbstractVector{CapacitySampler{V}},
     copperplate::Bool=false) where {N,L,T,P,E,V}
 
-    vg = system.vg[:, [dt_idx]]
-    load = system.load[:, [dt_idx]]
+    dt_idxs = [dt_idx]
+    vg = view(system.vg, :, dt_idxs)
+    load = view(system.load, :, dt_idxs)
 
     if copperplate
         vg = vec(sum(vg, dims=1))
