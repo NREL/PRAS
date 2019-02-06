@@ -101,7 +101,9 @@ function droppedloads!(localshortfalls::Vector{V},
 
     for i in 1:nregions
         shortfall = sample.regions[i].shortfall
-        if !(shortfall ≈ 0)
+        if shortfall ≈ 0
+            localshortfalls[i] = 0
+        else
             isshortfall = true
             totalshortfall += shortfall
             localshortfalls[i] = shortfall

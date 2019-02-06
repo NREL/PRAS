@@ -105,8 +105,9 @@ function update!(acc::NonSequentialSpatioTemporalResultAccumulator{V,SystemModel
     fit!(acc.droppedsum[t], powertoenergy(totalshortfall, L, T, P, E))
 
     for r in 1:length(acc.system.regions)
-        fit!(acc.droppedcount_regions[r, t], approxnonzero(localshortfalls[r]))
-        fit!(acc.droppedsum_regions[r, t], powertoenergy(localshortfalls[r], L, T, P, E))
+        shortfall = localshortfalls[r]
+        fit!(acc.droppedcount_regions[r, t], approxnonzero(shortfall))
+        fit!(acc.droppedsum_regions[r, t], powertoenergy(shortfall, L, T, P, E))
     end
 
     return
