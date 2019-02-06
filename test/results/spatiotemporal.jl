@@ -4,18 +4,18 @@
     regions = ["A", "B", "C"]
 
     periodlolps = LOLP{1,Hour}.(rand(168)/10, rand(168)/100)
-    lole = LOLE{168,1,Hour}(sum(val.(periodlolps)), sqrt(sum(stderr.(periodlolps).^2)))
+    lole = LOLE{168,1,Hour}(sum(val.(periodlolps)), sqrt(sum(stderror.(periodlolps).^2)))
     regionalperiodlolps = LOLP{1,Hour}.(rand(3,168)/10, rand(3,168)/100)
     regionalloles = vec(LOLE{168,1,Hour}.(
         sum(val.(regionalperiodlolps), dims=2),
-        sqrt.(sum(stderr.(regionalperiodlolps).^2, dims=2))))
+        sqrt.(sum(stderror.(regionalperiodlolps).^2, dims=2))))
 
     periodeues = EUE{1,1,Hour,MWh}.(rand(168), rand(168)/10)
-    eue = EUE{168,1,Hour,MWh}(sum(val.(periodeues)), sqrt(sum(stderr.(periodeues).^2)))
+    eue = EUE{168,1,Hour,MWh}(sum(val.(periodeues)), sqrt(sum(stderror.(periodeues).^2)))
     regionalperiodeues = EUE{1,1,Hour,MWh}.(rand(3,168)/10, rand(3,168)/100)
     regionaleues = vec(EUE{168,1,Hour,MWh}.(
         sum(val.(regionalperiodeues), dims=2),
-        sqrt.(sum(stderr.(regionalperiodeues).^2, dims=2))))
+        sqrt.(sum(stderror.(regionalperiodeues).^2, dims=2))))
 
     result = ResourceAdequacy.SpatioTemporalResult(
         regions, tstamps,
@@ -27,10 +27,10 @@
     @test_throws MethodError ResourceAdequacy.SpatioTemporalResult(
         regions, tstamps,
         lole, regionalloles, periodlolps, regionalperiodlolps,
-        EUE{168,30,Minute,MWh}(val(eue), stderr(eue)),
-        EUE{168,30,Minute,MWh}.(val.(regionaleues), stderr.(regionaleues)),
-        EUE{1,30,Minute,MWh}.(val.(periodeues), stderr.(periodeues)),
-        EUE{1,30,Minute,MWh}.(val.(regionalperiodeues), stderr.(regionalperiodeues)),
+        EUE{168,30,Minute,MWh}(val(eue), stderror(eue)),
+        EUE{168,30,Minute,MWh}.(val.(regionaleues), stderror.(regionaleues)),
+        EUE{1,30,Minute,MWh}.(val.(periodeues), stderror.(periodeues)),
+        EUE{1,30,Minute,MWh}.(val.(regionalperiodeues), stderror.(regionalperiodeues)),
         Backcast(), NonSequentialCopperplate()
     )
 

@@ -2,14 +2,14 @@ abstract type ReliabilityMetric{V<:Real} end
 
 function roundresults(x::ReliabilityMetric)
 
-    if stderr(x) == 0
+    if stderror(x) == 0
 
         v_rounded = string(val(x))
         s_rounded = "0"
 
     else
 
-        s = Decimal(stderr(x))
+        s = Decimal(stderror(x))
         s_sigfigs = length(string(s.c))
         s_c = round(Int, s.c / 10^(s_sigfigs-1))
         s_q = s.q + s_sigfigs - 1
@@ -33,7 +33,7 @@ include("EUE.jl")
 for T in [LOLP, LOLE, EUE]
 
     @eval val(x::($T)) = x.val
-    @eval Base.stderr(x::($T)) = x.stderr
+    @eval stderror(x::($T)) = x.stderr
 
     @eval Base.isapprox(x::M, y::M) where {M<:($T)} =
         isapprox(x.val, y.val) &&

@@ -21,7 +21,7 @@ function EUE(eues::Vector{EUE{1,L,T,E,V}}) where {
 
     for eue in eues
         total += val(eue)
-        s += stderr(eue)^2
+        s += stderror(eue)^2
     end
 
     return EUE{N,L,T,E}(total, sqrt(s))
@@ -33,7 +33,7 @@ function Base.show(io::IO, x::EUE{N,L,T,E}) where {N,L,T,E}
     v, s = roundresults(x)
 
     print(io, "EUE = ", v,
-          stderr(x) > 0 ? "±"*s : "", " ",
+          stderror(x) > 0 ? "±"*s : "", " ",
           unitsymbol(E), "/",
           N*L == 1 ? "" : N*L, unitsymbol(T))
 

@@ -20,7 +20,7 @@ export
 
     # Metrics
     LOLP, LOLE, EUE,
-    val, stderr,
+    val, stderror,
 
     # Distribution extraction specifications
     Backcast, REPRA,
