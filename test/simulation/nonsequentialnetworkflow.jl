@@ -3,9 +3,6 @@
     seed = UInt(1234)
     nstderr_tol = 3
 
-    # TODO: Decide on how to programmatically test MC estimates vs ground truth
-    @test_broken false
-
     # Single-region system A
     lole = 0.355
     lolps = [] # TODO
