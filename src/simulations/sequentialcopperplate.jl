@@ -9,16 +9,16 @@ end
 
 iscopperplate(::SequentialCopperplate) = true
 
-function assess_singlesequence!(
+function assess!(
     acc::ResultAccumulator,
     extractionspec::Backcast, #TODO: Generalize
     simulationspec::SequentialCopperplate,
-    sys::SystemModel{N1,T1,N2,T2,P,E,V},
+    sys::SystemModel{N,L,T,P,E,V},
     i::Int
-) where {N1,T1,N2,T2,P,E,V}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-    rng = acc.rng[Threads.threadid()]
-    sample = SystemOutputStateSample(Vector{Tuple{Int,Int}}[], 1)
+    rng = acc.rngs[Threads.threadid()]
+    sample = SystemOutputStateSample{L,T,P,V}(Tuple{Int,Int}[], 1)
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
@@ -48,15 +48,18 @@ function assess_singlesequence!(
         if residual_generation >= 0
 
             # Charge to consume residual_generation
-            residual_generation = charge_storage!(stors_available, stors_energy,
-                                                  residual_generation, stors)
-            sample.regions[1] = RegionResult{L,T,P}(residual_generation, residual_generation, 0.)
+            residual_generation = charge_storage!(
+                L, T, P, E,
+                stors_available, stors_energy, residual_generation, stors)
+            sample.regions[1] = RegionResult{L,T,P}(
+                residual_generation, residual_generation, 0.)
 
         else
 
             # Discharge to meet residual_generation shortfall
-            shortfall = discharge_storage!(stors_available, stors_energy,
-                                           -residual_generation, stors)
+            shortfall = discharge_storage!(
+                L, T, P, E,
+                stors_available, stors_energy, -residual_generation, stors)
             sample.regions[1] = RegionResult{L,T,P}(shortfall, 0., shortfall)
 
         end
@@ -73,12 +76,12 @@ function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
 
     @inbounds for i in 1:length(availability)
 
-        a = assets[i]
+        d = devices[i]
 
         if availability[i] # Unit is online
-            rand(rng) < a.λ && (availability[i] = false) # Unit fails
+            rand(rng) < d.λ && (availability[i] = false) # Unit fails
         else # Unit is offline
-            rand(rng) < a.μ && (availability[i] = true) # Unit is repaired
+            rand(rng) < d.μ && (availability[i] = true) # Unit is repaired
         end
 
     end
@@ -86,7 +89,6 @@ function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
 end
 
 function available_gen_capacity(
-    rng::MersenneTwister,
     gen_availability::Vector{Bool},
     generators::AbstractVector{DispatchableGeneratorSpec{T}}
 ) where {T <: Real}
@@ -101,8 +103,9 @@ function available_gen_capacity(
 
 end
 
-function decay_energy!(stors_energy::Vector{V},
-                       stors::AbstractVector{StorageDeviceSpec{V}}
+function decay_energy!(
+    stors_energy::Vector{V},
+    stors::AbstractVector{StorageDeviceSpec{V}}
 ) where {V<:Real}
 
     for (i, stor) in enumerate(stors)
@@ -111,22 +114,29 @@ function decay_energy!(stors_energy::Vector{V},
 
 end
 
-function charge_storage!(stors_available::Vector{Bool},
-                         stors_energy::Vector{T},
-                         surplus::T,
-                         stors::AbstractVector{StorageDeviceSpec{T}}
-                         ) where {T <: Real}
+function charge_storage!(
+    L::Int,
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+    E::Type{<:EnergyUnit},
+    stors_available::Vector{Bool},
+    stors_energy::Vector{V},
+    surplus::V,
+    stors::AbstractVector{StorageDeviceSpec{V}}
+) where {V<:Real}
 
-    # TODO: Replace with strategic charging
-    # TODO: Stop assuming hourly periods
+    # TODO: Replace with copperplate charging from Evans et al
+
+    surplus = powertoenergy(surplus, L, T, P, E)
 
     for (i, stor) in enumerate(stors)
 
         if stors_available[i]
 
-            max_charge = stor.energy - stors_energy[i]
+            max_charge_power = powertoenergy(stor.capacity, L, T, P, E)
+            max_charge_energy = stor.energy - stors_energy[i]
+            max_charge = min(max_charge_power, max_charge_energy)
 
-            # TODO: This is wrong, need to consider max charge rate
             if surplus > max_charge # Fully charge
 
                 stors_energy[i] = stor.energy
@@ -135,7 +145,7 @@ function charge_storage!(stors_available::Vector{Bool},
             else # Partially charge
 
                 stors_energy[i] += surplus
-                return zero(T)
+                return zero(V)
 
             end
 
@@ -147,22 +157,28 @@ function charge_storage!(stors_available::Vector{Bool},
 
 end
 
-function discharge_storage!(rng::MersenneTwister,
-                            stors_available::Vector{Bool},
-                            stors_energy::Vector{T},
-                            shortfall::T,
-                            stors::AbstractVector{StorageDeviceSpec{T}}
-                           ) where {T <: Real}
+function discharge_storage!(
+    L::Int,
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+    E::Type{<:EnergyUnit},
+    stors_available::Vector{Bool},
+    stors_energy::Vector{V},
+    shortfall::V,
+    stors::AbstractVector{StorageDeviceSpec{V}}
+) where {V<:Real}
 
-    # TODO: Replace with strategic discharging
-    # TODO: Stop assuming hourly periods
+    # TODO: Replace with optimal copperplate charging from Evans et al
+
+    shortfall = powertoenergy(shortfall, L, T, P, E)
 
     for (i, stor) in enumerate(stors)
 
         if stors_available[i]
 
-            # TODO: This is wrong, need to consider max charge rate
-            max_discharge = stors_energy[i]
+            max_discharge_power = powertoenergy(stor.capacity, L, T, P, E)
+            max_discharge_energy = stors_energy[i]
+            max_discharge = min(max_discharge_power, max_discharge_energy)
 
             if shortfall > max_discharge # Fully discharge
 
@@ -172,7 +188,7 @@ function discharge_storage!(rng::MersenneTwister,
             else # Partially discharge
 
                 stors_energy[i] -= shortfall
-                return zero(T)
+                return zero(V)
 
             end
 
