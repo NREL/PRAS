@@ -20,6 +20,7 @@ function accumulator(extractionspec::ExtractionSpec,
 
     droppedcount = Vector{MeanVariance{V}}(undef, nthreads)
     droppedsum = Vector{MeanVariance{V}}(undef, nthreads)
+
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
