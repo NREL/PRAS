@@ -3,9 +3,6 @@
     seed = UInt(1234)
     nstderr_tol = 3
 
-    # TODO: Decide on how to programmatically test MC estimates vs ground truth
-    @test_broken false
-
     # Single-region system A
     lole = 0.355
     lolps = [] # TODO
@@ -55,19 +52,19 @@
     eues = [] # TODO
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), singlenode_b)
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), eue, nstderr_tol)
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Spatial(), singlenode_b)
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), Spatial(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), eue, nstderr_tol)
     @test withinrange(LOLE(result_1bb, "Region"), lole, nstderr_tol)
     @test withinrange(EUE(result_1bb, "Region"), eue, nstderr_tol)
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Temporal(), singlenode_b)
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), Temporal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), eue, nstderr_tol)
     @test_broken all(withinrange.(LOLP.(result_1bb, threenode.timestamps),
@@ -76,7 +73,7 @@
                            eues, nstderr_tol))
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_b)
+        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), eue, nstderr_tol)
     @test withinrange(LOLE(result_1bb, "Region"), lole, nstderr_tol)
@@ -103,7 +100,7 @@
 
     println("Spatial:")
     result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
-                        Spatial(), threenode)
+                        Spatial(), threenode, seed)
     @test withinrange(LOLE(result_3mb), lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), eue, nstderr_tol)
     # TODO:  Test spatially-disaggregated results
@@ -113,7 +110,7 @@
     println()
 
     result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
-                        Temporal(), threenode)
+                        Temporal(), threenode, seed)
     @test withinrange(LOLE(result_3mb), lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), eue, nstderr_tol)
     @test all(withinrange.(LOLP.(result_3mb, threenode.timestamps),
@@ -123,7 +120,7 @@
 
     println("SpatioTemporal:")
     result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
-                        SpatioTemporal(), threenode)
+                        SpatioTemporal(), threenode, seed)
     @test withinrange(LOLE(result_3mb), lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), eue, nstderr_tol)
     @test all(withinrange.(LOLP.(result_3mb, threenode.timestamps),
