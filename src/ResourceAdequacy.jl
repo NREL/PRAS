@@ -43,7 +43,7 @@ include("abstractspecs/abstractspecs.jl")
 spec_instances = [
     ("extraction", ["backcast", "repra"]),
     ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
-                    "nonsequentialnetworkflow"]),
+                    "nonsequentialnetworkflow", "sequentialnetworkflow"]),
     ("result", ["minimal", "temporal", "spatial", "spatiotemporal"])  # TODO: "network"
 ]
 for (spec, instances) in spec_instances, instance in instances
