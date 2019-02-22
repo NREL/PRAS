@@ -36,28 +36,37 @@ function assess!(
     flowproblem = FlowProblem(simulationspec, system) # TODO: Need new method for this
 
     # Main simulation loop
-    for (t, (gen_set, stor_set)) in enumerate(zip(
+    for (t, (gen_set, line_set, stor_set)) in enumerate(zip(
         sys.timestamps_generatorset,
         sys.timestamps_lineset,
         sys.timestamps_storageset))
 
+        # Load data for timestep
         gens = view(sys.generators, :, gen_set)
         lines = view(sys.lines, :, line_set)
         stors = view(sys.storages, :, stor_set)
-
         loads = view(sys.load, :, t)
         vgs = view(sys.vg, :, t)
 
+        # Update assets for timestep
         update_availability!(rng, gens_available, gens)
         update_availability!(rng, lines_available, lines)
         update_availability!(rng, stors_available, stors)
         decay_energy!(stors_energy, stors)
 
+        # Update flowproblem with asset data for timestep
         update_gen_capacity!(flowproblem, gens_available, gens)
         update_line_capacity!(flowproblem, lines_available, lines)
         update_stor_capacity!(flowproblem, stors_available, stors)
         update_netload!(flowproblem, loads, vgs)
 
+        # Solve flowproblem
+        solveflows!(flowproblem)
+
+        # Update asset data with flowproblem solution
+        update_energy!(stors_energy, stors, flowproblem)
+
+        # Update results with flowproblem solution
         update!(outputsample, flowproblem)
         update!(acc, outputsample, t, i)
 
