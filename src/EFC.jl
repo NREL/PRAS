@@ -2,7 +2,7 @@ struct EFC <: CapacityValuationMethod
     nameplatecapacity::Float64
     p::Float64
     tol_mw::Float64
-    nodes::Generic{Int,Float64,Vector{Int}}
+    nodes::DiscreteNonParametric{Int,Float64,Vector{Int}}
 end
 
 function RA.assess(params::EFC,
