@@ -206,48 +206,97 @@ end
 
 function update_gen_surplusshortfall!(
     flowproblem::FlowProblem,
-    loads::Vector{V},
-    vgs::Vector{V},
+    loads::AbstractVector{V},
+    vgs::AbstractVector{V},
     gens_available::Vector{Bool},
-    gens::Vector{DispatchableGeneratorSpec{V}
+    gens::AbstractVector{DispatchableGeneratorSpec{V},
+    gens_regionstart::Vector{Int}
 ) where {V <: Real}
 
-    #TODO
+    slacknode = flowproblem.nodes[end]
+    nregions = length(gens_regionstart)
+    ngens = length(gens)
+    g_idx = 1
+
+    for r in 1:nregions
+
+        regionnode = flowproblem.nodes[r]
+        region_gensurplus = vgs[r] - loads[r]
+        region_lastgen = r < nregions ? gens_regionstart[r+1]-1 : ngens
+
+        while g_idx <= region_lastgen
+            if gens_available[g_idx]
+                region_gensurplus += gens[g_idx].capacity
+            end
+            g_idx += 1
+        end
+
+        updateinjection!(regionnode, slacknode, round(Int, region_gensurplus))
+
+    end
 
 end
 
 function update_line_capacity!(
     flowproblem::FlowProblem,
     lines_available::Vector{Bool},
-    lines::Vector{LineSpec{V}
+    lines::Vector{LineSpec{V},
+    lines_interfacestart::Vector{Int}
 ) where {V <: Real}
 
-    # TODO
+    ninterfaces = length(lines_interfacestart)
+    nlines = length(lines)
+
+    for i in 1:ninterfaces
+
+        forwardinterface = flowproblem.edges[i]
+        backwardinterface = flowproblem.edges[ninterfaces + i]
+        interface_capacity = zero(V)
+
+        while l_idx <= interface_lastline
+            if lines_available[l_idx]
+                interface_capacity += lines[l_idx].capacity
+            end
+            l_idx += 1
+        end
+
+        interface_capacity_rounded = round(Int, interface_capacity)
+        updateflowlimit!(forwardinterface, interface_capacity_rounded)
+        updateflowlimit!(backwardinterface, interface_capacity_rounded)
+
+    end
 
 end
 
 function update_stor_capacity!(
     flowproblem::FlowProblem,
     stors_available::Vector{Bool},
-    stors::Vector{StorageDeviceSpec{V}
+    stors::Vector{StorageDeviceSpec{V},
+    stors_regionstart::Vector{Int}
 ) where {V <: Real}
 
     # TODO
+    # Update both chargeable and dischargeable capacity
+    # Re-use logic from copperplate case?
 
 end
 
 function update_energy!(
     stors_energy::Vector{V},
     stors::Vector{StorageDeviceSpec{V},
-    flowproblem::FlowProblem)
+    stors_regionstart::Vector{Int},
+    flowproblem::FlowProblem
+) where {V <: Real}
 
     # TODO
+    # Re-use logic from copperplate case?
 
 end
 
 function update!(
     outputsample::SystemOutputStateSample{L,T,P,V},
-    flowproblem::FlowProblem) where {L,T<:Period,P<:PowerUnit,V<:Real}
+    flowproblem::FlowProblem
+) where {L,T<:Period,P<:PowerUnit,V<:Real}
 
     # TODO
 
