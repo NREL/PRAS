@@ -33,11 +33,12 @@ export
     Minimal, Spatial, Temporal, SpatioTemporal, FullNetwork
 
 
-# Basic functionality
+# Basic / common functionality
 include("utils/utils.jl")
 include("systemdata/systemdata.jl")
 include("metrics/metrics.jl")
 include("abstractspecs/abstractspecs.jl")
+include("simulations/sequentialutils.jl")
 
 # Spec instances
 spec_instances = [

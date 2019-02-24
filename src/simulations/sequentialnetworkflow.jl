@@ -33,7 +33,7 @@ function assess!(
                           for stor in view(sys.storages, :, 1)]
     stors_energy = zeros(V, size(sys.storages, 1))
 
-    flowproblem = FlowProblem(simulationspec, system) # TODO: Need new method for this
+    flowproblem = FlowProblem(simulationspec, system)
 
     # Main simulation loop
     for (t, (gen_set, line_set, stor_set)) in enumerate(zip(
@@ -55,10 +55,9 @@ function assess!(
         decay_energy!(stors_energy, stors)
 
         # Update flowproblem with asset data for timestep
-        update_gen_capacity!(flowproblem, gens_available, gens)
+        update_gen_surplusshortfall!(flowproblem, loads, vgs, gens_available, gens)
         update_line_capacity!(flowproblem, lines_available, lines)
         update_stor_capacity!(flowproblem, stors_available, stors)
-        update_netload!(flowproblem, loads, vgs)
 
         # Solve flowproblem
         solveflows!(flowproblem)
@@ -135,6 +134,8 @@ function MinCostFlows.FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
     nedges = ninterfaceedges + 6*nregions
 
     regions = 1:nregions
+    storagedischargenodes = nregions .+ regions
+    storagechargenodes = 2*nregions .+ regions
     slacknode = 3*nregions + 1
 
     nodesfrom = Vector{Int}(undef, nedges)
@@ -166,39 +167,88 @@ function MinCostFlows.FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
 
     # Dispatched storage discharge edges
     storagedischargeedges = unusedcapacityedges .+ nregions
-    nodesfrom[surpluscapacityedges] = _
-    nodesto[surpluscapacityedges] .= regions
-    limits[surpluscapacityedges] .= 999999
-    costs[surpluscapacityedges] .= 10
+    nodesfrom[storagedischargeedges] = storagedischargenodes
+    nodesto[storagedischargeedges] = regions
+    limits[storagedischargeedges] .= 999999
+    costs[storagedischargeedges] .= 10
 
     # Unused storage discharge edges
     unusedstoragedischargeedges = storagedischargeedges .+ nregions
-    nodesfrom[surpluscapacityedges] = _
-    nodesto[surpluscapacityedges] .= slacknode
-    limits[surpluscapacityedges] .= 999999
-    costs[surpluscapacityedges] .= 0
+    nodesfrom[unusedstoragedischargeedges] = storagedischargenodes
+    nodesto[unusedstoragedischargeedges] .= slacknode
+    limits[unusedstoragedischargeedges] .= 999999
+    costs[unusedstoragedischargeedges] .= 0
 
     # Dispatched storage charge edges
-    unusedcapacityedges = (1:nregions) .+ ninterfaceedges
-    nodesfrom[surpluscapacityedges] = _
-    nodesto[surpluscapacityedges] .= slacknode
-    limits[surpluscapacityedges] .= 999999
-    costs[surpluscapacityedges] .= -9
+    storagechargeedges = unusedstoragedischargeedges .+ nregions
+    nodesfrom[storagechargeedges] = regions
+    nodesto[storagechargeedges] = storagechargenodes
+    limits[storagechargeedges] .= 999999
+    costs[storagechargeedges] .= -9
 
     # Unused storage charge edges
-    surpluscapacityedges = unusedcapacityedges .+ nregions
-    nodesfrom[surpluscapacityedges] = regions
-    nodesto[surpluscapacityedges] .= slacknode
-    limits[surpluscapacityedges] .= 999999
-    costs[surpluscapacityedges] .= 0
+    unusedstoragechargeedges = storagechargeedges .+ nregions
+    nodesfrom[unusedstoragechargeedges] .= slacknode
+    nodesto[unusedstoragechargeedges] = storagechargenodes
+    limits[unusedstoragechargeedges] .= 999999
+    costs[unusedstoragechargeedges] .= 0
 
     # Unserved energy edges
-    unservedenergyedges = surpluscapacityedges .+ nregions
+    unservedenergyedges = unusedstoragechargeedges .+ nregions
     nodesfrom[unservedenergyedges] .= slacknode
     nodesto[unservedenergyedges] = regions
     limits[unservedenergyedges] .= 999999
     costs[unservedenergyedges] .= 9999
 
     return FlowProblem(nodesfrom, nodesto, limits, costs, injections)
+
+end
+
+function update_gen_surplusshortfall!(
+    flowproblem::FlowProblem,
+    loads::Vector{V},
+    vgs::Vector{V},
+    gens_available::Vector{Bool},
+    gens::Vector{DispatchableGeneratorSpec{V}
+) where {V <: Real}
+
+    #TODO
+
+end
+
+function update_line_capacity!(
+    flowproblem::FlowProblem,
+    lines_available::Vector{Bool},
+    lines::Vector{LineSpec{V}
+) where {V <: Real}
+
+    # TODO
+
+end
+
+function update_stor_capacity!(
+    flowproblem::FlowProblem,
+    stors_available::Vector{Bool},
+    stors::Vector{StorageDeviceSpec{V}
+) where {V <: Real}
+
+    # TODO
+
+end
+
+function update_energy!(
+    stors_energy::Vector{V},
+    stors::Vector{StorageDeviceSpec{V},
+    flowproblem::FlowProblem)
+
+    # TODO
+
+end
+
+function update!(
+    outputsample::SystemOutputStateSample{L,T,P,V},
+    flowproblem::FlowProblem) where {L,T<:Period,P<:PowerUnit,V<:Real}
+
+    # TODO
 
 end
