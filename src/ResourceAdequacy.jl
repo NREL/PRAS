@@ -51,4 +51,6 @@ for (spec, instances) in spec_instances, instance in instances
     include(spec * "s/" * instance * ".jl")
 end
 
+include("simulations/flowproblems.jl")
+
 end # module
