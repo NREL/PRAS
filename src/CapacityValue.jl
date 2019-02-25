@@ -5,8 +5,7 @@ using Distributions
 import ResourceAdequacy
 const RA = ResourceAdequacy
 
-export
-    EFC
+export EFC
 
 abstract type CapacityValuationMethod end
 

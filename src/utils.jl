@@ -5,33 +5,39 @@ function pequal(x::T, y::T) where {T<:RA.ReliabilityMetric}
     return 2 * ccdf(normdist, z)
 end
 
-function addfirmcapacity(sys::RA.SystemModel{N1,T1,N2,T2,P,V},
-                         nodes::Generic{Int,Float64,Vector{Int}},
-                         capacity::Float64) where {N1,T1,N2,T2,P,V}
+function addfirmcapacity(
+    system::RA.SystemModel{N,L,T,P,E,V},
+    regions::DiscreteNonParametric{Int,V,Vector{Int}},
+    totalcapacity::V) where {N,L,T,P,E,V}
 
-    gens_updated     = copy(sys.generators)
-    gens_regionstart = copy(sys.generators_regionstart)
-    n_gen_cols       = size(gens_updated, 2)
+    regions_idxs = support(regions)
+    region_shares = Distributions.probs(regions)
 
-    for (node, weight) in zip(support(nodes), Distributions.probs(nodes))
+    n_gensets = size(system.generators, 2)
+    newgenerators = system.generators
+    newgenerators_regionstart = copy(system.generators_regionstart)
 
-        firm_gen = ResourceAdequacy.DispatchableGeneratorSpec(
-                       weight*capacity, 0.0, 1.0)
-        regionstart_idx = gens_regionstart[node]
-        gens_updated = [gens_updated[1:(regionstart_idx-1), :];
-                        fill(firm_gen, 1, n_gen_cols);
-                        gens_updated[regionstart_idx:end, :]
-                       ]
-        gens_regionstart[(node+1):end] .+= 1
+    for (r, share) in zip(region_idxs, region_shares)
+
+        firmgen = RA.DispatchableGeneratorSpec(
+            totalcapacity * share, 0., 1.)
+
+        g = system.generators_regionstart[r]
+        newgenerators = vcat(
+            newgenerators[1:(g-1), :],
+            fill(firmgen, 1, n_gensets),
+            newgenerators[g:end, :]
+        )
+        newgenerators_regionstart[(r+1):end] .+= 1
 
     end
 
-    return RA.SystemModel{N1,T1,N2,T2,P,V}(
-        sys.regions, gens_updated, gens_regionstart,
-        sys.storages, sys.storages_regionstart,
-        sys.interfaces, sys.lines, sys.lines_interfacestart,
-        sys.timestamps, sys.timestamps_generatorset,
-        sys.timestamps_storageset, sys.timestamps_lineset,
-        sys.vg, sys.load)
+    return RA.SystemModel{N,L,T,P,E}(
+        system.regions, newgenerators, newgenerators_regionstart,
+        system.storages, system.storages_regionstart,
+        system.interfaces, system.lines, system.lines_interfacestart,
+        system.timestamps, system.timestamps_generatorset,
+        system.timestamps_storageset, system.timestamps_lineset,
+        system.vg, system.load)
 
 end

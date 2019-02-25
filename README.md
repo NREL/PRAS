@@ -4,9 +4,10 @@ To assess the equivalent firm capacity a new resource added
 to the system in region 3:
 
 ```julia
+using ResourceAdequacy, CapacityValue, Distributions
 multiperiod_system_new_resource # The previous system augmented with a new resource
-assess(EFC(1000, 0.95, 1, Generic([3], [1.0])),
-       LOLE, REPRA(1, 10), NonSequentialNetworkFlow(100_000), MinimalResult(),
+assess(EFC(1000, 0.95, 1, DiscreteNonParametric([3], [1.0])),
+       LOLE, REPRA(1, 10), NonSequentialNetworkFlow(100_000), Minimal(),
 	   multiperiod_system, multiperiod_system_new_resource)
 ```
 
@@ -24,6 +25,5 @@ ELCC coming soon, hopefully.
 ### Reliability Assessment / Comparison Metric
 
 Currently supported:
- - LOLP (single-period assessment)
- - LOLE (multi-period assessment)
+ - LOLE
  - EUE
