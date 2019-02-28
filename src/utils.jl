@@ -1,7 +1,7 @@
 normdist = Normal()
 function pequal(x::T, y::T) where {T<:RA.ReliabilityMetric}
-    z = abs((val(x) - val(y)) /
-            sqrt(stderror(x)^2 + stderror(y)^2))
+    z = abs((RA.val(x) - RA.val(y)) /
+            sqrt(RA.stderror(x)^2 + RA.stderror(y)^2))
     return 2 * ccdf(normdist, z)
 end
 
