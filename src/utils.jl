@@ -10,7 +10,7 @@ function addfirmcapacity(
     regions::DiscreteNonParametric{Int,V,Vector{Int}},
     totalcapacity::V) where {N,L,T,P,E,V}
 
-    regions_idxs = support(regions)
+    region_idxs = support(regions)
     region_shares = Distributions.probs(regions)
 
     n_gensets = size(system.generators, 2)
