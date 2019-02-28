@@ -54,7 +54,6 @@ function update!(acc::SequentialTemporalResultAccumulator,
                  result::SystemOutputStateSummary, t::Int)
 
     error("Sequential analytical solutions are not currently supported.")
-    return
 
 end
 
