@@ -69,11 +69,13 @@ function update!(acc::SequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,
     fit!(acc.droppedsum_period[t, thread], unservedenergy)
 
     # Update overall results
-    if i != acc.simidx[thread] # Previous thread-local simulation has finished
+    prev_i = acc.simidx[thread]
+    if i != prev_i # Previous thread-local simulation has finished
 
-        # Store previous thread-local result
-        fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
-        fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+        if prev_i != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+        end
 
         # Reset thread-local tracking for new simulation
         acc.simidx[thread] = i
@@ -99,9 +101,18 @@ function finalize(acc::SequentialTemporalResultAccumulator{V,<:SystemModel{N,L,T
 
     timestamps = acc.system.timestamps
     nperiods = length(timestamps)
+    nthreads = Threads.nthreads()
+
+    # Store final simulation results
+    for thread in 1:nthreads
+        if acc.simidx[thread] != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+        end
+    end
 
     # Merge thread-local stats into final stats
-    for i in 2:Threads.nthreads()
+    for i in 2:nthreads
 
         merge!(acc.droppedcount_overall[1], acc.droppedcount_overall[i])
         merge!(acc.droppedsum_overall[1], acc.droppedsum_overall[i])

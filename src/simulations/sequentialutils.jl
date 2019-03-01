@@ -43,15 +43,15 @@ end
 
 function available_storage_capacity(
     stors_available::AbstractVector{Bool},
-    stors_energy::AbstractVector{Bool},
+    stors_energy::AbstractVector{T},
     stors::AbstractVector{StorageDeviceSpec{T}}
 ) where {T <: Real}
 
     charge_capacity = zero(T)
     discharge_capacity = zero(T)
 
-    for i in length(stors)
-        if availability[i]
+    for i in 1:length(stors)
+        if stors_available[i]
             stor_energy = stors_energy[i]
             max_power = powertoenergy(stor.capacity, L, T, P, E)
             charge_capacity += min(max_power, stor.energy - stor_energy)

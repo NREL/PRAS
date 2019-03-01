@@ -105,6 +105,8 @@ end
 function assetgrouprange(starts::Vector{Int}, nassets::Int)
 
     ngroups = length(starts)
+    ngroups == 0 && return UnitRange{Int}[]
+
     results = Vector{UnitRange{Int}}(undef, ngroups)
 
     i = 1

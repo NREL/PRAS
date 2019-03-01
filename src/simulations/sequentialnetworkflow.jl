@@ -21,6 +21,11 @@ function assess!(
     rng = acc.rngs[Threads.threadid()]
 
     nregions = length(sys.regions)
+    ngens = size(sys.generators, 1)
+    nstors = size(sys.storages, 1)
+
+    ninterfaces = length(sys.interfaces)
+    nlines = size(sys.lines, 1)
 
     outputsample = SystemOutputStateSample{L,T,P,V}(
         sys.interfaces, nregions)
@@ -35,11 +40,11 @@ function assess!(
                            for stor in view(sys.storages, :, 1)]
     stors_energy = zeros(V, size(sys.storages, 1))
 
-    flowproblem = FlowProblem(simulationspec, system)
+    flowproblem = FlowProblem(simulationspec, sys)
 
-    genranges = assetgrouprange(gens_regionstart, ngens)
-    storranges = assetgrouprange(stors_regionstart, nstors)
-    lineranges = assetgrouprange(lines_interfacestart, nlines)
+    genranges = assetgrouprange(sys.generators_regionstart, ngens)
+    storranges = assetgrouprange(sys.storages_regionstart, nstors)
+    lineranges = assetgrouprange(sys.lines_interfacestart, nlines)
 
     # Main simulation loop
     for (t, (gen_set, line_set, stor_set)) in enumerate(zip(
@@ -53,7 +58,7 @@ function assess!(
         stors = view(sys.storages, :, stor_set)
 
         # TODO: Support non-backcast sampling methods
-        loads = view(sys.loads, :, t)
+        loads = view(sys.load, :, t)
         vgs = view(sys.vg, :, t)
 
         # Update assets for timestep
@@ -76,7 +81,7 @@ function assess!(
         update_energy!(
             stors_energy,
             storranges, stors, stors_available,
-            flowproblem)
+            flowproblem, ninterfaces)
 
         update!(simulationspec, outputsample, flowproblem)
         update!(acc, outputsample, t, i)
@@ -88,17 +93,17 @@ end
 function update_flownodes!(
     flowproblem::FlowProblem,
     loads::AbstractVector{V}, vgs::AbstractVector{V}, 
-    genranges::Vector{UnitStep{Int}},
+    genranges::Vector{UnitRange{Int}},
     gens::AbstractVector{DispatchableGeneratorSpec{V}},
     gens_available::AbstractVector{Bool},
-    storranges::Vector{UnitStep{Int}},
-    stors::AbstactVector{StorageDeviceSpec{V}},
-    stors_available::AbstactVector{Bool},
+    storranges::Vector{UnitRange{Int}},
+    stors::AbstractVector{StorageDeviceSpec{V}},
+    stors_available::AbstractVector{Bool},
     stors_energy::AbstractVector{V}
 ) where {V <: Real}
 
     nregions = length(genranges)
-    slack_node = flowproblem.nodes[end]
+    slacknode = flowproblem.nodes[end]
 
     for r in 1:nregions
 
@@ -108,33 +113,33 @@ function update_flownodes!(
 
         # Update generators
         region_genrange = genranges[r]
-        region_gensurplus = vgs[r] - load[r] +
+        region_gensurplus = vgs[r] - loads[r] +
             available_capacity(
                 view(gens_available, region_genrange),
                 view(gens, region_genrange))
-        updateinjection!(flowproblem, region_node, slack_node, round(Int, region_gensurplus))
+        updateinjection!(region_node, slacknode, round(Int, region_gensurplus))
 
         # Update storages
         region_storrange = storranges[r]
         charge_capacity, discharge_capacity = available_storage_capacity(
             view(stors_available, region_storrange),
             view(stors_energy, region_storrange),
-            view(gens, region_storrange))
-        updateinjection!(flowproblem, region_chargenode, slacknode, round(Int, charge_capacity))
-        updateinjection!(flowproblem, region_dischargenode, slacknode, round(Int, discharge_capacity))
+            view(stors, region_storrange))
+        updateinjection!(region_chargenode, slacknode, round(Int, charge_capacity))
+        updateinjection!(region_dischargenode, slacknode, round(Int, discharge_capacity))
 
     end
 
-end    
+end
 
 function update_flowedges!(
     flowproblem::FlowProblem,
-    lineranges::Vector{UnitStep{Int}},
-    lines::AbstractVector{DispatchableGeneratorSpec{V}},
+    lineranges::Vector{UnitRange{Int}},
+    lines::AbstractVector{LineSpec{V}},
     lines_available::AbstractVector{Bool}
 ) where {V <: Real}
 
-    ninterfaces = length(lines_interfacestart)
+    ninterfaces = length(lineranges)
 
     for i in 1:ninterfaces
 
@@ -155,11 +160,12 @@ function update_flowedges!(
 end
 
 function update_energy!(
-    stors_available::Vector{Bool},
-    storranges::Vector{UnitStep{Int}},
     stors_energy::Vector{V},
-    stors::Vector{StorageDeviceSpec{V},
-    flowproblem::FlowProblem
+    storranges::Vector{UnitRange{Int}},
+    stors::AbstractVector{StorageDeviceSpec{V}},
+    stors_available::Vector{Bool},
+    flowproblem::FlowProblem,
+    ninterfaces::Int
 ) where {V <: Real}
 
     nregions = length(storranges)
@@ -167,10 +173,10 @@ function update_energy!(
 
     for r in 1:nregions
 
-        region_discharge = flowproblem.flows[2*ninterfaces + nregions + r]
-        region_charge = flowproblem.flows[2*ninterfaces + 3*nregions + r]
+        region_discharge = flowproblem.edges[2*ninterfaces + nregions + r].flow
+        region_charge = flowproblem.edges[2*ninterfaces + 3*nregions + r].flow
 
-        storrange = storranges[i]
+        storrange = storranges[r]
         region_stors_available = view(stors_available, storrange)
         region_stors_energy = view(stors_energy, storrange)
         region_stors = view(stors, storrange)
@@ -201,25 +207,25 @@ function update!(
     flowproblem::FlowProblem
 ) where {L,T<:Period,P<:PowerUnit,V<:Real}
 
-    nregions = length(sample.regions)
-    ninterfaces = length(sample.interfaces)
+    nregions = length(outputsample.regions)
+    ninterfaces = length(outputsample.interfaces)
 
     # Save gen available, gen dispatched, demand, demand served for each region
     for i in 1:nregions
         node = flowproblem.nodes[i]
-        surplus_edge = fp.edges[2*ninterfaces + i]
-        shortfall_edge = fp.edges[2*ninterfaces + 5*nregions + i]
-        sample.regions[i] = RegionResult{L,T,P}(
+        surplus_edge = flowproblem.edges[2*ninterfaces + i]
+        shortfall_edge = flowproblem.edges[2*ninterfaces + 5*nregions + i]
+        outputsample.regions[i] = RegionResult{L,T,P}(
             V(node.injection), V(surplus_edge.flow), V(shortfall_edge.flow))
     end
 
     # Save flow available, flow for each interface
     for i in 1:ninterfaces
-        forwardedge = fp.edges[i]
+        forwardedge = flowproblem.edges[i]
         forwardflow = forwardedge.flow
-        reverseflow = fp.edges[ninterfaces+i].flow
+        reverseflow = flowproblem.edges[ninterfaces+i].flow
         flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        sample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
+        outputsample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
     end
 
 end

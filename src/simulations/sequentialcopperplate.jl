@@ -40,7 +40,7 @@ function assess!(
         update_availability!(rng, stors_available, stors)
         decay_energy!(stors_energy, stors)
 
-        dispatchable_gen_available = available_gen_capacity(gens_available, gens)
+        dispatchable_gen_available = available_capacity(gens_available, gens)
         netload = sum(view(sys.load, :, t)) - sum(view(sys.vg, :, t))
 
         residual_generation = dispatchable_gen_available - netload

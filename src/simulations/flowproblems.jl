@@ -118,8 +118,8 @@ Edges are ordered as:
 """
 function MinCostFlows.FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
 
-    nregions = length(sys.region_labels)
-    ninterfaces = length(sys.interface_labels)
+    nregions = length(sys.regions)
+    ninterfaces = length(sys.interfaces)
 
     ninterfaceedges = 2*ninterfaces
     nedges = ninterfaceedges + 6*nregions
@@ -137,24 +137,24 @@ function MinCostFlows.FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
 
     # Forward transmission edges
     forwardtransmission = 1:ninterfaces
-    nodesfrom[forwardtransmission] = first.(sys.interface_labels)
-    nodesto[forwardtransmission] = last.(sys.interface_labels)
+    nodesfrom[forwardtransmission] = first.(sys.interfaces)
+    nodesto[forwardtransmission] = last.(sys.interfaces)
     limits[forwardtransmission] .= 0 # Will be updated during simulation
     costs[forwardtransmission] .= 1
 
     # Reverse transmission edges
     reversetransmission = forwardtransmission .+ ninterfaces
-    nodesfrom[reversetransmission] = last.(sys.interface_labels)
-    nodesto[reversetransmission] = first.(sys.interface_labels)
+    nodesfrom[reversetransmission] = last.(sys.interfaces)
+    nodesto[reversetransmission] = first.(sys.interfaces)
     limits[reversetransmission] .= 0 # Will be updated during simulation
     costs[reversetransmission] .= 1
 
     # Unused generation edges
     unusedcapacityedges = (1:nregions) .+ ninterfaceedges
-    nodesfrom[surpluscapacityedges] = regions
-    nodesto[surpluscapacityedges] .= slacknode
-    limits[surpluscapacityedges] .= 999999
-    costs[surpluscapacityedges] .= 0
+    nodesfrom[unusedcapacityedges] = regions
+    nodesto[unusedcapacityedges] .= slacknode
+    limits[unusedcapacityedges] .= 999999
+    costs[unusedcapacityedges] .= 0
 
     # Dispatched storage discharge edges
     storagedischargeedges = unusedcapacityedges .+ nregions

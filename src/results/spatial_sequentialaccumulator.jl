@@ -52,7 +52,7 @@ function accumulator(extractionspec::ExtractionSpec,
     return SequentialSpatialResultAccumulator(
         droppedcount_overall, droppedsum_overall,
         droppedcount_region, droppedsum_region,
-        simidx, simcount, simsum, simcount_region, sumsum_region,
+        simidx, simcount, simsum, simcount_region, simsum_region,
         localshortfalls, sys, extractionspec, simulationspec, rngs)
 
 end
@@ -73,19 +73,23 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
     isshortfall, unservedload, unservedloads = droppedloads!(acc.localshortfalls[thread], sample)
     unservedenergy = powertoenergy(unservedload, L, T, P, E)
 
-    if i != acc.localidx[thread]
+    prev_i = acc.simidx[thread]
+    if i != prev_i
 
         # Previous local simulation/timestep has finished,
-        # so store previous local result and reset
+        # so store previous local result (if appropriate) and reset
 
-        fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
-        fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
-        for r in 1:nregions
-            fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
-            fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
+        if prev_i != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+            for r in 1:nregions
+                fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
+                fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
+            end
         end
 
-        acc.localidx[thread] = i
+        # Initialize new simulation data
+        acc.simidx[thread] = i
         acc.droppedcount_sim[thread] = V(isshortfall)
         acc.droppedsum_sim[thread] = unservedenergy
         for r in 1:nregions
@@ -99,8 +103,8 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
         # Local simulation/timestep is still ongoing
         # Load was dropped, update local tracking
 
-        acc.droppedcount_local[thread] += one(V)
-        acc.droppedsum_local[thread] += droppedenergy
+        acc.droppedcount_sim[thread] += one(V)
+        acc.droppedsum_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
             acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
@@ -118,15 +122,28 @@ function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,
 
     regions = acc.system.regions
     nregions = length(regions)
+    nthreads = Threads.nthreads()
+
+    # Store final simulation results
+    for thread in 1:nthreads
+        if acc.simidx[thread] != 0
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+            for r in 1:nregions
+                fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
+                fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
+            end
+        end
+    end
 
     # Merge thread-local stats into final stats
-    for i in 2:Threads.nthreads()
+    for i in 2:nthreads
 
-        merge!(acc.droppedcount_overall[1], acc.droppedcount[i])
+        merge!(acc.droppedcount_overall[1], acc.droppedcount_overall[i])
         merge!(acc.droppedsum_overall[1], acc.droppedsum[i])
 
         for r in 1:nregions
-            merge!(acc.droppedcount_region[r, 1], acc.droppedcount[r, i])
+            merge!(acc.droppedcount_region[r, 1], acc.droppedcount_region[r, i])
             merge!(acc.droppedsum_region[r, 1], acc.droppedsum[r, i])
         end
 

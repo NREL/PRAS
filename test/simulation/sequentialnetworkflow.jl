@@ -21,9 +21,9 @@
         assess(Backcast(), SequentialNetworkFlow(100_000), Temporal(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1ab, threenode.timestamps),
+    @test all(withinrange.(LOLP.(result_1ab, singlenode_a.timestamps),
                            singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, threenode.timestamps),
+    @test all(withinrange.(EUE.(result_1ab, singlenode_a.timestamps),
                            singlenode_a_eues, nstderr_tol))
 
     # result_1ab =
@@ -59,9 +59,9 @@
         assess(Backcast(), NonSequentialNetworkFlow(100_000), Temporal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1bb, threenode.timestamps),
+    @test all(withinrange.(LOLP.(result_1bb, singlenode_b.timestamps),
                            singlenode_b_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, threenode.timestamps),
+    @test all(withinrange.(EUE.(result_1bb, singlenode_b.timestamps),
                            singlenode_b_eues, nstderr_tol))
 
     # result_1bb =
