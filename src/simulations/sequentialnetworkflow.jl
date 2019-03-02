@@ -152,8 +152,8 @@ function update_flowedges!(
                 view(lines_available, interface_linerange),
                 view(lines, interface_linerange)))
 
-        updateflowlimit!(forwardinterface, interface_capacity)
-        updateflowlimit!(backwardinterface, interface_capacity)
+        updateflowlimit!(interface_forwardedge, interface_capacity)
+        updateflowlimit!(interface_backwardedge, interface_capacity)
 
     end
 
