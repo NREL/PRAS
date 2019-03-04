@@ -1,11 +1,18 @@
 struct SequentialSpatioTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount_overall::Vector{SumVariance{V}}
-    droppedsum_overall::Vector{SumVariance{V}}
-    droppedcount_region::Matrix{SumVariance{V}}
-    droppedsum_region::Matrix{SumVariance{V}}
-    localidx::Vector{Int}
-    droppedcount_local::Vector{V}
-    droppedsum_local::Vector{V}
+    droppedcount_overall::Vector{MeanVariance{V}}
+    droppedsum_overall::Vector{MeanVariance{V}}
+    droppedcount_region::Matrix{MeanVariance{V}}
+    droppedsum_region::Matrix{MeanVariance{V}}
+    droppedcount_period::Matrix{MeanVariance{V}}
+    droppedsum_period::Matrix{MeanVariance{V}}
+    droppedcount_regionperiod::Array{MeanVariance{V},3}
+    droppedsum_regionperiod::Array{MeanVariance{V},3}
+    simidx::Vector{Int}
+    droppedcount_overall_sim::Vector{V}
+    droppedsum_overall_sim::Vector{V}
+    droppedcount_region_sim::Matrix{V}
+    droppedsum_region_sim::Matrix{V}
+    localshortfalls::Vector{Vector{V}}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -19,34 +26,69 @@ function accumulator(extractionspec::ExtractionSpec,
 
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
+    nperiods = length(sys.timestamps)
 
-    droppedcount_overall = Vector{SumVariance{V}}(undef, nthreads)
-    droppedsum_overall = Vector{SumVariance{V}}(undef, nthreads)
-    droppedcount_region = Matrix{SumVariance{V}}(undef, nregions, nthreads)
-    droppedsum_region = Matrix{SumVariance{V}}(undef, nregions, nthreads)
+    droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedcount_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
+    droppedsum_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
+    droppedcount_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
+    droppedsum_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
+    droppedcount_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
+    droppedsum_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
-    localidx = zeros(Int, nthreads)
-    localcount = Vector{V}(undef, nthreads)
-    localsum = Vector{V}(undef, nthreads)
+    simidx = zeros(Int, nthreads)
+    droppedcount_overall_sim = Vector{V}(undef, nthreads)
+    droppedsum_overall_sim = Vector{V}(undef, nthreads)
+    droppedcount_region_sim = Matrix{V}(undef, nregions, nthreads)
+    droppedsum_region_sim = Matrix{V}(undef, nregions, nthreads)
+    localshortfalls = Vector{Vector{V}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
-        droppedcount_overall[i] = Series(Sum(), Variance())
-        droppedsum_overall[i] = Series(Sum(), Variance())
-        for r in 1:nregions
-            droppedsum_region[r, i] = Series(Sum(), Variance())
-            droppedcount_region[r, i] = Series(Sum(), Variance())
+
+        droppedcount_overall[i] = Series(Mean(), Variance())
+        droppedsum_overall[i] = Series(Mean(), Variance())
+
+        for t in 1:nperiods
+
+            droppedcount_period[t, i] = Series(Mean(), Variance())
+            droppedcount_sum[t, i] = Series(Mean(), Variance())
+
+            for r in 1:nregions
+                droppedcount_regionperiod[r, t, i] = Series(Mean(), Variance())
+                droppedsum_regionperiod[r, t, i] = Series(Mean(), Variance())
+            end
+
         end
+
+        for r in 1:nregions
+            droppedcount_region[r, i] = Series(Mean(), Variance())
+            droppedsum_region[r, i] = Series(Mean(), Variance())
+        end
+
         rngs[i] = copy(rngs_temp[i])
+        localshortfalls[i] = zeros(V, nregions)
+
     end
 
     return SequentialSpatioTemporalResultAccumulator(
         droppedcount_overall, droppedsum_overall,
         droppedcount_region, droppedsum_region,
-        localidx, localcount, localsum,
+        droppedcount_period, droppedsum_period,
+        droppedcount_regionperiod, droppedsum_regionperiod,
+        simidx, droppedcount_overall_sim, droppedsum_overall_sim,
+        droppedcount_region_sim, droppedsum_region_sim, localshortfalls
         sys, extractionspec, simulationspec, rngs)
+
+end
+
+function update!(acc::SequentialSpatioTemporalResultAccumulator,
+                 result::SystemOutputStateSummary, t::Int)
+
+        error("Sequential analytical solutions are not currently supported.")
 
 end
 
@@ -54,54 +96,58 @@ function update!(acc::SequentialSpatioTemporalResultAccumulator{V,SystemModel{N,
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     thread = Threads.threadid()
-    shortfall = droppedload(sample)
-    isshortfall = !isapprox(shortfall, 0.)
-    droppedenergy = powertoenergy(shortfall, L, T, P, E)
+    nregions = length(acc.system.regions)
 
-    # Sequential simulations are grouped by simulation,
-    # while NonSequential are grouped by timestep
-    localidx = issequential(acc.simulationspec) ? i : t
+    isshortfall, unservedload, unservedloads = droppedloads!(acc.localshortfalls[thread], sample)
+    unservedenergy = powertoenergy(unservedload, L, T, P, E)
 
-    if localidx != acc.localidx[thread]
+    # Update temporal/spatiotemporal result data
+    fit!(acc.droppedcount_period[t, thread], V(isshortfall))
+    fit!(acc.droppedsum_period[t, thread], unservedenergy)
+    for r in 1:nregions
+        regionshortfall = unservedloads[r]
+        fit!(acc.droppedcount_regionperiod[r, t, thread], approxnonzero(regionshortfall))
+        fit!(acc.droppedsum_regionperiod[r, t, thread], regionshortfall)
+    end
 
-        # Previous local simulation/timestep has finished,
-        # so store previous local result and reset
+    prev_i = acc.simidx[thread]
+    if i != prev_i
 
-        fit!(acc.droppedcount[thread], acc.droppedcount_local[thread])
-        fit!(acc.droppedsum[thread], acc.droppedsum_local[thread])
+        # Previous local simulation has finished,
+        # so store previous time-aggregated results (if appropriate) and reset
 
-        acc.localidx[thread] = i
-        acc.droppedcount_local[thread] = V(isshortfall)
-        acc.droppedsum_local[thread] = droppedenergy
+        if prev_i != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_overall_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_overall_sim[thread])
+            for r in 1:nregions
+                fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
+                fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
+            end
+        end
+
+        # Initialize time-aggregated result data for new simulation
+        acc.simidx[thread] = i
+        acc.droppedcount_sim[thread] = V(isshortfall)
+        acc.droppedsum_sim[thread] = unservedenergy
+        for r in 1:nregions
+            regionshortfall = unservedloads[r]
+            acc.droppedcount_region_sim[r, thread] = approxnonzero(regionshortfall)
+            acc.droppedsum_region_sim[r, thread] = regionshortfall
+        end
 
     elseif isshortfall
 
         # Local simulation/timestep is still ongoing
-        # Load was dropped, update local tracking
+        # Load was dropped, update time-aggregated tracking
 
-        acc.droppedcount_local[thread] += one(V)
-        acc.droppedsum_local[thread] += droppedenergy
+        acc.droppedcount_sim[thread] += one(V)
+        acc.droppedsum_sim[thread] += unservedenergy
+        for r in 1:nregions
+            regionshortfall = unservedloads[r]
+            acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
+            acc.droppedsum_region_sim[r, thread] += regionshortfall
+        end
 
-    end
-
-    return
-
-end
-
-function update!(acc::SequentialSpatioTemporalResultAccumulator,
-                 result::SystemOutputStateSummary, t::Int)
-
-    issequential(acc.simulationspec) &&
-        error("Sequential analytical solutions are not currently supported.")
-
-    thread = Threads.threadid()
-
-    fit!(acc.droppedcount_overall[thread], result.lolp_system)
-    fit!(acc.droppedsum_overall[thread], sum(result.eue_regions))
-
-    for r in 1:length(acc.system.regions)
-        fit!(acc.droppedcount_region[r, thread], result.lolp_regions[r])
-        fit!(acc.droppedsum_region[r, thread], result.eue_regions[r])
     end
 
     return
@@ -112,43 +158,51 @@ function finalize(acc::SequentialSpatioTemporalResultAccumulator{V,<:SystemModel
                   ) where {N,L,T,P,E,V}
 
     regions = acc.system.regions
+    timestamps = acc.system.timestamps
+    nthreads = Threads.nthreads()
     nregions = length(regions)
+    nperiods = length(timestamps)
+
+    # Store final simulation time-aggregated results
+    for thread in 1:nthreads
+        if acc.simidx[thread] != 0
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_overall_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_overall_sim[thread])
+            for r in 1:nregions
+                fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
+                fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
+            end
+        end
+    end
 
     # Merge thread-local stats into final stats
-    for i in 2:Threads.nthreads()
+    for i in 2:nthreads
 
-        merge!(acc.droppedcount_overall[1], acc.droppedcount[i])
-        merge!(acc.droppedsum_overall[1], acc.droppedsum[i])
+        merge!(acc.droppedcount_overall[1], acc.droppedcount_overall_sim[i])
+        merge!(acc.droppedsum_overall[1], acc.droppedsum_overall_sim[i])
 
         for r in 1:nregions
-            merge!(acc.droppedcount_region[r, 1], acc.droppedcount[r, i])
-            merge!(acc.droppedsum_region[r, 1], acc.droppedsum[r, i])
+            merge!(acc.droppedcount_region[r, 1], acc.droppedcount_region_sim[r, i])
+            merge!(acc.droppedsum_region[r, 1], acc.droppedsum_region_sim[r, i])
         end
 
     end
 
-    if ismontecarlo(acc.simulationspec)
+    nsamples = acc.simulationspec.nsamples
 
-        # Accumulator summed results nsamples times, need to scale back down
-        nsamples = acc.simulationspec.nsamples
-        lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1], nsamples)...)
-        loles = map(r -> LOLE{N,L,T}(r...),
-                    mean_stderr.(acc.droppedcount_region[:, 1], nsamples))
-        eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1], nsamples)...)
-        eues = map(r -> EUE{N,L,T,E}(r...),
-                   mean_stderr.(acc.droppedsum_region[:, 1], nsamples))
+    lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1], nsamples)...)
+    period_lolps = map(r -> LOLP{L,T}(r...),
+                mean_stderr.(acc.droppedcount_period[:, 1], nsamples))
+    region_loles = map(r -> LOLE{N,L,T}(r...),
+                mean_stderr.(acc.droppedcount_region[:, 1], nsamples))
+    regionperiod_lolps = _ # TODO
 
-    else
-
-        # Accumulator summed once per timestep, no scaling required
-        lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1])...)
-        loles = map(r -> LOLE{N,L,T}(r...),
-                    mean_stderr.(acc.droppedcount_region[:, 1]))
-        eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1])...)
-        eues = map(r -> EUE{N,L,T,E}(r...),
-                   mean_stderr.(acc.droppedsum_region[:, 1]))
-
-    end
+    eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1], nsamples)...)
+    period_eues = map(r -> EUE{1,L,T,E}(r...),
+               mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
+    region_eues = map(r -> EUE{N,L,T,E}(r...),
+               mean_stderr.(acc.droppedsum_region[:, 1], nsamples))
+    regionperiod_eues = _ # TODO
 
     return SpatioTemporalResult(regions, lole, loles, eue, eues,
                           acc.extractionspec, acc.simulationspec)

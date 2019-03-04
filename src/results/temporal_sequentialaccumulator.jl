@@ -103,7 +103,7 @@ function finalize(acc::SequentialTemporalResultAccumulator{V,<:SystemModel{N,L,T
     nperiods = length(timestamps)
     nthreads = Threads.nthreads()
 
-    # Store final simulation results
+    # Store final simulation time-aggregated results
     for thread in 1:nthreads
         if acc.simidx[thread] != 0 # Previous simulation had results, so store them
             fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])

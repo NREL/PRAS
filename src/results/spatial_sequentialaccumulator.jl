@@ -4,8 +4,8 @@ struct SequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     droppedcount_region::Matrix{MeanVariance{V}}
     droppedsum_region::Matrix{MeanVariance{V}}
     simidx::Vector{Int}
-    droppedcount_sim::Vector{V}
-    droppedsum_sim::Vector{V}
+    droppedcount_overall_sim::Vector{V}
+    droppedsum_overall_sim::Vector{V}
     droppedcount_region_sim::Matrix{V}
     droppedsum_region_sim::Matrix{V}
     localshortfalls::Vector{Vector{V}}
@@ -76,7 +76,7 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
     prev_i = acc.simidx[thread]
     if i != prev_i
 
-        # Previous local simulation/timestep has finished,
+        # Previous local simulation has finished,
         # so store previous local result (if appropriate) and reset
 
         if prev_i != 0 # Previous simulation had results, so store them
@@ -124,7 +124,7 @@ function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,
     nregions = length(regions)
     nthreads = Threads.nthreads()
 
-    # Store final simulation results
+    # Store final simulation time-aggregated results
     for thread in 1:nthreads
         if acc.simidx[thread] != 0
             fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
@@ -140,11 +140,11 @@ function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,
     for i in 2:nthreads
 
         merge!(acc.droppedcount_overall[1], acc.droppedcount_overall[i])
-        merge!(acc.droppedsum_overall[1], acc.droppedsum[i])
+        merge!(acc.droppedsum_overall[1], acc.droppedsum_overall[i])
 
         for r in 1:nregions
             merge!(acc.droppedcount_region[r, 1], acc.droppedcount_region[r, i])
-            merge!(acc.droppedsum_region[r, 1], acc.droppedsum[r, i])
+            merge!(acc.droppedsum_region[r, 1], acc.droppedsum_region[r, i])
         end
 
     end
