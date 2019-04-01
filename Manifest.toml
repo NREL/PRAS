@@ -36,10 +36,10 @@ deps = ["Printf"]
 uuid = "ade2ca70-3891-5945-98fb-dc099432e06a"
 
 [[Decimals]]
-deps = ["Compat"]
-git-tree-sha1 = "7f0f577c00afe5ad7afe3300d5e82a0e5d33ae0a"
+deps = ["Test"]
+git-tree-sha1 = "b374d464d64470e743c5f9172c57352e1a9404ac"
 uuid = "abce61dc-4473-55a0-ba07-351d65e31d42"
-version = "0.3.1"
+version = "0.4.0"
 
 [[DelimitedFiles]]
 deps = ["Mmap"]
@@ -95,7 +95,7 @@ deps = ["Base64"]
 uuid = "d6f4376e-aef5-505a-96c1-9c027394607a"
 
 [[MinCostFlows]]
-git-tree-sha1 = "3e350d27ce94973786533b4971b519ae50453b11"
+git-tree-sha1 = "f0b901cfffe17cf0bf2b6a007c8052c9e5a3a1fc"
 repo-rev = "master"
 repo-url = "https://github.nrel.gov/PRAS/MinCostFlows.jl"
 uuid = "62286e6e-1779-56f1-888a-1c0056788ce0"
@@ -112,15 +112,15 @@ uuid = "a63ad114-7e13-5084-954f-fe012c677804"
 
 [[OnlineStats]]
 deps = ["DataStructures", "Dates", "LearnBase", "LinearAlgebra", "LossFunctions", "OnlineStatsBase", "PenaltyFunctions", "Random", "RecipesBase", "Reexport", "Statistics", "StatsBase", "SweepOperator", "Test"]
-git-tree-sha1 = "99494c29cf153055f61ee1e84df232057ee059de"
+git-tree-sha1 = "b06d8866561ec69476c3157db4e59bd7ed3ddae2"
 uuid = "a15396b6-48d5-5d58-9928-6d29437db91e"
-version = "0.20.3"
+version = "0.21.0"
 
 [[OnlineStatsBase]]
-deps = ["LearnBase", "Test"]
-git-tree-sha1 = "b6feb4b0e2fc4e7fd3ac7e2cb3b151f5f7f59051"
+deps = ["LearnBase", "Statistics", "Test"]
+git-tree-sha1 = "cfdcb7ba388df61729e7014504bc6f03c003f439"
 uuid = "925886fa-5bf2-5e8e-b522-a9147a512338"
-version = "0.9.2"
+version = "0.9.3"
 
 [[OrderedCollections]]
 deps = ["Random", "Serialization", "Test"]
@@ -215,15 +215,15 @@ uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
 
 [[StatsBase]]
 deps = ["DataStructures", "DelimitedFiles", "LinearAlgebra", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "Test"]
-git-tree-sha1 = "7b596062316c7d846b67bf625d5963a832528598"
+git-tree-sha1 = "8f68351fc2600bab59e68406b980b13b2100c472"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.27.0"
+version = "0.28.1"
 
 [[StatsFuns]]
 deps = ["Rmath", "SpecialFunctions", "Test"]
-git-tree-sha1 = "7e7658a6adf28c91db1290c84483e07cc59ea3a4"
+git-tree-sha1 = "b3a4e86aa13c732b8a8c0ba0c3d3264f55e6bb3e"
 uuid = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
-version = "0.7.1"
+version = "0.8.0"
 
 [[SuiteSparse]]
 deps = ["Libdl", "LinearAlgebra", "SparseArrays"]

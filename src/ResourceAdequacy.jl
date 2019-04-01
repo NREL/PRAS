@@ -33,21 +33,24 @@ export
     Minimal, Spatial, Temporal, SpatioTemporal, FullNetwork
 
 
-# Basic functionality
+# Basic / common functionality
 include("utils/utils.jl")
 include("systemdata/systemdata.jl")
 include("metrics/metrics.jl")
 include("abstractspecs/abstractspecs.jl")
+include("simulations/sequentialutils.jl")
 
 # Spec instances
 spec_instances = [
     ("extraction", ["backcast", "repra"]),
     ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
-                    "nonsequentialnetworkflow"]),
+                    "nonsequentialnetworkflow", "sequentialnetworkflow"]),
     ("result", ["minimal", "temporal", "spatial", "spatiotemporal"])  # TODO: "network"
 ]
 for (spec, instances) in spec_instances, instance in instances
     include(spec * "s/" * instance * ".jl")
 end
+
+include("simulations/flowproblems.jl")
 
 end # module

@@ -101,3 +101,21 @@ function approxnonzero(x::V, T::Type=V) where {V<:AbstractFloat}
     absx = abs(x)
     return T(absx > sqrt(eps(V))*absx)
 end
+
+function assetgrouprange(starts::Vector{Int}, nassets::Int)
+
+    ngroups = length(starts)
+    ngroups == 0 && return UnitRange{Int}[]
+
+    results = Vector{UnitRange{Int}}(undef, ngroups)
+
+    i = 1
+    while i < ngroups
+        results[i] = starts[i]:(starts[i+1]-1)
+        i += 1
+    end
+    results[ngroups] = starts[ngroups]:nassets
+
+    return results
+
+end

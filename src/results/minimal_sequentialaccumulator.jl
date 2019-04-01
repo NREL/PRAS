@@ -54,11 +54,13 @@ function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E
     isshortfall, unservedload = droppedload(sample)
     unservedenergy = powertoenergy(unservedload, L, T, P, E)
 
-    if i != acc.simidx[thread] # Previous thread-local simulation has finished
+    prev_i = acc.simidx[thread]
+    if i != prev_i # Previous thread-local simulation has finished
 
-        # Store previous thread-local result
-        fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
-        fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
+        if prev_i != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
+        end
 
         # Reset thread-local tracking for new simulation
         acc.simidx[thread] = i
@@ -82,8 +84,18 @@ end
 function finalize(acc::SequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
                   ) where {N,L,T,P,E,V}
 
+   nthreads = Threads.nthreads()
+
+   # Store final simulation results
+    for thread in 1:nthreads
+        if acc.simidx[thread] != 0 # Previous simulation had results, so store them
+            fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
+            fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
+        end
+    end
+
     # Merge thread-local cross-simulation stats into final stats
-    for i in 2:Threads.nthreads()
+    for i in 2:nthreads
         merge!(acc.droppedcount[1], acc.droppedcount[i])
         merge!(acc.droppedsum[1], acc.droppedsum[i])
     end

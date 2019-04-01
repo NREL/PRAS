@@ -63,7 +63,8 @@ function assess(extractionspec::ExtractionSpec,
 
     acc = accumulator(extractionspec, simulationspec, resultspec, system, seed)
 
-    Threads.@threads for i in 1:simulationspec.nsamples
+    #Threads.@threads for i in 1:simulationspec.nsamples
+    for i in 1:simulationspec.nsamples
         assess!(acc, extractionspec, simulationspec, system, i)
     end
 
