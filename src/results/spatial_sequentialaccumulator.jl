@@ -80,8 +80,8 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
         # so store previous local result (if appropriate) and reset
 
         if prev_i != 0 # Previous simulation had results, so store them
-            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_overall_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_overall_sim[thread])
             for r in 1:nregions
                 fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
                 fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])
@@ -90,8 +90,8 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
 
         # Initialize new simulation data
         acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = V(isshortfall)
-        acc.droppedsum_sim[thread] = unservedenergy
+        acc.droppedcount_overall_sim[thread] = V(isshortfall)
+        acc.droppedsum_overall_sim[thread] = unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
             acc.droppedcount_region_sim[r, thread] = approxnonzero(regionshortfall)
@@ -103,8 +103,8 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
         # Local simulation/timestep is still ongoing
         # Load was dropped, update local tracking
 
-        acc.droppedcount_sim[thread] += one(V)
-        acc.droppedsum_sim[thread] += unservedenergy
+        acc.droppedcount_overall_sim[thread] += one(V)
+        acc.droppedsum_overall_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
             acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
@@ -127,8 +127,8 @@ function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,
     # Store final simulation time-aggregated results
     for thread in 1:nthreads
         if acc.simidx[thread] != 0
-            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+            fit!(acc.droppedcount_overall[thread], acc.droppedcount_overall_sim[thread])
+            fit!(acc.droppedsum_overall[thread], acc.droppedsum_overall_sim[thread])
             for r in 1:nregions
                 fit!(acc.droppedcount_region[r, thread], acc.droppedcount_region_sim[r, thread])
                 fit!(acc.droppedsum_region[r, thread], acc.droppedsum_region_sim[r, thread])

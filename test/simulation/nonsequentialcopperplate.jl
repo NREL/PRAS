@@ -77,18 +77,4 @@
     @test all(EUE.(result_3b, result_3b.timestamps) .≈
               EUE{1,1,Hour,MWh}.([1.75783, 3.13343, 2.47954, 4.36196], zeros(4)))
 
-    # TODO: Check REPRA results by hand
-
-    result_1ar = assess(REPRA(1,1), NonSequentialCopperplate(), Minimal(), singlenode_a)
-    @test_broken LOLE(result_1ar) ≈ LOLE{4,1,Hour}(0.06, 0.)
-    @test_broken EUE(result_1ar) ≈ EUE{4,1,Hour,MWh}(0.06, 0.)
-
-    result_1br = assess(REPRA(1,1), NonSequentialCopperplate(), Minimal(), singlenode_b)
-    @test_broken LOLE(result_1br) ≈ LOLE{6,1,Hour}(1e-5, 0.)
-    @test_broken EUE(result_1br) ≈ EUE{6,1,Hour,MWh}(0.06, 0.)
-
-    result_3r = assess(REPRA(1,1), NonSequentialCopperplate(), Minimal(), threenode)
-    @test_broken LOLE(result_3r) ≈ LOLE{4,1,Hour}(0.1408, 0.)
-    @test_broken EUE(result_3r) ≈ EUE{4,1,Hour,MWh}(0.06, 0.)
-
 end

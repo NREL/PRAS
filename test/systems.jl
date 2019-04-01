@@ -23,9 +23,11 @@ lines2 = [ResourceAdequacy.LineSpec(8., 0., 1.),
 
 # Systems
 
+# TODO: Calculate REPRA results (ground-truth values here are all for Backcast)
+
 ## Single-Region System A
 singlenode_a = ResourceAdequacy.SystemModel{4,1,Hour,MW,MWh}(
-    gens1, stors1, DateTime(2010,1,1):Hour(1):DateTime(2010,1,1,3),
+    gens1, stors1, DateTime(2010,1,1,0):Hour(1):DateTime(2010,1,1,3),
     ones(Int, 4), ones(Int, 4), [5., 6, 7, 8], [25., 28, 27, 24])
 
 singlenode_a_lole = 0.355
@@ -35,7 +37,7 @@ singlenode_a_eues = [0.29, 0.832, 0.29, 0.178]
 
 ## Single-Region System B
 singlenode_b = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
-    gens2, stors1, DateTime(2015,6,1):Hour(1):DateTime(2015,6,1,5),
+    gens2, stors1, DateTime(2015,6,1,0):Hour(1):DateTime(2015,6,1,5),
     [1,1,1,2,2,2], ones(Int, 6), [7.,8,9,9,8,7], [28.,29,30,31,32,33])
 
 singlenode_b_lole = 0.96

@@ -55,7 +55,7 @@ function accumulator(extractionspec::ExtractionSpec,
         for t in 1:nperiods
 
             droppedcount_period[t, i] = Series(Mean(), Variance())
-            droppedcount_sum[t, i] = Series(Mean(), Variance())
+            droppedsum_period[t, i] = Series(Mean(), Variance())
 
             for r in 1:nregions
                 droppedcount_regionperiod[r, t, i] = Series(Mean(), Variance())
@@ -80,7 +80,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_period, droppedsum_period,
         droppedcount_regionperiod, droppedsum_regionperiod,
         simidx, droppedcount_overall_sim, droppedsum_overall_sim,
-        droppedcount_region_sim, droppedsum_region_sim, localshortfalls
+        droppedcount_region_sim, droppedsum_region_sim, localshortfalls,
         sys, extractionspec, simulationspec, rngs)
 
 end
@@ -127,8 +127,8 @@ function update!(acc::SequentialSpatioTemporalResultAccumulator{V,SystemModel{N,
 
         # Initialize time-aggregated result data for new simulation
         acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = V(isshortfall)
-        acc.droppedsum_sim[thread] = unservedenergy
+        acc.droppedcount_overall_sim[thread] = V(isshortfall)
+        acc.droppedsum_overall_sim[thread] = unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
             acc.droppedcount_region_sim[r, thread] = approxnonzero(regionshortfall)
@@ -140,8 +140,8 @@ function update!(acc::SequentialSpatioTemporalResultAccumulator{V,SystemModel{N,
         # Local simulation/timestep is still ongoing
         # Load was dropped, update time-aggregated tracking
 
-        acc.droppedcount_sim[thread] += one(V)
-        acc.droppedsum_sim[thread] += unservedenergy
+        acc.droppedcount_overall_sim[thread] += one(V)
+        acc.droppedsum_overall_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
             acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
@@ -178,12 +178,24 @@ function finalize(acc::SequentialSpatioTemporalResultAccumulator{V,<:SystemModel
     # Merge thread-local stats into final stats
     for i in 2:nthreads
 
-        merge!(acc.droppedcount_overall[1], acc.droppedcount_overall_sim[i])
-        merge!(acc.droppedsum_overall[1], acc.droppedsum_overall_sim[i])
+        merge!(acc.droppedcount_overall[1], acc.droppedcount_overall[i])
+        merge!(acc.droppedsum_overall[1], acc.droppedsum_overall[i])
+
+        for t in 1:nperiods
+
+            merge!(acc.droppedcount_period[t, 1], acc.droppedcount_period[t, i])
+            merge!(acc.droppedsum_period[t, 1], acc.droppedsum_period[t, i])
+
+            for r in 1:nregions
+                merge!(acc.droppedcount_regionperiod[r, t, 1], acc.droppedcount_regionperiod[r, t, i])
+                merge!(acc.droppedsum_regionperiod[r, t, 1], acc.droppedsum_regionperiod[r, t, i])
+            end
+
+        end
 
         for r in 1:nregions
-            merge!(acc.droppedcount_region[r, 1], acc.droppedcount_region_sim[r, i])
-            merge!(acc.droppedsum_region[r, 1], acc.droppedsum_region_sim[r, i])
+            merge!(acc.droppedcount_region[r, 1], acc.droppedcount_region[r, i])
+            merge!(acc.droppedsum_region[r, 1], acc.droppedsum_region[r, i])
         end
 
     end
@@ -191,20 +203,25 @@ function finalize(acc::SequentialSpatioTemporalResultAccumulator{V,<:SystemModel
     nsamples = acc.simulationspec.nsamples
 
     lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1], nsamples)...)
-    period_lolps = map(r -> LOLP{L,T}(r...),
-                mean_stderr.(acc.droppedcount_period[:, 1], nsamples))
     region_loles = map(r -> LOLE{N,L,T}(r...),
                 mean_stderr.(acc.droppedcount_region[:, 1], nsamples))
-    regionperiod_lolps = _ # TODO
+    period_lolps = map(r -> LOLP{L,T}(r...),
+                mean_stderr.(acc.droppedcount_period[:, 1], nsamples))
+    regionperiod_lolps = map(r -> LOLP{L,T}(r...),
+                mean_stderr.(acc.droppedcount_regionperiod[:, :, 1], nsamples))
 
     eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1], nsamples)...)
-    period_eues = map(r -> EUE{1,L,T,E}(r...),
-               mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
     region_eues = map(r -> EUE{N,L,T,E}(r...),
                mean_stderr.(acc.droppedsum_region[:, 1], nsamples))
-    regionperiod_eues = _ # TODO
+    period_eues = map(r -> EUE{1,L,T,E}(r...),
+               mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
+    regionperiod_eues = map(r -> EUE{1,L,T,E}(r...),
+               mean_stderr.(acc.droppedsum_regionperiod[:, :, 1], nsamples))
 
-    return SpatioTemporalResult(regions, lole, loles, eue, eues,
-                          acc.extractionspec, acc.simulationspec)
+    return SpatioTemporalResult(
+        regions, timestamps,
+        lole, region_loles, period_lolps, regionperiod_lolps,
+        eue, region_eues, period_eues, regionperiod_eues,
+        acc.extractionspec, acc.simulationspec)
 
 end
