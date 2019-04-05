@@ -5,6 +5,7 @@ version = "0.4.0"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
+CapacityValue = "e9572c70-259d-42a9-812a-bf29f717e3f1"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 JLD = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"
