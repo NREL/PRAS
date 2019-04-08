@@ -31,7 +31,8 @@ struct NonSequentialNetworkResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S
         V,S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
         new{V,S,ES,SS}(
             droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-            localshortfalls, system, extractionspec, simulationspec, rngs)
+            localshortfalls, flows, utilizations, system,
+            extractionspec, simulationspec, rngs)
 
 end
 
@@ -78,8 +79,8 @@ function accumulator(extractionspec::ExtractionSpec,
 
     return NonSequentialNetworkResultAccumulator{V}(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-        localshortfalls, flows, utilizations,
-        sys, extractionspec, simulationspec, rngs)
+        localshortfalls, flows, utilizations, sys,
+        extractionspec, simulationspec, rngs)
 
 end
 
