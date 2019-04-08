@@ -62,10 +62,10 @@ struct NetworkResult{
         @assert size(utilizations) == (ninterfaces, ntimesteps)
 
         new{N,L,T,E,P,V,ES,SS}(
-            regions, timestamps,
+            regions, interfaces, timestamps,
             lole, regionloles, periodlolps, regionalperiodlolps,
-            eue, regioneues, periodeues, regionalperiodeues, flows,
-            extractionspec, simulationspec)
+            eue, regioneues, periodeues, regionalperiodeues,
+            flows, utilizations, extractionspec, simulationspec)
 
     end
 
@@ -97,7 +97,7 @@ function ExpectedInterfaceFlow(
 )
     r1_idx = findfirstunique(x.regions, r1)
     r2_idx = findfirstunique(x.regions, r2)
-    return ExpectedInterfaceFlow(x, (r1_idx, r2_idx), t_idx)
+    return ExpectedInterfaceFlow(x, minmax(r1_idx, r2_idx), t)
 end
 
 function ExpectedInterfaceFlow(x::NetworkResult, i::Tuple{Int,Int}, t::DateTime)
@@ -114,7 +114,7 @@ function ExpectedInterfaceUtilization(
 )
     r1_idx = findfirstunique(x.regions, r1)
     r2_idx = findfirstunique(x.regions, r2)
-    return ExpectedInterfaceUtilization(x, (r1_idx, r2_idx), t_idx)
+    return ExpectedInterfaceUtilization(x, minmax(r1_idx, r2_idx), t)
 end
 
 function ExpectedInterfaceUtilization(x::NetworkResult, i::Tuple{Int,Int}, t::DateTime)

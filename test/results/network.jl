@@ -1,178 +1,81 @@
 @testset "NetworkResult" begin
 
-    nodelabels = ["A", "B", "C"]
-    edgelabels = [(1,2), (1,3), (2,3)]
+    tstamps = DateTime(2012,4,1,0):Hour(1):DateTime(2012,4,7,23)
+    regions = ["A", "B", "C"]
+    interfaces = [(1,2), (2,3)]
 
-    nodes1 = [ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(10.,10.,x,x)
-                 for x in [8., 10, 12]]
-    edges1 = [ResourceAdequacy.EdgeResult{1,Hour,MW,MWh}(1., 1.) for _ in 1:3]
+    periodlolps = LOLP{1,Hour}.(rand(168)/10, rand(168)/100)
+    lole = LOLE{168,1,Hour}(sum(val.(periodlolps)), sqrt(sum(stderror.(periodlolps).^2)))
+    regionalperiodlolps = LOLP{1,Hour}.(rand(3,168)/10, rand(3,168)/100)
+    regionalloles = vec(LOLE{168,1,Hour}.(
+        sum(val.(regionalperiodlolps), dims=2),
+        sqrt.(sum(stderror.(regionalperiodlolps).^2, dims=2))))
 
-    nodes2 = [ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(10.,10.,x,y)
-                 for (x,y) in zip([9.,11,13], [9.,11,10])]
-    edges2 = [ResourceAdequacy.EdgeResult{1,Hour,MW,MWh}(1., x)
-                 for x in [1., 0, 0]]
+    periodeues = EUE{1,1,Hour,MWh}.(rand(168), rand(168)/10)
+    eue = EUE{168,1,Hour,MWh}(sum(val.(periodeues)), sqrt(sum(stderror.(periodeues).^2)))
+    regionalperiodeues = EUE{1,1,Hour,MWh}.(rand(3,168)/10, rand(3,168)/100)
+    regionaleues = vec(EUE{168,1,Hour,MWh}.(
+        sum(val.(regionalperiodeues), dims=2),
+        sqrt.(sum(stderror.(regionalperiodeues).^2, dims=2))))
 
-    nodes3 = [ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(10., x, x, x)
-                 for x in [8., 9, 10]]
-    edges3 = [ResourceAdequacy.EdgeResult{1,Hour,MW,MWh}(1., 0.)
-             for _ in 1:3]
+    interfaceflows = ExpectedInterfaceFlow{1,1,Hour,MW}.(
+        100*randn(2,168), rand(2,168))
+    interfaceutilizations = ExpectedInterfaceUtilization{1,1,Hour}.(
+        rand(2,168), rand(2,168)./100)
 
-    nodes4 = [ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(4.,4.,7.,6.),
-              ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(10.,9.,8.,8.),
-              ResourceAdequacy.NodeResult{1,Hour,MW,MWh}(10.,10.,9.,9.)]
-    edges4 = [ResourceAdequacy.EdgeResult{1,Hour,MW,MWh}(1., x)
-              for x in [-1., 0, -1]]
+    result = ResourceAdequacy.NetworkResult(
+        regions, interfaces, tstamps,
+        lole, regionalloles, periodlolps, regionalperiodlolps,
+        eue, regionaleues, periodeues, regionalperiodeues,
+        interfaceflows, interfaceutilizations,
+        Backcast(), NonSequentialCopperplate())
 
-    # States 1,2,3
-    lolp1 = LOLP{1,Hour}(1/3, √(2/27))
-    eue1  = EUE{MWh,1,Hour}(1.,  √(2/3))
+    # Disallow metrics defined over different time periods
+    @test_throws MethodError ResourceAdequacy.NetworkResult(
+        regions, tstamps,
+        lole, regionalloles, periodlolps, regionalperiodlolps,
+        EUE{168,30,Minute,MWh}(val(eue), stderror(eue)),
+        EUE{168,30,Minute,MWh}.(val.(regionaleues), stderror.(regionaleues)),
+        EUE{1,30,Minute,MWh}.(val.(periodeues), stderror.(periodeues)),
+        EUE{1,30,Minute,MWh}.(val.(regionalperiodeues), stderror.(regionalperiodeues)),
+        ExpectedInterfaceFlow{1,30,Minute,MW}.(
+            val.(interfaceflows), stderror.(interfaceflows)),
+        ExpectedInterfaceUtilization{1,30,Minute}.(
+            val.(interfaceutilizations), stderror.(interfaceutilizations)),
+        Backcast(), NonSequentialCopperplate()
+    )
 
-    # States 2,3,4
-    lolp2 = LOLP{1,Hour}(2/3, √(2/27))
-    eue2  = EUE{MWh,1,Hour}(4/3, √42/9)
+    # Metric constructors
 
-    # States 3,4,1
-    lolp3 = LOLP{1,Hour}(1/3, √(2/27))
-    eue3  = EUE{MWh,1,Hour}(1/3, √6/9)
+    @test LOLE(result) == lole
+    @test LOLE(result, regions[1]) == regionalloles[1]
+    @test LOLP(result, tstamps[1]) == periodlolps[1]
+    @test LOLP(result, regions[2], tstamps[1]) == regionalperiodlolps[2,1]
 
-    # Combining the above
-    loletotal = LOLE{1,Hour,3,Hour}(4/3, √(2)/3)
-    euetotal  = EUE{MWh,3,Hour}(8/3, √102/9)
+    @test EUE(result) == eue
+    @test EUE(result, regions[1]) == regionaleues[1]
+    @test EUE(result, tstamps[1]) == periodeues[1]
+    @test EUE(result, regions[2], tstamps[1]) == regionalperiodeues[2,1]
 
-    simspec = NonSequentialNetworkFlow(3)
-    extrspec = Backcast()
+    @test ExpectedInterfaceFlow(result, regions[1], regions[2], tstamps[1]) == interfaceflows[1,1]
+    @test ExpectedInterfaceFlow(result, regions[2], regions[1], tstamps[1]) == interfaceflows[1,1]
+    @test ExpectedInterfaceFlow(result, regions[2], regions[3], tstamps[4]) == interfaceflows[2,4]
+    @test ExpectedInterfaceFlow(result, regions[3], regions[2], tstamps[12]) == interfaceflows[2,12]
 
-    @testset "NetworkState" begin
+    @test ExpectedInterfaceUtilization(result, regions[1], regions[2], tstamps[1]) == interfaceutilizations[1,1]
+    @test ExpectedInterfaceUtilization(result, regions[2], regions[1], tstamps[1]) == interfaceutilizations[1,1]
+    @test ExpectedInterfaceUtilization(result, regions[2], regions[3], tstamps[4]) == interfaceutilizations[2,4]
+    @test ExpectedInterfaceUtilization(result, regions[3], regions[2], tstamps[12]) == interfaceutilizations[2,12]
 
-        # All load served
-        statematrix = [0. 1  1  0 8;
-                       1  0  1  0 10;
-                       1  1  0  0 12;
-                       10 10 10 0 0;
-                       0  0  0  0 0]
-        flowmatrix = [0. 1  1  0 8;
-                      -1 0  1  0 10;
-                      -1 -1 0  0 12;
-                      10 10 10 0 0;
-                      0  0  0  0 0]
-
-        ns1 = ResourceAdequacy.NetworkState{1,Hour,MW,MWh}(
-            statematrix, flowmatrix,
-            edgelabels, 3)
-
-        @test ns1.nodes == nodes1
-        @test ns1.edges == edges1
-        @test ResourceAdequacy.droppedload(ns1) == 0.
-
-        # Unserved load
-        statematrix = [0. 1  1  0 9;
-                       1  0  1  0 11;
-                       1  1  0  0 13;
-                       10 10 10 0 0;
-                       0  0  0  0 0]
-        flowmatrix = [0. 1  0  0 9;
-                      -1 0  0  0 11;
-                      0  0  0  0 10;
-                      10 10 10 0 0;
-                      0  0  0  0 0]
-
-        ns2 = ResourceAdequacy.NetworkState{1,Hour,MW,MWh}(
-            statematrix, flowmatrix,
-            edgelabels, 3)
-
-        @test ns2.nodes == nodes2
-        @test ns2.edges == edges2
-        @test ResourceAdequacy.droppedload(ns2) ≈ 3.
-
-        ns3 = ResourceAdequacy.NetworkState(
-            nodes3, edges3, edgelabels)
-
-        @test ResourceAdequacy.droppedload(ns3) == 0.
-
-        nss = ResourceAdequacy.NetworkStateSet([ns1, ns2, ns3])
-
-        @test LOLP(nss) ≈ lolp1
-        @test LOLP(ResourceAdequacy.NetworkStateSet([ns2]), 3) ≈ lolp1
-
-        @test EUE(nss) ≈ eue1
-        @test EUE(ResourceAdequacy.NetworkStateSet([ns2]), 3) ≈ eue1
-
-    end
-
-    spr1 = ResourceAdequacy.SinglePeriodNetworkResult(
-        nodelabels, edgelabels,
-        hcat(nodes1, nodes2, nodes3), hcat(edges1, edges2, edges3),
-        simspec, NetworkResult(failuresonly=false))
-
-    spr2 = ResourceAdequacy.SinglePeriodNetworkResult(
-        nodelabels, edgelabels, reshape(nodes2, :, 1), reshape(edges2, :, 1),
-        simspec, NetworkResult(failuresonly=true))
-
-
-    @testset "Single Period" begin
-
-        @test LOLP(spr1) ≈ lolp1
-        @test EUE(spr1) ≈ eue1
-
-
-        @test LOLP(spr2) ≈ lolp1
-        @test EUE(spr2) ≈ eue1
-
-    end
-
-    @testset "Multi Period" begin
-
-        tstamps = DateTime(1993,1,1,3):Hour(1):DateTime(1993,1,1,5)
-
-        mpr1 = ResourceAdequacy.MultiPeriodNetworkResult(
-            tstamps, nodelabels, edgelabels,
-            [hcat(nodes1, nodes2, nodes3), hcat(nodes2, nodes3, nodes4),
-             hcat(nodes3, nodes4, nodes1)],
-            [hcat(edges1, edges2, edges3), hcat(edges2, edges3, edges4),
-             hcat(edges3, edges4, edges1)],
-            extrspec, simspec, NetworkResult(failuresonly=false))
-
-        @test timestamps(mpr1) == tstamps
-
-        x = mpr1[tstamps[1]]
-        y = spr1
-        # @test mpr1[tstamps[1]] == spr1
-        @test typeof(x) == typeof(y)
-        @test x.nodelabels == y.nodelabels
-        @test x.edgelabels == y.edgelabels
-        @test x.nodesset == y.nodesset
-        @test x.simulationspec == y.simulationspec
-        @test x.resultspec == y.resultspec
-
-        @test LOLP(mpr1[tstamps[1]]) ≈ lolp1
-        @test EUE(mpr1[tstamps[1]]) ≈ eue1
-        @test LOLP(mpr1[tstamps[2]]) ≈ lolp2
-        @test EUE(mpr1[tstamps[2]]) ≈ eue2
-        @test LOLP(mpr1[tstamps[3]]) ≈ lolp3
-        @test EUE(mpr1[tstamps[3]]) ≈ eue3
-        @test LOLE(mpr1) ≈ loletotal
-        @test EUE(mpr1) ≈ euetotal
-
-        @test_throws BoundsError mpr1[tstamps[1] - Hour(1)]
-
-        mpr2 = ResourceAdequacy.MultiPeriodNetworkResult(
-            tstamps, nodelabels, edgelabels,
-            [hcat(nodes2), hcat(nodes2, nodes4), hcat(nodes4)],
-            [hcat(edges2), hcat(edges2, edges4), hcat(edges4)],
-            extrspec, simspec, NetworkResult(failuresonly=true))
-
-        @test LOLE(mpr2) ≈ loletotal
-        @test EUE(mpr2) ≈ euetotal
-        # @test mpr2[tstamps[1]] == spr2
-        x = mpr2[tstamps[1]]
-        y = spr2
-        @test typeof(x) == typeof(y)
-        @test x.nodelabels == y.nodelabels
-        @test x.edgelabels == y.edgelabels
-        @test x.nodesset == y.nodesset
-        @test x.simulationspec == y.simulationspec
-        @test x.resultspec == y.resultspec
-
-    end
+    @test_throws BoundsError LOLP(result, DateTime(2013,1,1,12))
+    @test_throws BoundsError EUE(result, DateTime(2013,1,1,12))
+    @test_throws BoundsError LOLE(result, "NotARegion")
+    @test_throws BoundsError EUE(result, "NotARegion")
+    @test_throws BoundsError ExpectedInterfaceFlow(result, regions[1], regions[3], tstamps[1])
+    @test_throws BoundsError ExpectedInterfaceFlow(result, regions[1], "NotARegion", tstamps[1])
+    @test_throws BoundsError ExpectedInterfaceFlow(result, "A", "B", DateTime(2013,1,1,12))
+    @test_throws BoundsError ExpectedInterfaceUtilization(result, regions[1], regions[3], tstamps[1])
+    @test_throws BoundsError ExpectedInterfaceUtilization(result, regions[1], "NotARegion", tstamps[1])
+    @test_throws BoundsError ExpectedInterfaceUtilization(result, "A", "B", DateTime(2013,1,1,12))
 
 end

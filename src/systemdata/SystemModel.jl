@@ -58,6 +58,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
         @assert first(storages_regionstart) == 1
         @assert last(storages_regionstart) <= size(storages, 1) + 1
 
+        @assert all(i[1] < i[2] for i in interfaces)
         @assert length(lines_interfacestart) == n_interfaces
         @assert issorted(lines_interfacestart)
         size(lines, 1) > 0 &&
