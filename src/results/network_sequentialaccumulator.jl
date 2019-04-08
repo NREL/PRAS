@@ -14,6 +14,7 @@ struct SequentialNetworkResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     droppedsum_region_sim::Matrix{V}
     localshortfalls::Vector{Vector{V}}
     flows::Array{MeanVariance{V},3}
+    utilizations::Array{MeanVariance{V},3}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -39,6 +40,7 @@ function accumulator(extractionspec::ExtractionSpec,
     droppedcount_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
     droppedsum_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
     flows = Array{MeanVariance{V},3}(undef, ninterfaces, nperiods, nthreads)
+    utilizations = Array{MeanVariance{V},3}(undef, ninterfaces, nperiods, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
@@ -65,8 +67,9 @@ function accumulator(extractionspec::ExtractionSpec,
                 droppedsum_regionperiod[r, t, i] = Series(Mean(), Variance())
             end
 
-            for i in 1:ninterfaces
-                flows[i,t] = Series(Mean(), Variance())
+            for iface in 1:ninterfaces
+                flows[iface, t, i] = Series(Mean(), Variance())
+                utilizations[iface, t, i] = Series(Mean(), Variance())
             end
 
         end
@@ -88,7 +91,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_regionperiod, droppedsum_regionperiod,
         simidx, droppedcount_overall_sim, droppedsum_overall_sim,
         droppedcount_region_sim, droppedsum_region_sim, localshortfalls,
-        flows, sys, extractionspec, simulationspec, rngs)
+        flows, utilizations, sys, extractionspec, simulationspec, rngs)
 
 end
 
@@ -104,6 +107,7 @@ function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E
 
     thread = Threads.threadid()
     nregions = length(acc.system.regions)
+    ninterfaces = length(acc.system.interfaces)
 
     isshortfall, unservedload, unservedloads = droppedloads!(acc.localshortfalls[thread], sample)
     unservedenergy = powertoenergy(unservedload, L, T, P, E)
@@ -119,6 +123,8 @@ function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E
 
     for i in 1:ninterfaces
         fit!(acc.flows[i, t, thread], sample.interfaces[i].transfer)
+        fit!(acc.utilizations[i, t, thread],
+             abs(sample.interfaces[i].transfer) / sample.interfaces[i].max_transfer_magnitude)
     end
 
     prev_i = acc.simidx[thread]
@@ -169,9 +175,12 @@ function finalize(acc::SequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,
                   ) where {N,L,T,P,E,V}
 
     regions = acc.system.regions
+    interfaces = acc.system.interfaces
     timestamps = acc.system.timestamps
+
     nthreads = Threads.nthreads()
     nregions = length(regions)
+    ninterfaces = length(interfaces)
     nperiods = length(timestamps)
 
     # Store final simulation time-aggregated results
@@ -202,6 +211,11 @@ function finalize(acc::SequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,
                 merge!(acc.droppedsum_regionperiod[r, t, 1], acc.droppedsum_regionperiod[r, t, i])
             end
 
+            for i in 1:ninterfaces
+                merge!(acc.flows[iface, t, 1], acc.flows[iface, t, i])
+                merge!(acc.utilizations[iface, t, 1], acc.utilizations[iface, t, i])
+            end
+
         end
 
         for r in 1:nregions
@@ -229,10 +243,13 @@ function finalize(acc::SequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,
     regionperiod_eues = map(r -> EUE{1,L,T,E}(r...),
                mean_stderr.(acc.droppedsum_regionperiod[:, :, 1], nsamples))
 
+    flows = makemetric.(ExpectedInterfaceFlow{1,L,T,P}, acc.flows[:, :, 1])
+    utilizations = makemetric.(ExpectedInterfaceUtilization{1,L,T}, acc.utilizations[:, :, 1])
+
     return NetworkResult(
-        regions, timestamps,
+        regions, interfaces, timestamps,
         lole, region_loles, period_lolps, regionperiod_lolps,
         eue, region_eues, period_eues, regionperiod_eues,
-        acc.extractionspec, acc.simulationspec)
+        flows, utilizations, acc.extractionspec, acc.simulationspec)
 
 end
