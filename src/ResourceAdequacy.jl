@@ -19,7 +19,7 @@ export
     MWh, GWh, TWh,
 
     # Metrics
-    LOLP, LOLE, EUE,
+    LOLP, LOLE, EUE, ExpectedInterfaceFlow, ExpectedInterfaceUtilization,
     val, stderror,
 
     # Distribution extraction specifications
@@ -30,7 +30,7 @@ export
     NonSequentialNetworkFlow, SequentialNetworkFlow,
 
     # Result specifications
-    Minimal, Spatial, Temporal, SpatioTemporal, FullNetwork
+    Minimal, Spatial, Temporal, SpatioTemporal, Network
 
 
 # Basic / common functionality
@@ -45,7 +45,7 @@ spec_instances = [
     ("extraction", ["backcast", "repra"]),
     ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
                     "nonsequentialnetworkflow", "sequentialnetworkflow"]),
-    ("result", ["minimal", "temporal", "spatial", "spatiotemporal"])  # TODO: "network"
+    ("result", ["minimal", "temporal", "spatial", "spatiotemporal", "network"])
 ]
 for (spec, instances) in spec_instances, instance in instances
     include(spec * "s/" * instance * ".jl")
