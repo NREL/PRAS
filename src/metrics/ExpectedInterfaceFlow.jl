@@ -21,3 +21,6 @@ function Base.show(io::IO, x::ExpectedInterfaceFlow{N,L,T,P}) where {N,L,T,P}
           N*L == 1 ? "" : N*L, unitsymbol(T), ")")
 
 end
+
+-(x::ExpectedInterfaceFlow{N,L,T,P}) where {N,L,T,P} =
+    ExpectedInterfaceFlow{N,L,T,P}(-val(x), stderror(x))

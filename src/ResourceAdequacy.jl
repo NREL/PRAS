@@ -9,7 +9,11 @@ using Random
 using Future # for randjump
 using StatsBase
 
+import Base: -
+
 export
+
+    -,
 
     assess,
 

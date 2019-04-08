@@ -95,9 +95,18 @@ function ExpectedInterfaceFlow(
     r2::AbstractString,
     t::DateTime
 )
+
     r1_idx = findfirstunique(x.regions, r1)
     r2_idx = findfirstunique(x.regions, r2)
-    return ExpectedInterfaceFlow(x, minmax(r1_idx, r2_idx), t)
+
+    if r1_idx < r2_idx
+        flow = ExpectedInterfaceFlow(x, (r1_idx, r2_idx), t)
+    else
+        flow = -ExpectedInterfaceFlow(x, (r2_idx, r1_idx), t)
+    end
+
+    return flow
+
 end
 
 function ExpectedInterfaceFlow(x::NetworkResult, i::Tuple{Int,Int}, t::DateTime)

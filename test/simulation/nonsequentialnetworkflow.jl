@@ -56,6 +56,8 @@
                            singlenode_a_lolps, nstderr_tol))
     @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol),
                            singlenode_a_eues, nstderr_tol))
+    @test length(result_1ab.flows) == 0
+    @test length(result_1ab.utilizations) == 0
 
     # Single-region system B
     timestampcol = singlenode_b.timestamps
@@ -110,6 +112,8 @@
                            singlenode_b_lolps, nstderr_tol))
     @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
                            singlenode_b_eues, nstderr_tol))
+    @test length(result_1bb.flows) == 0
+    @test length(result_1bb.utilizations) == 0
 
     println("\nThree-region system")
 

@@ -58,9 +58,9 @@
     @test EUE(result, regions[2], tstamps[1]) == regionalperiodeues[2,1]
 
     @test ExpectedInterfaceFlow(result, regions[1], regions[2], tstamps[1]) == interfaceflows[1,1]
-    @test ExpectedInterfaceFlow(result, regions[2], regions[1], tstamps[1]) == interfaceflows[1,1]
+    @test ExpectedInterfaceFlow(result, regions[2], regions[1], tstamps[1]) == -interfaceflows[1,1]
     @test ExpectedInterfaceFlow(result, regions[2], regions[3], tstamps[4]) == interfaceflows[2,4]
-    @test ExpectedInterfaceFlow(result, regions[3], regions[2], tstamps[12]) == interfaceflows[2,12]
+    @test ExpectedInterfaceFlow(result, regions[3], regions[2], tstamps[12]) == -interfaceflows[2,12]
 
     @test ExpectedInterfaceUtilization(result, regions[1], regions[2], tstamps[1]) == interfaceutilizations[1,1]
     @test ExpectedInterfaceUtilization(result, regions[2], regions[1], tstamps[1]) == interfaceutilizations[1,1]

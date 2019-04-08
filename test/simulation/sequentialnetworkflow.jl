@@ -57,6 +57,8 @@
                            singlenode_a_lolps, nstderr_tol))
     @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol),
                            singlenode_a_eues, nstderr_tol))
+    @test length(result_1ab.flows) == 0
+    @test length(result_1ab.utilizations) == 0
 
     # Single-region system B
     timestampcol = collect(singlenode_b.timestamps)
@@ -111,6 +113,8 @@
                            reshape(singlenode_b_lolps, :, 1), nstderr_tol))
     @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
                            reshape(singlenode_b_eues, :, 1), nstderr_tol))
+    @test length(result_1bb.flows) == 0
+    @test length(result_1bb.utilizations) == 0
 
     println("\nThree-region system")
     regionsrow = reshape(threenode.regions, 1, :)
