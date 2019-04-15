@@ -122,12 +122,14 @@
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
 
+    # TODO:  Test spatially-disaggregated results
+    #        (but see comment below)
+
     println("Spatial:")
     result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
                         Spatial(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    # TODO:  Test spatially-disaggregated results
     display(hcat(threenode.regions,
                  LOLE.(result_3mb, threenode.regions),
                  EUE.(result_3mb, threenode.regions)))
@@ -152,7 +154,15 @@
     @test all(withinrange.(EUE.(result_3mb, threenode.timestamps),
                            threenode_eues, nstderr_tol))
 
-    # TODO:  Test spatially-disaggregated results
+    # TODO:  More comprehensive tests of spatially-disaggregated results
+    #        This is difficult since there are often degenerate shortfall-minimizing
+    #        solutions (e.g. can export power from region A to address shortfalls in either
+    #        region B or region C, but not both). For now only testing
+    #        metrics/regions/timesteps with unique solutions.
+
+    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
+    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+
     println("SpatioTemporal LOLPs:")
     regionsrow = reshape(threenode.regions, 1, :)
     timestampcol = collect(threenode.timestamps)
@@ -181,7 +191,10 @@
     @test all(withinrange.(EUE.(result_3mb, threenode.timestamps),
                            threenode_eues, nstderr_tol))
 
-    # TODO:  Test spatially-disaggregated results
+    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
+    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+
+    # TODO:  Test spatially-disaggregated region and interface results
     println("Network ExpectedInterfaceFlows:")
     interfacenamesrow = reshape([(threenode.regions[from], threenode.regions[to])
                              for (from, to) in threenode.interfaces],
