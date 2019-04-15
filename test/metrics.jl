@@ -33,4 +33,26 @@
 
     end
 
+    @testset "ExpectedInterfaceFlow" begin
+
+        eue1 = ExpectedInterfaceFlow{1,1,Hour,MW}(1.2, 0.)
+        eue2 = ExpectedInterfaceFlow{1,1,Hour,MW}(-1.2, 0.1)
+        eue3 = ExpectedInterfaceFlow{1,2,Year,GW}(17.2, 1.3)
+        eues1 = ExpectedInterfaceFlow{1,1,Hour,MW}.(rand(168), 0.)
+        @test_throws ErrorException ExpectedInterfaceFlow{1,1,Hour,MW}(1.2, -0.1)
+
+    end
+
+    @testset "ExpectedInterfaceUtilization" begin
+
+        eue1 = ExpectedInterfaceUtilization{1,1,Hour}(0.95, 0.)
+        eue2 = ExpectedInterfaceUtilization{1,1,Hour}(0.9, 0.1)
+        eue3 = ExpectedInterfaceUtilization{1,2,Year}(0.4, 1.3)
+        eues1 = ExpectedInterfaceUtilization{1,1,Hour}.(rand(168), 0.)
+        @test_throws ErrorException ExpectedInterfaceUtilization{1,1,Hour}(1.2, 0.1)
+        @test_throws ErrorException ExpectedInterfaceUtilization{1,1,Hour}(-0.2, 0.1)
+        @test_throws ErrorException ExpectedInterfaceUtilization{1,1,Hour}(0.8, -0.1)
+
+    end
+
 end

@@ -28,9 +28,11 @@ end
 include("LOLP.jl")
 include("LOLE.jl")
 include("EUE.jl")
+include("ExpectedInterfaceFlow.jl")
+include("ExpectedInterfaceUtilization.jl")
 
 # Common getter methods
-for T in [LOLP, LOLE, EUE]
+for T in [LOLP, LOLE, EUE, ExpectedInterfaceFlow, ExpectedInterfaceUtilization]
 
     @eval val(x::($T)) = x.val
     @eval stderror(x::($T)) = x.stderr

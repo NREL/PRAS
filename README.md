@@ -45,7 +45,7 @@ Options are `Backcast` or `REPRA`.
 Options are `NonSequentialCopperplate` or `NonSequentialNetworkFlow`.
 
 **Results**: What level of detail should be saved out during simulations?
-Options are `Minimal`, `Temporal`, `Spatial`, and `SpatioTemporal`.
+Options are `Minimal`, `Temporal`, `Spatial`, `SpatioTemporal`, and `Network`.
 
 ### Running an analysis
 
@@ -114,9 +114,26 @@ simulation period:
 eue_a = EUE(result, "Region A")
 ```
 
-Finally, if the results specification supports it (e.g. `SpatioTemporal`), metrics can be
-obtained for both a specific region and time:
+If the results specification supports it (i.e. `SpatioTemporal` or `Network`),
+metrics can be obtained for both a specific region and time:
 
 ```julia
 eue_a = EUE(result, "Region A", DateTime(2024, 4, 27, 13))
+```
+
+Finally, if using the `Network` result spec, information about interface flows
+and utilization factors can be obtained as well:
+
+```julia
+# Average flow from Region A to Region B during the hour of interest
+flow_ab = ExpectedInterfaceFlow(
+    result, "Region A", "Region B", DateTime(2024, 4, 27, 13))
+    
+# Same magnitude as above, but different sign
+flow_ba = ExpectedInterfaceFlow(
+    result, "Region B", "Region A", DateTime(2024, 4, 27, 13))
+    
+# Average utilization (average ratio of absolute value of actual flow vs maximum possible after outages)
+utilization_ab = ExpectedInterfaceUtilization(
+    result, "Region A", "Region B", DateTime(2024, 4, 27, 13))
 ```
