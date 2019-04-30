@@ -68,6 +68,7 @@ function assess!(
         decay_energy!(stors_energy, stors)
 
         update_flownodes!(
+            L, T, P, E,
             flowproblem, loads, vgs,
             genranges, gens, gens_available,
             storranges, stors, stors_available, stors_energy)
@@ -91,6 +92,10 @@ function assess!(
 end
 
 function update_flownodes!(
+    L::Int,
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+    E::Type{<:EnergyUnit},
     flowproblem::FlowProblem,
     loads::AbstractVector{V}, vgs::AbstractVector{V}, 
     genranges::Vector{UnitRange{Int}},
@@ -122,6 +127,7 @@ function update_flownodes!(
         # Update storages
         region_storrange = storranges[r]
         charge_capacity, discharge_capacity = available_storage_capacity(
+            L, T, P, E,
             view(stors_available, region_storrange),
             view(stors_energy, region_storrange),
             view(stors, region_storrange))

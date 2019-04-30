@@ -3,10 +3,11 @@
     seed = UInt(1234)
     nstderr_tol = 3
 
+    # TODO: Add test case with storage
+    assess(Backcast(), SequentialCopperplate(100_000), Minimal(), singlenode_stor, seed)
 
     # Note: These results should be close but not technically identical
     # TODO: Solve sequential probabilities by hand
-    # TODO: Add test case with storage
 
     # Overall result - singlenode_a
     result_1a = assess(Backcast(), SequentialCopperplate(100_000), Minimal(),

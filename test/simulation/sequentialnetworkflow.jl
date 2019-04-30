@@ -3,6 +3,9 @@
     seed = UInt(2345)
     nstderr_tol = 3
 
+    # TODO: More test cases with storage
+    @time assess(Backcast(), SequentialNetworkFlow(10), Minimal(), singlenode_stor, seed)
+
     # Single-region system A
     timestampcol = collect(singlenode_a.timestamps)
 
