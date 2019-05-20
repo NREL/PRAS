@@ -1,7 +1,7 @@
 name = "ResourceAdequacy"
 uuid = "f1bff6d7-bd5f-4f25-88ac-02781f2d51b7"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
