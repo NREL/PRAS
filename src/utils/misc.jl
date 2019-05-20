@@ -119,3 +119,15 @@ function assetgrouprange(starts::Vector{Int}, nassets::Int)
     return results
 
 end
+
+function colsum(x::Matrix{T}, col::Int) where {T}
+
+    result = zero(T)
+
+    for i in 1:size(x, 1)
+        result += x[i, col]
+    end
+
+    return result
+
+end

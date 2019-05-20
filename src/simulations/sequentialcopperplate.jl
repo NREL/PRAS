@@ -18,7 +18,7 @@ function assess!(
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
     rng = acc.rngs[Threads.threadid()]
-    sample = SystemOutputStateSample{L,T,P,V}(Tuple{Int,Int}[], 1)
+    sample = SystemOutputStateSample{L,T,P,V}(Tuple{Int,Int}[], 1) # Preallocate?
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
@@ -41,8 +41,7 @@ function assess!(
         decay_energy!(stors_energy, stors)
 
         dispatchable_gen_available = available_capacity(gens_available, gens)
-        netload = sum(view(sys.load, :, t)) - sum(view(sys.vg, :, t))
-
+        netload = colsum(sys.load, t) - colsum(sys.vg, t)
         residual_generation = dispatchable_gen_available - netload
 
         if residual_generation >= 0
@@ -67,6 +66,5 @@ function assess!(
         update!(acc, sample, t, i)
 
     end
-
 
 end
