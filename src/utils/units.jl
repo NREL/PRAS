@@ -28,3 +28,6 @@ unitsymbol(::Type{Year}) = "y"
 
 powertoenergy(p::Real, n::Real, ::Type{Hour}, ::Type{MW}, ::Type{MWh})   = n*p
 powertoenergy(p::Real, n::Real, ::Type{Minute}, ::Type{MW}, ::Type{MWh}) = n*p/60
+
+energytopower(e::Real, n::Real, ::Type{Hour}, ::Type{MW}, ::Type{MWh})   = e/n
+energytopower(e::Real, n::Real, ::Type{Minute}, ::Type{MW}, ::Type{MWh}) = e/n*60

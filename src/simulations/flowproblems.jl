@@ -72,11 +72,11 @@ Create a min-cost flow problem for the max power delivery problem with
 generation and storage discharging in decreasing order of priority, and
 storage charging with excess capacity.
 
-This involves injections/withdrawals at four nodes (generation, charging,
-discharging, and load) for each modelled region, as well as a supplementary
-"slack" node in the network that can absorb undispatched power or pass
-unserved energy or unused charging capability through to satisfy power balance
-constraints.
+This involves injections/withdrawals at three nodes (regional capacity
+surplus/shortfall, charging, and discharging) for each modelled region, as well
+as a supplementary "slack" node in the network that can absorb undispatched
+power or pass unserved energy or unused charging capability through to satisfy
+power balance constraints.
 
 Flows from the generation nodes are free, while flows from the discharging
 nodes have a cost of 10 (this ensures storage is only discharged once generation

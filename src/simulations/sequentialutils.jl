@@ -59,8 +59,8 @@ function available_storage_capacity(
             stor = stors[i]
             stor_energy = stors_energy[i]
             max_power = powertoenergy(stor.capacity, L, T, P, E)
-            charge_capacity += min(max_power, stor.energy - stor_energy)
-            discharge_capacity += min(max_power, stor_energy)
+            charge_capacity += min(stor.capacity, energytopower(stor.energy - stor_energy, L, T, P, E))
+            discharge_capacity += min(stor.capacity, energytopower(stor_energy, L, T, P, E))
         end
     end
 
