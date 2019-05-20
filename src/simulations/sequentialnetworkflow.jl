@@ -80,6 +80,7 @@ function assess!(
         solveflows!(flowproblem)
 
         update_energy!(
+            L, T, P, E,
             stors_energy,
             storranges, stors, stors_available,
             flowproblem, ninterfaces)
@@ -92,7 +93,7 @@ function assess!(
 end
 
 function update_flownodes!(
-    L::Int,
+    L::Int, # TODO: Eliminate this with units for storage devices in next breaking release
     T::Type{<:Period},
     P::Type{<:PowerUnit},
     E::Type{<:EnergyUnit},
@@ -131,7 +132,7 @@ function update_flownodes!(
             view(stors_available, region_storrange),
             view(stors_energy, region_storrange),
             view(stors, region_storrange))
-        updateinjection!(region_chargenode, slacknode, round(Int, charge_capacity))
+        updateinjection!(region_chargenode, slacknode, -round(Int, charge_capacity))
         updateinjection!(region_dischargenode, slacknode, round(Int, discharge_capacity))
 
     end
@@ -166,6 +167,10 @@ function update_flowedges!(
 end
 
 function update_energy!(
+    L::Int, # TODO: Eliminate this with units for storage devices in next breaking release
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+    E::Type{<:EnergyUnit},
     stors_energy::Vector{V},
     storranges::Vector{UnitRange{Int}},
     stors::AbstractVector{StorageDeviceSpec{V}},
@@ -179,8 +184,8 @@ function update_energy!(
 
     for r in 1:nregions
 
-        region_discharge = flowproblem.edges[2*ninterfaces + nregions + r].flow
-        region_charge = flowproblem.edges[2*ninterfaces + 3*nregions + r].flow
+        region_discharge = V(flowproblem.edges[2*ninterfaces + nregions + r].flow)
+        region_charge = V(flowproblem.edges[2*ninterfaces + 3*nregions + r].flow)
 
         storrange = storranges[r]
         region_stors_available = view(stors_available, storrange)
