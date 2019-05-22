@@ -19,7 +19,7 @@ for T in [LOLP, EUE]
 
     # Metric at a specific timestep over all regions
     (::Type{T})(::R, ::DateTime) where {R<:Result} = 
-        error("$T(::$R, period::DateTime) not yet defined: $R may not support" *
+        error("$T(::$R, period::DateTime) not yet defined: $R may not support " *
               "timestep-specific results")
 
    
