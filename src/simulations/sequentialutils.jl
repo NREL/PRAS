@@ -87,16 +87,20 @@ function charge_storage!(
 
         if stors_available[i]
 
-            max_charge_power = powertoenergy(stor.capacity, L, T, P, E)
-            max_charge_energy = stor.energy - stors_energy[i]
-            max_charge = min(max_charge_power, max_charge_energy)
+            power_limit = powertoenergy(stor.capacity, L, T, P, E)
+            energy_limit = stor.energy - stors_energy[i]
 
-            if surplus > max_charge # Fully charge
+            if energy_limit <= min(power_limit, surplus) # Charge to full energy
 
                 stors_energy[i] = stor.energy
-                surplus -= max_charge
+                surplus -= energy_limit
 
-            else # Partially charge
+            elseif power_limit <= min(energy_limit, surplus) # Charge at full power
+
+                stors_energy[i] += power_limit
+                surplus -= power_limit
+
+            else # Surplus is exhausted, allocate the last of it and return
 
                 stors_energy[i] += surplus
                 return zero(V)
@@ -107,7 +111,7 @@ function charge_storage!(
 
     end
 
-    return surplus
+    return energytopower(surplus, L, T, P, E)
 
 end
 
@@ -130,16 +134,20 @@ function discharge_storage!(
 
         if stors_available[i]
 
-            max_discharge_power = powertoenergy(stor.capacity, L, T, P, E)
-            max_discharge_energy = stors_energy[i]
-            max_discharge = min(max_discharge_power, max_discharge_energy)
+            power_limit = powertoenergy(stor.capacity, L, T, P, E)
+            energy_limit = stors_energy[i]
 
-            if shortfall > max_discharge # Fully discharge
+            if energy_limit <= min(power_limit, shortfall) # Discharge to zero energy
 
                 stors_energy[i] = 0
-                shortfall -= max_discharge
+                shortfall -= energy_limit
 
-            else # Partially discharge
+            elseif power_limit <= min(energy_limit, shortfall) # Discharge at full power
+
+                stors_energy[i] -= power_limit
+                shortfall -= power_limit
+
+            else # Shortfall is exhausted, allocate the last of it and return
 
                 stors_energy[i] -= shortfall
                 return zero(V)
@@ -150,6 +158,6 @@ function discharge_storage!(
 
     end
 
-    return shortfall
+    return energytopower(shortfall, L, T, P, E)
 
 end

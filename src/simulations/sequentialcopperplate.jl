@@ -47,11 +47,11 @@ function assess!(
         if residual_generation >= 0
 
             # Charge to consume residual_generation
-            residual_generation = charge_storage!(
+            surplus = charge_storage!(
                 L, T, P, E,
                 stors_available, stors_energy, residual_generation, stors)
             sample.regions[1] = RegionResult{L,T,P}(
-                residual_generation, residual_generation, 0.)
+                residual_generation, surplus, 0.)
 
         else
 
@@ -59,7 +59,7 @@ function assess!(
             shortfall = discharge_storage!(
                 L, T, P, E,
                 stors_available, stors_energy, -residual_generation, stors)
-            sample.regions[1] = RegionResult{L,T,P}(shortfall, 0., shortfall)
+            sample.regions[1] = RegionResult{L,T,P}(residual_generation, 0., shortfall)
 
         end
 
