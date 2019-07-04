@@ -1,4 +1,4 @@
-module CapacityValue
+module CapacityCredit
 
 using Distributions
 

@@ -27,9 +27,9 @@ git:
 
 ## uncomment the following lines to override the default test script
 #script:
-#  - julia -e 'Pkg.clone(pwd()); Pkg.build("CapacityValue"); Pkg.test("CapacityValue"; coverage=true)'
+#  - julia -e 'Pkg.clone(pwd()); Pkg.build("CapacityCredit"); Pkg.test("CapacityCredit"; coverage=true)'
 after_success:
   # push coverage results to Coveralls
-  - julia -e 'cd(Pkg.dir("CapacityValue")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
+  - julia -e 'cd(Pkg.dir("CapacityCredit")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(Coveralls.process_folder())'
   # push coverage results to Codecov
-  - julia -e 'cd(Pkg.dir("CapacityValue")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
+  - julia -e 'cd(Pkg.dir("CapacityCredit")); Pkg.add("Coverage"); using Coverage; Codecov.submit(Codecov.process_folder())'
