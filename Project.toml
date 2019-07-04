@@ -1,7 +1,7 @@
 name = "PRAS"
 uuid = "05348d26-1c52-11e9-35e3-9d51842d34b9"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.4.0"
+version = "0.4.1"
 
 [deps]
 ArgParse = "c7e460c6-2fb9-53a9-8c5b-16f535851c63"
