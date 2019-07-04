@@ -7,11 +7,9 @@ The Probabilistic Resource Adequacy Suite (PRAS) provides a modular collection
 of data processing and system simulation tools to assess power system reliability.
 
 To use this functionality for capacity valuation, see
-[CapacityValue.jl](https://github.nrel.gov/PRAS/CapacityValue.jl).
-To import systems from PLEXOS, see the
-[PLEXOS2PRAS](https://github.nrel.gov/PRAS/PLEXOS2PRAS) collection of scripts.
-To save out detailed results to a file for postprocessing or visualization, see
-[PRAS2HDF5.jl](https://github.nrel.gov/PRAS/PRAS2HDF5.jl).
+[CapacityCredit.jl](https://github.com/NREL/CapacityCredit.jl).
+To import systems from PLEXOS, see
+[PLEXOS2PRAS.jl](https://github.com/NREL/PLEXOS2PRAS.jl).
 
 ## Getting Started
 
