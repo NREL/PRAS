@@ -3,12 +3,20 @@ module PRASBase
 using Dates
 
 export
+
+    # System assets
+    AssetSpec,
     DispatchableGeneratorSpec,
     StorageDeviceSpec,
     LineSpec,
-    SystemModel,
-    MW, GW,
-    MWh, GWh, TWh
+
+    # Units
+    PowerUnit, MW, GW,
+    EnergyUnit, MWh, GWh, TWh,
+    unitsymbol, powertoenergy, energytopower,
+
+    # Main data structure
+    SystemModel
 
 include("units.jl")
 include("assets.jl")
