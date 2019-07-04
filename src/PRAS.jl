@@ -1,8 +1,7 @@
 module PRAS
 
-using ResourceAdequacy
+using Reexport
 
-@warn "The PRAS module provides no actual functionality: " *
-       "consider importing a module like ResourceAdequacy instead."
+@reexport using ResourceAdequacy, CapacityValue
 
 end
