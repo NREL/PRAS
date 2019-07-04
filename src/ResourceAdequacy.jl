@@ -5,6 +5,7 @@ using Decimals
 using Distributions
 using MinCostFlows
 using OnlineStats
+using PRASBase
 using Random
 using Future # for randjump
 using StatsBase
