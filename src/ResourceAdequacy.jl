@@ -10,6 +10,7 @@ using Future # for randjump
 using StatsBase
 
 import Base: -
+import StatsBase: stderror
 
 export
 
