@@ -10,6 +10,7 @@ Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 Future = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"
 OnlineStats = "a15396b6-48d5-5d58-9928-6d29437db91e"
+PRASBase = "b5ddb534-8618-11e9-23a2-3523bd004218"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
