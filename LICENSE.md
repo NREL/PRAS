@@ -1,4 +1,4 @@
-The CapacityValue.jl package is licensed under a modified MIT "Expat" License:
+The CapacityCredit.jl package is licensed under a modified MIT "Expat" License:
 
 > Copyright 2018 Alliance for Sustainable Energy, LLC
 >

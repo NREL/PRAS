@@ -1,4 +1,4 @@
-name = "CapacityValue"
+name = "CapacityCredit"
 uuid = "e9572c70-259d-42a9-812a-bf29f717e3f1"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
 version = "0.4.0"
