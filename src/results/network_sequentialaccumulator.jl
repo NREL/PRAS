@@ -211,7 +211,7 @@ function finalize(acc::SequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,
                 merge!(acc.droppedsum_regionperiod[r, t, 1], acc.droppedsum_regionperiod[r, t, i])
             end
 
-            for i in 1:ninterfaces
+            for iface in 1:ninterfaces
                 merge!(acc.flows[iface, t, 1], acc.flows[iface, t, i])
                 merge!(acc.utilizations[iface, t, 1], acc.utilizations[iface, t, i])
             end
