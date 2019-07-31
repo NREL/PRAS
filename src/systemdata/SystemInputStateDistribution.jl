@@ -79,7 +79,7 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 
 end
 
-function Random.rand!(rng::MersenneTwister, fp::FlowProblem,
+function rand!(rng::MersenneTwister, fp::FlowProblem,
                       system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
 
@@ -111,7 +111,7 @@ function Random.rand!(rng::MersenneTwister, fp::FlowProblem,
 
 end
 
-function Random.rand(rng::MersenneTwister, fp::FlowProblem,
+function rand(rng::MersenneTwister, fp::FlowProblem,
                    system::SystemInputStateDistribution{N,T,P,E,V}
     ) where {N,T,P,E,V}
     return rand!(rng, FlowProblem(system), system)

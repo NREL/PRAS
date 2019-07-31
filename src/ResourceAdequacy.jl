@@ -1,17 +1,18 @@
 module ResourceAdequacy
 
-using Dates
-using Decimals
-using Distributions
 using MinCostFlows
-using OnlineStats
 using PRASBase
-using Random
-using Future # for randjump
-using StatsBase
 
 import Base: -
-import StatsBase: stderror
+import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
+import Decimals: Decimal
+import Distributions: AliasTable,
+                      DiscreteNonParametric, DiscreteNonParametricSampler,
+                      NoArgCheck, probs, sampler, support
+import Future: randjump
+import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
+import Random: MersenneTwister, rand, rand!, SamplerRangeFast
+import StatsBase: countmap, stderror
 
 export
 

@@ -1,23 +1,17 @@
 CapacityDistribution{T} =
-    Distributions.DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
+    DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
 
 CapacitySampler{T} =
-    Distributions.DiscreteNonParametricSampler{
+    DiscreteNonParametricSampler{
         T, Vector{T},
-        Distributions.AliasTable{Random.SamplerRangeFast{UInt64,Int64}}}
+        AliasTable{SamplerRangeFast{UInt64,Int64}}}
 
-struct NoCheck end # For bypassing constructor checks
+SumVariance{T} = Series{
+    Number, Tuple{Sum{T}, Variance{T, EqualWeight}}
+}
 
-SumVariance{T} = OnlineStats.Series{
-    Number,
-    Tuple{OnlineStats.Sum{T},
-          OnlineStats.Variance{T, EqualWeight}
-}}
-
-MeanVariance{T} = OnlineStats.Series{
-    Number,
-    Tuple{OnlineStats.Mean{T, EqualWeight},
-          OnlineStats.Variance{T, EqualWeight}}
+MeanVariance{T} = Series{
+    Number, Tuple{Mean{T, EqualWeight}, Variance{T, EqualWeight}}
 }
 
 function makemetric(f, mv::MeanVariance)
@@ -53,7 +47,7 @@ function initrngs(n::Int; seed::UInt=rand(UInt), step::Integer=big(10)^20)
     result = Vector{MersenneTwister}(undef, n)
     prev = MersenneTwister(seed)
     for i in 1:n
-        prev = Future.randjump(prev, step)
+        prev = randjump(prev, step)
         result[i] = prev
     end
     return result

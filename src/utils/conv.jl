@@ -65,7 +65,7 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     hvs = hvsraw[zeroidxs]
     hps = hpsraw[zeroidxs]
 
-    length(hvs) == 0 && return DiscreteNonParametric([0], [1.], Distributions.NoArgCheck())
+    length(hvs) == 0 && return DiscreteNonParametric([0], [1.], NoArgCheck())
 
     max_n = sum(hvs) + 1
     current_probs  = Vector{Float64}(undef, max_n)
@@ -90,42 +90,42 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     return DiscreteNonParametric(
         current_values[nonzeroprob_idxs],
         current_probs[nonzeroprob_idxs],
-        Distributions.NoArgCheck())
+        NoArgCheck())
 
 end
 
 function add_dists(a::DiscreteNonParametric, b::DiscreteNonParametric)
 
-    values = vec(support(a) .+ support(b)')
-    probs  = vec(Distributions.probs(a) .* Distributions.probs(b)')
+    xs = vec(support(a) .+ support(b)')
+    ps = vec(probs(a) .* probs(b)')
 
     # These are monstrous
-    ordering = sortperm(values)
-    values = values[ordering]
-    probs  = probs[ordering]
+    ordering = sortperm(xs)
+    xs = xs[ordering]
+    ps = ps[ordering]
 
     # TODO: Replace these resizing arrays with worst-case-length
     # vectors and an out_idx index tracker. Small potatoes
     # compared to the sort operation above though.
-    out_values = [values[1]]
-    out_probs  = [probs[1]]
-    prev_value = values[1]
+    out_values = [xs[1]]
+    out_probs  = [ps[1]]
+    prev_value = xs[1]
 
-    for i in 2:length(values)
+    for i in 2:length(xs)
 
-        value = values[i]
+        value = xs[i]
 
         if value == prev_value
-            out_probs[end] += probs[i]
+            out_probs[end] += ps[i]
         else
             push!(out_values, value)
-            push!(out_probs, probs[i])
+            push!(out_probs, ps[i])
             prev_value = value
         end
 
     end
 
-    return DiscreteNonParametric(out_values, out_probs, Distributions.NoArgCheck())
+    return DiscreteNonParametric(out_values, out_probs, NoArgCheck())
 
 end
 
@@ -136,10 +136,10 @@ function assess(supply::DiscreteNonParametric{T,Float64,Vector{T}},
                 demand::DiscreteNonParametric{T,Float64,Vector{T}}) where T
 
     s = support(supply)
-    ps = Distributions.probs(supply)
+    ps = probs(supply)
 
     d = support(demand)
-    pd = Distributions.probs(demand)
+    pd = probs(demand)
     j = j_max = length(d)
     j_min = 1
 
