@@ -13,6 +13,10 @@ struct SequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
+    gens_available::Vector{Vector{Bool}}
+    lines_available::Vector{Vector{Bool}}
+    stors_available::Vector{Vector{Bool}}
+    stors_energy::Vector{Vector{V}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
@@ -22,6 +26,10 @@ function accumulator(extractionspec::ExtractionSpec,
 
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
+
+    ngens = size(sys.generators, 1)
+    nstors = size(sys.storages, 1)
+    nlines = size(sys.lines, 1)
 
     droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
     droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
@@ -38,6 +46,11 @@ function accumulator(extractionspec::ExtractionSpec,
     simsum_region = Matrix{V}(undef, nregions, nthreads)
     localshortfalls = Vector{Vector{V}}(undef, nthreads)
 
+    gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    lines_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_energy = Vector{Vector{V}}(undef, nthreads)
+
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Mean(), Variance())
         droppedsum_overall[i] = Series(Mean(), Variance())
@@ -47,13 +60,19 @@ function accumulator(extractionspec::ExtractionSpec,
         end
         rngs[i] = copy(rngs_temp[i])
         localshortfalls[i] = zeros(V, nregions)
+        gens_available[i] = Vector{Bool}(undef, ngens)
+        lines_available[i] = Vector{Bool}(undef, nlines)
+        stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_energy[i] = Vector{V}(undef, nstors)
     end
 
     return SequentialSpatialResultAccumulator(
         droppedcount_overall, droppedsum_overall,
         droppedcount_region, droppedsum_region,
         simidx, simcount, simsum, simcount_region, simsum_region,
-        localshortfalls, sys, extractionspec, simulationspec, rngs)
+        localshortfalls, sys, extractionspec, simulationspec, rngs,
+        gens_available, lines_available, stors_available,
+        stors_energy)
 
 end
 

@@ -10,6 +10,10 @@ struct SequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,E
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
+    gens_available::Vector{Vector{Bool}}
+    lines_available::Vector{Vector{Bool}}
+    stors_available::Vector{Vector{Bool}}
+    stors_energy::Vector{Vector{V}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
@@ -19,6 +23,10 @@ function accumulator(extractionspec::ExtractionSpec,
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
+
+    ngens = size(sys.generators, 1)
+    nstors = size(sys.storages, 1)
+    nlines = size(sys.lines, 1)
 
     droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
     droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
@@ -32,6 +40,11 @@ function accumulator(extractionspec::ExtractionSpec,
     simcount = Vector{V}(undef, nthreads)
     simsum = Vector{V}(undef, nthreads)
 
+    gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    lines_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_energy = Vector{Vector{V}}(undef, nthreads)
+
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Mean(), Variance())
         droppedsum_overall[i] = Series(Mean(), Variance())
@@ -40,13 +53,19 @@ function accumulator(extractionspec::ExtractionSpec,
             droppedcount_period[t, i] = Series(Mean(), Variance())
         end
         rngs[i] = copy(rngs_temp[i])
+        gens_available[i] = Vector{Bool}(undef, ngens)
+        lines_available[i] = Vector{Bool}(undef, nlines)
+        stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_energy[i] = Vector{V}(undef, nstors)
     end
 
     return SequentialTemporalResultAccumulator(
         droppedcount_overall, droppedsum_overall,
         droppedcount_period, droppedsum_period,
         simidx, simcount, simsum,
-        sys, extractionspec, simulationspec, rngs)
+        sys, extractionspec, simulationspec, rngs,
+        gens_available, lines_available, stors_available,
+        stors_energy)
 
 end
 

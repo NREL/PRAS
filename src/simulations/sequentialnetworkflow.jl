@@ -18,7 +18,14 @@ function assess!(
     i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-    rng = acc.rngs[Threads.threadid()]
+    threadid = Threads.threadid()
+
+    rng = acc.rngs[threadid]
+
+    gens_available = acc.gens_available[threadid]
+    lines_available = acc.lines_available[threadid]
+    stors_available = acc.stors_available[threadid]
+    stors_energy = acc.stors_energy[threadid]
 
     nregions = length(sys.regions)
     ngens = size(sys.generators, 1)
@@ -32,13 +39,26 @@ function assess!(
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
-    gens_available = Bool[rand(rng) < gen.μ /(gen.λ + gen.μ)
-                          for gen in view(sys.generators, :, 1)]
-    lines_available = Bool[rand(rng) < line.μ / (line.λ + line.μ)
-                           for line in view(sys.lines, :, 1)]
-    stors_available = Bool[rand(rng) < stor.μ / (stor.λ + stor.μ)
-                           for stor in view(sys.storages, :, 1)]
-    stors_energy = zeros(V, size(sys.storages, 1))
+
+    t1_gens = sys.timestamps_generatorset[1]
+    for i in 1:ngens
+        gen = sys.generators[i, t1_gens]
+        gens_available[i] = rand(rng) < gen.μ / (gen.λ + gen.μ)
+    end
+
+    t1_lines = sys.timestamps_lineset[1]
+    for i in 1:nlines
+        line = sys.lines[i, t1_lines]
+        lines_available[i] = rand(rng) < line.μ / (line.λ + line.μ)
+    end
+
+    t1_stors = sys.timestamps_storageset[1]
+    for i in 1:nstors
+        stor = sys.storages[i, t1_stors]
+        stors_available[i] = rand(rng) < stor.μ / (stor.λ + stor.μ)
+    end
+
+    fill!(stors_energy, zero(V))
 
     flowproblem = FlowProblem(simulationspec, sys)
 

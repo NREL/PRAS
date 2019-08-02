@@ -9,6 +9,10 @@ struct SequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
+    gens_available::Vector{Vector{Bool}}
+    lines_available::Vector{Vector{Bool}}
+    stors_available::Vector{Vector{Bool}}
+    stors_energy::Vector{Vector{V}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
@@ -17,6 +21,10 @@ function accumulator(extractionspec::ExtractionSpec,
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
+
+    ngens = size(sys.generators, 1)
+    nstors = size(sys.storages, 1)
+    nlines = size(sys.lines, 1)
 
     droppedcount = Vector{MeanVariance{V}}(undef, nthreads)
     droppedsum = Vector{MeanVariance{V}}(undef, nthreads)
@@ -28,15 +36,26 @@ function accumulator(extractionspec::ExtractionSpec,
     simcount = Vector{V}(undef, nthreads)
     simsum = Vector{V}(undef, nthreads)
 
+    gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    lines_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_energy = Vector{Vector{V}}(undef, nthreads)
+
     Threads.@threads for i in 1:nthreads
         droppedcount[i] = Series(Mean(), Variance())
         droppedsum[i] = Series(Mean(), Variance())
         rngs[i] = copy(rngs_temp[i])
+        gens_available[i] = Vector{Bool}(undef, ngens)
+        lines_available[i] = Vector{Bool}(undef, nlines)
+        stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_energy[i] = Vector{V}(undef, nstors)
     end
 
     return SequentialMinimalResultAccumulator(
         droppedcount, droppedsum, simidx, simcount, simsum,
-        sys, extractionspec, simulationspec, rngs)
+        sys, extractionspec, simulationspec, rngs,
+        gens_available, lines_available, stors_available,
+        stors_energy)
 
 end
 
