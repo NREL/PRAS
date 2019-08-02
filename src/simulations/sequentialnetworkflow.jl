@@ -72,10 +72,6 @@ function assess!(
         sys.timestamps_lineset,
         sys.timestamps_storageset))
 
-        # TODO: Support non-backcast sampling methods
-        loads = view(sys.load, :, t)
-        vgs = view(sys.vg, :, t)
-
         # Update assets for timestep
         update_availability!(rng, gens_available, sys.generators, gen_set)
         update_availability!(rng, lines_available, sys.lines, line_set)
@@ -84,7 +80,7 @@ function assess!(
 
         update_flownodes!(
             L, T, P, E,
-            flowproblem, loads, vgs,
+            flowproblem, sys.load, sys.vg, t,
             genranges, sys.generators, gens_available, gen_set,
             storranges, sys.storages, stors_available, stors_energy, stor_set)
 
@@ -113,7 +109,7 @@ function update_flownodes!(
     P::Type{<:PowerUnit},
     E::Type{<:EnergyUnit},
     flowproblem::FlowProblem,
-    loads::AbstractVector{V}, vgs::AbstractVector{V}, 
+    loads::Matrix{V}, vgs::Matrix{V}, t::Int,
     genranges::Vector{Tuple{Int,Int}},
     gens::Matrix{DispatchableGeneratorSpec{V}},
     gens_available::Vector{Bool},
@@ -135,8 +131,10 @@ function update_flownodes!(
         region_chargenode = flowproblem.nodes[2*nregions + r]
 
         # Update generators
+        # TODO: Support non-backcast load / vg sampling methods
+
         gen_range = genranges[r]
-        region_gensurplus = vgs[r] - loads[r] +
+        region_gensurplus = vgs[r, t] - loads[r, t] +
             available_capacity(gens_available, gens, gen_range, gen_set)
         updateinjection!(region_node, slacknode, round(Int, region_gensurplus))
 
