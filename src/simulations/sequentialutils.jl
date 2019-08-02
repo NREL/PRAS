@@ -1,9 +1,9 @@
 function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
-                              devices::AbstractVector{<:AssetSpec})
+                              devices::Matrix{<:AssetSpec}, s::Int)
 
     @inbounds for i in 1:length(availability)
 
-        d = devices[i]
+        d = devices[i, s]
 
         if availability[i] # Unit is online
             rand(rng) < d.λ && (availability[i] = false) # Unit fails
@@ -17,24 +17,27 @@ end
 
 function decay_energy!(
     stors_energy::Vector{V},
-    stors::AbstractVector{StorageDeviceSpec{V}}
+    stors::Matrix{StorageDeviceSpec{V}},
+    s::Int
 ) where {V<:Real}
 
-    for (i, stor) in enumerate(stors)
+    for i in 1:length(stors_energy)
+        stor = stors[i, s]
         stors_energy[i] *= stor.decayrate
     end
 
 end
 
 function available_capacity(
-    availability::AbstractVector{Bool},
-    assets::AbstractVector{<:AssetSpec{T}}
+    availability::Vector{Bool},
+    assets::Matrix{<:AssetSpec{T}},
+    i_bounds::Tuple{Int,Int}, s::Int
 ) where {T <: Real}
 
     capacity = zero(T)
 
-    for i in 1:length(availability)
-        availability[i] && (capacity += assets[i].capacity)
+    for i in first(i_bounds):last(i_bounds)
+        availability[i] && (capacity += assets[i, s].capacity)
     end
 
     return capacity
@@ -46,17 +49,18 @@ function available_storage_capacity(
     T::Type{<:Period},
     P::Type{<:PowerUnit},
     E::Type{<:EnergyUnit},
-    stors_available::AbstractVector{Bool},
-    stors_energy::AbstractVector{V},
-    stors::AbstractVector{StorageDeviceSpec{V}}
+    stors_available::Vector{Bool},
+    stors_energy::Vector{V},
+    stors::Matrix{StorageDeviceSpec{V}},
+    i_bounds::Tuple{Int,Int}, s::Int
 ) where {V <: Real}
 
     charge_capacity = zero(V)
     discharge_capacity = zero(V)
 
-    for i in 1:length(stors)
+    for i in first(i_bounds):last(i_bounds)
         if stors_available[i]
-            stor = stors[i]
+            stor = stors[i, s]
             stor_energy = stors_energy[i]
             max_power = powertoenergy(stor.capacity, L, T, P, E)
             charge_capacity += min(stor.capacity, energytopower(stor.energy - stor_energy, L, T, P, E))
@@ -73,17 +77,20 @@ function charge_storage!(
     T::Type{<:Period},
     P::Type{<:PowerUnit},
     E::Type{<:EnergyUnit},
-    stors_available::AbstractVector{Bool},
-    stors_energy::AbstractVector{V},
+    stors_available::Vector{Bool},
+    stors_energy::Vector{V},
     surplus::V,
-    stors::AbstractVector{StorageDeviceSpec{V}}
+    stors::Matrix{StorageDeviceSpec{V}},
+    stors_range::Tuple{Int,Int}, stor_set::Int
 ) where {V<:Real}
 
     # TODO: Replace with copperplate charging from Evans et al
 
     surplus = powertoenergy(surplus, L, T, P, E)
 
-    for (i, stor) in enumerate(stors)
+    for i in first(stors_range):last(stors_range)
+
+        stor = stors[i, stor_set]
 
         if stors_available[i]
 
@@ -120,17 +127,20 @@ function discharge_storage!(
     T::Type{<:Period},
     P::Type{<:PowerUnit},
     E::Type{<:EnergyUnit},
-    stors_available::AbstractVector{Bool},
-    stors_energy::AbstractVector{V},
+    stors_available::Vector{Bool},
+    stors_energy::Vector{V},
     shortfall::V,
-    stors::AbstractVector{StorageDeviceSpec{V}}
+    stors::Matrix{StorageDeviceSpec{V}},
+    stor_range::Tuple{Int,Int}, stor_set::Int
 ) where {V<:Real}
 
     # TODO: Replace with optimal copperplate charging from Evans et al
 
     shortfall = powertoenergy(shortfall, L, T, P, E)
 
-    for (i, stor) in enumerate(stors)
+    for i in first(stor_range):last(stor_range)
+
+        stor = stors[i, stor_set]
 
         if stors_available[i]
 

@@ -29,18 +29,18 @@ function assess!(
                           for stor in view(sys.storages, :, 1)]
     stors_energy = zeros(V, size(sys.storages, 1))
 
+    all_gens = (1, size(sys.generators, 1))
+    all_stors = (1, size(sys.storages, 1))
+
     # Main simulation loop
     for (t, (gen_set, stor_set)) in enumerate(zip(
         sys.timestamps_generatorset, sys.timestamps_storageset))
 
-        gens = view(sys.generators, :, gen_set)
-        stors = view(sys.storages, :, stor_set)
+        update_availability!(rng, gens_available, sys.generators, gen_set)
+        update_availability!(rng, stors_available, sys.storages, stor_set)
+        decay_energy!(stors_energy, sys.storages, stor_set)
 
-        update_availability!(rng, gens_available, gens)
-        update_availability!(rng, stors_available, stors)
-        decay_energy!(stors_energy, stors)
-
-        dispatchable_gen_available = available_capacity(gens_available, gens)
+        dispatchable_gen_available = available_capacity(gens_available, sys.generators, all_gens, gen_set)
         netload = colsum(sys.load, t) - colsum(sys.vg, t)
         residual_generation = dispatchable_gen_available - netload
 
@@ -49,7 +49,7 @@ function assess!(
             # Charge to consume residual_generation
             surplus = charge_storage!(
                 L, T, P, E,
-                stors_available, stors_energy, residual_generation, stors)
+                stors_available, stors_energy, residual_generation, sys.storages, all_stors, stor_set)
             sample.regions[1] = RegionResult{L,T,P}(
                 residual_generation, surplus, 0.)
 
@@ -58,7 +58,7 @@ function assess!(
             # Discharge to meet residual_generation shortfall
             shortfall = discharge_storage!(
                 L, T, P, E,
-                stors_available, stors_energy, -residual_generation, stors)
+                stors_available, stors_energy, -residual_generation, sys.storages, all_stors, stor_set)
             sample.regions[1] = RegionResult{L,T,P}(residual_generation, 0., shortfall)
 
         end
