@@ -99,16 +99,16 @@ end
 function assetgrouprange(starts::Vector{Int}, nassets::Int)
 
     ngroups = length(starts)
-    ngroups == 0 && return UnitRange{Int}[]
+    ngroups == 0 && return Tuple{Int,Int}[]
 
-    results = Vector{UnitRange{Int}}(undef, ngroups)
+    results = Vector{Tuple{Int,Int}}(undef, ngroups)
 
     i = 1
     while i < ngroups
-        results[i] = starts[i]:(starts[i+1]-1)
+        results[i] = (starts[i], starts[i+1]-1)
         i += 1
     end
-    results[ngroups] = starts[ngroups]:nassets
+    results[ngroups] = (starts[ngroups], nassets)
 
     return results
 
