@@ -39,3 +39,4 @@ With PRAS installed, you can load it into Julia as follows:
 
 This will make the core PRAS functions (most importantly, the `assess`
 function) available for use in your Julia script or interactive REPL session.
+The [Getting Started](./getting-started) page provides more information on using PRAS.

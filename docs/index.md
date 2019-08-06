@@ -9,7 +9,7 @@ PRAS is developed and maintained at the US
 [National Renewable Energy Laboratory](https://www.nrel.gov/) (NREL).
 
 For help installing PRAS, see the [Installation](./installation) page. To get started using PRAS,
-see the [Usage](./usage) page.
+see the [Getting Started](./getting-started) page.
 
 The functionality of PRAS is spread across multiple Julia packages.
 Those packages include:
