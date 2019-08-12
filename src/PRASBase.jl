@@ -1,6 +1,8 @@
 module PRASBase
 
-using Dates
+using Reexport
+
+@reexport using Dates
 
 export
 
