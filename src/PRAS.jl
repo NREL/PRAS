@@ -2,6 +2,6 @@ module PRAS
 
 using Reexport
 
-@reexport using ResourceAdequacy, CapacityCredit
+@reexport using PRASBase, ResourceAdequacy, CapacityCredit
 
 end
