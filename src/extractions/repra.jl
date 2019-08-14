@@ -53,9 +53,10 @@ function window_idxs(dt::DateTime, dts::StepRange{DateTime},
     #       include_idxs and resize at the end to avoid repeated pushes
     include_idxs = Int[]
     for (i, dt_i) in enumerate(dts)
-        any(range -> range[1] <= dt_i <= range[2], periodranges)
-        push!(include_idxs, i)
-    end 
+        if any(range -> range[1] <= dt_i <= range[2], periodranges)
+            push!(include_idxs, i)
+        end
+    end
 
     return include_idxs
 
