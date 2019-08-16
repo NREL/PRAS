@@ -21,6 +21,7 @@ export
     SystemModel
 
 include("units.jl")
+include("collections.jl")
 include("assets.jl")
 include("SystemModel.jl")
 

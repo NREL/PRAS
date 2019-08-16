@@ -1,32 +1,24 @@
 struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
 
-    regions::Vector{String} # region names
+    regions::Regions{P}
+    generators::Generators{L,T,P}
+    storages::Storages{L,T,P,E}
+    generatorstorages::GeneratorStorages{L,T,P,E}
 
-    generators::Matrix{DispatchableGeneratorSpec{V}} # generators x unique sets
-    generators_regionstart::Vector{Int} # starting index of each region
-                                        # in the generator vector
-    # e.g. for region i, corresponding units are stored in
+    interfaces::Interfaces
+    lines::Lines{L,T,P}
+
+    # starting index of each region in the generator vector
+    # e.g. for region i, corresponding generators are stored in
     # generators[generators_regionstart[i]:generators_regionsstart[i+1]-1]
     # (in the last region i == length(regions), it would be
     # generators[generators_regionstart[i]:end])
-
-    storages::Matrix{StorageDeviceSpec{V}} # devices x unique sets
-    storages_regionstart::Vector{Int} # starting index of each region
-                                      # in the storage device vector
-
-    interfaces::Vector{Tuple{Int,Int}}
-
-    lines::Matrix{LineSpec{V}} # lines x unique sets
-    lines_interfacestart::Vector{Int} # starting index of each line
-                                      # in the line vector
+    generators_regionstart::Vector{Int}
+    storages_regionstart::Vector{Int}
+    generatorstorages_regionstart::Vector{Int}
+    lines_interfacestart::Vector{Int}
 
     timestamps::StepRange{DateTime,T}
-    timestamps_generatorset::Vector{Int} # generator property set for each timestamp
-    timestamps_storageset::Vector{Int} # storage device property set for each timestamp
-    timestamps_lineset::Vector{Int} # line property set for each timestamp
-
-    vg::Matrix{V} # regions x timestamps
-    load::Matrix{V} # regions x timestamps
 
     function SystemModel{N,L,T,P,E}(
         regions::Vector{String},
