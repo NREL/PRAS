@@ -1,7 +1,7 @@
 name = "PRASBase"
 uuid = "b5ddb534-8618-11e9-23a2-3523bd004218"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
