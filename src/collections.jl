@@ -10,6 +10,7 @@ struct Regions{N,P<:PowerUnit}
         n_regions = length(names)
 
         @assert size(load) == (n_regions, N)
+        @assert all(load .>= 0)
 
         new{N,P}(names, load)
 
@@ -17,7 +18,7 @@ struct Regions{N,P<:PowerUnit}
 
 end
 
-length(r::Regions) = length(r.names)
+Base.length(r::Regions) = length(r.names)
 
 struct Interfaces{N,P<:PowerUnit}
 
@@ -36,6 +37,8 @@ struct Interfaces{N,P<:PowerUnit}
 
         @assert size(forwardcapacity) == (n_interfaces, N)
         @assert size(backwardcapacity) == (n_interfaces, N)
+        @assert all(forwardcapacity .>= 0)
+        @assert all(backwardcapacity .>= 0)
 
         new{N,P}(regions_from, regions_to, forwardcapacity, backwardcapacity)
 
@@ -43,4 +46,4 @@ struct Interfaces{N,P<:PowerUnit}
 
 end
 
-length(i::Interfaces) = length(i.regions_from)
+Base.length(i::Interfaces) = length(i.regions_from)

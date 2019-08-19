@@ -1,5 +1,5 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
-length(a::AbstractAssets) = length(a.names)
+Base.length(a::AbstractAssets) = length(a.names)
 
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
@@ -16,8 +16,9 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         capacity::Matrix{Int}, λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P}
 
-        n_gens = length(name)
-        @assert length(category) == n_gens
+        n_gens = length(names)
+        @assert length(categories) == n_gens
+        @assert allunique(names)
 
         @assert size(capacity) == (n_gens, N)
         @assert all(capacity .>= 0) # Why not just use unsigned integers?
@@ -51,13 +52,14 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
     function Storages{N,L,T,P,E}(
         names::Vector{String}, categories::Vector{String},
         chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
-        energycapacity::Matrix{Int}, chargeefficiency::Matrix{Int},
+        energycapacity::Matrix{Int}, chargeefficiency::Matrix{Float64},
         dischargeefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P,E}
 
         n_stors = length(names)
         @assert length(categories) == n_stors
+        @assert allunique(names)
 
         @assert size(chargecapacity) == (n_stors, N)
         @assert size(dischargecapacity) == (n_stors, N)
@@ -78,10 +80,10 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(name, category,
-                     chargecapacity, dischargecapacity, energycapacity,
-                     chargeefficiency, dischargeefficiency, carryoverefficiency,
-                     λ, μ)
+        new{N,L,T,P,E}(names, categories,
+                       chargecapacity, dischargecapacity, energycapacity,
+                       chargeefficiency, dischargeefficiency, carryoverefficiency,
+                       λ, μ)
 
     end
 
@@ -106,16 +108,17 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
     μ::Matrix{Float64}
 
     function GeneratorStorages{N,L,T,P,E}(
-        name::Vector{String}, category::Vector{String}, inflowcapacity::Matrix{Int},
+        names::Vector{String}, categories::Vector{String}, inflowcapacity::Matrix{Int},
         chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
         storage_chargecapacity::Matrix{Int}, storage_dischargecapacity::Matrix{Int},
-        storage_energycapacity::Matrix{Int}, storage_chargeefficiency::Matrix{Int},
+        storage_energycapacity::Matrix{Int}, storage_chargeefficiency::Matrix{Float64},
         storage_dischargeefficiency::Matrix{Float64}, storage_carryoverefficiency::Matrix{Float64},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P,E}
 
         n_stors = length(names)
         @assert length(categories) == n_stors
+        @assert allunique(names)
 
         @assert size(inflowcapacity) == (n_stors, N)
         @assert size(chargecapacity) == (n_stors, N)
@@ -143,7 +146,7 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(name, category,
+        new{N,L,T,P,E}(names, categories,
                        inflowcapacity, chargecapacity, dischargecapacity,
                        storage_chargecapacity, storage_dischargecapacity,
                        storage_energycapacity,
@@ -174,6 +177,7 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
         n_lines = length(names)
         @assert length(categories) == n_lines
+        @assert allunique(names)
 
         @assert size(forwardcapacity) == (n_lines, N)
         @assert size(backwardcapacity) == (n_lines, N)
@@ -185,7 +189,7 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(name, category, forwardcapacity, backwardcapacity, λ, μ)
+        new{N,L,T,P}(names, categories, forwardcapacity, backwardcapacity, λ, μ)
 
     end
 

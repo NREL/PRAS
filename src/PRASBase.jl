@@ -7,10 +7,9 @@ using Reexport
 export
 
     # System assets
-    AssetSpec,
-    DispatchableGeneratorSpec,
-    StorageDeviceSpec,
-    LineSpec,
+    AbstractAssets,
+    Regions, Interfaces,
+    Generators, Storages, GeneratorStorages, Lines,
 
     # Units
     PowerUnit, MW, GW,

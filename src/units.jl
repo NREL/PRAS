@@ -26,8 +26,8 @@ unitsymbol(::Type{Year}) = "y"
 #      in terms of conversions to a common set of units (MW, MWh, Hour?)
 #      and ship all conversions through those?
 
-powertoenergy(p::Real, n::Real, ::Type{Hour}, ::Type{MW}, ::Type{MWh})   = n*p
-powertoenergy(p::Real, n::Real, ::Type{Minute}, ::Type{MW}, ::Type{MWh}) = n*p/60
+powertoenergy(::Type{MWh}, p::Real, ::Type{MW}, n::Real, ::Type{Hour})   = n*p
+powertoenergy(::Type{MWh}, p::Real, ::Type{MW}, n::Real, ::Type{Minute}) = n*p/60
 
-energytopower(e::Real, n::Real, ::Type{Hour}, ::Type{MW}, ::Type{MWh})   = e/n
-energytopower(e::Real, n::Real, ::Type{Minute}, ::Type{MW}, ::Type{MWh}) = e/n*60
+energytopower(::Type{MW}, e::Real, ::Type{MWh}, n::Real, ::Type{Hour})   = e/n
+energytopower(::Type{MW}, e::Real, ::Type{MWh}, n::Real, ::Type{Minute}) = e/n*60

@@ -1,12 +1,12 @@
 struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    regions::Regions{P}
-    generators::Generators{L,T,P}
-    storages::Storages{L,T,P,E}
-    generatorstorages::GeneratorStorages{L,T,P,E}
+    regions::Regions{N,P}
+    generators::Generators{N,L,T,P}
+    storages::Storages{N,L,T,P,E}
+    generatorstorages::GeneratorStorages{N,L,T,P,E}
 
-    interfaces::Interfaces{P}
-    lines::Lines{L,T,P}
+    interfaces::Interfaces{N,P}
+    lines::Lines{N,L,T,P}
 
     # starting index of each region in the generator vector
     # e.g. for region i, corresponding generators are stored in
@@ -59,8 +59,10 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
         @assert length(lines_interfacestart) == n_interfaces
         @assert issorted(lines_interfacestart)
-        @assert first(lines_interfacestart) == 1
-        n_lines > 0 && @assert lines_interfacestart[end] <= n_lines + 1
+        if n_lines > 0
+            @assert first(lines_interfacestart) == 1
+            @assert lines_interfacestart[end] <= n_lines + 1
+        end
 
         @assert all(
             1 <= interfaces.regions_from[i] < interfaces.regions_to[i] <= n_regions
@@ -87,7 +89,7 @@ function SystemModel{N,L,T,P,E}(
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     timestamps::StepRange{DateTime,T},
     load::Vector{Int}
-) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     return SystemModel{N,L,T,P,E}(
         Regions{N,P}(["Region"], reshape(load, 1, :)),
