@@ -7,10 +7,9 @@ using Reexport
 export
 
     # System assets
-    AssetSpec,
-    DispatchableGeneratorSpec,
-    StorageDeviceSpec,
-    LineSpec,
+    AbstractAssets,
+    Regions, Interfaces,
+    Generators, Storages, GeneratorStorages, Lines,
 
     # Units
     PowerUnit, MW, GW,
@@ -21,6 +20,7 @@ export
     SystemModel
 
 include("units.jl")
+include("collections.jl")
 include("assets.jl")
 include("SystemModel.jl")
 
