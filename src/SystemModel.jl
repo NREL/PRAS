@@ -1,11 +1,11 @@
-struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     regions::Regions{P}
     generators::Generators{L,T,P}
     storages::Storages{L,T,P,E}
     generatorstorages::GeneratorStorages{L,T,P,E}
 
-    interfaces::Interfaces
+    interfaces::Interfaces{P}
     lines::Lines{L,T,P}
 
     # starting index of each region in the generator vector
@@ -21,59 +21,60 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
     timestamps::StepRange{DateTime,T}
 
     function SystemModel{N,L,T,P,E}(
-        regions::Vector{String},
-        generators::Matrix{DispatchableGeneratorSpec{V}},
+        regions::Regions{N,P},
+        generators::Generators{N,L,T,P},
+        storages::Storages{N,L,T,P,E},
+        generatorstorages::GeneratorStorages{N,L,T,P,E},
+        interfaces::Interfaces{N,P},
+        lines::Lines{N,L,T,P},
         generators_regionstart::Vector{Int},
-        storages::Matrix{StorageDeviceSpec{V}},
         storages_regionstart::Vector{Int},
-        interfaces::Vector{Tuple{Int,Int}},
-        lines::Matrix{LineSpec{V}},
+        generatorstorages_regionstart::Vector{Int},
         lines_interfacestart::Vector{Int},
-        timestamps::StepRange{DateTime,T},
-        timestamps_generatorset::Vector{Int},
-        timestamps_storageset::Vector{Int},
-        timestamps_lineset::Vector{Int},
-        vg::Matrix{V},
-        load::Matrix{V}
-    ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
+        timestamps::StepRange{DateTime,T}
+    ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
         n_regions = length(regions)
+        n_generators = length(generators)
+        n_storages = length(storages)
+        n_generatorstorages = length(generatorstorages)
+
         n_interfaces = length(interfaces)
+        n_lines = length(lines)
 
         @assert length(generators_regionstart) == n_regions
         @assert issorted(generators_regionstart)
         @assert first(generators_regionstart) == 1
-        @assert last(generators_regionstart) <= size(generators, 1) + 1
+        @assert last(generators_regionstart) <= n_generators + 1
 
         @assert length(storages_regionstart) == n_regions
         @assert issorted(storages_regionstart)
         @assert first(storages_regionstart) == 1
-        @assert last(storages_regionstart) <= size(storages, 1) + 1
+        @assert last(storages_regionstart) <= n_storages + 1
 
-        @assert all(i[1] < i[2] for i in interfaces)
+        @assert length(generatorstorages_regionstart) == n_regions
+        @assert issorted(generatorstorages_regionstart)
+        @assert first(generatorstorages_regionstart) == 1
+        @assert last(generatorstorages_regionstart) <= n_generatorstorages + 1
+
         @assert length(lines_interfacestart) == n_interfaces
         @assert issorted(lines_interfacestart)
-        size(lines, 1) > 0 &&
-            @assert lines_interfacestart[end] <= size(lines, 1)
+        @assert first(lines_interfacestart) == 1
+        n_lines > 0 && @assert lines_interfacestart[end] <= n_lines + 1
+
+        @assert all(
+            1 <= interfaces.regions_from[i] < interfaces.regions_to[i] <= n_regions
+            for i in 1:n_interfaces)
 
         @assert step(timestamps) == T(L)
         @assert length(timestamps) == N
-        @assert N == length(timestamps_generatorset)
-        @assert N == length(timestamps_storageset)
-        @assert N == length(timestamps_lineset)
 
-        @assert size(vg) == (n_regions, N)
-        @assert size(load) == (n_regions, N)
-
-        new{N,L,T,P,E,V}(
-            regions,
-            generators, generators_regionstart,
-            storages, storages_regionstart,
-            interfaces,
-            lines, lines_interfacestart,
-            timestamps, timestamps_generatorset,
-            timestamps_storageset, timestamps_lineset,
-            vg, load)
+        new{N,L,T,P,E}(
+            regions, generators, storages, generatorstorages,
+            interfaces, lines,
+            generators_regionstart, storages_regionstart,
+            generatorstorages_regionstart, lines_interfacestart,
+            timestamps)
 
     end
 
@@ -81,20 +82,23 @@ end
 
 # Single-node constructor
 function SystemModel{N,L,T,P,E}(
-    generators::Matrix{DispatchableGeneratorSpec{V}},
-    storages::Matrix{StorageDeviceSpec{V}},
+    generators::Generators{N,L,T,P},
+    storages::Storages{N,L,T,P,E},
+    generatorstorages::GeneratorStorages{N,L,T,P,E},
     timestamps::StepRange{DateTime,T},
-    timestamps_generatorset::Vector{Int},
-    timestamps_storageset::Vector{Int},
-    vg::Vector{V},
-    load::Vector{V}
+    load::Vector{Int}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real}
 
     return SystemModel{N,L,T,P,E}(
-        ["Region"], generators, [1], storages, [1],
-        Tuple{Int,Int}[], Matrix{LineSpec{V}}(undef, 0,1), Int[],
-        timestamps, timestamps_generatorset,
-        timestamps_storageset, ones(Int, length(timestamps)),
-        reshape(vg, 1, :), reshape(load, 1, :))
+        Regions{N,P}(["Region"], reshape(load, 1, :)),
+        generators, storages, generatorstorages,
+        Interfaces{N,P}(
+            Int[], Int[],
+            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N)),
+        Lines{N,L,T,P}(
+            String[], String[],
+            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
+            Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
+        [1], [1], [1], Int[], timestamps)
 
 end
