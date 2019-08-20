@@ -13,7 +13,7 @@ function assess!(
     acc::ResultAccumulator,
     extractionspec::Backcast, #TODO: Generalize
     simulationspec::SequentialCopperplate,
-    sys::SystemModel{N,L,T,P,E,V},
+    sys::SystemModel{N,L,T,P,E},
     i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 

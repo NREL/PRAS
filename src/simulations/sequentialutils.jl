@@ -1,5 +1,5 @@
 function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
-                              devices::Matrix{<:AssetSpec}, s::Int)
+                              devices::AbstractAssets, s::Int)
 
     @inbounds for i in 1:length(availability)
 
@@ -17,7 +17,7 @@ end
 
 function decay_energy!(
     stors_energy::Vector{V},
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     s::Int
 ) where {V<:Real}
 
@@ -30,7 +30,7 @@ end
 
 function available_capacity(
     availability::Vector{Bool},
-    assets::Matrix{<:AssetSpec{T}},
+    assets::AbstractAssets,
     i_bounds::Tuple{Int,Int}, s::Int
 ) where {T <: Real}
 
@@ -51,7 +51,7 @@ function available_storage_capacity(
     E::Type{<:EnergyUnit},
     stors_available::Vector{Bool},
     stors_energy::Vector{V},
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     i_bounds::Tuple{Int,Int}, s::Int
 ) where {V <: Real}
 
@@ -80,7 +80,7 @@ function charge_storage!(
     stors_available::Vector{Bool},
     stors_energy::Vector{V},
     surplus::V,
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     stors_range::Tuple{Int,Int}, stor_set::Int
 ) where {V<:Real}
 
@@ -130,7 +130,7 @@ function discharge_storage!(
     stors_available::Vector{Bool},
     stors_energy::Vector{V},
     shortfall::V,
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     stor_range::Tuple{Int,Int}, stor_set::Int
 ) where {V<:Real}
 

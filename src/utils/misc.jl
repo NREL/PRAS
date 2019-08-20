@@ -25,13 +25,6 @@ function mean_stderr(mv::MeanVariance, nsamples::Int)
     return (samplemean, sqrt(samplevar / nsamples))
 end
 
-function searchsortedunique(a::AbstractVector{T}, i::T) where {T}
-    idxs = searchsorted(a, i)
-    length(idxs) == 0 && throw(BoundsError(a))
-    length(idxs) > 1 && throw(ArgumentError("Element $i occurs more than once in $a"))
-    return first(idxs)
-end
-
 function findfirstunique(a::AbstractVector{T}, i::T) where T
     i_idx = findfirst(isequal(i), a)
     i_idx === nothing && throw(BoundsError(a))
@@ -53,23 +46,6 @@ function initrngs(n::Int; seed::UInt=rand(UInt), step::Integer=big(10)^20)
     return result
 end
 
-function unzip(xys::Vector{Tuple{X,Y}}) where {X,Y}
-
-    n = length(xys)
-
-    xs = Vector{X}(undef, n)
-    ys = Vector{Y}(undef, n)
-
-    for i in 1:n
-       x, y = xys[i]
-       xs[i] = x
-       ys[i] = y
-    end
-
-    return xs, ys
-
-end
-
 function transferperiodresults!(
     dest_sum::Array{V,N}, dest_var::Array{V,N},
     src::Array{MeanVariance{V},N}, idxs::Vararg{Int,N}) where {V,N}
@@ -84,16 +60,6 @@ function transferperiodresults!(
         src[idxs...] = Series(Mean(), Variance())
     end
 
-end
-
-function checkdifference(x::V, y::V) where {V<:AbstractFloat}
-    diff = x - y
-    return abs(diff) > sqrt(eps(V))*max(abs(x), abs(y)), diff
-end
-
-function approxnonzero(x::V, T::Type=V) where {V<:AbstractFloat}
-    absx = abs(x)
-    return T(absx > sqrt(eps(V))*absx)
 end
 
 function assetgrouprange(starts::Vector{Int}, nassets::Int)

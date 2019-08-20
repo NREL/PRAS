@@ -11,7 +11,7 @@ end
 
 function SystemInputStateDistribution(
     params::REPRA, dt_idx::Int,
-    system::SystemModel{N,L,T,P,E,V},
+    system::SystemModel{N,L,T,P,E},
     region_distrs::AbstractVector{CapacityDistribution{V}},
     region_samplers::AbstractVector{CapacitySampler{V}},
     interface_distrs::AbstractVector{CapacityDistribution{V}},

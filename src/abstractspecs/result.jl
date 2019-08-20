@@ -39,7 +39,7 @@ end
 Returns a `ResultAccumulator` corresponding to the provided `ResultSpec`.
 """
 accumulator(::ExtractionSpec, ::SimulationSpec, ::S,
-            ::SystemModel{N,L,T,P,E,V}, seed::UInt
+            ::SystemModel{N,L,T,P,E}, seed::UInt
 ) where {N,L,T,P,E,V,S<:ResultSpec} = 
     error("An `accumulator` method has not been defined for ResultSpec $T")
 

@@ -14,7 +14,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
-                     resultspec::Minimal, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -56,7 +56,7 @@ function update!(acc::NonSequentialMinimalResultAccumulator,
 
 end
 
-function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample{L,T,P,V}, t::Int, i::Int) where {N,L,T,P,E,V}
 
     thread = Threads.threadid()
@@ -88,7 +88,7 @@ function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,
 
 end
 
-function finalize(acc::NonSequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::NonSequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
     # Add the final local results

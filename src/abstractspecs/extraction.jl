@@ -63,8 +63,8 @@ collapse transmission as part of the extraction (for copperplate simulations,
 this is much more efficient than collapsing the network on-the-fly).
 """
 function extract(extractionspec::ExtractionSpec,
-                 system::SystemModel{N,L,T,P,E,V},
-                 copperplate::Bool) where {N,L,T,P,E,V}
+                 system::SystemModel{N,L,T,P,E},
+                 copperplate::Bool) where {N,L,T,P,E}
 
     region_starts = copperplate ? [1] : system.generators_regionstart
     interface_starts = copperplate ? Int[] : system.lines_interfacestart
@@ -118,7 +118,7 @@ function extract(extractionspec::ExtractionSpec,
 
 end
 
-function convolvepartitions(assets::AbstractVector{<:AssetSpec{T}},
+function convolvepartitions(assets::AbstractAssets,
                            partitionstarts::Vector{Int}) where {T}
     distrs = Vector{CapacityDistribution{T}}(undef, length(partitionstarts))
     samplers = Vector{CapacitySampler{T}}(undef, length(partitionstarts))
@@ -127,7 +127,7 @@ end
 
 function convolvepartitions!(distrs::AbstractVector{CapacityDistribution{T}},
                              samplers::AbstractVector{CapacitySampler{T}},
-                             assets::AbstractVector{<:AssetSpec{T}},
+                             assets::AbstractAssets,
                              partitionstarts::Vector{Int}) where {T}
 
     n_assets = length(assets)

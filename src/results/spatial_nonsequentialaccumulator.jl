@@ -25,7 +25,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
-                     resultspec::Spatial, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -91,7 +91,7 @@ function update!(acc::NonSequentialSpatialResultAccumulator,
 
 end
 
-function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     thread = Threads.threadid()
@@ -145,7 +145,7 @@ function update!(acc::NonSequentialSpatialResultAccumulator{V,SystemModel{N,L,T,
 
 end
 
-function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::NonSequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
     regions = acc.system.regions

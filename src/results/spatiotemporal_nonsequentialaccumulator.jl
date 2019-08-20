@@ -32,7 +32,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
-                     resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -93,7 +93,7 @@ end
 Updates a NonSequentialSpatioTemporalResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialSpatioTemporalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::NonSequentialSpatioTemporalResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     i = Threads.threadid()
@@ -114,7 +114,7 @@ function update!(acc::NonSequentialSpatioTemporalResultAccumulator{V,SystemModel
 
 end
 
-function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
     nregions = length(acc.system.regions)

@@ -38,7 +38,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
-                     resultspec::Network, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::Network, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -108,7 +108,7 @@ end
 Updates a NonSequentialNetworkResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::NonSequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     i = Threads.threadid()
@@ -136,7 +136,7 @@ function update!(acc::NonSequentialNetworkResultAccumulator{V,SystemModel{N,L,T,
 
 end
 
-function finalize(acc::NonSequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::NonSequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
     nregions = length(acc.system.regions)

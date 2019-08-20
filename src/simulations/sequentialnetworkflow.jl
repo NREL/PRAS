@@ -14,7 +14,7 @@ function assess!(
     acc::ResultAccumulator,
     extractionspec::Backcast, #TODO: Generalize
     simulationspec::SequentialNetworkFlow,
-    sys::SystemModel{N,L,T,P,E,V},
+    sys::SystemModel{N,L,T,P,E},
     i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
@@ -111,11 +111,11 @@ function update_flownodes!(
     flowproblem::FlowProblem,
     loads::Matrix{V}, vgs::Matrix{V}, t::Int,
     genranges::Vector{Tuple{Int,Int}},
-    gens::Matrix{DispatchableGeneratorSpec{V}},
+    gens::Generators,
     gens_available::Vector{Bool},
     gen_set::Int,
     storranges::Vector{Tuple{Int,Int}},
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     stors_available::Vector{Bool},
     stors_energy::Vector{V},
     stor_set::Int
@@ -153,7 +153,7 @@ end
 function update_flowedges!(
     flowproblem::FlowProblem,
     lineranges::Vector{Tuple{Int,Int}},
-    lines::Matrix{LineSpec{V}},
+    lines::Lines,
     lines_available::Vector{Bool},
     line_set::Int
 ) where {V <: Real}
@@ -184,7 +184,7 @@ function update_energy!(
     E::Type{<:EnergyUnit},
     stors_energy::Vector{V},
     storranges::Vector{Tuple{Int,Int}},
-    stors::Matrix{StorageDeviceSpec{V}},
+    stors::Storages,
     stors_available::Vector{Bool},
     stor_set::Int,
     flowproblem::FlowProblem,

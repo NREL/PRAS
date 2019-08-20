@@ -21,7 +21,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
-                     resultspec::Spatial, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -83,7 +83,7 @@ function update!(acc::SequentialSpatialResultAccumulator,
 
 end
 
-function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     nregions = length(acc.system.regions)
@@ -136,7 +136,7 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
 
 end
 
-function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
     regions = acc.system.regions

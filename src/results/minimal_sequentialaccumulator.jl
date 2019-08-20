@@ -1,4 +1,3 @@
-# TODO: Need to enforce consistency between V and SystemModel{.., V}
 struct SequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
     droppedcount::Vector{MeanVariance{V}} # LOL mean and variance
     droppedsum::Vector{MeanVariance{V}} #UE mean and variance
@@ -17,7 +16,7 @@ end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
-                     resultspec::Minimal, sys::SystemModel{N,L,T,P,E,V},
+                     resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E,V}
 
     nthreads = Threads.nthreads()
@@ -66,7 +65,7 @@ function update!(acc::SequentialMinimalResultAccumulator,
 
 end
 
-function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E,V}},
+function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E}},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
 
     thread = Threads.threadid()
@@ -100,7 +99,7 @@ function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E
 
 end
 
-function finalize(acc::SequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E,V}}
+function finalize(acc::SequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E,V}
 
    nthreads = Threads.nthreads()
