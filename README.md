@@ -1,5 +1,8 @@
 # ResourceAdequacy
 
+[![Build Status](https://travis-ci.org/NREL/ResourceAdequacy.jl.svg?branch=master)](https://travis-ci.org/NREL/ResourceAdequacy.jl)
+[![Coverage Status](https://coveralls.io/repos/github/NREL/ResourceAdequacy.jl/badge.svg?branch=master)](https://coveralls.io/github/NREL/ResourceAdequacy.jl?branch=master)
+
 _Note: This package is still very much a work in progress and is subject
 to change. Email Gord for the latest status._
 

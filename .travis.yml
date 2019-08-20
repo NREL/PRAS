@@ -34,5 +34,5 @@ script:
                 end'
     - julia -e 'using Pkg; Pkg.build(); Pkg.test(coverage=true)'
 
-codecov: true
-coveralls: true
+after_success:
+    - julia -e 'import Pkg; Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
