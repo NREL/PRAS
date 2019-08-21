@@ -28,37 +28,37 @@ function assess!(
     stors_energy = acc.stors_energy[threadid]
 
     nregions = length(sys.regions)
-    ngens = size(sys.generators, 1)
-    nstors = size(sys.storages, 1)
+    ngens = length(sys.generators)
+    nstors = length(sys.storages)
 
     ninterfaces = length(sys.interfaces)
-    nlines = size(sys.lines, 1)
+    nlines = length(sys.lines)
 
-    outputsample = SystemOutputStateSample{L,T,P,V}(
-        sys.interfaces, nregions)
+    outputsample = SystemOutputStateSample{L,T,P}(
+        sys.interfaces.regions_from, sys.interfaces.regions_to, nregions)
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
 
-    t1_gens = sys.timestamps_generatorset[1]
     for i in 1:ngens
-        gen = sys.generators[i, t1_gens]
-        gens_available[i] = rand(rng) < gen.μ / (gen.λ + gen.μ)
+        μ = sys.generators.μ[i, 1]
+        λ = sys.generators.λ[i, 1]
+        gens_available[i] = rand(rng) < μ / (λ + μ)
     end
 
-    t1_lines = sys.timestamps_lineset[1]
     for i in 1:nlines
-        line = sys.lines[i, t1_lines]
-        lines_available[i] = rand(rng) < line.μ / (line.λ + line.μ)
+        μ = sys.lines.μ[i, 1]
+        λ = sys.lines.λ[i, 1]
+        lines_available[i] = rand(rng) < μ / (λ + μ)
     end
 
-    t1_stors = sys.timestamps_storageset[1]
     for i in 1:nstors
-        stor = sys.storages[i, t1_stors]
-        stors_available[i] = rand(rng) < stor.μ / (stor.λ + stor.μ)
+        μ = sys.storages.μ[i, 1]
+        λ = sys.storages.λ[i, 1]
+        stors_available[i] = rand(rng) < μ / (λ + μ)
     end
 
-    fill!(stors_energy, zero(V))
+    fill!(stors_energy, 0)
 
     flowproblem = FlowProblem(simulationspec, sys)
 
@@ -67,33 +67,28 @@ function assess!(
     lineranges = assetgrouprange(sys.lines_interfacestart, nlines)
 
     # Main simulation loop
-    for (t, (gen_set, line_set, stor_set)) in enumerate(zip(
-        sys.timestamps_generatorset,
-        sys.timestamps_lineset,
-        sys.timestamps_storageset))
+    for t in 1:N
 
         # Update assets for timestep
-        update_availability!(rng, gens_available, sys.generators, gen_set)
-        update_availability!(rng, lines_available, sys.lines, line_set)
-        update_availability!(rng, stors_available, sys.storages, stor_set)
-        decay_energy!(stors_energy, sys.storages, stor_set)
+        update_availability!(rng, gens_available, sys.generators, t)
+        update_availability!(rng, lines_available, sys.lines, t)
+        update_availability!(rng, stors_available, sys.storages, t)
+        decay_energy!(stors_energy, sys.storages, t)
 
         update_flownodes!(
-            L, T, P, E,
-            flowproblem, sys.load, sys.vg, t,
-            genranges, sys.generators, gens_available, gen_set,
-            storranges, sys.storages, stors_available, stors_energy, stor_set)
+            flowproblem, t, sys.regions.load,
+            genranges, sys.generators, gens_available,
+            storranges, sys.storages, stors_available, stors_energy)
 
         update_flowedges!(
-            flowproblem,
-            lineranges, sys.lines, lines_available, line_set)
+            flowproblem, t,
+            lineranges, sys.lines, lines_available)
 
         solveflows!(flowproblem)
 
         update_energy!(
-            L, T, P, E,
-            stors_energy,
-            storranges, sys.storages, stors_available, stor_set,
+            stors_energy, t,
+            storranges, sys.storages, stors_available,
             flowproblem, ninterfaces)
 
         update!(simulationspec, outputsample, flowproblem)
@@ -104,22 +99,17 @@ function assess!(
 end
 
 function update_flownodes!(
-    L::Int, # TODO: Eliminate this with units for storage devices in next breaking release
-    T::Type{<:Period},
-    P::Type{<:PowerUnit},
-    E::Type{<:EnergyUnit},
     flowproblem::FlowProblem,
-    loads::Matrix{V}, vgs::Matrix{V}, t::Int,
+    t::Int,
+    loads::Matrix{Int},
     genranges::Vector{Tuple{Int,Int}},
     gens::Generators,
     gens_available::Vector{Bool},
-    gen_set::Int,
     storranges::Vector{Tuple{Int,Int}},
     stors::Storages,
     stors_available::Vector{Bool},
-    stors_energy::Vector{V},
-    stor_set::Int
-) where {V <: Real}
+    stors_energy::Vector{Int},
+)
 
     nregions = length(genranges)
     slacknode = flowproblem.nodes[end]
@@ -131,20 +121,17 @@ function update_flownodes!(
         region_chargenode = flowproblem.nodes[2*nregions + r]
 
         # Update generators
-        # TODO: Support non-backcast load / vg sampling methods
-
         gen_range = genranges[r]
-        region_gensurplus = vgs[r, t] - loads[r, t] +
-            available_capacity(gens_available, gens, gen_range, gen_set)
-        updateinjection!(region_node, slacknode, round(Int, region_gensurplus))
+        region_gensurplus =
+            available_capacity(gens_available, gens, gen_range, t) - loads[r, t]
+        updateinjection!(region_node, slacknode, region_gensurplus)
 
         # Update storages
         stor_range = storranges[r]
         charge_capacity, discharge_capacity = available_storage_capacity(
-            L, T, P, E,
-            stors_available, stors_energy, stors, stor_range, stor_set)
-        updateinjection!(region_chargenode, slacknode, -round(Int, charge_capacity))
-        updateinjection!(region_dischargenode, slacknode, round(Int, discharge_capacity))
+            stors_available, stors_energy, stors, stor_range, t)
+        updateinjection!(region_chargenode, slacknode, -charge_capacity)
+        updateinjection!(region_dischargenode, slacknode, discharge_capacity)
 
     end
 
@@ -152,10 +139,10 @@ end
 
 function update_flowedges!(
     flowproblem::FlowProblem,
+    t::Int,
     lineranges::Vector{Tuple{Int,Int}},
     lines::Lines,
-    lines_available::Vector{Bool},
-    line_set::Int
+    lines_available::Vector{Bool}
 ) where {V <: Real}
 
     ninterfaces = length(lineranges)
@@ -166,9 +153,8 @@ function update_flowedges!(
         interface_backwardedge = flowproblem.edges[ninterfaces + i]
         line_range = lineranges[i]
 
-        interface_capacity = round(Int,
-            available_capacity(lines_available, lines, line_range, line_set)
-        )
+        interface_capacity =
+            available_capacity(lines_available, lines, line_range, t)
 
         updateflowlimit!(interface_forwardedge, interface_capacity)
         updateflowlimit!(interface_backwardedge, interface_capacity)
@@ -178,40 +164,36 @@ function update_flowedges!(
 end
 
 function update_energy!(
-    L::Int, # TODO: Eliminate this with units for storage devices in next breaking release
-    T::Type{<:Period},
-    P::Type{<:PowerUnit},
-    E::Type{<:EnergyUnit},
-    stors_energy::Vector{V},
+    stors_energy::Vector{Int},
+    t::Int,
     storranges::Vector{Tuple{Int,Int}},
     stors::Storages,
     stors_available::Vector{Bool},
-    stor_set::Int,
     flowproblem::FlowProblem,
     ninterfaces::Int
-) where {V <: Real}
+)
 
     nregions = length(storranges)
     nstors = length(stors)
 
     for r in 1:nregions
 
-        region_discharge = V(flowproblem.edges[2*ninterfaces + nregions + r].flow)
-        region_charge = V(flowproblem.edges[2*ninterfaces + 3*nregions + r].flow)
+        region_discharge = flowproblem.edges[2*ninterfaces + nregions + r].flow
+        region_charge = flowproblem.edges[2*ninterfaces + 3*nregions + r].flow
 
         storrange = storranges[r]
 
         if region_charge > 0
 
             charge_storage!(
-                L, T, P, E, stors_available, stors_energy,
-                region_charge, stors, storrange, stor_set)
+                stors_available, stors_energy,
+                region_charge, stors, storrange, t)
 
         elseif region_discharge > 0
 
             discharge_storage!(
-                L, T, P, E, stors_available, stors_energy,
-                region_discharge, stors, storrange, stor_set)
+                stors_available, stors_energy,
+                region_discharge, stors, storrange, t)
 
         end
 

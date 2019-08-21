@@ -27,9 +27,9 @@ function accumulator(extractionspec::ExtractionSpec,
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
 
-    ngens = size(sys.generators, 1)
-    nstors = size(sys.storages, 1)
-    nlines = size(sys.lines, 1)
+    ngens = length(sys.generators)
+    nstors = length(sys.storages)
+    nlines = length(sys.lines)
 
     droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
     droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
@@ -49,7 +49,7 @@ function accumulator(extractionspec::ExtractionSpec,
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
     lines_available = Vector{Vector{Bool}}(undef, nthreads)
     stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{V}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Mean(), Variance())
@@ -59,7 +59,7 @@ function accumulator(extractionspec::ExtractionSpec,
             droppedcount_region[r, i] = Series(Mean(), Variance())
         end
         rngs[i] = copy(rngs_temp[i])
-        localshortfalls[i] = zeros(V, nregions)
+        localshortfalls[i] = zeros(Int, nregions)
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
@@ -109,11 +109,11 @@ function update!(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
 
         # Initialize new simulation data
         acc.simidx[thread] = i
-        acc.droppedcount_overall_sim[thread] = V(isshortfall)
+        acc.droppedcount_overall_sim[thread] = isshortfall
         acc.droppedsum_overall_sim[thread] = unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
-            acc.droppedcount_region_sim[r, thread] = approxnonzero(regionshortfall)
+            acc.droppedcount_region_sim[r, thread] = (regionshortfall > 0)
             acc.droppedsum_region_sim[r, thread] = regionshortfall
         end
 
@@ -126,7 +126,7 @@ function update!(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
         acc.droppedsum_overall_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
-            acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
+            acc.droppedcount_region_sim[r, thread] += (regionshortfall > 0)
             acc.droppedsum_region_sim[r, thread] += regionshortfall
         end
 
@@ -139,7 +139,7 @@ end
 function finalize(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E}
 
-    regions = acc.system.regions
+    regions = acc.system.regions.names
     nregions = length(regions)
     nthreads = Threads.nthreads()
 

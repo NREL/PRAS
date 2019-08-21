@@ -21,9 +21,9 @@ function accumulator(extractionspec::ExtractionSpec,
 
     nthreads = Threads.nthreads()
 
-    ngens = size(sys.generators, 1)
-    nstors = size(sys.storages, 1)
-    nlines = size(sys.lines, 1)
+    ngens = length(sys.generators)
+    nstors = length(sys.storages)
+    nlines = length(sys.lines)
 
     droppedcount = Vector{MeanVariance}(undef, nthreads)
     droppedsum = Vector{MeanVariance}(undef, nthreads)

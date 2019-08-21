@@ -137,15 +137,15 @@ function MinCostFlows.FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
 
     # Forward transmission edges
     forwardtransmission = 1:ninterfaces
-    nodesfrom[forwardtransmission] = first.(sys.interfaces)
-    nodesto[forwardtransmission] = last.(sys.interfaces)
+    nodesfrom[forwardtransmission] = sys.interfaces.regions_from
+    nodesto[forwardtransmission] = sys.interfaces.regions_to
     limits[forwardtransmission] .= 0 # Will be updated during simulation
     costs[forwardtransmission] .= 1
 
     # Reverse transmission edges
     reversetransmission = forwardtransmission .+ ninterfaces
-    nodesfrom[reversetransmission] = last.(sys.interfaces)
-    nodesto[reversetransmission] = first.(sys.interfaces)
+    nodesfrom[reversetransmission] = sys.interfaces.regions_to
+    nodesto[reversetransmission] = sys.interfaces.regions_from
     limits[reversetransmission] .= 0 # Will be updated during simulation
     costs[reversetransmission] .= 1
 

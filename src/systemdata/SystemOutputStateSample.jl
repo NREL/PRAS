@@ -12,25 +12,30 @@ end
 struct SystemOutputStateSample{L,T,P}
     regions::Vector{RegionResult{L,T,P}}
     interfaces::Vector{InterfaceResult{L,T,P}}
-    interfacelabels::Vector{Tuple{Int,Int}}
+    regions_from::Vector{Int}
+    regions_to::Vector{Int}
 
     function SystemOutputStateSample(
         regions::Vector{RegionResult{L,T,P}},
         interfaces::Vector{InterfaceResult{L,T,P}},
-        interfacelabels::Vector{Tuple{Int,Int}}
+        regions_from::Vector{Int},
+        regions_to::Vector{Int}
     ) where {L,T,P}
-        @assert length(interfaces) == length(interfacelabels)
+        n_regions = length(regions)
+        n_interfaces = length(interfaces)
+        @assert length(regions_from) == n_interfaces
+        @assert length(regions_to) == n_interfaces
         # TODO: Could also check that region indexes are valid
-        new{L,T,P}(regions, interfaces, interfacelabels)
+        new{L,T,P}(regions, interfaces, regions_from, regions_to)
     end
 end
 
 function SystemOutputStateSample{L,T,P}(
-    interface_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P}
+    regions_from::Vector{Int}, regions_to::Vector{Int}, n::Int) where {L,T,P}
 
     regions = Vector{RegionResult{L,T,P}}(undef, n)
-    interfaces = Vector{InterfaceResult{L,T,P}}(undef, length(interface_labels))
-    return SystemOutputStateSample(regions, interfaces, interface_labels)
+    interfaces = Vector{InterfaceResult{L,T,P}}(undef, length(regions_from))
+    return SystemOutputStateSample(regions, interfaces, regions_from, regions_to)
 
 end
 

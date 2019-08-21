@@ -1,14 +1,12 @@
 function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
-                              devices::AbstractAssets, s::Int)
+                              devices::AbstractAssets, t::Int)
 
-    @inbounds for i in 1:length(availability)
-
-        d = devices[i, s]
+    for i in 1:length(availability)
 
         if availability[i] # Unit is online
-            rand(rng) < d.λ && (availability[i] = false) # Unit fails
+            rand(rng) < devices.λ[i, t] && (availability[i] = false) # Unit fails
         else # Unit is offline
-            rand(rng) < d.μ && (availability[i] = true) # Unit is repaired
+            rand(rng) < devices.μ[i, t] && (availability[i] = true) # Unit is repaired
         end
 
     end
@@ -16,14 +14,13 @@ function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
 end
 
 function decay_energy!(
-    stors_energy::Vector{V},
+    stors_energy::Vector{Int},
     stors::Storages,
-    s::Int
-) where {V<:Real}
+    t::Int
+)
 
     for i in 1:length(stors_energy)
-        stor = stors[i, s]
-        stors_energy[i] *= stor.decayrate
+        stors_energy[i] *= round(Int, stors.carryoverefficiency[i,t])
     end
 
 end
@@ -31,13 +28,29 @@ end
 function available_capacity(
     availability::Vector{Bool},
     assets::AbstractAssets,
-    i_bounds::Tuple{Int,Int}, s::Int
-) where {T <: Real}
+    i_bounds::Tuple{Int,Int}, t::Int
+)
 
-    capacity = zero(T)
+    capacity = 0
 
     for i in first(i_bounds):last(i_bounds)
-        availability[i] && (capacity += assets[i, s].capacity)
+        availability[i] && (capacity += assets.capacity[i, t])
+    end
+
+    return capacity
+
+end
+
+function available_capacity(
+    availability::Vector{Bool},
+    assets::Lines,
+    i_bounds::Tuple{Int,Int}, t::Int
+)
+
+    capacity = 0
+
+    for i in first(i_bounds):last(i_bounds)
+        availability[i] && (capacity += assets.forwardcapacity[i, t])
     end
 
     return capacity
@@ -45,26 +58,27 @@ function available_capacity(
 end
 
 function available_storage_capacity(
-    L::Int,
-    T::Type{<:Period},
-    P::Type{<:PowerUnit},
-    E::Type{<:EnergyUnit},
     stors_available::Vector{Bool},
-    stors_energy::Vector{V},
-    stors::Storages,
-    i_bounds::Tuple{Int,Int}, s::Int
-) where {V <: Real}
+    stors_energy::Vector{Int},
+    stors::Storages{N,L,T,P,E},
+    i_bounds::Tuple{Int,Int}, t::Int
+) where {N,L,T,P,E}
 
-    charge_capacity = zero(V)
-    discharge_capacity = zero(V)
+    charge_capacity = 0
+    discharge_capacity = 0
 
     for i in first(i_bounds):last(i_bounds)
         if stors_available[i]
-            stor = stors[i, s]
+
             stor_energy = stors_energy[i]
-            max_power = powertoenergy(stor.capacity, L, T, P, E)
-            charge_capacity += min(stor.capacity, energytopower(stor.energy - stor_energy, L, T, P, E))
-            discharge_capacity += min(stor.capacity, energytopower(stor_energy, L, T, P, E))
+
+            maxcharge = stors.chargecapacity[i, t]
+            maxdischarge = stors.dischargecapacity[i, t]
+            maxenergy = stors.energycapacity[i, t]
+
+            charge_capacity += min(maxcharge, round(Int, energytopower(P, maxenergy - stor_energy, E, L, T)))
+            discharge_capacity += min(maxdischarge, round(Int, energytopower(P, stor_energy, E, L, T)))
+
         end
     end
 
@@ -73,33 +87,27 @@ function available_storage_capacity(
 end
 
 function charge_storage!(
-    L::Int,
-    T::Type{<:Period},
-    P::Type{<:PowerUnit},
-    E::Type{<:EnergyUnit},
     stors_available::Vector{Bool},
-    stors_energy::Vector{V},
-    surplus::V,
-    stors::Storages,
-    stors_range::Tuple{Int,Int}, stor_set::Int
-) where {V<:Real}
+    stors_energy::Vector{Int},
+    surplus::Int,
+    stors::Storages{N,L,T,P,E},
+    stors_range::Tuple{Int,Int}, t::Int
+) where {N,L,T,P,E}
 
     # TODO: Replace with copperplate charging from Evans et al
 
-    surplus = powertoenergy(surplus, L, T, P, E)
+    surplus = powertoenergy(E, surplus, P, L, T)
 
     for i in first(stors_range):last(stors_range)
 
-        stor = stors[i, stor_set]
-
         if stors_available[i]
 
-            power_limit = powertoenergy(stor.capacity, L, T, P, E)
-            energy_limit = stor.energy - stors_energy[i]
+            power_limit = powertoenergy(E, stors.chargecapacity[i, t], P, L, T)
+            energy_limit = stors.energycapacity[i, t] - stors_energy[i]
 
             if energy_limit <= min(power_limit, surplus) # Charge to full energy
 
-                stors_energy[i] = stor.energy
+                stors_energy[i] = stors.energycapacity[i, t]
                 surplus -= energy_limit
 
             elseif power_limit <= min(energy_limit, surplus) # Charge at full power
@@ -110,7 +118,7 @@ function charge_storage!(
             else # Surplus is exhausted, allocate the last of it and return
 
                 stors_energy[i] += surplus
-                return zero(V)
+                return 0
 
             end
 
@@ -118,33 +126,27 @@ function charge_storage!(
 
     end
 
-    return energytopower(surplus, L, T, P, E)
+    return energytopower(P, surplus, E, L, T)
 
 end
 
 function discharge_storage!(
-    L::Int,
-    T::Type{<:Period},
-    P::Type{<:PowerUnit},
-    E::Type{<:EnergyUnit},
     stors_available::Vector{Bool},
-    stors_energy::Vector{V},
-    shortfall::V,
-    stors::Storages,
-    stor_range::Tuple{Int,Int}, stor_set::Int
-) where {V<:Real}
+    stors_energy::Vector{Int},
+    shortfall::Int,
+    stors::Storages{N,L,T,P,E},
+    stor_range::Tuple{Int,Int}, t::Int
+) where {N,L,T,P,E}
 
     # TODO: Replace with optimal copperplate charging from Evans et al
 
-    shortfall = powertoenergy(shortfall, L, T, P, E)
+    shortfall = powertoenergy(E, shortfall, P, L, T)
 
     for i in first(stor_range):last(stor_range)
 
-        stor = stors[i, stor_set]
-
         if stors_available[i]
 
-            power_limit = powertoenergy(stor.capacity, L, T, P, E)
+            power_limit = powertoenergy(E, stors.dischargecapacity[i, t], P, L, T)
             energy_limit = stors_energy[i]
 
             if energy_limit <= min(power_limit, shortfall) # Discharge to zero energy
@@ -160,7 +162,7 @@ function discharge_storage!(
             else # Shortfall is exhausted, allocate the last of it and return
 
                 stors_energy[i] -= shortfall
-                return zero(V)
+                return 0
 
             end
 
@@ -168,6 +170,6 @@ function discharge_storage!(
 
     end
 
-    return energytopower(shortfall, L, T, P, E)
+    return energytopower(P, shortfall, E, L, T)
 
 end

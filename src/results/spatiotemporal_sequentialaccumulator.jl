@@ -32,9 +32,9 @@ function accumulator(extractionspec::ExtractionSpec,
     nregions = length(sys.regions)
     nperiods = length(sys.timestamps)
 
-    ngens = size(sys.generators, 1)
-    nstors = size(sys.storages, 1)
-    nlines = size(sys.lines, 1)
+    ngens = length(sys.generators)
+    nstors = length(sys.storages)
+    nlines = length(sys.lines)
 
     droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
     droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
@@ -83,7 +83,7 @@ function accumulator(extractionspec::ExtractionSpec,
         end
 
         rngs[i] = copy(rngs_temp[i])
-        localshortfalls[i] = zeros(V, nregions)
+        localshortfalls[i] = zeros(Int, nregions)
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
@@ -125,7 +125,7 @@ function update!(acc::SequentialSpatioTemporalResultAccumulator{SystemModel{N,L,
     fit!(acc.droppedsum_period[t, thread], unservedenergy)
     for r in 1:nregions
         regionshortfall = unservedloads[r]
-        fit!(acc.droppedcount_regionperiod[r, t, thread], approxnonzero(regionshortfall))
+        fit!(acc.droppedcount_regionperiod[r, t, thread], (regionshortfall > 0))
         fit!(acc.droppedsum_regionperiod[r, t, thread], regionshortfall)
     end
 
@@ -150,7 +150,7 @@ function update!(acc::SequentialSpatioTemporalResultAccumulator{SystemModel{N,L,
         acc.droppedsum_overall_sim[thread] = unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
-            acc.droppedcount_region_sim[r, thread] = approxnonzero(regionshortfall)
+            acc.droppedcount_region_sim[r, thread] = (regionshortfall > 0)
             acc.droppedsum_region_sim[r, thread] = regionshortfall
         end
 
@@ -176,7 +176,7 @@ end
 function finalize(acc::SequentialSpatioTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E}
 
-    regions = acc.system.regions
+    regions = acc.system.regions.names
     timestamps = acc.system.timestamps
     nthreads = Threads.nthreads()
     nregions = length(regions)
