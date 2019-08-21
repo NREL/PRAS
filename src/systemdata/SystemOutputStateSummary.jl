@@ -1,11 +1,11 @@
-struct SystemOutputStateSummary{L, T<:Period, E<:EnergyUnit, V<:Real}
-    lolp_system::V
-    lolp_regions::Vector{V}
-    eue_regions::Vector{V}
+struct SystemOutputStateSummary{L,T<:Period,E<:EnergyUnit}
+    lolp_system::Float64
+    lolp_regions::Vector{Float64}
+    eue_regions::Vector{Float64}
 
     SystemOutputStateSummary{L,T,E}(
-        lolp_system::V, lolp_regions::Vector{V}, eue_regions::Vector{V}
-        ) where {L, T<:Period, E<:EnergyUnit, V<:Real} =
-        new{L,T,E,V}(lolp_system, lolp_regions, eue_regions)
+        lolp_system::Float64, lolp_regions::Vector{Float64}, eue_regions::Vector{Float64}
+        ) where {L, T<:Period, E<:EnergyUnit} =
+        new{L,T,E}(lolp_system, lolp_regions, eue_regions)
 
 end

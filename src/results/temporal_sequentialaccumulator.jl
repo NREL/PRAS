@@ -1,11 +1,11 @@
-struct SequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount_overall::Vector{MeanVariance{V}}
-    droppedsum_overall::Vector{MeanVariance{V}}
-    droppedcount_period::Matrix{MeanVariance{V}}
-    droppedsum_period::Matrix{MeanVariance{V}}
+struct SequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount_overall::Vector{MeanVariance}
+    droppedsum_overall::Vector{MeanVariance}
+    droppedcount_period::Matrix{MeanVariance}
+    droppedsum_period::Matrix{MeanVariance}
     simidx::Vector{Int}
-    droppedcount_sim::Vector{V}
-    droppedsum_sim::Vector{V}
+    droppedcount_sim::Vector{Int}
+    droppedsum_sim::Vector{Int}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -13,13 +13,13 @@ struct SequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,E
     gens_available::Vector{Vector{Bool}}
     lines_available::Vector{Vector{Bool}}
     stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{V}}
+    stors_energy::Vector{Vector{Int}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
                      resultspec::Temporal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
@@ -28,22 +28,22 @@ function accumulator(extractionspec::ExtractionSpec,
     nstors = size(sys.storages, 1)
     nlines = size(sys.lines, 1)
 
-    droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedcount_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
-    droppedsum_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
+    droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedcount_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
+    droppedsum_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
     simidx = zeros(Int, nthreads)
-    simcount = Vector{V}(undef, nthreads)
-    simsum = Vector{V}(undef, nthreads)
+    simcount = Vector{Int}(undef, nthreads)
+    simsum = Vector{Int}(undef, nthreads)
 
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
     lines_available = Vector{Vector{Bool}}(undef, nthreads)
     stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{V}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Mean(), Variance())
@@ -56,7 +56,7 @@ function accumulator(extractionspec::ExtractionSpec,
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{V}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
     end
 
     return SequentialTemporalResultAccumulator(
@@ -76,15 +76,15 @@ function update!(acc::SequentialTemporalResultAccumulator,
 
 end
 
-function update!(acc::SequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     isshortfall, unservedload = droppedload(sample)
-    unservedenergy = powertoenergy(unservedload, L, T, P, E)
+    unservedenergy = powertoenergy(E, unservedload, P, L, T)
 
     # Update temporal results
-    fit!(acc.droppedcount_period[t, thread], V(isshortfall))
+    fit!(acc.droppedcount_period[t, thread], isshortfall)
     fit!(acc.droppedsum_period[t, thread], unservedenergy)
 
     # Update overall results
@@ -98,7 +98,7 @@ function update!(acc::SequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,
 
         # Reset thread-local tracking for new simulation
         acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = V(isshortfall)
+        acc.droppedcount_sim[thread] = isshortfall
         acc.droppedsum_sim[thread] = unservedenergy
 
     elseif isshortfall
@@ -106,7 +106,7 @@ function update!(acc::SequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,
         # Previous thread-local simulation is still ongoing
         # Load was dropped, update thread-local tracking
 
-        acc.droppedcount_sim[thread] += one(V)
+        acc.droppedcount_sim[thread] += 1
         acc.droppedsum_sim[thread] += unservedenergy
 
     end
@@ -115,8 +115,8 @@ function update!(acc::SequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,
 
 end
 
-function finalize(acc::SequentialTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     timestamps = acc.system.timestamps
     nperiods = length(timestamps)

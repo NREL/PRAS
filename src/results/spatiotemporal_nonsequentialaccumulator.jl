@@ -1,26 +1,26 @@
-struct NonSequentialSpatioTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
+struct NonSequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
 
     # LOLP / LOLE
-    droppedcount::Vector{MeanVariance{V}}
-    droppedcount_regions::Matrix{MeanVariance{V}}
+    droppedcount::Vector{MeanVariance}
+    droppedcount_regions::Matrix{MeanVariance}
 
     # EUE
-    droppedsum::Vector{MeanVariance{V}}
-    droppedsum_regions::Matrix{MeanVariance{V}}
+    droppedsum::Vector{MeanVariance}
+    droppedsum_regions::Matrix{MeanVariance}
 
-    localshortfalls::Vector{Vector{V}}
+    localshortfalls::Vector{Vector{Int}}
 
     system::S
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
-    NonSequentialSpatioTemporalResultAccumulator{V}(
-        droppedcount::Vector{MeanVariance{V}},
-        droppedcount_regions::Matrix{MeanVariance{V}},
-        droppedsum::Vector{MeanVariance{V}},
-        droppedsum_regions::Matrix{MeanVariance{V}},
-        localshortfalls::Vector{Vector{V}},
+    NonSequentialSpatioTemporalResultAccumulator(
+        droppedcount::Vector{MeanVariance},
+        droppedcount_regions::Matrix{MeanVariance},
+        droppedsum::Vector{MeanVariance},
+        droppedsum_regions::Matrix{MeanVariance},
+        localshortfalls::Vector{Vector{Int}},
         system::S, extractionspec::ES, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {
         V,S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
@@ -33,17 +33,17 @@ end
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
                      resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
     nregions = length(sys.regions)
 
-    droppedcount = Vector{MeanVariance{V}}(undef, nperiods)
-    droppedcount_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
+    droppedcount = Vector{MeanVariance}(undef, nperiods)
+    droppedcount_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
-    droppedsum = Vector{MeanVariance{V}}(undef, nperiods)
-    droppedsum_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
+    droppedsum = Vector{MeanVariance}(undef, nperiods)
+    droppedsum_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -56,14 +56,14 @@ function accumulator(extractionspec::ExtractionSpec,
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
-    localshortfalls = Vector{Vector{V}}(undef, nthreads)
+    localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])
         localshortfalls[i] = zeros(V, nregions)
     end
 
-    return NonSequentialSpatioTemporalResultAccumulator{V}(
+    return NonSequentialSpatioTemporalResultAccumulator(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
         localshortfalls,
         sys, extractionspec, simulationspec, rngs)
@@ -101,21 +101,21 @@ function update!(acc::NonSequentialSpatioTemporalResultAccumulator{V,SystemModel
     isshortfall, totalshortfall, localshortfalls =
         droppedloads!(acc.localshortfalls[i], sample)
 
-    fit!(acc.droppedcount[t], V(isshortfall))
-    fit!(acc.droppedsum[t], powertoenergy(totalshortfall, L, T, P, E))
+    fit!(acc.droppedcount[t], isshortfall)
+    fit!(acc.droppedsum[t], powertoenergy(E, totalshortfall, P, L, T))
 
     for r in 1:length(acc.system.regions)
         shortfall = localshortfalls[r]
         fit!(acc.droppedcount_regions[r, t], approxnonzero(shortfall))
-        fit!(acc.droppedsum_regions[r, t], powertoenergy(shortfall, L, T, P, E))
+        fit!(acc.droppedsum_regions[r, t], powertoenergy(E, shortfall, P, L, T))
     end
 
     return
 
 end
 
-function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     nregions = length(acc.system.regions)
 

@@ -70,7 +70,6 @@ You must also define the following allied types and their associated methods:
 
 """
 abstract type ResultAccumulator{
-    V <: Real, # Type of accumulated values
     S <: SystemModel, # Type of simulated system
     ES <: ExtractionSpec, # Extraction method used in simulation
     SS <: SimulationSpec # Simulation being used

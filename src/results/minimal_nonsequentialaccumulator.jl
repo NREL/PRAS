@@ -1,11 +1,11 @@
-struct NonSequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount_valsum::Vector{V}
-    droppedcount_varsum::Vector{V}
-    droppedsum_valsum::Vector{V}
-    droppedsum_varsum::Vector{V}
+struct NonSequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount_valsum::Vector{Float64}
+    droppedcount_varsum::Vector{Float64}
+    droppedsum_valsum::Vector{Float64}
+    droppedsum_varsum::Vector{Float64}
     periodidx::Vector{Int}
-    droppedcount_period::Vector{MeanVariance{V}}
-    droppedsum_period::Vector{MeanVariance{V}}
+    droppedcount_period::Vector{MeanVariance}
+    droppedsum_period::Vector{MeanVariance}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -15,21 +15,21 @@ end
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
                      resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
 
-    droppedcount_valsum = zeros(V, nthreads)
-    droppedcount_varsum = zeros(V, nthreads)
-    droppedsum_valsum = zeros(V, nthreads)
-    droppedsum_varsum = zeros(V, nthreads)
+    droppedcount_valsum = zeros(Float64, nthreads)
+    droppedcount_varsum = zeros(Float64, nthreads)
+    droppedsum_valsum = zeros(Float64, nthreads)
+    droppedsum_varsum = zeros(Float64, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
     periodidx = zeros(Int, nthreads)
-    periodcount = Vector{MeanVariance{V}}(undef, nthreads)
-    periodsum = Vector{MeanVariance{V}}(undef, nthreads)
+    periodcount = Vector{MeanVariance}(undef, nthreads)
+    periodsum = Vector{MeanVariance}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         periodcount[i] = Series(Mean(), Variance())
@@ -56,8 +56,8 @@ function update!(acc::NonSequentialMinimalResultAccumulator,
 
 end
 
-function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample{L,T,P,V}, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::NonSequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample{L,T,P}, t::Int, i::Int) where {N,L,T,P,E}
 
     thread = Threads.threadid()
 
@@ -79,7 +79,7 @@ function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,
     end
 
     isshortfall, droppedpower = droppedload(sample)
-    droppedenergy = powertoenergy(droppedpower, L, T, P, E)
+    droppedenergy = powertoenergy(E, droppedpower, P, L, T)
 
     fit!(acc.droppedcount_period[thread], V(isshortfall))
     fit!(acc.droppedsum_period[thread], droppedenergy)
@@ -88,8 +88,8 @@ function update!(acc::NonSequentialMinimalResultAccumulator{V,SystemModel{N,L,T,
 
 end
 
-function finalize(acc::NonSequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::NonSequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     # Add the final local results
     for thread in 1:Threads.nthreads()
@@ -114,7 +114,7 @@ function finalize(acc::NonSequentialMinimalResultAccumulator{V,<:SystemModel{N,L
         lole_stderr = sqrt(sum(acc.droppedcount_varsum) ./ nsamples)
         eue_stderr = sqrt(sum(acc.droppedsum_varsum) ./ nsamples)
     else
-        lole_stderr = eue_stderr = zero(V)
+        lole_stderr = eue_stderr = 0.
     end
 
     return MinimalResult(

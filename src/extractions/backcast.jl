@@ -3,10 +3,10 @@ struct Backcast <: ExtractionSpec end
 function SystemInputStateDistribution(
     extraction_spec::Backcast, dt_idx::Int,
     system::SystemModel{N,L,T,P,E},
-    region_distrs::AbstractVector{CapacityDistribution{V}},
-    region_samplers::AbstractVector{CapacitySampler{V}},
-    interface_distrs::AbstractVector{CapacityDistribution{V}},
-    interface_samplers::AbstractVector{CapacitySampler{V}},
+    region_distrs::AbstractVector{CapacityDistribution},
+    region_samplers::AbstractVector{CapacitySampler},
+    interface_distrs::AbstractVector{CapacityDistribution},
+    interface_samplers::AbstractVector{CapacitySampler},
     copperplate::Bool=false) where {N,L,T,P,E,V}
 
     dt_idxs = [dt_idx]

@@ -1,17 +1,13 @@
-CapacityDistribution{T} =
-    DiscreteNonParametric{T,Float64,Vector{T},Vector{Float64}}
+CapacityDistribution =
+    DiscreteNonParametric{Int,Float64,Vector{Int},Vector{Float64}}
 
-CapacitySampler{T} =
+CapacitySampler =
     DiscreteNonParametricSampler{
-        T, Vector{T},
+        Int, Vector{Int},
         AliasTable{SamplerRangeFast{UInt64,Int64}}}
 
-SumVariance{T} = Series{
-    Number, Tuple{Sum{T}, Variance{T, EqualWeight}}
-}
-
-MeanVariance{T} = Series{
-    Number, Tuple{Mean{T, EqualWeight}, Variance{T, EqualWeight}}
+MeanVariance = Series{
+    Number, Tuple{Mean{Float64, EqualWeight}, Variance{Float64, EqualWeight}}
 }
 
 function makemetric(f, mv::MeanVariance)
@@ -48,7 +44,7 @@ end
 
 function transferperiodresults!(
     dest_sum::Array{V,N}, dest_var::Array{V,N},
-    src::Array{MeanVariance{V},N}, idxs::Vararg{Int,N}) where {V,N}
+    src::Array{MeanVariance,N}, idxs::Vararg{Int,N}) where {V,N}
 
     series = src[idxs...]
 

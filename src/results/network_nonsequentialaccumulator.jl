@@ -1,35 +1,35 @@
-struct NonSequentialNetworkResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
+struct NonSequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
 
     # LOLP / LOLE
-    droppedcount::Vector{MeanVariance{V}}
-    droppedcount_regions::Matrix{MeanVariance{V}}
+    droppedcount::Vector{MeanVariance}
+    droppedcount_regions::Matrix{MeanVariance}
 
     # EUE
-    droppedsum::Vector{MeanVariance{V}}
-    droppedsum_regions::Matrix{MeanVariance{V}}
+    droppedsum::Vector{MeanVariance}
+    droppedsum_regions::Matrix{MeanVariance}
 
-    localshortfalls::Vector{Vector{V}}
+    localshortfalls::Vector{Vector{Int}}
 
-    flows::Matrix{MeanVariance{V}}
-    utilizations::Matrix{MeanVariance{V}}
+    flows::Matrix{MeanVariance}
+    utilizations::Matrix{MeanVariance}
 
     system::S
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
-    NonSequentialNetworkResultAccumulator{V}(
-        droppedcount::Vector{MeanVariance{V}},
-        droppedcount_regions::Matrix{MeanVariance{V}},
-        droppedsum::Vector{MeanVariance{V}},
-        droppedsum_regions::Matrix{MeanVariance{V}},
-        localshortfalls::Vector{Vector{V}},
-        flows::Matrix{MeanVariance{V}},
-        utilizations::Matrix{MeanVariance{V}},
+    NonSequentialNetworkResultAccumulator{}(
+        droppedcount::Vector{MeanVariance},
+        droppedcount_regions::Matrix{MeanVariance},
+        droppedsum::Vector{MeanVariance},
+        droppedsum_regions::Matrix{MeanVariance},
+        localshortfalls::Vector{Vector{Int}},
+        flows::Matrix{MeanVariance},
+        utilizations::Matrix{MeanVariance},
         system::S, extractionspec::ES, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {
-        V,S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
-        new{V,S,ES,SS}(
+        S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
+        new{S,ES,SS}(
             droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
             localshortfalls, flows, utilizations, system,
             extractionspec, simulationspec, rngs)
@@ -39,21 +39,21 @@ end
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
                      resultspec::Network, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
     nregions = length(sys.regions)
     ninterfaces = length(sys.interfaces)
 
-    droppedcount = Vector{MeanVariance{V}}(undef, nperiods)
-    droppedcount_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
+    droppedcount = Vector{MeanVariance}(undef, nperiods)
+    droppedcount_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
-    droppedsum = Vector{MeanVariance{V}}(undef, nperiods)
-    droppedsum_regions = Matrix{MeanVariance{V}}(undef, nregions, nperiods)
+    droppedsum = Vector{MeanVariance}(undef, nperiods)
+    droppedsum_regions = Matrix{MeanVariance}(undef, nregions, nperiods)
 
-    flows = Matrix{MeanVariance{V}}(undef, ninterfaces, nperiods)
-    utilizations = Matrix{MeanVariance{V}}(undef, ninterfaces, nperiods)
+    flows = Matrix{MeanVariance}(undef, ninterfaces, nperiods)
+    utilizations = Matrix{MeanVariance}(undef, ninterfaces, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -70,14 +70,14 @@ function accumulator(extractionspec::ExtractionSpec,
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
-    localshortfalls = Vector{Vector{V}}(undef, nthreads)
+    localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         rngs[i] = copy(rngs_temp[i])
-        localshortfalls[i] = zeros(V, nregions)
+        localshortfalls[i] = zeros(Float64, nregions)
     end
 
-    return NonSequentialNetworkResultAccumulator{V}(
+    return NonSequentialNetworkResultAccumulator(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
         localshortfalls, flows, utilizations, sys,
         extractionspec, simulationspec, rngs)
@@ -108,16 +108,16 @@ end
 Updates a NonSequentialNetworkResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     i = Threads.threadid()
 
     isshortfall, totalshortfall, localshortfalls =
         droppedloads!(acc.localshortfalls[i], sample)
 
-    fit!(acc.droppedcount[t], V(isshortfall))
-    fit!(acc.droppedsum[t], powertoenergy(totalshortfall, L, T, P, E))
+    fit!(acc.droppedcount[t], isshortfall)
+    fit!(acc.droppedsum[t], powertoenergy(E, totalshortfall, P, L, T))
 
     for r in 1:length(acc.system.regions)
         shortfall = localshortfalls[r]
@@ -136,8 +136,8 @@ function update!(acc::NonSequentialNetworkResultAccumulator{V,SystemModel{N,L,T,
 
 end
 
-function finalize(acc::NonSequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     nregions = length(acc.system.regions)
 

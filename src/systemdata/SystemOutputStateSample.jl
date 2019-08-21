@@ -1,60 +1,47 @@
-struct RegionResult{L,T<:Period,P<:PowerUnit,V<:Real}
-
-    net_injection::V
-    surplus::V
-    shortfall::V
-
-    RegionResult{L,T,P}(
-        net_injection::V, surplus::V, shortfall::V
-    ) where {L,T<:Period,P<:PowerUnit,V<:Real} =
-    new{L,T,P,V}(net_injection, surplus, shortfall)
-
+struct RegionResult{L,T<:Period,P<:PowerUnit}
+    net_injection::Int
+    surplus::Int
+    shortfall::Int
 end
 
-struct InterfaceResult{L,T<:Period,P<:PowerUnit,V<:Real}
-
-    max_transfer_magnitude::V
-    transfer::V
-
-    function InterfaceResult{L,T,P}(
-        max::V, actual::V) where {L,T<:Period,P<:PowerUnit,V<:Real}
-        new{L,T,P,V}(max, actual)
-    end
-
+struct InterfaceResult{L,T<:Period,P<:PowerUnit}
+    max_transfer_magnitude::Int
+    transfer::Int
 end
 
-struct SystemOutputStateSample{L,T,P,V}
-    regions::Vector{RegionResult{L,T,P,V}}
-    interfaces::Vector{InterfaceResult{L,T,P,V}}
+struct SystemOutputStateSample{L,T,P}
+    regions::Vector{RegionResult{L,T,P}}
+    interfaces::Vector{InterfaceResult{L,T,P}}
     interfacelabels::Vector{Tuple{Int,Int}}
 
     function SystemOutputStateSample(
-        regions::Vector{RegionResult{L,T,P,V}},
-        interfaces::Vector{InterfaceResult{L,T,P,V}},
+        regions::Vector{RegionResult{L,T,P}},
+        interfaces::Vector{InterfaceResult{L,T,P}},
         interfacelabels::Vector{Tuple{Int,Int}}
-    ) where {L,T,P,V}
+    ) where {L,T,P}
         @assert length(interfaces) == length(interfacelabels)
-        new{L,T,P,V}(regions, interfaces, interfacelabels)
+        # TODO: Could also check that region indexes are valid
+        new{L,T,P}(regions, interfaces, interfacelabels)
     end
 end
 
-function SystemOutputStateSample{L,T,P,V}(
-    interface_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P,V}
+function SystemOutputStateSample{L,T,P}(
+    interface_labels::Vector{Tuple{Int,Int}}, n::Int) where {L,T,P}
 
-    regions = Vector{RegionResult{L,T,P,V}}(undef, n)
-    interfaces = Vector{InterfaceResult{L,T,P,V}}(undef, length(interface_labels))
+    regions = Vector{RegionResult{L,T,P}}(undef, n)
+    interfaces = Vector{InterfaceResult{L,T,P}}(undef, length(interface_labels))
     return SystemOutputStateSample(regions, interfaces, interface_labels)
 
 end
 
-function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
+function droppedload(sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
 
     isshortfall = false
-    totalshortfall = zero(V)
+    totalshortfall = 0
 
     for region in sample.regions
         shortfall = region.shortfall
-        if !(shortfall ≈ 0)
+        if shortfall > 0
             isshortfall = true
             totalshortfall += shortfall
         end
@@ -64,34 +51,24 @@ function droppedload(sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
 
 end
 
-function droppedloads!(localshortfalls::Vector{V},
-                       sample::SystemOutputStateSample{L,T,P,V}) where {L,T,P,V}
+function droppedloads!(localshortfalls::Vector{Int},
+                       sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
 
     nregions = length(sample.regions)
     isshortfall = false
-    totalshortfall = zero(V)
+    totalshortfall = 0
 
     for i in 1:nregions
         shortfall = sample.regions[i].shortfall
-        if approxnonzero(shortfall, Bool)
+        if shortfall > 0
             isshortfall = true
             totalshortfall += shortfall
             localshortfalls[i] = shortfall
         else
-            localshortfalls[i] = 0.
+            localshortfalls[i] = 0
         end
     end
 
     return isshortfall, totalshortfall, localshortfalls
 
-end
-
-function all_load_served(A::Matrix{T}, B::Matrix{T}, sink::Int, n::Int) where T
-    served = true
-    i = 1
-    while served && (i <= n)
-        served = A[i, sink] ≈ B[i, sink]
-        i += 1
-    end
-    return served
 end

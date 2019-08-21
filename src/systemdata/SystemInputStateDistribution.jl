@@ -1,7 +1,7 @@
-struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Real,
-    VCDV<:AbstractVector{CapacityDistribution{V}},
-    VCSV<:AbstractVector{CapacitySampler{V}},
-    MV<:AbstractMatrix{V}}
+struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,
+    VCDV<:AbstractVector{CapacityDistribution},
+    VCSV<:AbstractVector{CapacitySampler},
+    MV<:AbstractMatrix{Int}}
 
     region_idxs::Base.OneTo{Int}
     region_labels::Vector{String}
@@ -26,10 +26,10 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         interface_maxflowdistrs::VCDV,
         interface_maxflowsamplers::VCSV,
         loadsamples::MV) where {
-            N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V,
-            VCDV<:AbstractVector{CapacityDistribution{V}},
-            VCSV<:AbstractVector{CapacitySampler{V}},
-            MV<:AbstractMatrix{V}}
+            N,T<:Period,P<:PowerUnit,E<:EnergyUnit,
+            VCDV<:AbstractVector{CapacityDistribution},
+            VCSV<:AbstractVector{CapacitySampler},
+            MV<:AbstractMatrix{Int}}
 
         n_regions = length(region_labels)
         region_idxs = Base.OneTo(n_regions)
@@ -47,7 +47,7 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
         n_loadsamples = size(loadsamples, 2)
         loadsample_idxs = Base.OneTo(n_loadsamples)
 
-        new{N,T,P,E,V,VCDV,VCSV,MV}(
+        new{N,T,P,E,VCDV,VCSV,MV}(
             region_idxs, region_labels,
             region_maxdispatchabledistrs,
             region_maxdispatchablesamplers,
@@ -61,18 +61,18 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 
     # Single-region constructor
     function SystemInputStateDistribution{N,T,P,E}(
-        maxdispatchable_distr::CapacityDistribution{V},
-        maxdispatchable_sampler::CapacitySampler{V},
-        vgsamples::Vector{V}, loadsamples::Vector{V}
+        maxdispatchable_distr::CapacityDistribution,
+        maxdispatchable_sampler::CapacitySampler,
+        vgsamples::Vector{Int}, loadsamples::Vector{Int}
     ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
 
-        new{N,T,P,E,V,Vector{CapacityDistribution{V}},
-                      Vector{CapacitySampler{V}},Matrix{V}}(
+        new{N,T,P,E,V,Vector{CapacityDistribution},
+                      Vector{CapacitySampler},Matrix{Int}}(
             Base.OneTo(1), ["Region"],
             [maxdispatchable_distr], [maxdispatchable_sampler],
             Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),
             Base.OneTo(0), Tuple{Int,Int}[],
-            CapacityDistribution{V}[], CapacitySampler{V}[],
+            CapacityDistribution[], CapacitySampler[],
             Base.OneTo(length(loadsamples)), reshape(loadsamples, 1, :))
 
     end
@@ -80,8 +80,8 @@ struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V<:Re
 end
 
 function rand!(rng::MersenneTwister, fp::FlowProblem,
-                      system::SystemInputStateDistribution{N,T,P,E,V}
-    ) where {N,T,P,E,V}
+                      system::SystemInputStateDistribution{N,T,P,E}
+    ) where {N,T,P,E}
 
     slacknode = fp.nodes[end]
     ninterfaces = length(system.interface_labels)
@@ -92,11 +92,11 @@ function rand!(rng::MersenneTwister, fp::FlowProblem,
     # Draw random capacity surplus / deficits
     for i in system.region_idxs
         updateinjection!(
-            fp.nodes[i], slacknode, round(Int,
+            fp.nodes[i], slacknode,
             rand(rng, system.region_maxdispatchablesamplers[i]) + # Dispatchable generation
             system.vgsamples[i, vgsample_idx] - # Variable generation
             system.loadsamples[i, loadsample_idx] # Load
-        ))
+        )
     end
 
     # Assign random line limits
@@ -112,7 +112,7 @@ function rand!(rng::MersenneTwister, fp::FlowProblem,
 end
 
 function rand(rng::MersenneTwister, fp::FlowProblem,
-                   system::SystemInputStateDistribution{N,T,P,E,V}
-    ) where {N,T,P,E,V}
+                   system::SystemInputStateDistribution{N,T,P,E}
+    ) where {N,T,P,E}
     return rand!(rng, FlowProblem(system), system)
 end

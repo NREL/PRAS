@@ -1,14 +1,14 @@
-struct SequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount_overall::Vector{MeanVariance{V}}
-    droppedsum_overall::Vector{MeanVariance{V}}
-    droppedcount_region::Matrix{MeanVariance{V}}
-    droppedsum_region::Matrix{MeanVariance{V}}
+struct SequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount_overall::Vector{MeanVariance}
+    droppedsum_overall::Vector{MeanVariance}
+    droppedcount_region::Matrix{MeanVariance}
+    droppedsum_region::Matrix{MeanVariance}
     simidx::Vector{Int}
-    droppedcount_overall_sim::Vector{V}
-    droppedsum_overall_sim::Vector{V}
-    droppedcount_region_sim::Matrix{V}
-    droppedsum_region_sim::Matrix{V}
-    localshortfalls::Vector{Vector{V}}
+    droppedcount_overall_sim::Vector{Int}
+    droppedsum_overall_sim::Vector{Int}
+    droppedcount_region_sim::Matrix{Int}
+    droppedsum_region_sim::Matrix{Int}
+    localshortfalls::Vector{Vector{Int}}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -16,13 +16,13 @@ struct SequentialSpatialResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     gens_available::Vector{Vector{Bool}}
     lines_available::Vector{Vector{Bool}}
     stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{V}}
+    stors_energy::Vector{Vector{Int}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
                      resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
@@ -31,20 +31,20 @@ function accumulator(extractionspec::ExtractionSpec,
     nstors = size(sys.storages, 1)
     nlines = size(sys.lines, 1)
 
-    droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedcount_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
-    droppedsum_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
+    droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedcount_region = Matrix{MeanVariance}(undef, nregions, nthreads)
+    droppedsum_region = Matrix{MeanVariance}(undef, nregions, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
     simidx = zeros(Int, nthreads)
-    simcount = Vector{V}(undef, nthreads)
-    simsum = Vector{V}(undef, nthreads)
-    simcount_region = Matrix{V}(undef, nregions, nthreads)
-    simsum_region = Matrix{V}(undef, nregions, nthreads)
-    localshortfalls = Vector{Vector{V}}(undef, nthreads)
+    simcount = Vector{Int}(undef, nthreads)
+    simsum = Vector{Int}(undef, nthreads)
+    simcount_region = Matrix{Int}(undef, nregions, nthreads)
+    simsum_region = Matrix{Int}(undef, nregions, nthreads)
+    localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
     lines_available = Vector{Vector{Bool}}(undef, nthreads)
@@ -63,7 +63,7 @@ function accumulator(extractionspec::ExtractionSpec,
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{V}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
     end
 
     return SequentialSpatialResultAccumulator(
@@ -83,14 +83,14 @@ function update!(acc::SequentialSpatialResultAccumulator,
 
 end
 
-function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     nregions = length(acc.system.regions)
 
     thread = Threads.threadid()
     isshortfall, unservedload, unservedloads = droppedloads!(acc.localshortfalls[thread], sample)
-    unservedenergy = powertoenergy(unservedload, L, T, P, E)
+    unservedenergy = powertoenergy(E, unservedload, P, L, T)
 
     prev_i = acc.simidx[thread]
     if i != prev_i
@@ -122,7 +122,7 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
         # Local simulation/timestep is still ongoing
         # Load was dropped, update local tracking
 
-        acc.droppedcount_overall_sim[thread] += one(V)
+        acc.droppedcount_overall_sim[thread] += 1
         acc.droppedsum_overall_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
@@ -136,8 +136,8 @@ function update!(acc::SequentialSpatialResultAccumulator{V,SystemModel{N,L,T,P,E
 
 end
 
-function finalize(acc::SequentialSpatialResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     regions = acc.system.regions
     nregions = length(regions)

@@ -1,16 +1,16 @@
-struct NonSequentialTemporalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount::Vector{MeanVariance{V}}
-    droppedsum::Vector{MeanVariance{V}}
+struct NonSequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount::Vector{MeanVariance}
+    droppedsum::Vector{MeanVariance}
     system::S
     extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
-    NonSequentialTemporalResultAccumulator{V}(
-        droppedcount::Vector{MeanVariance{V}}, droppedsum::Vector{MeanVariance{V}},
+    NonSequentialTemporalResultAccumulator(
+        droppedcount::Vector{MeanVariance}, droppedsum::Vector{MeanVariance},
         system::S, extractionspec::ES, simulationspec::SS,
-        rngs::Vector{MersenneTwister}) where {V,S,ES,SS} =
-        new{V,S,ES,SS}(droppedcount, droppedsum, system,
+        rngs::Vector{MersenneTwister}) where {S,ES,SS} =
+        new{S,ES,SS}(droppedcount, droppedsum, system,
                        extractionspec, simulationspec, rngs)
 
 end
@@ -18,13 +18,13 @@ end
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{NonSequential},
                      resultspec::Temporal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
 
-    droppedcount = Vector{MeanVariance{V}}(undef, nperiods)
-    droppedsum = Vector{MeanVariance{V}}(undef, nperiods)
+    droppedcount = Vector{MeanVariance}(undef, nperiods)
+    droppedsum = Vector{MeanVariance}(undef, nperiods)
 
     for t in 1:nperiods
         droppedcount[t] = Series(Mean(), Variance())
@@ -38,7 +38,7 @@ function accumulator(extractionspec::ExtractionSpec,
         rngs[i] = copy(rngs_temp[i])
     end
 
-    return NonSequentialTemporalResultAccumulator{V}(
+    return NonSequentialTemporalResultAccumulator(
         droppedcount, droppedsum,
         sys, extractionspec, simulationspec, rngs)
 
@@ -53,21 +53,21 @@ function update!(acc::NonSequentialTemporalResultAccumulator,
 
 end
 
-function update!(acc::NonSequentialTemporalResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::NonSequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     isshortfall, droppedpower = droppedload(sample)
-    droppedenergy = powertoenergy(droppedpower, L, T, P, E)
+    droppedenergy = powertoenergy(E, droppedpower, P, L, T)
 
-    fit!(acc.droppedcount[t], V(isshortfall))
+    fit!(acc.droppedcount[t], isshortfall)
     fit!(acc.droppedsum[t], droppedenergy)
 
     return
 
 end
 
-function finalize(acc::NonSequentialTemporalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::NonSequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     lolps = makemetric.(LOLP{L,T}, acc.droppedcount)
     eues = makemetric.(EUE{1,L,T,E}, acc.droppedsum)

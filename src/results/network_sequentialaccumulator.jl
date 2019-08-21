@@ -1,20 +1,20 @@
-struct SequentialNetworkResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount_overall::Vector{MeanVariance{V}}
-    droppedsum_overall::Vector{MeanVariance{V}}
-    droppedcount_region::Matrix{MeanVariance{V}}
-    droppedsum_region::Matrix{MeanVariance{V}}
-    droppedcount_period::Matrix{MeanVariance{V}}
-    droppedsum_period::Matrix{MeanVariance{V}}
-    droppedcount_regionperiod::Array{MeanVariance{V},3}
-    droppedsum_regionperiod::Array{MeanVariance{V},3}
+struct SequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount_overall::Vector{MeanVariance}
+    droppedsum_overall::Vector{MeanVariance}
+    droppedcount_region::Matrix{MeanVariance}
+    droppedsum_region::Matrix{MeanVariance}
+    droppedcount_period::Matrix{MeanVariance}
+    droppedsum_period::Matrix{MeanVariance}
+    droppedcount_regionperiod::Array{MeanVariance,3}
+    droppedsum_regionperiod::Array{MeanVariance,3}
     simidx::Vector{Int}
-    droppedcount_overall_sim::Vector{V}
-    droppedsum_overall_sim::Vector{V}
-    droppedcount_region_sim::Matrix{V}
-    droppedsum_region_sim::Matrix{V}
-    localshortfalls::Vector{Vector{V}}
-    flows::Array{MeanVariance{V},3}
-    utilizations::Array{MeanVariance{V},3}
+    droppedcount_overall_sim::Vector{Int}
+    droppedsum_overall_sim::Vector{Int}
+    droppedcount_region_sim::Matrix{Int}
+    droppedsum_region_sim::Matrix{Int}
+    localshortfalls::Vector{Vector{Int}}
+    flows::Array{MeanVariance,3}
+    utilizations::Array{MeanVariance,3}
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -22,13 +22,13 @@ struct SequentialNetworkResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     gens_available::Vector{Vector{Bool}}
     lines_available::Vector{Vector{Bool}}
     stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{V}}
+    stors_energy::Vector{Vector{Int}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
                      resultspec::Network, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
@@ -39,31 +39,31 @@ function accumulator(extractionspec::ExtractionSpec,
     nstors = size(sys.storages, 1)
     nlines = size(sys.lines, 1)
 
-    droppedcount_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedsum_overall = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedcount_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
-    droppedsum_region = Matrix{MeanVariance{V}}(undef, nregions, nthreads)
-    droppedcount_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
-    droppedsum_period = Matrix{MeanVariance{V}}(undef, nperiods, nthreads)
-    droppedcount_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
-    droppedsum_regionperiod = Array{MeanVariance{V},3}(undef, nregions, nperiods, nthreads)
-    flows = Array{MeanVariance{V},3}(undef, ninterfaces, nperiods, nthreads)
-    utilizations = Array{MeanVariance{V},3}(undef, ninterfaces, nperiods, nthreads)
+    droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
+    droppedcount_region = Matrix{MeanVariance}(undef, nregions, nthreads)
+    droppedsum_region = Matrix{MeanVariance}(undef, nregions, nthreads)
+    droppedcount_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
+    droppedsum_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
+    droppedcount_regionperiod = Array{MeanVariance,3}(undef, nregions, nperiods, nthreads)
+    droppedsum_regionperiod = Array{MeanVariance,3}(undef, nregions, nperiods, nthreads)
+    flows = Array{MeanVariance,3}(undef, ninterfaces, nperiods, nthreads)
+    utilizations = Array{MeanVariance,3}(undef, ninterfaces, nperiods, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
     simidx = zeros(Int, nthreads)
-    droppedcount_overall_sim = Vector{V}(undef, nthreads)
-    droppedsum_overall_sim = Vector{V}(undef, nthreads)
-    droppedcount_region_sim = Matrix{V}(undef, nregions, nthreads)
-    droppedsum_region_sim = Matrix{V}(undef, nregions, nthreads)
-    localshortfalls = Vector{Vector{V}}(undef, nthreads)
+    droppedcount_overall_sim = Vector{Int}(undef, nthreads)
+    droppedsum_overall_sim = Vector{Int}(undef, nthreads)
+    droppedcount_region_sim = Matrix{Int}(undef, nregions, nthreads)
+    droppedsum_region_sim = Matrix{Int}(undef, nregions, nthreads)
+    localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
     lines_available = Vector{Vector{Bool}}(undef, nthreads)
     stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{V}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
 
@@ -93,11 +93,11 @@ function accumulator(extractionspec::ExtractionSpec,
         end
 
         rngs[i] = copy(rngs_temp[i])
-        localshortfalls[i] = zeros(V, nregions)
+        localshortfalls[i] = zeros(Int, nregions)
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{V}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
 
     end
 
@@ -121,22 +121,22 @@ function update!(acc::SequentialNetworkResultAccumulator,
 
 end
 
-function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::SequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     nregions = length(acc.system.regions)
     ninterfaces = length(acc.system.interfaces)
 
     isshortfall, unservedload, unservedloads = droppedloads!(acc.localshortfalls[thread], sample)
-    unservedenergy = powertoenergy(unservedload, L, T, P, E)
+    unservedenergy = powertoenergy(E, unservedload, P, L, T)
 
     # Update temporal/spatiotemporal result data
-    fit!(acc.droppedcount_period[t, thread], V(isshortfall))
+    fit!(acc.droppedcount_period[t, thread], isshortfall)
     fit!(acc.droppedsum_period[t, thread], unservedenergy)
     for r in 1:nregions
         regionshortfall = unservedloads[r]
-        fit!(acc.droppedcount_regionperiod[r, t, thread], approxnonzero(regionshortfall))
+        fit!(acc.droppedcount_regionperiod[r, t, thread], regionshortfall > 0)
         fit!(acc.droppedsum_regionperiod[r, t, thread], regionshortfall)
     end
 
@@ -163,7 +163,7 @@ function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E
 
         # Initialize time-aggregated result data for new simulation
         acc.simidx[thread] = i
-        acc.droppedcount_overall_sim[thread] = V(isshortfall)
+        acc.droppedcount_overall_sim[thread] = isshortfall
         acc.droppedsum_overall_sim[thread] = unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
@@ -176,11 +176,11 @@ function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E
         # Local simulation/timestep is still ongoing
         # Load was dropped, update time-aggregated tracking
 
-        acc.droppedcount_overall_sim[thread] += one(V)
+        acc.droppedcount_overall_sim[thread] += 1
         acc.droppedsum_overall_sim[thread] += unservedenergy
         for r in 1:nregions
             regionshortfall = unservedloads[r]
-            acc.droppedcount_region_sim[r, thread] += approxnonzero(regionshortfall)
+            acc.droppedcount_region_sim[r, thread] += regionshortfall > 0
             acc.droppedsum_region_sim[r, thread] += regionshortfall
         end
 
@@ -190,8 +190,8 @@ function update!(acc::SequentialNetworkResultAccumulator{V,SystemModel{N,L,T,P,E
 
 end
 
-function finalize(acc::SequentialNetworkResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::SequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
     regions = acc.system.regions
     interfaces = acc.system.interfaces

@@ -12,13 +12,13 @@ iscopperplate(::NonSequentialNetworkFlow) = false
 
 function assess!(acc::ResultAccumulator,
                  simulationspec::NonSequentialNetworkFlow,
-                 system::SystemInputStateDistribution{L,T,P,E,Float64},
+                 system::SystemInputStateDistribution{L,T,P,E},
                  t::Int) where {L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     thread = Threads.threadid()
 
     flowproblem = FlowProblem(simulationspec, system)
-    outputsample = SystemOutputStateSample{L,T,P,Float64}(
+    outputsample = SystemOutputStateSample{L,T,P}(
         system.interface_labels, length(system.region_labels))
 
     for i in 1:simulationspec.nsamples
@@ -32,9 +32,9 @@ end
 
 function update!(
     simulationspec::NonSequentialNetworkFlow,
-    sample::SystemOutputStateSample{L,T,P,V},
+    sample::SystemOutputStateSample{L,T,P},
     fp::FlowProblem
-) where {L,T<:Period,P<:PowerUnit,V<:Real}
+) where {L,T<:Period,P<:PowerUnit}
 
     nregions = length(sample.regions)
     ninterfaces = length(sample.interfaces)
@@ -45,7 +45,7 @@ function update!(
         surplus_edge = fp.edges[2*ninterfaces + i]
         shortfall_edge = fp.edges[2*ninterfaces + nregions + i]
         sample.regions[i] = RegionResult{L,T,P}(
-            V(node.injection), V(surplus_edge.flow), V(shortfall_edge.flow))
+            node.injection, surplus_edge.flow, shortfall_edge.flow)
     end
 
     # Save flow available, flow for each interface
@@ -54,7 +54,7 @@ function update!(
         forwardflow = forwardedge.flow
         reverseflow = fp.edges[ninterfaces+i].flow
         flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        sample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
+        sample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
     end
 
 end

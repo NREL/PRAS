@@ -16,7 +16,7 @@ function assess!(
     simulationspec::SequentialNetworkFlow,
     sys::SystemModel{N,L,T,P,E},
     i::Int
-) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     threadid = Threads.threadid()
 
@@ -223,9 +223,9 @@ end
 #      equivalent - refactor to share code?
 function update!(
     simulationspec::SequentialNetworkFlow,
-    outputsample::SystemOutputStateSample{L,T,P,V},
+    outputsample::SystemOutputStateSample{L,T,P},
     flowproblem::FlowProblem
-) where {L,T<:Period,P<:PowerUnit,V<:Real}
+) where {L,T<:Period,P<:PowerUnit}
 
     nregions = length(outputsample.regions)
     ninterfaces = length(outputsample.interfaces)
@@ -236,7 +236,7 @@ function update!(
         surplus_edge = flowproblem.edges[2*ninterfaces + i]
         shortfall_edge = flowproblem.edges[2*ninterfaces + 5*nregions + i]
         outputsample.regions[i] = RegionResult{L,T,P}(
-            V(node.injection), V(surplus_edge.flow), V(shortfall_edge.flow))
+            node.injection, surplus_edge.flow, shortfall_edge.flow)
     end
 
     # Save flow available, flow for each interface
@@ -245,7 +245,7 @@ function update!(
         forwardflow = forwardedge.flow
         reverseflow = flowproblem.edges[ninterfaces+i].flow
         flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        outputsample.interfaces[i] = InterfaceResult{L,T,P}(V(forwardedge.limit), V(flow))
+        outputsample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
     end
 
 end

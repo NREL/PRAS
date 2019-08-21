@@ -1,9 +1,9 @@
-struct SequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES,SS}
-    droppedcount::Vector{MeanVariance{V}} # LOL mean and variance
-    droppedsum::Vector{MeanVariance{V}} #UE mean and variance
+struct SequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+    droppedcount::Vector{MeanVariance} # LOL mean and variance
+    droppedsum::Vector{MeanVariance} #UE mean and variance
     simidx::Vector{Int} # Current thread-local simulation idx
-    droppedcount_sim::Vector{V} # LOL count for thread-local simulations
-    droppedsum_sim::Vector{V} # UE sum for thread-local simulations
+    droppedcount_sim::Vector{Int} # LOL count for thread-local simulations
+    droppedsum_sim::Vector{Int} # UE sum for thread-local simulations
     system::S
     extractionspec::ES
     simulationspec::SS
@@ -11,13 +11,13 @@ struct SequentialMinimalResultAccumulator{V,S,ES,SS} <: ResultAccumulator{V,S,ES
     gens_available::Vector{Vector{Bool}}
     lines_available::Vector{Vector{Bool}}
     stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{V}}
+    stors_energy::Vector{Vector{Int}}
 end
 
 function accumulator(extractionspec::ExtractionSpec,
                      simulationspec::SimulationSpec{Sequential},
                      resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E,V}
+                     seed::UInt) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
 
@@ -25,20 +25,20 @@ function accumulator(extractionspec::ExtractionSpec,
     nstors = size(sys.storages, 1)
     nlines = size(sys.lines, 1)
 
-    droppedcount = Vector{MeanVariance{V}}(undef, nthreads)
-    droppedsum = Vector{MeanVariance{V}}(undef, nthreads)
+    droppedcount = Vector{MeanVariance}(undef, nthreads)
+    droppedsum = Vector{MeanVariance}(undef, nthreads)
 
     rngs = Vector{MersenneTwister}(undef, nthreads)
     rngs_temp = initrngs(nthreads, seed=seed)
 
     simidx = zeros(Int, nthreads)
-    simcount = Vector{V}(undef, nthreads)
-    simsum = Vector{V}(undef, nthreads)
+    simcount = Vector{Int}(undef, nthreads)
+    simsum = Vector{Int}(undef, nthreads)
 
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
     lines_available = Vector{Vector{Bool}}(undef, nthreads)
     stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{V}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount[i] = Series(Mean(), Variance())
@@ -47,7 +47,7 @@ function accumulator(extractionspec::ExtractionSpec,
         gens_available[i] = Vector{Bool}(undef, ngens)
         lines_available[i] = Vector{Bool}(undef, nlines)
         stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{V}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
     end
 
     return SequentialMinimalResultAccumulator(
@@ -65,12 +65,12 @@ function update!(acc::SequentialMinimalResultAccumulator,
 
 end
 
-function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E,V}
+function update!(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}},
+                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     isshortfall, unservedload = droppedload(sample)
-    unservedenergy = powertoenergy(unservedload, L, T, P, E)
+    unservedenergy = powertoenergy(E, unservedload, P, L, T)
 
     prev_i = acc.simidx[thread]
     if i != prev_i # Previous thread-local simulation has finished
@@ -82,7 +82,7 @@ function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E
 
         # Reset thread-local tracking for new simulation
         acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = V(isshortfall)
+        acc.droppedcount_sim[thread] = isshortfall
         acc.droppedsum_sim[thread] = unservedenergy
 
     elseif isshortfall
@@ -90,7 +90,7 @@ function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E
         # Previous thread-local simulation is still ongoing
         # Load was dropped, update thread-local tracking
 
-        acc.droppedcount_sim[thread] += one(V)
+        acc.droppedcount_sim[thread] += 1
         acc.droppedsum_sim[thread] += unservedenergy
 
     end
@@ -99,8 +99,8 @@ function update!(acc::SequentialMinimalResultAccumulator{V,SystemModel{N,L,T,P,E
 
 end
 
-function finalize(acc::SequentialMinimalResultAccumulator{V,<:SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E,V}
+function finalize(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}}
+                  ) where {N,L,T,P,E}
 
    nthreads = Threads.nthreads()
 
