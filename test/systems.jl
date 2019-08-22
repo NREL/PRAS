@@ -81,9 +81,9 @@ regions = Regions{4,MW}(["Region A", "Region B", "Region C"],
 generators = Generators{4,1,Hour,MW}(
     ["Gen1", "VG A", "Gen 2", "Gen 3", "VG B", "Gen 4", "Gen 5", "VG C"],
     ["Gens", "VG", "Gens", "Gens", "VG", "Gens", "Gens", "VG"],
-    [10 10 10 10; 4 3 2 4;               # A
+    [10 10 10 10; 4 3 2 3;               # A
      10 10 10 10; 10 10 10 10; 6 5 3 4;  # B
-     10 10 10 10; 20 20 25 20; 2 1 2 1], # C
+     10 10 15 10; 20 20 25 20; 2 1 2 1], # C
     [fill(0.1, 1, 4); fill(0.0, 1, 4);  # A
      fill(0.1, 2, 4); fill(0.0, 1, 4);  # B
      fill(0.1, 2, 4); fill(0.0, 1, 4)], # C
