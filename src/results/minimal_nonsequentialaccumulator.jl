@@ -79,7 +79,7 @@ function update!(acc::NonSequentialMinimalResultAccumulator{SystemModel{N,L,T,P,
     isshortfall, droppedpower = droppedload(sample)
     droppedenergy = powertoenergy(E, droppedpower, P, L, T)
 
-    fit!(acc.droppedcount_period[thread], V(isshortfall))
+    fit!(acc.droppedcount_period[thread], isshortfall)
     fit!(acc.droppedsum_period[thread], droppedenergy)
 
     return

@@ -5,23 +5,22 @@ struct TemporalResult{
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
-    V <: Real, # Numerical type of value data
     SS <: SimulationSpec
-} <: Result{N,L,T,V,SS}
+} <: Result{N,L,T,SS}
 
     timestamps::StepRange{DateTime,T}
-    lole::LOLE{N,L,T,V}
-    lolps::Vector{LOLP{L,T,V}}
-    eue::EUE{N,L,T,E,V}
-    eues::Vector{EUE{1,L,T,E,V}}
+    lole::LOLE{N,L,T}
+    lolps::Vector{LOLP{L,T}}
+    eue::EUE{N,L,T,E}
+    eues::Vector{EUE{1,L,T,E}}
     simulationspec::SS
 
     TemporalResult{}(
         timestamps::StepRange{DateTime,T},
-        lole::LOLE{N,L,T,V}, lolps::Vector{LOLP{L,T,V}},
-        eue::EUE{N,L,T,E,V}, eues::Vector{EUE{1,L,T,E,V}},
-        simulationspec::SS) where {N,L,T,E,V,SS} =
-        new{N,L,T,E,V,SS}(timestamps, lole, lolps, eue, eues, simulationspec)
+        lole::LOLE{N,L,T}, lolps::Vector{LOLP{L,T}},
+        eue::EUE{N,L,T,E}, eues::Vector{EUE{1,L,T,E}},
+        simulationspec::SS) where {N,L,T,E,SS} =
+        new{N,L,T,E,SS}(timestamps, lole, lolps, eue, eues, simulationspec)
 
 end
 

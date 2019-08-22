@@ -31,29 +31,13 @@ function available_capacity(
     i_bounds::Tuple{Int,Int}, t::Int
 )
 
-    capacity = 0
+    avcap = 0
 
     for i in first(i_bounds):last(i_bounds)
-        availability[i] && (capacity += assets.capacity[i, t])
+        availability[i] && (avcap += capacity(assets)[i, t])
     end
 
-    return capacity
-
-end
-
-function available_capacity(
-    availability::Vector{Bool},
-    assets::Lines,
-    i_bounds::Tuple{Int,Int}, t::Int
-)
-
-    capacity = 0
-
-    for i in first(i_bounds):last(i_bounds)
-        availability[i] && (capacity += assets.forwardcapacity[i, t])
-    end
-
-    return capacity
+    return avcap
 
 end
 

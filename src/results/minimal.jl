@@ -5,18 +5,17 @@ struct MinimalResult{
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
-    V <: Real, # Numerical type of value data
     SS <: SimulationSpec
-} <: Result{N,L,T,V,SS}
+} <: Result{N,L,T,SS}
 
-    lole::LOLE{N,L,T,V}
-    eue::EUE{N,L,T,E,V}
+    lole::LOLE{N,L,T}
+    eue::EUE{N,L,T,E}
     simulationspec::SS
 
     MinimalResult{}(
-        lole::LOLE{N,L,T,V}, eue::EUE{N,L,T,E,V},
-        simulationspec::SS) where {N,L,T,E,V,SS} =
-        new{N,L,T,E,V,SS}(lole, eue, simulationspec)
+        lole::LOLE{N,L,T}, eue::EUE{N,L,T,E},
+        simulationspec::SS) where {N,L,T,E,SS} =
+        new{N,L,T,E,SS}(lole, eue, simulationspec)
 
 end
 

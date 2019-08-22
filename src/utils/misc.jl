@@ -87,3 +87,25 @@ function colsum(x::Matrix{T}, col::Int) where {T}
     return result
 
 end
+
+function assess(distr::CapacityDistribution)
+
+    xs = support(distr)
+    ps = probs(distr)
+
+    i = 1
+    lolp = 0.
+    eul = 0.
+
+    while i <= length(xs)
+
+       xs[i] >= 0 && break
+       lolp += ps[i]
+       eul -= ps[i] * xs[i]
+       i += 1
+
+    end
+
+    return lolp, eul
+
+end

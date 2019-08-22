@@ -12,17 +12,18 @@ iscopperplate(::NonSequentialNetworkFlow) = false
 
 function assess!(acc::ResultAccumulator,
                  simulationspec::NonSequentialNetworkFlow,
-                 system::SystemInputStateDistribution{L,T,P,E},
-                 t::Int) where {L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+                 sys::SystemModel{N,L,T,P,E},
+                 t::Int) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     thread = Threads.threadid()
 
-    flowproblem = FlowProblem(simulationspec, system)
+    statesampler = sampler(SystemInputStateDistribution(sys, t, copperplate=false))
+    flowproblem = FlowProblem(simulationspec, sys)
     outputsample = SystemOutputStateSample{L,T,P}(
-        system.interface_labels, length(system.region_labels))
+        sys.interfaces.regions_from, sys.interfaces.regions_to, length(sys.regions))
 
     for i in 1:simulationspec.nsamples
-        rand!(acc.rngs[thread], flowproblem, system)
+        rand!(acc.rngs[thread], flowproblem, statesampler)
         solveflows!(flowproblem)
         update!(simulationspec, outputsample, flowproblem)
         update!(acc, outputsample, t, i)

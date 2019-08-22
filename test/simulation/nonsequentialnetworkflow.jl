@@ -130,9 +130,9 @@
                         Spatial(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    display(hcat(threenode.regions,
-                 LOLE.(result_3mb, threenode.regions),
-                 EUE.(result_3mb, threenode.regions)))
+    display(hcat(threenode.regions.names,
+                 LOLE.(result_3mb, threenode.regions.names),
+                 EUE.(result_3mb, threenode.regions.names)))
     println()
 
     result_3mb = assess(NonSequentialNetworkFlow(100_000),
@@ -164,7 +164,7 @@
     @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
 
     println("SpatioTemporal LOLPs:")
-    regionsrow = reshape(threenode.regions, 1, :)
+    regionsrow = reshape(threenode.regions.names, 1, :)
     timestampcol = collect(threenode.timestamps)
     display(
         vcat(
@@ -196,10 +196,12 @@
 
     # TODO:  Test spatially-disaggregated region and interface results
     println("Network ExpectedInterfaceFlows:")
-    interfacenamesrow = reshape([(threenode.regions[from], threenode.regions[to])
-                             for (from, to) in threenode.interfaces],
+    threenode_interfaces = tuple.(threenode.interfaces.regions_from,
+                                  threenode.interfaces.regions_to)
+    interfacenamesrow = reshape([(threenode.regions.names[from], threenode.regions.names[to])
+                                 for (from, to) in threenode_interfaces],
                             1, :)
-    interfacesrow = reshape(threenode.interfaces, 1, :)
+    interfacesrow = reshape(threenode_interfaces, 1, :)
     timestampcol = collect(threenode.timestamps)
     display(
         vcat(

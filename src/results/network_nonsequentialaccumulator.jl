@@ -119,8 +119,8 @@ function update!(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,
 
     for r in 1:length(acc.system.regions)
         shortfall = localshortfalls[r]
-        fit!(acc.droppedcount_regions[r, t], approxnonzero(shortfall))
-        fit!(acc.droppedsum_regions[r, t], powertoenergy(shortfall, L, T, P, E))
+        fit!(acc.droppedcount_regions[r, t], shortfall > 0)
+        fit!(acc.droppedsum_regions[r, t], powertoenergy(E, shortfall, P, L, T))
     end
 
     for i in 1:length(acc.system.interfaces)
@@ -138,6 +138,8 @@ function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P
                   ) where {N,L,T,P,E}
 
     nregions = length(acc.system.regions)
+    interfaces = tuple.(acc.system.interfaces.regions_from,
+                        acc.system.interfaces.regions_to)
 
     periodlolps = makemetric.(LOLP{L,T}, acc.droppedcount)
     lole = LOLE(periodlolps)
@@ -153,7 +155,7 @@ function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P
     utilizations = makemetric.(ExpectedInterfaceUtilization{1,L,T}, acc.utilizations)
 
     return NetworkResult(
-        acc.system.regions, acc.system.interfaces, acc.system.timestamps,
+        acc.system.regions.names, interfaces, acc.system.timestamps,
         lole, regionloles, periodlolps, regionalperiodlolps,
         eue, regioneues, periodeues, regionalperiodeues,
         flows, utilizations, acc.simulationspec)

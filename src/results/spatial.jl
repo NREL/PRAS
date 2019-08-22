@@ -5,23 +5,22 @@ struct SpatialResult{
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
-    V <: Real, # Numerical type of value data
     SS <: SimulationSpec
-} <: Result{N,L,T,V,SS}
+} <: Result{N,L,T,SS}
 
     regions::Vector{String}
-    lole::LOLE{N,L,T,V}
-    loles::Vector{LOLE{N,L,T,V}}
-    eue::EUE{N,L,T,E,V}
-    eues::Vector{EUE{N,L,T,E,V}}
+    lole::LOLE{N,L,T}
+    loles::Vector{LOLE{N,L,T}}
+    eue::EUE{N,L,T,E}
+    eues::Vector{EUE{N,L,T,E}}
     simulationspec::SS
 
     SpatialResult{}(
         regions::Vector{String},
-        lole::LOLE{N,L,T,V}, loles::Vector{LOLE{N,L,T,V}},
-        eue::EUE{N,L,T,E,V}, eues::Vector{EUE{N,L,T,E,V}},
-        simulationspec::SS) where {N,L,T,E,V,SS} =
-        new{N,L,T,E,V,SS}(regions, lole, loles, eue, eues, simulationspec)
+        lole::LOLE{N,L,T}, loles::Vector{LOLE{N,L,T}},
+        eue::EUE{N,L,T,E}, eues::Vector{EUE{N,L,T,E}},
+        simulationspec::SS) where {N,L,T,E,SS} =
+        new{N,L,T,E,SS}(regions, lole, loles, eue, eues, simulationspec)
 
 end
 

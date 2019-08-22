@@ -1,22 +1,22 @@
 # Loss-of-Load Expectation
 
-struct LOLE{N,L,T<:Period,V<:Real} <: ReliabilityMetric{V}
-    val::V
-    stderr::V
+struct LOLE{N,L,T<:Period} <: ReliabilityMetric
+    val::Float64
+    stderr::Float64
 
-    function LOLE{N,L,T}(val::V, stderr::V) where {N,L,T<:Period,V<:Real}
+    function LOLE{N,L,T}(val::Float64, stderr::Float64) where {N,L,T<:Period}
         (val >= 0) || error("$val is not a valid occurence expectation")
         (stderr >= 0) || error("$stderr is not a valid standard error")
-        new{N,L,T,V}(val, stderr)
+        new{N,L,T}(val, stderr)
     end
 
 end
 
-function LOLE(lolps::Vector{LOLP{L,T,V}}) where {L,T<:Period,V<:AbstractFloat}
+function LOLE(lolps::Vector{LOLP{L,T}}) where {L,T<:Period}
 
     N = length(lolps)
-    lole = zero(V)
-    s = zero(V)
+    lole = 0.
+    s = 0.
 
     for lolp in lolps
         lole += val(lolp)

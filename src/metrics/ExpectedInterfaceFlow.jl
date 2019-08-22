@@ -1,12 +1,13 @@
 # Expected Unserved Energy
 
-struct ExpectedInterfaceFlow{N,L,T<:Period,P<:PowerUnit,V<:Real} <: ReliabilityMetric{V}
-    val::V
-    stderr::V
+struct ExpectedInterfaceFlow{N,L,T<:Period,P<:PowerUnit} <: ReliabilityMetric
+    val::Float64
+    stderr::Float64
 
-    function ExpectedInterfaceFlow{N,L,T,P}(val::V, stderr::V) where {N,L,T<:Period,P<:PowerUnit,V<:Real}
+    function ExpectedInterfaceFlow{N,L,T,P}(val::Float64, stderr::Float64
+    ) where {N,L,T<:Period,P<:PowerUnit}
         (stderr >= 0) || error("$stderr is not a valid standard error")
-        new{N,L,T,P,V}(val, stderr)
+        new{N,L,T,P}(val, stderr)
     end
 
 end

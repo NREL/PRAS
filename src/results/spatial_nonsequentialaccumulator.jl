@@ -1,13 +1,13 @@
 struct NonSequentialSpatialResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
 
-    droppedcount_overall_valsum::Vector{Int}
-    droppedcount_overall_varsum::Vector{Int}
-    droppedsum_overall_valsum::Vector{Int}
-    droppedsum_overall_varsum::Vector{Int}
-    droppedcount_region_valsum::Matrix{Int}
-    droppedcount_region_varsum::Matrix{Int}
-    droppedsum_region_valsum::Matrix{Int}
-    droppedsum_region_varsum::Matrix{Int}
+    droppedcount_overall_valsum::Vector{Float64}
+    droppedcount_overall_varsum::Vector{Float64}
+    droppedsum_overall_valsum::Vector{Float64}
+    droppedsum_overall_varsum::Vector{Float64}
+    droppedcount_region_valsum::Matrix{Float64}
+    droppedcount_region_varsum::Matrix{Float64}
+    droppedsum_region_valsum::Matrix{Float64}
+    droppedsum_region_varsum::Matrix{Float64}
     localshortfalls::Vector{Vector{Int}}
 
     periodidx::Vector{Int}
@@ -29,15 +29,15 @@ function accumulator(simulationspec::SimulationSpec{NonSequential},
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
 
-    droppedcount_overall_valsum = zeros(Int, nthreads)
-    droppedcount_overall_varsum = zeros(Int, nthreads)
-    droppedsum_overall_valsum = zeros(Int, nthreads)
-    droppedsum_overall_varsum = zeros(Int, nthreads)
+    droppedcount_overall_valsum = zeros(Float64, nthreads)
+    droppedcount_overall_varsum = zeros(Float64, nthreads)
+    droppedsum_overall_valsum = zeros(Float64, nthreads)
+    droppedsum_overall_varsum = zeros(Float64, nthreads)
 
-    droppedcount_region_valsum = zeros(Int, nregions, nthreads)
-    droppedcount_region_varsum = zeros(Int, nregions, nthreads)
-    droppedsum_region_valsum = zeros(Int, nregions, nthreads)
-    droppedsum_region_varsum = zeros(Int, nregions, nthreads)
+    droppedcount_region_valsum = zeros(Float64, nregions, nthreads)
+    droppedcount_region_varsum = zeros(Float64, nregions, nthreads)
+    droppedsum_region_valsum = zeros(Float64, nregions, nthreads)
+    droppedsum_region_varsum = zeros(Float64, nregions, nthreads)
 
     periodidx = zeros(Int, nthreads)
     droppedcount_overall_period = Vector{MeanVariance}(undef, nthreads)
@@ -133,8 +133,7 @@ function update!(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,
 
     for r in 1:nregions
         shortfall = localshortfalls[r]
-        fit!(acc.droppedcount_region_period[r, thread],
-             approxnonzero(shortfall))
+        fit!(acc.droppedcount_region_period[r, thread], shortfall > 0)
         fit!(acc.droppedsum_region_period[r, thread],
              powertoenergy(E, shortfall, P, L, T))
     end
@@ -146,7 +145,7 @@ end
 function finalize(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
                   ) where {N,L,T,P,E}
 
-    regions = acc.system.regions
+    regions = acc.system.regions.names
 
     # Transfer the final thread-local results
     for thread in 1:Threads.nthreads()

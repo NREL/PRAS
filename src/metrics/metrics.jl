@@ -1,4 +1,4 @@
-abstract type ReliabilityMetric{V<:Real} end
+abstract type ReliabilityMetric end
 
 function roundresults(x::ReliabilityMetric)
 

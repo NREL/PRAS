@@ -1,6 +1,6 @@
 """
 
-    FlowProblem(::NonSequentialNetworkFlow, sys::SystemInputStateDistribution)
+    FlowProblem(::NonSequentialNetworkFlow, sys::SystemModel)
 
 Create a min-cost flow problem for the max power delivery problem. This involves
 a supplementary "slack" node in the network that can absorb undispatched power
@@ -15,12 +15,12 @@ included last. Edges are ordered as: forward transmission (interface order),
 backwards transmission (interface order), excess capacity (region order),
 unserved energy (region order).
 """
-function MinCostFlows.FlowProblem(::NonSequentialNetworkFlow, sys::SystemInputStateDistribution)
+function MinCostFlows.FlowProblem(::NonSequentialNetworkFlow, sys::SystemModel)
 
-    nregions = length(sys.region_labels)
-    ninterfaces = length(sys.interface_labels)
+    nregions = length(sys.regions)
+    ninterfaces = length(sys.interfaces)
 
-    ninterfaceedges = 2 * ninterfaces
+    ninterfaceedges = 2*ninterfaces
     nedges = ninterfaceedges + 2*nregions
 
     regions = 1:nregions
@@ -34,15 +34,15 @@ function MinCostFlows.FlowProblem(::NonSequentialNetworkFlow, sys::SystemInputSt
 
     # Forward transmission edges
     forwardtransmission = 1:ninterfaces
-    nodesfrom[forwardtransmission] = first.(sys.interface_labels)
-    nodesto[forwardtransmission] = last.(sys.interface_labels)
+    nodesfrom[forwardtransmission] = sys.interfaces.regions_from
+    nodesto[forwardtransmission] = sys.interfaces.regions_to
     limits[forwardtransmission] .= 0
     costs[forwardtransmission] .= 1
 
     # Reverse transmission edges
     reversetransmission = forwardtransmission .+ ninterfaces
-    nodesfrom[reversetransmission] = last.(sys.interface_labels)
-    nodesto[reversetransmission] = first.(sys.interface_labels)
+    nodesfrom[reversetransmission] = sys.interfaces.regions_to
+    nodesto[reversetransmission] = sys.interfaces.regions_from
     limits[reversetransmission] .= 0
     costs[reversetransmission] .= 1
 
@@ -66,7 +66,7 @@ end
 
 """
 
-    FlowProblem(::SequentialNetworkFlow, sys::SystemInputStateDistribution)
+    FlowProblem(::SequentialNetworkFlow, sys::SystemModel)
 
 Create a min-cost flow problem for the max power delivery problem with
 generation and storage discharging in decreasing order of priority, and

@@ -1,118 +1,90 @@
-struct SystemInputStateDistribution{N,T<:Period,P<:PowerUnit,E<:EnergyUnit,
-    VCDV<:AbstractVector{CapacityDistribution},
-    VCSV<:AbstractVector{CapacitySampler},
-    MV<:AbstractMatrix{Int}}
+struct SystemInputStateDistribution{P<:PowerUnit}
 
-    region_idxs::Base.OneTo{Int}
-    region_labels::Vector{String}
-    region_maxdispatchabledistrs::VCDV
-    region_maxdispatchablesamplers::VCSV
-    vgsample_idxs::Base.OneTo{Int}
-    vgsamples::MV
-    interface_idxs::Base.OneTo{Int}
-    interface_labels::Vector{Tuple{Int,Int}}
-    interface_maxflowdistrs::VCDV
-    interface_maxflowsamplers::VCSV
-    loadsample_idxs::Base.OneTo{Int}
-    loadsamples::MV
+    regions::Vector{CapacityDistribution}
+    interfaces::Vector{CapacityDistribution}
 
-    # Multi-region constructor
-    function SystemInputStateDistribution{N,T,P,E}(
-        region_labels::Vector{String},
-        region_maxdispatchabledistrs::VCDV,
-        region_maxdispatchablesamplers::VCSV,
-        vgsamples::MV,
-        interface_labels::Vector{Tuple{Int,Int}},
-        interface_maxflowdistrs::VCDV,
-        interface_maxflowsamplers::VCSV,
-        loadsamples::MV) where {
-            N,T<:Period,P<:PowerUnit,E<:EnergyUnit,
-            VCDV<:AbstractVector{CapacityDistribution},
-            VCSV<:AbstractVector{CapacitySampler},
-            MV<:AbstractMatrix{Int}}
+    function SystemInputStateDistribution{}(
+        system::SystemModel{N,L,T,P,E}, t::Int; copperplate::Bool=false
+        ) where {N,L,T,P,E}
 
-        n_regions = length(region_labels)
-        region_idxs = Base.OneTo(n_regions)
-        @assert length(region_maxdispatchabledistrs) == n_regions
-        @assert size(vgsamples, 1) == n_regions
-        @assert size(loadsamples, 1) == n_regions
+        region_starts = copperplate ? [1] : system.generators_regionstart
+        interface_starts = copperplate ? Int[] : system.lines_interfacestart
 
-        n_interfaces = length(interface_labels)
-        interface_idxs = Base.OneTo(n_interfaces)
-        @assert n_interfaces == length(interface_maxflowdistrs)
+        region_distrs = convolvepartitions(system.generators, region_starts, t)
+        interface_distrs = convolvepartitions(system.lines, interface_starts, t)
 
-        n_vgsamples = size(vgsamples, 2)
-        vgsample_idxs = Base.OneTo(n_vgsamples)
-
-        n_loadsamples = size(loadsamples, 2)
-        loadsample_idxs = Base.OneTo(n_loadsamples)
-
-        new{N,T,P,E,VCDV,VCSV,MV}(
-            region_idxs, region_labels,
-            region_maxdispatchabledistrs,
-            region_maxdispatchablesamplers,
-            vgsample_idxs, vgsamples,
-	    interface_idxs, interface_labels,
-            interface_maxflowdistrs,
-            interface_maxflowsamplers,
-            loadsample_idxs, loadsamples)
+        new{P}(region_distrs, interface_distrs)
 
     end
 
-    # Single-region constructor
-    function SystemInputStateDistribution{N,T,P,E}(
-        maxdispatchable_distr::CapacityDistribution,
-        maxdispatchable_sampler::CapacitySampler,
-        vgsamples::Vector{Int}, loadsamples::Vector{Int}
-    ) where {N,T<:Period,P<:PowerUnit,E<:EnergyUnit,V}
+end
 
-        new{N,T,P,E,V,Vector{CapacityDistribution},
-                      Vector{CapacitySampler},Matrix{Int}}(
-            Base.OneTo(1), ["Region"],
-            [maxdispatchable_distr], [maxdispatchable_sampler],
-            Base.OneTo(length(vgsamples)), reshape(vgsamples, 1, :),
-            Base.OneTo(0), Tuple{Int,Int}[],
-            CapacityDistribution[], CapacitySampler[],
-            Base.OneTo(length(loadsamples)), reshape(loadsamples, 1, :))
+struct SystemInputStateSampler{P<:PowerUnit}
+    regions::Vector{CapacitySampler}
+    interfaces::Vector{CapacitySampler}
+end
+
+sampler(s::SystemInputStateDistribution{P}) where {P} =
+        SystemInputStateSampler{P}(sampler.(s.regions), sampler.(s.interfaces))
+
+function convolvepartitions(
+    assets::AbstractAssets,
+    partitionstarts::Vector{Int},
+    t::Int)
+
+    distrs = Vector{CapacityDistribution}(undef, length(partitionstarts))
+
+    n_assets = length(assets)
+    n_partitions = length(partitionstarts)
+
+    for p in 1:n_partitions
+
+        partitionstart = partitionstarts[p]
+        partitionend = p < n_partitions ? partitionstarts[p+1]-1 : n_assets
+
+        n_partition_assets = partitionend - partitionstart + 1
+        capacities = Vector{Int}(undef, n_partition_assets)
+        availabilities = Vector{Float64}(undef, n_partition_assets)
+        j = 1
+
+        for i in partitionstart:partitionend
+            capacities[j] = capacity(assets)[i, t]
+            μ = assets.μ[i, t]
+            λ = assets.λ[i, t]
+            availabilities[j] = μ / (μ + λ)
+            j += 1
+        end
+
+        distrs[p] = spconv(capacities, availabilities)
 
     end
+
+    return distrs
 
 end
 
 function rand!(rng::MersenneTwister, fp::FlowProblem,
-                      system::SystemInputStateDistribution{N,T,P,E}
-    ) where {N,T,P,E}
+               sampler::SystemInputStateSampler)
 
     slacknode = fp.nodes[end]
-    ninterfaces = length(system.interface_labels)
-
-    vgsample_idx = rand(rng, system.vgsample_idxs)
-    loadsample_idx = rand(rng, system.loadsample_idxs)
+    nregions = length(sampler.regions)
+    ninterfaces = length(sampler.interfaces)
 
     # Draw random capacity surplus / deficits
-    for i in system.region_idxs
-        updateinjection!(
-            fp.nodes[i], slacknode,
-            rand(rng, system.region_maxdispatchablesamplers[i]) + # Dispatchable generation
-            system.vgsamples[i, vgsample_idx] - # Variable generation
-            system.loadsamples[i, loadsample_idx] # Load
-        )
+    for i in 1:nregions
+        injection = rand(rng, sampler.regions[i])
+        updateinjection!(fp.nodes[i], slacknode, injection)
     end
 
-    # Assign random line limits
-    for ij in system.interface_idxs
-        i, j = system.interface_labels[ij]
-        flowlimit = round(Int, rand(rng, system.interface_maxflowsamplers[ij]))
-        updateflowlimit!(fp.edges[ij], flowlimit) # Forward transmission
-        updateflowlimit!(fp.edges[ninterfaces + ij], flowlimit) # Reverse transmission
+    # Assign random interface limits
+    # TODO: Model seperate forward and reverse flow limits
+    #       (based on common line outages)
+    for i in 1:ninterfaces
+        flowlimit = rand(rng, sampler.interfaces[i])
+        updateflowlimit!(fp.edges[i], flowlimit) # Forward transmission
+        updateflowlimit!(fp.edges[ninterfaces + i], flowlimit) # Reverse transmission
     end
 
     return fp
 
-end
-
-function rand(rng::MersenneTwister, fp::FlowProblem,
-                   system::SystemInputStateDistribution{N,T,P,E}
-    ) where {N,T,P,E}
-    return rand!(rng, FlowProblem(system), system)
 end

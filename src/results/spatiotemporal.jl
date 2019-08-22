@@ -5,34 +5,33 @@ struct SpatioTemporalResult{
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
-    V <: Real, # Numerical type of value data
     SS <: SimulationSpec
-} <: Result{N,L,T,V,SS}
+} <: Result{N,L,T,SS}
 
     regions::Vector{String}
     timestamps::StepRange{DateTime,T}
 
-    lole::LOLE{N,L,T,V}
-    regionloles::Vector{LOLE{N,L,T,V}}
-    periodlolps::Vector{LOLP{L,T,V}}
-    regionalperiodlolps::Matrix{LOLP{L,T,V}}
+    lole::LOLE{N,L,T}
+    regionloles::Vector{LOLE{N,L,T}}
+    periodlolps::Vector{LOLP{L,T}}
+    regionalperiodlolps::Matrix{LOLP{L,T}}
 
-    eue::EUE{N,L,T,E,V}
-    regioneues::Vector{EUE{N,L,T,E,V}}
-    periodeues::Vector{EUE{1,L,T,E,V}}
-    regionalperiodeues::Matrix{EUE{1,L,T,E,V}}
+    eue::EUE{N,L,T,E}
+    regioneues::Vector{EUE{N,L,T,E}}
+    periodeues::Vector{EUE{1,L,T,E}}
+    regionalperiodeues::Matrix{EUE{1,L,T,E}}
 
     simulationspec::SS
 
     function SpatioTemporalResult{}(
         regions::Vector{String}, timestamps::StepRange{DateTime,T},
-        lole::LOLE{N,L,T,V}, regionloles::Vector{LOLE{N,L,T,V}},
-        periodlolps::Vector{LOLP{L,T,V}},
-        regionalperiodlolps::Matrix{LOLP{L,T,V}},
-        eue::EUE{N,L,T,E,V}, regioneues::Vector{EUE{N,L,T,E,V}},
-        periodeues::Vector{EUE{1,L,T,E,V}},
-        regionalperiodeues::Matrix{EUE{1,L,T,E,V}},
-        simulationspec::SS) where {N,L,T,E,V,SS}
+        lole::LOLE{N,L,T}, regionloles::Vector{LOLE{N,L,T}},
+        periodlolps::Vector{LOLP{L,T}},
+        regionalperiodlolps::Matrix{LOLP{L,T}},
+        eue::EUE{N,L,T,E}, regioneues::Vector{EUE{N,L,T,E}},
+        periodeues::Vector{EUE{1,L,T,E}},
+        regionalperiodeues::Matrix{EUE{1,L,T,E}},
+        simulationspec::SS) where {N,L,T,E,SS}
 
         nregions = length(regions)
         ntimesteps = length(timestamps)
@@ -47,7 +46,7 @@ struct SpatioTemporalResult{
         @assert length(periodeues) == ntimesteps
         @assert size(regionalperiodeues) == (nregions, ntimesteps)
 
-        new{N,L,T,E,V,SS}(
+        new{N,L,T,E,SS}(
             regions, timestamps,
             lole, regionloles, periodlolps, regionalperiodlolps,
             eue, regioneues, periodeues, regionalperiodeues,

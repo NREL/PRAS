@@ -80,7 +80,6 @@ abstract type Result{
     N, # Number of timesteps simulated
     L, # Length of each simulation timestep
     T <: Period, # Units of each simulation timestep
-    V <: Real, # Numeric type of value data
     SS <: SimulationSpec # Type of simulation that produced the result
 } end
 
