@@ -1,22 +1,19 @@
-struct NonSequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct NonSequentialTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount::Vector{MeanVariance}
     droppedsum::Vector{MeanVariance}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
     NonSequentialTemporalResultAccumulator(
         droppedcount::Vector{MeanVariance}, droppedsum::Vector{MeanVariance},
-        system::S, extractionspec::ES, simulationspec::SS,
-        rngs::Vector{MersenneTwister}) where {S,ES,SS} =
-        new{S,ES,SS}(droppedcount, droppedsum, system,
-                       extractionspec, simulationspec, rngs)
+        system::S, simulationspec::SS,
+        rngs::Vector{MersenneTwister}) where {S,SS} =
+        new{S,SS}(droppedcount, droppedsum, system, simulationspec, rngs)
 
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{NonSequential},
+function accumulator(simulationspec::SimulationSpec{NonSequential},
                      resultspec::Temporal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -39,8 +36,7 @@ function accumulator(extractionspec::ExtractionSpec,
     end
 
     return NonSequentialTemporalResultAccumulator(
-        droppedcount, droppedsum,
-        sys, extractionspec, simulationspec, rngs)
+        droppedcount, droppedsum, sys, simulationspec, rngs)
 
 end
 
@@ -74,6 +70,6 @@ function finalize(acc::NonSequentialTemporalResultAccumulator{SystemModel{N,L,T,
 
     return TemporalResult(
         acc.system.timestamps, LOLE(lolps), lolps, EUE(eues), eues,
-        acc.extractionspec, acc.simulationspec)
+        acc.simulationspec)
 
 end

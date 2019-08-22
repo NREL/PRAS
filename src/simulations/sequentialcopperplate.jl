@@ -11,7 +11,6 @@ iscopperplate(::SequentialCopperplate) = true
 
 function assess!(
     acc::ResultAccumulator,
-    extractionspec::Backcast, #TODO: Generalize
     simulationspec::SequentialCopperplate,
     sys::SystemModel{N,L,T,P,E},
     i::Int

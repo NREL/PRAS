@@ -1,4 +1,4 @@
-struct SequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct SequentialSpatialResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_overall::Vector{MeanVariance}
     droppedsum_overall::Vector{MeanVariance}
     droppedcount_region::Matrix{MeanVariance}
@@ -10,7 +10,6 @@ struct SequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
     droppedsum_region_sim::Matrix{Int}
     localshortfalls::Vector{Vector{Int}}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
     gens_available::Vector{Vector{Bool}}
@@ -19,8 +18,7 @@ struct SequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
     stors_energy::Vector{Vector{Int}}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{Sequential},
+function accumulator(simulationspec::SimulationSpec{Sequential},
                      resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -70,7 +68,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_overall, droppedsum_overall,
         droppedcount_region, droppedsum_region,
         simidx, simcount, simsum, simcount_region, simsum_region,
-        localshortfalls, sys, extractionspec, simulationspec, rngs,
+        localshortfalls, sys, simulationspec, rngs,
         gens_available, lines_available, stors_available,
         stors_energy)
 
@@ -177,6 +175,6 @@ function finalize(acc::SequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}
                mean_stderr.(acc.droppedsum_region[:, 1], nsamples))
 
     return SpatialResult(regions, lole, loles, eue, eues,
-                          acc.extractionspec, acc.simulationspec)
+                          acc.simulationspec)
 
 end

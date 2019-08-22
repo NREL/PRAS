@@ -2,8 +2,6 @@ empty_str = String[]
 empty_int(x) = Matrix{Int}(undef, 0, x)
 empty_float(x) = Matrix{Float64}(undef, 0, x)
 
-# TODO: Calculate REPRA results (ground-truth values here are all for Backcast)
-
 ## Single-Region System A
 
 gens1 = Generators{4,1,Hour,MW}(

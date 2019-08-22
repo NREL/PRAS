@@ -6,11 +6,11 @@
 
     # Single-period constructor
     singleresult = ResourceAdequacy.MinimalResult(
-        lole1, eue1, Backcast(), NonSequentialCopperplate())
+        lole1, eue1, NonSequentialCopperplate())
 
     # Disallow metrics defined over different time periods
     @test_throws MethodError ResourceAdequacy.MinimalResult(
-        lole2, eue1, Backcast(), NonSequentialCopperplate())
+        lole2, eue1, NonSequentialCopperplate())
 
     # Metric constructors
     @test LOLE(singleresult) == lole1

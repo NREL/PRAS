@@ -1,4 +1,4 @@
-struct NonSequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct NonSequentialSpatialResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
 
     droppedcount_overall_valsum::Vector{Int}
     droppedcount_overall_varsum::Vector{Int}
@@ -17,14 +17,12 @@ struct NonSequentialSpatialResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,
     droppedsum_region_period::Matrix{MeanVariance}
 
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{NonSequential},
+function accumulator(simulationspec::SimulationSpec{NonSequential},
                      resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -70,7 +68,7 @@ function accumulator(extractionspec::ExtractionSpec,
         localshortfalls,
         periodidx, droppedcount_overall_period, droppedsum_overall_period,
         droppedcount_region_period, droppedsum_region_period,
-        sys, extractionspec, simulationspec, rngs)
+        sys, simulationspec, rngs)
 
 end
 
@@ -200,6 +198,6 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P
                          LOLE{N,L,T}.(loles, loles_stderr),
                          EUE{N,L,T,E}(eue, eue_stderr),
                          EUE{N,L,T,E}.(eues, eues_stderr),
-                         acc.extractionspec, acc.simulationspec)
+                         acc.simulationspec)
 
 end

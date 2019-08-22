@@ -12,7 +12,6 @@ iscopperplate(::SequentialNetworkFlow) = false
 
 function assess!(
     acc::ResultAccumulator,
-    extractionspec::Backcast, #TODO: Generalize
     simulationspec::SequentialNetworkFlow,
     sys::SystemModel{N,L,T,P,E},
     i::Int

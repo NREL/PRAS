@@ -1,4 +1,4 @@
-struct NonSequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct NonSequentialSpatioTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
 
     # LOLP / LOLE
     droppedcount::Vector{MeanVariance}
@@ -11,7 +11,6 @@ struct NonSequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulato
     localshortfalls::Vector{Vector{Int}}
 
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
@@ -21,17 +20,16 @@ struct NonSequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulato
         droppedsum::Vector{MeanVariance},
         droppedsum_regions::Matrix{MeanVariance},
         localshortfalls::Vector{Vector{Int}},
-        system::S, extractionspec::ES, simulationspec::SS,
+        system::S, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {
-        V,S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
-        new{V,S,ES,SS}(
+        V,S<:SystemModel,SS<:SimulationSpec} =
+        new{V,S,SS}(
             droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-            localshortfalls, system, extractionspec, simulationspec, rngs)
+            localshortfalls, system, simulationspec, rngs)
 
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{NonSequential},
+function accumulator(simulationspec::SimulationSpec{NonSequential},
                      resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -66,7 +64,7 @@ function accumulator(extractionspec::ExtractionSpec,
     return NonSequentialSpatioTemporalResultAccumulator(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
         localshortfalls,
-        sys, extractionspec, simulationspec, rngs)
+        sys, simulationspec, rngs)
 
 end
 
@@ -133,6 +131,6 @@ function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{
         acc.system.regions, acc.system.timestamps,
         lole, regionloles, periodlolps, regionalperiodlolps,
         eue, regioneues, periodeues, regionalperiodeues,
-        acc.extractionspec, acc.simulationspec)
+        acc.simulationspec)
 
 end

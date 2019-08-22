@@ -29,9 +29,6 @@ export
     LOLP, LOLE, EUE, ExpectedInterfaceFlow, ExpectedInterfaceUtilization,
     val, stderror,
 
-    # Distribution extraction specifications
-    Backcast, REPRA,
-
     # Simulation specifications
     NonSequentialCopperplate, SequentialCopperplate,
     NonSequentialNetworkFlow, SequentialNetworkFlow,
@@ -49,7 +46,6 @@ include("simulations/sequentialutils.jl")
 
 # Spec instances
 spec_instances = [
-    ("extraction", ["backcast", "repra"]),
     ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
                     "nonsequentialnetworkflow", "sequentialnetworkflow"]),
     ("result", ["minimal", "temporal", "spatial", "spatiotemporal", "network"])

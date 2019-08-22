@@ -1,19 +1,3 @@
-# Extraction
-
-"""
-An abstract parent type for specifying specific methods for extracting VG/load
-probability distributions from time series inputs. When defining a new type
-`S where {S <: ExtractionSpec}`, you must define methods for the following functions
-/ constructors:
-
- - SystemStateDistribution (for nonsequential simulations)
- - #TODO: Something for sequential simulations
-
-Check the documentation for each function for required type signatures.
-"""
-abstract type ExtractionSpec end
-
-
 # Simulation
 
 abstract type SimulationSequentiality end
@@ -71,7 +55,6 @@ You must also define the following allied types and their associated methods:
 """
 abstract type ResultAccumulator{
     S <: SystemModel, # Type of simulated system
-    ES <: ExtractionSpec, # Extraction method used in simulation
     SS <: SimulationSpec # Simulation being used
 } end
 
@@ -98,11 +81,9 @@ abstract type Result{
     L, # Length of each simulation timestep
     T <: Period, # Units of each simulation timestep
     V <: Real, # Numeric type of value data
-    ES <: ExtractionSpec, # Prob. distr. extraction method for input time series
     SS <: SimulationSpec # Type of simulation that produced the result
 } end
 
 # Load abstract methods
-include("extraction.jl")
 include("simulation.jl")
 include("result.jl")

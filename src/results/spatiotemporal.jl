@@ -6,9 +6,8 @@ struct SpatioTemporalResult{
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
     V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,V,SS}
 
     regions::Vector{String}
     timestamps::StepRange{DateTime,T}
@@ -23,7 +22,6 @@ struct SpatioTemporalResult{
     periodeues::Vector{EUE{1,L,T,E,V}}
     regionalperiodeues::Matrix{EUE{1,L,T,E,V}}
 
-    extractionspec::ES
     simulationspec::SS
 
     function SpatioTemporalResult{}(
@@ -34,7 +32,7 @@ struct SpatioTemporalResult{
         eue::EUE{N,L,T,E,V}, regioneues::Vector{EUE{N,L,T,E,V}},
         periodeues::Vector{EUE{1,L,T,E,V}},
         regionalperiodeues::Matrix{EUE{1,L,T,E,V}},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,V,ES,SS}
+        simulationspec::SS) where {N,L,T,E,V,SS}
 
         nregions = length(regions)
         ntimesteps = length(timestamps)
@@ -49,11 +47,11 @@ struct SpatioTemporalResult{
         @assert length(periodeues) == ntimesteps
         @assert size(regionalperiodeues) == (nregions, ntimesteps)
 
-        new{N,L,T,E,V,ES,SS}(
+        new{N,L,T,E,V,SS}(
             regions, timestamps,
             lole, regionloles, periodlolps, regionalperiodlolps,
             eue, regioneues, periodeues, regionalperiodeues,
-            extractionspec, simulationspec)
+            simulationspec)
 
     end
 

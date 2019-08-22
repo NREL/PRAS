@@ -28,7 +28,7 @@
         lole, regionalloles, periodlolps, regionalperiodlolps,
         eue, regionaleues, periodeues, regionalperiodeues,
         interfaceflows, interfaceutilizations,
-        Backcast(), NonSequentialCopperplate())
+        NonSequentialCopperplate())
 
     # Disallow metrics defined over different time periods
     @test_throws MethodError ResourceAdequacy.NetworkResult(
@@ -42,7 +42,7 @@
             val.(interfaceflows), stderror.(interfaceflows)),
         ExpectedInterfaceUtilization{1,30,Minute}.(
             val.(interfaceutilizations), stderror.(interfaceutilizations)),
-        Backcast(), NonSequentialCopperplate()
+        NonSequentialCopperplate()
     )
 
     # Metric constructors

@@ -1,34 +1,15 @@
 """
 
-    SystemInputStateDistribution(::ExtractionSpec, timestep::Int, ::SystemModel,
-                            regionalsupply::Vector{CapacityDistribution},
-                            interregionalflow::Vector{CapacityDistribution},
-                            copperplate::Bool)
-
-Returns a `SystemInputStateDistribution` for the given `timestep` of the
-`SystemModel`. As the dispatchable generation and interface available capacity
-distributions are provided, this just amounts to determining the VG and load
-distributions.
-
-If `copperplate` is true, the VG and load distributions should be for a single
-(collapsed / aggregated) region.
-"""
-SystemInputStateDistribution(::ExtractionSpec, ::Int, ::SystemModel,
-                        ::Vector{CapacityDistribution}, ::Vector{CapacityDistribution}, ::Bool)
-
-"""
-
-    extract(::ExtractionSpec, system::SystemModel, dt::DateTime; copperplate::Bool=false)
+    extract(system::SystemModel, dt::DateTime; copperplate::Bool=false)
 
 Extracts a `SystemInputStateDistribution` from `system` corresponding to the point
-in time `dt`, as prescribed by the supplied `ExtractionSpec`.
+in time `dt`.
 
 The optional keyword argument `copperplate` indicates whether or not to
 collapse transmission as part of the extraction (for copperplate simulations,
 this is much more efficient than collapsing the network on-the-fly).
 """
-function extract(extractionspec::ExtractionSpec, system::SystemModel,
-                 dt::DateTime, copperplate::Bool)
+function extract(system::SystemModel, dt::DateTime, copperplate::Bool)
 
     dt_idx = findfirstunique(system.timestamps, dt)
     genset_idx = system.timestamps_generatorset[dt_idx]
@@ -52,18 +33,16 @@ end
 
 """
 
-    extract(::ExtractionSpec, system::SystemModel, copperplate::Bool=false)
+    extract(system::SystemModel, copperplate::Bool=false)
 
 Extracts a vector of `SystemInputStateDistribution`s from `system` for each time
-period in the simulation, as prescribed by the supplied `ExtractionSpec`. This
-method is generally much faster than extracting each time period seperately.
+period in the simulation. This method is generally much faster than extracting each time period seperately.
 
 The optional keyword argument `copperplate` indicates whether or not to
 collapse transmission as part of the extraction (for copperplate simulations,
 this is much more efficient than collapsing the network on-the-fly).
 """
-function extract(extractionspec::ExtractionSpec,
-                 system::SystemModel{N,L,T,P,E},
+function extract(system::SystemModel{N,L,T,P,E},
                  copperplate::Bool) where {N,L,T,P,E}
 
     region_starts = copperplate ? [1] : system.generators_regionstart

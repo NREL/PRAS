@@ -1,4 +1,4 @@
-struct NonSequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct NonSequentialMinimalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_valsum::Vector{Float64}
     droppedcount_varsum::Vector{Float64}
     droppedsum_valsum::Vector{Float64}
@@ -7,13 +7,11 @@ struct NonSequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,
     droppedcount_period::Vector{MeanVariance}
     droppedsum_period::Vector{MeanVariance}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{NonSequential},
+function accumulator(simulationspec::SimulationSpec{NonSequential},
                      resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -41,7 +39,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_valsum, droppedcount_varsum,
         droppedsum_valsum, droppedsum_varsum,
         periodidx, periodcount, periodsum,
-        sys, extractionspec, simulationspec, rngs)
+        sys, simulationspec, rngs)
 
 end
 
@@ -120,6 +118,6 @@ function finalize(acc::NonSequentialMinimalResultAccumulator{SystemModel{N,L,T,P
     return MinimalResult(
         LOLE{N,L,T}(lole, lole_stderr),
         EUE{N,L,T,E}(eue, eue_stderr),
-        acc.extractionspec, acc.simulationspec)
+        acc.simulationspec)
 
 end

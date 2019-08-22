@@ -1,11 +1,10 @@
-struct SequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct SequentialMinimalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount::Vector{MeanVariance} # LOL mean and variance
     droppedsum::Vector{MeanVariance} #UE mean and variance
     simidx::Vector{Int} # Current thread-local simulation idx
     droppedcount_sim::Vector{Int} # LOL count for thread-local simulations
     droppedsum_sim::Vector{Int} # UE sum for thread-local simulations
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
     gens_available::Vector{Vector{Bool}}
@@ -14,8 +13,7 @@ struct SequentialMinimalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
     stors_energy::Vector{Vector{Int}}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{Sequential},
+function accumulator(simulationspec::SimulationSpec{Sequential},
                      resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -52,7 +50,7 @@ function accumulator(extractionspec::ExtractionSpec,
 
     return SequentialMinimalResultAccumulator(
         droppedcount, droppedsum, simidx, simcount, simsum,
-        sys, extractionspec, simulationspec, rngs,
+        sys, simulationspec, rngs,
         gens_available, lines_available, stors_available,
         stors_energy)
 
@@ -126,6 +124,6 @@ function finalize(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}
     return MinimalResult(
         LOLE{N,L,T}(lole, lole_stderr),
         EUE{N,L,T,E}(eue, eue_stderr),
-        acc.extractionspec, acc.simulationspec)
+        acc.simulationspec)
 
 end

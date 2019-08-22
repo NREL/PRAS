@@ -12,13 +12,12 @@ iscopperplate(::S) where {S <: SimulationSpec} =
 
 """
 
-    assess!(::ResultAccumulator, ::ExtractionSpec,
-            ::SimulationSpec, ::SystemModel)
+    assess!(::ResultAccumulator, ::SimulationSpec, ::SystemModel)
 
-Run a full simulation of `SystemModel` according to `ExtractionSpec` and
+Run a full simulation of `SystemModel` according to
 `SimulationSpec`, storing the results in `ResultAccumulator`.
 """
-assess!(::ResultAccumulator, ::ExtractionSpec, ::S, ::SystemModel
+assess!(::ResultAccumulator, ::S, ::SystemModel
 ) where {S <: SimulationSpec} =
     error("assess! not yet defined for SimulationSpec $S")
 
@@ -34,37 +33,34 @@ assess!(::ResultAccumulator, ::S, ::SystemInputStateDistribution, t::Int
 ) where {S <: SimulationSpec} =
     error("assess! not yet defined for SimulationSpec $S")
 
-function assess(extractionspec::ExtractionSpec,
-                simulationspec::SimulationSpec{NonSequential},
+function assess(simulationspec::SimulationSpec{NonSequential},
                 resultspec::ResultSpec,
-                system::SystemModel,
-                seed::UInt=rand(UInt))
+                system::SystemModel{N},
+                seed::UInt=rand(UInt)) where {N}
 
-    acc = accumulator(extractionspec, simulationspec, resultspec, system, seed)
+    acc = accumulator(simulationspec, resultspec, system, seed)
 
     #TODO: If storage devices exist, warn that they may be ignored or
     #      treated as firm capacity - need to decide how exactly that
     #      should work first though...
 
-    statedistrs = extract(extractionspec, system, iscopperplate(simulationspec))
-    Threads.@threads for (t, statedistr) in collect(enumerate(statedistrs))
-        assess!(acc, simulationspec, statedistr, t)
+    Threads.@threads for t in 1:N 
+        assess!(acc, simulationspec, system, t)
     end
 
     return finalize(acc)
 
 end
 
-function assess(extractionspec::ExtractionSpec,
-                simulationspec::SimulationSpec{Sequential},
+function assess(simulationspec::SimulationSpec{Sequential},
                 resultspec::ResultSpec,
                 system::SystemModel,
                 seed::UInt=rand(UInt))
 
-    acc = accumulator(extractionspec, simulationspec, resultspec, system, seed)
+    acc = accumulator(simulationspec, resultspec, system, seed)
 
     Threads.@threads for i in 1:simulationspec.nsamples
-        assess!(acc, extractionspec, simulationspec, system, i)
+        assess!(acc, simulationspec, system, i)
     end
 
     return finalize(acc)

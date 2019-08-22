@@ -14,7 +14,6 @@ withinrange(x::RA.ReliabilityMetric, y::Real, n::Real) =
     include("metrics.jl")
     include("results.jl")
     include("systems.jl")
-    include("extraction.jl")
     include("simulation.jl")
 
 end

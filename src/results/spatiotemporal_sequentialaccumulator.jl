@@ -1,4 +1,4 @@
-struct SequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct SequentialSpatioTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_overall::Vector{MeanVariance}
     droppedsum_overall::Vector{MeanVariance}
     droppedcount_region::Matrix{MeanVariance}
@@ -14,7 +14,6 @@ struct SequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S
     droppedsum_region_sim::Matrix{Int}
     localshortfalls::Vector{Vector{Int}}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
     gens_available::Vector{Vector{Bool}}
@@ -23,8 +22,7 @@ struct SequentialSpatioTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S
     stors_energy::Vector{Vector{Int}}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{Sequential},
+function accumulator(simulationspec::SimulationSpec{Sequential},
                      resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -98,7 +96,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_regionperiod, droppedsum_regionperiod,
         simidx, droppedcount_overall_sim, droppedsum_overall_sim,
         droppedcount_region_sim, droppedsum_region_sim, localshortfalls,
-        sys, extractionspec, simulationspec, rngs,
+        sys, simulationspec, rngs,
         gens_available, lines_available, stors_available,
         stors_energy)
 
@@ -241,6 +239,6 @@ function finalize(acc::SequentialSpatioTemporalResultAccumulator{SystemModel{N,L
         regions, timestamps,
         lole, region_loles, period_lolps, regionperiod_lolps,
         eue, region_eues, period_eues, regionperiod_eues,
-        acc.extractionspec, acc.simulationspec)
+        acc.simulationspec)
 
 end

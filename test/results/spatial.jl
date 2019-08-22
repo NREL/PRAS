@@ -10,7 +10,7 @@
 
     result = ResourceAdequacy.SpatialResult(
         regions, lole, loles, eue, eues,
-        Backcast(), NonSequentialCopperplate()
+        NonSequentialCopperplate()
     )
 
     # Disallow metrics defined over different time periods
@@ -18,7 +18,7 @@
         regions, lole, loles,
         EUE{168,30,Minute,MWh}(val(eue), stderror(eue)),
         EUE{168,30,Minute,MWh}.(val.(eues), stderror.(eues)),
-        Backcast(), NonSequentialCopperplate()
+        NonSequentialCopperplate()
     )
 
     # Metric constructors

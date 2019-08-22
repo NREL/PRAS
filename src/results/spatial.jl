@@ -6,25 +6,22 @@ struct SpatialResult{
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
     V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,V,SS}
 
     regions::Vector{String}
     lole::LOLE{N,L,T,V}
     loles::Vector{LOLE{N,L,T,V}}
     eue::EUE{N,L,T,E,V}
     eues::Vector{EUE{N,L,T,E,V}}
-    extractionspec::ES
     simulationspec::SS
 
     SpatialResult{}(
         regions::Vector{String},
         lole::LOLE{N,L,T,V}, loles::Vector{LOLE{N,L,T,V}},
         eue::EUE{N,L,T,E,V}, eues::Vector{EUE{N,L,T,E,V}},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,V,ES,SS} =
-        new{N,L,T,E,V,ES,SS}(regions, lole, loles, eue, eues,
-                             extractionspec, simulationspec)
+        simulationspec::SS) where {N,L,T,E,V,SS} =
+        new{N,L,T,E,V,SS}(regions, lole, loles, eue, eues, simulationspec)
 
 end
 

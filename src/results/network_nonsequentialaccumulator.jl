@@ -1,4 +1,4 @@
-struct NonSequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct NonSequentialNetworkResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
 
     # LOLP / LOLE
     droppedcount::Vector{MeanVariance}
@@ -14,7 +14,6 @@ struct NonSequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,
     utilizations::Matrix{MeanVariance}
 
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
 
@@ -26,18 +25,17 @@ struct NonSequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,
         localshortfalls::Vector{Vector{Int}},
         flows::Matrix{MeanVariance},
         utilizations::Matrix{MeanVariance},
-        system::S, extractionspec::ES, simulationspec::SS,
+        system::S, simulationspec::SS,
         rngs::Vector{MersenneTwister}) where {
-        S<:SystemModel,ES<:ExtractionSpec,SS<:SimulationSpec} =
-        new{S,ES,SS}(
+        S<:SystemModel,SS<:SimulationSpec} =
+        new{S,SS}(
             droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
             localshortfalls, flows, utilizations, system,
-            extractionspec, simulationspec, rngs)
+            simulationspec, rngs)
 
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{NonSequential},
+function accumulator(simulationspec::SimulationSpec{NonSequential},
                      resultspec::Network, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -80,7 +78,7 @@ function accumulator(extractionspec::ExtractionSpec,
     return NonSequentialNetworkResultAccumulator(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
         localshortfalls, flows, utilizations, sys,
-        extractionspec, simulationspec, rngs)
+        simulationspec, rngs)
 
 end
 
@@ -158,6 +156,6 @@ function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P
         acc.system.regions, acc.system.interfaces, acc.system.timestamps,
         lole, regionloles, periodlolps, regionalperiodlolps,
         eue, regioneues, periodeues, regionalperiodeues,
-        flows, utilizations, acc.extractionspec, acc.simulationspec)
+        flows, utilizations, acc.simulationspec)
 
 end

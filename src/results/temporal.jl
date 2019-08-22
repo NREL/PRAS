@@ -6,25 +6,22 @@ struct TemporalResult{
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
     V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,V,SS}
 
     timestamps::StepRange{DateTime,T}
     lole::LOLE{N,L,T,V}
     lolps::Vector{LOLP{L,T,V}}
     eue::EUE{N,L,T,E,V}
     eues::Vector{EUE{1,L,T,E,V}}
-    extractionspec::ES
     simulationspec::SS
 
     TemporalResult{}(
         timestamps::StepRange{DateTime,T},
         lole::LOLE{N,L,T,V}, lolps::Vector{LOLP{L,T,V}},
         eue::EUE{N,L,T,E,V}, eues::Vector{EUE{1,L,T,E,V}},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,V,ES,SS} =
-        new{N,L,T,E,V,ES,SS}(timestamps, lole, lolps, eue, eues,
-                             extractionspec, simulationspec)
+        simulationspec::SS) where {N,L,T,E,V,SS} =
+        new{N,L,T,E,V,SS}(timestamps, lole, lolps, eue, eues, simulationspec)
 
 end
 

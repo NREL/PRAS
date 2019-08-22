@@ -1,4 +1,4 @@
-struct SequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct SequentialNetworkResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_overall::Vector{MeanVariance}
     droppedsum_overall::Vector{MeanVariance}
     droppedcount_region::Matrix{MeanVariance}
@@ -16,7 +16,6 @@ struct SequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
     flows::Array{MeanVariance,3}
     utilizations::Array{MeanVariance,3}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
     gens_available::Vector{Vector{Bool}}
@@ -25,8 +24,7 @@ struct SequentialNetworkResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
     stors_energy::Vector{Vector{Int}}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{Sequential},
+function accumulator(simulationspec::SimulationSpec{Sequential},
                      resultspec::Network, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -108,7 +106,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_regionperiod, droppedsum_regionperiod,
         simidx, droppedcount_overall_sim, droppedsum_overall_sim,
         droppedcount_region_sim, droppedsum_region_sim, localshortfalls,
-        flows, utilizations, sys, extractionspec, simulationspec, rngs,
+        flows, utilizations, sys, simulationspec, rngs,
         gens_available, lines_available, stors_available,
         stors_energy)
 
@@ -271,6 +269,6 @@ function finalize(acc::SequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}
         regions, interfaces, timestamps,
         lole, region_loles, period_lolps, regionperiod_lolps,
         eue, region_eues, period_eues, regionperiod_eues,
-        flows, utilizations, acc.extractionspec, acc.simulationspec)
+        flows, utilizations, acc.simulationspec)
 
 end

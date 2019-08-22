@@ -1,4 +1,4 @@
-struct SequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS}
+struct SequentialTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_overall::Vector{MeanVariance}
     droppedsum_overall::Vector{MeanVariance}
     droppedcount_period::Matrix{MeanVariance}
@@ -7,7 +7,6 @@ struct SequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS
     droppedcount_sim::Vector{Int}
     droppedsum_sim::Vector{Int}
     system::S
-    extractionspec::ES
     simulationspec::SS
     rngs::Vector{MersenneTwister}
     gens_available::Vector{Vector{Bool}}
@@ -16,8 +15,7 @@ struct SequentialTemporalResultAccumulator{S,ES,SS} <: ResultAccumulator{S,ES,SS
     stors_energy::Vector{Vector{Int}}
 end
 
-function accumulator(extractionspec::ExtractionSpec,
-                     simulationspec::SimulationSpec{Sequential},
+function accumulator(simulationspec::SimulationSpec{Sequential},
                      resultspec::Temporal, sys::SystemModel{N,L,T,P,E},
                      seed::UInt) where {N,L,T,P,E}
 
@@ -63,7 +61,7 @@ function accumulator(extractionspec::ExtractionSpec,
         droppedcount_overall, droppedsum_overall,
         droppedcount_period, droppedsum_period,
         simidx, simcount, simsum,
-        sys, extractionspec, simulationspec, rngs,
+        sys, simulationspec, rngs,
         gens_available, lines_available, stors_available,
         stors_energy)
 
@@ -153,7 +151,6 @@ function finalize(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E
     eues = map(r -> EUE{1,L,T,E}(r...),
                mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
 
-    return TemporalResult(timestamps, lole, lolps, eue, eues,
-                          acc.extractionspec, acc.simulationspec)
+    return TemporalResult(timestamps, lole, lolps, eue, eues, acc.simulationspec)
 
 end

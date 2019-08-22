@@ -7,19 +7,19 @@
     timestampcol = singlenode_a.timestamps
 
     result_1ab =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), singlenode_a, seed)
+        assess(NonSequentialNetworkFlow(100_000), Minimal(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
 
     result_1ab =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Spatial(), singlenode_a, seed)
+        assess(NonSequentialNetworkFlow(100_000), Spatial(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
     @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
 
     result_1ab =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Temporal(), singlenode_a, seed)
+        assess(NonSequentialNetworkFlow(100_000), Temporal(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
     @test all(withinrange.(LOLP.(result_1ab, timestampcol),
@@ -28,7 +28,7 @@
                            singlenode_a_eues, nstderr_tol))
 
     result_1ab =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_a, seed)
+        assess(NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
     @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
@@ -43,7 +43,7 @@
                            singlenode_a_eues, nstderr_tol))
 
     result_1ab =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Network(), singlenode_a, seed)
+        assess(NonSequentialNetworkFlow(100_000), Network(), singlenode_a, seed)
     @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
     @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
     @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
@@ -63,19 +63,19 @@
     timestampcol = singlenode_b.timestamps
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), singlenode_b, seed)
+        assess(NonSequentialNetworkFlow(100_000), Minimal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Spatial(), singlenode_b, seed)
+        assess(NonSequentialNetworkFlow(100_000), Spatial(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
     @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Temporal(), singlenode_b, seed)
+        assess(NonSequentialNetworkFlow(100_000), Temporal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
     @test all(withinrange.(LOLP.(result_1bb, timestampcol),
@@ -84,7 +84,7 @@
                            singlenode_b_eues, nstderr_tol))
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_b, seed)
+        assess(NonSequentialNetworkFlow(100_000), SpatioTemporal(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
     @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
@@ -99,7 +99,7 @@
                            singlenode_b_eues, nstderr_tol))
 
     result_1bb =
-        assess(Backcast(), NonSequentialNetworkFlow(100_000), Network(), singlenode_b, seed)
+        assess(NonSequentialNetworkFlow(100_000), Network(), singlenode_b, seed)
     @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
     @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
     @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
@@ -117,7 +117,7 @@
 
     println("\nThree-region system")
 
-    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+    result_3mb = assess(NonSequentialNetworkFlow(100_000),
                         Minimal(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
@@ -126,7 +126,7 @@
     #        (but see comment below)
 
     println("Spatial:")
-    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+    result_3mb = assess(NonSequentialNetworkFlow(100_000),
                         Spatial(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
@@ -135,7 +135,7 @@
                  EUE.(result_3mb, threenode.regions)))
     println()
 
-    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+    result_3mb = assess(NonSequentialNetworkFlow(100_000),
                         Temporal(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
@@ -145,7 +145,7 @@
                            threenode_eues, nstderr_tol))
 
     println("SpatioTemporal:")
-    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+    result_3mb = assess(NonSequentialNetworkFlow(100_000),
                         SpatioTemporal(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
@@ -182,7 +182,7 @@
     )); println()
 
     println("\nNetwork")
-    result_3mb = assess(Backcast(), NonSequentialNetworkFlow(100_000),
+    result_3mb = assess(NonSequentialNetworkFlow(100_000),
                         Network(), threenode, seed)
     @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
     @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)

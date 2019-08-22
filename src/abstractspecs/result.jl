@@ -33,13 +33,12 @@ end
 
 """
 
-    accumulator(::ExtractionSpec, ::SimulationSpec, ::ResultSpec,
-                ::SystemModel, seed::UInt)::ResultAccumulator
+    accumulator(::SimulationSpec, ::ResultSpec, ::SystemModel,
+                seed::UInt)::ResultAccumulator
 
 Returns a `ResultAccumulator` corresponding to the provided `ResultSpec`.
 """
-accumulator(::ExtractionSpec, ::SimulationSpec, ::S,
-            ::SystemModel{N,L,T,P,E}, seed::UInt
+accumulator(::SimulationSpec, ::S, ::SystemModel{N,L,T,P,E}, seed::UInt
 ) where {N,L,T,P,E,V,S<:ResultSpec} = 
     error("An `accumulator` method has not been defined for ResultSpec $T")
 
@@ -84,7 +83,7 @@ update!(::R, ::SystemOutputStateSummary, t::Int) where {R <: ResultAccumulator} 
 
 """
 
-    finalize(::ExtractionSpec, ::SimulationSpec, ::ResultAccumulator)::Result
+    finalize(::SimulationSpec, ::ResultAccumulator)::Result
 
 Returns a `Result` corresponding to the provided `ResultAccumulator`.
 """

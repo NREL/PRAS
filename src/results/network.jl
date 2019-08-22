@@ -7,9 +7,8 @@ struct NetworkResult{
     E <: EnergyUnit, # Units for energy results
     P <: PowerUnit, # Units for power results
     V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,V,SS}
 
     regions::Vector{String}
     interfaces::Vector{Tuple{Int,Int}}
@@ -28,7 +27,6 @@ struct NetworkResult{
     flows::Matrix{ExpectedInterfaceFlow{1,L,T,P,V}}
     utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T,V}}
 
-    extractionspec::ES
     simulationspec::SS
 
     function NetworkResult{}(
@@ -42,7 +40,7 @@ struct NetworkResult{
         regionalperiodeues::Matrix{EUE{1,L,T,E,V}},
         flows::Matrix{ExpectedInterfaceFlow{1,L,T,P,V}},
         utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T,V}},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,P,V,ES,SS}
+        simulationspec::SS) where {N,L,T,E,P,V,SS}
 
         nregions = length(regions)
         ninterfaces = length(interfaces)
@@ -61,11 +59,11 @@ struct NetworkResult{
         @assert size(flows) == (ninterfaces, ntimesteps)
         @assert size(utilizations) == (ninterfaces, ntimesteps)
 
-        new{N,L,T,E,P,V,ES,SS}(
+        new{N,L,T,E,P,V,SS}(
             regions, interfaces, timestamps,
             lole, regionloles, periodlolps, regionalperiodlolps,
             eue, regioneues, periodeues, regionalperiodeues,
-            flows, utilizations, extractionspec, simulationspec)
+            flows, utilizations, simulationspec)
 
     end
 

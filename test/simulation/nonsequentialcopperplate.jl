@@ -1,18 +1,18 @@
 @testset "NonSequentialCopperplate" begin
 
     # Overall result - singlenode_a
-    result_1ab = assess(Backcast(), NonSequentialCopperplate(), Minimal(), singlenode_a)
+    result_1ab = assess(NonSequentialCopperplate(), Minimal(), singlenode_a)
     @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
     @test EUE(result_1ab) ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
 
-    result_1ab = assess(Backcast(), NonSequentialCopperplate(), Spatial(), singlenode_a)
+    result_1ab = assess(NonSequentialCopperplate(), Spatial(), singlenode_a)
     @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
     @test LOLE(result_1ab, "Region") ≈ LOLE{4,1,Hour}(0.355, 0.)
     @test EUE(result_1ab) ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
     @test EUE(result_1ab, "Region") ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
 
     # Hourly result - singlenode_a
-    result_1ab = assess(Backcast(), NonSequentialCopperplate(), Temporal(), singlenode_a)
+    result_1ab = assess(NonSequentialCopperplate(), Temporal(), singlenode_a)
     @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
     @test all(LOLP.(result_1ab, singlenode_a.timestamps) .≈ # TODO: Update broadcasting syntax?
               LOLP{1,Hour}.([0.028, 0.271, 0.028, 0.028], zeros(4)))
@@ -20,7 +20,7 @@
     @test all(EUE.(result_1ab, singlenode_a.timestamps) .≈
               EUE{1,1,Hour,MWh}.([0.29, 0.832, 0.29, 0.178], zeros(4)))
 
-    result_1ab = assess(Backcast(), NonSequentialCopperplate(), SpatioTemporal(), singlenode_a)
+    result_1ab = assess(NonSequentialCopperplate(), SpatioTemporal(), singlenode_a)
     @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
     @test all(LOLP.(result_1ab, singlenode_a.timestamps) .≈
               LOLP{1,Hour}.([0.028, 0.271, 0.028, 0.028], zeros(4)))
@@ -29,18 +29,18 @@
               EUE{1,1,Hour,MWh}.([0.29, 0.832, 0.29, 0.178], zeros(4)))
 
     # Overall result - singlenode_b
-    result_1bb = assess(Backcast(), NonSequentialCopperplate(), Minimal(), singlenode_b)
+    result_1bb = assess(NonSequentialCopperplate(), Minimal(), singlenode_b)
     @test LOLE(result_1bb) ≈ LOLE{6,1,Hour}(0.96, 0.)
     @test EUE(result_1bb) ≈ EUE{6,1,Hour,MWh}(7.11, 0.)
 
-    result_1bb = assess(Backcast(), NonSequentialCopperplate(), Spatial(), singlenode_b)
+    result_1bb = assess(NonSequentialCopperplate(), Spatial(), singlenode_b)
     @test LOLE(result_1bb) ≈ LOLE{6,1,Hour}(0.96, 0.)
     @test LOLE(result_1bb, "Region") ≈ LOLE{6,1,Hour}(0.96, 0.)
     @test EUE(result_1bb) ≈ EUE{6,1,Hour,MWh}(7.11, 0.)
     @test EUE(result_1bb, "Region") ≈ EUE{6,1,Hour,MWh}(7.11, 0.)
 
     # Hourly result - singlenode_b
-    result_1bb = assess(Backcast(), NonSequentialCopperplate(), Temporal(), singlenode_b)
+    result_1bb = assess(NonSequentialCopperplate(), Temporal(), singlenode_b)
     @test LOLE(result_1bb) ≈ LOLE{6,1,Hour}(0.96, 0.)
     @test all(LOLP.(result_1bb, singlenode_b.timestamps) .≈
               LOLP{1,Hour}.([0.19, 0.19, 0.19, 0.1, 0.1, 0.19], zeros(6)))
@@ -48,7 +48,7 @@
     @test all(EUE.(result_1bb, singlenode_b.timestamps) .≈
               EUE{1,1,Hour,MWh}.([1.29, 1.29, 1.29, 0.85, 1.05, 1.34], zeros(6)))
 
-    result_1bb = assess(Backcast(), NonSequentialCopperplate(), SpatioTemporal(), singlenode_b)
+    result_1bb = assess(NonSequentialCopperplate(), SpatioTemporal(), singlenode_b)
     @test LOLE(result_1bb) ≈ LOLE{6,1,Hour}(0.96, 0.)
     @test all(LOLP.(result_1bb, singlenode_b.timestamps) .≈
               LOLP{1,Hour}.([0.19, 0.19, 0.19, 0.1, 0.1, 0.19], zeros(6)))
@@ -62,13 +62,13 @@
     #       lower computational cost)
 
     # Overall result - threenode
-    result_3b = assess(Backcast(), NonSequentialCopperplate(),
+    result_3b = assess(NonSequentialCopperplate(),
                        Minimal(), threenode)
     @test LOLE(result_3b) ≈ LOLE{4,1,Hour}(1.17877, 0.)
     @test EUE(result_3b) ≈ EUE{4,1,Hour,MWh}(11.73276, 0.)
 
     # Hourly result - threenode
-    result_3b = assess(Backcast(), NonSequentialCopperplate(),
+    result_3b = assess(NonSequentialCopperplate(),
                        Temporal(), threenode)
     @test LOLE(result_3b) ≈ LOLE{4,1,Hour}(1.17877, 0.)
     @test all(LOLP.(result_3b, result_3b.timestamps) .≈
