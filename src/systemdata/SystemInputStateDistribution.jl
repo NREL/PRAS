@@ -11,6 +11,18 @@ struct SystemInputStateDistribution{P<:PowerUnit}
         interface_starts = copperplate ? Int[] : system.lines_interfacestart
 
         region_distrs = convolvepartitions(system.generators, region_starts, t)
+
+        # Subtract load from available capacity
+        if copperplate
+            xs = support(region_distrs[1])
+            xs .-= colsum(system.regions.load, t)
+        else
+            for r in 1:length(system.regions)
+                xs = support(region_distrs[r])
+                xs .-= system.regions.load[r, t]
+            end
+        end
+
         interface_distrs = convolvepartitions(system.lines, interface_starts, t)
 
         new{P}(region_distrs, interface_distrs)
