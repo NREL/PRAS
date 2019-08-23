@@ -34,6 +34,8 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
 end
 
+capacity(g::Generators) = g.capacity
+
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -194,3 +196,5 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     end
 
 end
+
+capacity(l::Lines) = l.forwardcapacity

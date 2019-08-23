@@ -17,7 +17,10 @@ export
     unitsymbol, powertoenergy, energytopower,
 
     # Main data structure
-    SystemModel
+    SystemModel,
+
+    # Accessors
+    capacity
 
 include("units.jl")
 include("collections.jl")
