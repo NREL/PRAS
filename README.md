@@ -28,3 +28,17 @@ ELCC coming soon, hopefully.
 Currently supported:
  - LOLE
  - EUE
+ 
+ ### Descripton of arguments 
+ 
+assess(EFC(UB,CI,MW range,DisreteNonParametric([list A],[list b])), EUE or LOLE, Backcast(),NonSequentialNetworkFlow(1000),Minimal(),original system,new system)
+
+UB = the upper bound on the capacity value, often the nameplate capacity of the new unit
+
+CI = the first of two conditions that stop the iterative calculation. Sets the confidence interval. If the reliability metrics (EUE or LOLE) calculated for both the upper and lower firm capacity bound are statistically identical within the confidence interval, the calculation stops.
+
+MW range = the second of two conditions that stop the iterative calculation. Sets an absolute MW difference. If the reliability metrics calculated for both the upper and lower firm capacity bound are within this difference, the calculation stops.
+
+list A = the list of regions in which the calculation places equivalent firm capacity
+
+list B = the proportion of firm capacity the calculation places in each region. Must add up to 1.
