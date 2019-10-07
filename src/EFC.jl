@@ -10,15 +10,15 @@ function RA.assess(params::EFC,
                    extractionspec::RA.ExtractionSpec,
                    simulationspec::RA.SimulationSpec,
                    resultspec::RA.ResultSpec,
-                   sys_before::S, sys_after::S) where {S <: RA.SystemModel}
+                   sys_before::S, sys_after::S, seed::UInt=rand(UInt)) where {S <: RA.SystemModel}
 
-    metric_target = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_after))
+    metric_target = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_after, seed))
 
-    metric_a = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_before))
+    metric_a = metric(RA.assess(extractionspec, simulationspec, resultspec, sys_before, seed))
     fc_a = 0.
 
     metric_b = metric(RA.assess(extractionspec, simulationspec, resultspec,
-        addfirmcapacity(sys_before, params.nodes, params.nameplatecapacity)))
+        addfirmcapacity(sys_before, params.nodes, params.nameplatecapacity), seed))
     fc_b = params.nameplatecapacity
 
     while true
@@ -50,7 +50,7 @@ function RA.assess(params::EFC,
             extractionspec,
             simulationspec,
             resultspec,
-            addfirmcapacity(sys_before, params.nodes, fc_x)))
+            addfirmcapacity(sys_before, params.nodes, fc_x), seed))
 
         # Tighten FC bounds
         if RA.val(metric_x) > RA.val(metric_target)
