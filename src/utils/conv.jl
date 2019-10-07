@@ -64,7 +64,8 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     hvs = hvsraw[zeroidxs]
     hps = hpsraw[zeroidxs]
 
-    length(hvs) == 0 && return DiscreteNonParametric([0], [1.], NoArgCheck())
+    length(hvs) == 0 &&
+        return DiscreteNonParametric([0], [1.], check_args=false)
 
     max_n = sum(hvs) + 1
     current_probs  = Vector{Float64}(undef, max_n)
@@ -89,6 +90,6 @@ function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
     return DiscreteNonParametric(
         current_values[nonzeroprob_idxs],
         current_probs[nonzeroprob_idxs],
-        NoArgCheck())
+        check_args=false)
 
 end

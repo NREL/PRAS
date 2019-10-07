@@ -8,7 +8,7 @@ import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
 import Decimals: Decimal
 import Distributions: AliasTable,
                       DiscreteNonParametric, DiscreteNonParametricSampler,
-                      NoArgCheck, probs, sampler, support
+                      probs, sampler, support
 import Future: randjump
 import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
 import Random: MersenneTwister, rand, rand!, SamplerRangeFast
