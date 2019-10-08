@@ -15,7 +15,19 @@ methods for the following functions:
 
 Check the documentation for each function for required type signatures.
 """
-abstract type SimulationSpec{T<:SimulationSequentiality} end
+abstract type SimulationSpec{SS<:SimulationSequentiality} end
+
+"""
+An abstract parent type for holding cached data and memory allocation
+during simulations. When defining a new type `S where {S <: SimulationCache}`,
+you must also define methods for the following functions:
+
+ - `cache`
+
+Check the documentation for each function for required type signatures.
+"""
+abstract type SimulationCache{
+    N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,SS<:SimulationSpec} end
 
 # Results
 
@@ -41,8 +53,7 @@ An abstract parent type for accumulating simulation results. When defining
 a new type `A where {A <: ResultAccumulator}`, you must define methods for
 the following functions:
 
- - `savetimestepsample!` - for Monte Carlo simulations
- - `savetimestepresult!` - for time-partitioned analytical solutions
+ - `update!`
  - `finalize`
 
 Check the documentation for each function for required type signatures.
@@ -53,10 +64,7 @@ You must also define the following allied types and their associated methods:
  - `R where {R <: Result}`
 
 """
-abstract type ResultAccumulator{
-    S <: SystemModel, # Type of simulated system
-    SS <: SimulationSpec # Simulation being used
-} end
+abstract type ResultAccumulator{R<:ResultSpec,S<:SimulationSequentiality} end
 
 
 """

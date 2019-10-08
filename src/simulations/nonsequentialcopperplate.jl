@@ -1,12 +1,30 @@
+# Simulation specification
+
 struct NonSequentialCopperplate <: SimulationSpec{NonSequential} end
 
 ismontecarlo(::NonSequentialCopperplate) = false
 iscopperplate(::NonSequentialCopperplate) = true
 
-function assess!(acc::ResultAccumulator,
-                 simulationspec::NonSequentialCopperplate,
-                 sys::SystemModel{N,L,T,P,E},
-                 t::Int) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+# Simulation cache
+
+struct NonSequentialCopperplateCache{N,L,T,P,E} <:
+    SimulationCache{N,L,T,P,E,NonSequentialCopperplate}
+    simulationspec::NonSequentialCopperplate
+    system::SystemModel{N,L,T,P,E}
+end
+
+function cache(simulationspec::NonSequentialCopperplate,
+               system::SystemModel, seed::UInt)
+    return NonSequentialCopperplateCache(simulationspec, system)
+end
+
+# Simulation assessment
+
+function assess!(
+    cache::NonSequentialCopperplateCache{N,L,T,P,E},
+    acc::ResultAccumulator,
+    sys::SystemModel{N,L,T,P,E}, t::Int
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     statedistr = SystemInputStateDistribution(sys, t, copperplate=true)
     lolp, eul = assess(statedistr.regions[1])

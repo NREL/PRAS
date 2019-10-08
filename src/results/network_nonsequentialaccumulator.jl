@@ -1,4 +1,5 @@
-struct NonSequentialNetworkResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
+struct NonSequentialNetworkResultAccumulator{N,L,T,P,E} <:
+    ResultAccumulator{Network,NonSequential}
 
     # LOLP / LOLE
     droppedcount::Vector{MeanVariance}
@@ -13,31 +14,11 @@ struct NonSequentialNetworkResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     flows::Matrix{MeanVariance}
     utilizations::Matrix{MeanVariance}
 
-    system::S
-    simulationspec::SS
-    rngs::Vector{MersenneTwister}
-
-    NonSequentialNetworkResultAccumulator{}(
-        droppedcount::Vector{MeanVariance},
-        droppedcount_regions::Matrix{MeanVariance},
-        droppedsum::Vector{MeanVariance},
-        droppedsum_regions::Matrix{MeanVariance},
-        localshortfalls::Vector{Vector{Int}},
-        flows::Matrix{MeanVariance},
-        utilizations::Matrix{MeanVariance},
-        system::S, simulationspec::SS,
-        rngs::Vector{MersenneTwister}) where {
-        S<:SystemModel,SS<:SimulationSpec} =
-        new{S,SS}(
-            droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-            localshortfalls, flows, utilizations, system,
-            simulationspec, rngs)
-
 end
 
-function accumulator(simulationspec::SimulationSpec{NonSequential},
-                     resultspec::Network, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E}
+function accumulator(
+    ::Type{NonSequential}, resultspec::Network, sys::SystemModel{N,L,T,P,E}
+) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
@@ -66,19 +47,15 @@ function accumulator(simulationspec::SimulationSpec{NonSequential},
         end
     end
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
     localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
-        rngs[i] = copy(rngs_temp[i])
         localshortfalls[i] = zeros(Float64, nregions)
     end
 
-    return NonSequentialNetworkResultAccumulator(
+    return NonSequentialNetworkResultAccumulator{N,L,T,P,E}(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-        localshortfalls, flows, utilizations, sys,
-        simulationspec, rngs)
+        localshortfalls, flows, utilizations)
 
 end
 
@@ -106,24 +83,26 @@ end
 Updates a NonSequentialNetworkResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}},
+function update!(acc::NonSequentialNetworkResultAccumulator{N,L,T,P,E},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
-    i = Threads.threadid()
+    thread = Threads.threadid()
+    nregions = length(acc.localshortfalls[thread])
+    ninterfaces = size(acc.flows, 1)
 
     isshortfall, totalshortfall, localshortfalls =
-        droppedloads!(acc.localshortfalls[i], sample)
+        droppedloads!(acc.localshortfalls[thread], sample)
 
     fit!(acc.droppedcount[t], isshortfall)
     fit!(acc.droppedsum[t], powertoenergy(E, totalshortfall, P, L, T))
 
-    for r in 1:length(acc.system.regions)
+    for r in 1:nregions
         shortfall = localshortfalls[r]
         fit!(acc.droppedcount_regions[r, t], shortfall > 0)
         fit!(acc.droppedsum_regions[r, t], powertoenergy(E, shortfall, P, L, T))
     end
 
-    for i in 1:length(acc.system.interfaces)
+    for i in 1:ninterfaces
         fit!(acc.flows[i,t], sample.interfaces[i].transfer)
         fit!(acc.utilizations[i,t],
              abs(sample.interfaces[i].transfer) /
@@ -134,12 +113,14 @@ function update!(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,
 
 end
 
-function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E}
+function finalize(
+    cache::SimulationCache{N,L,T,P,E},
+    acc::NonSequentialNetworkResultAccumulator{N,L,T,P,E}
+) where {N,L,T,P,E}
 
-    nregions = length(acc.system.regions)
-    interfaces = tuple.(acc.system.interfaces.regions_from,
-                        acc.system.interfaces.regions_to)
+    nregions = length(cache.system.regions)
+    interfaces = tuple.(cache.system.interfaces.regions_from,
+                        cache.system.interfaces.regions_to)
 
     periodlolps = makemetric.(LOLP{L,T}, acc.droppedcount)
     lole = LOLE(periodlolps)
@@ -155,9 +136,9 @@ function finalize(acc::NonSequentialNetworkResultAccumulator{SystemModel{N,L,T,P
     utilizations = makemetric.(ExpectedInterfaceUtilization{1,L,T}, acc.utilizations)
 
     return NetworkResult(
-        acc.system.regions.names, interfaces, acc.system.timestamps,
+        cache.system.regions.names, interfaces, cache.system.timestamps,
         lole, regionloles, periodlolps, regionalperiodlolps,
         eue, regioneues, periodeues, regionalperiodeues,
-        flows, utilizations, acc.simulationspec)
+        flows, utilizations, cache.simulationspec)
 
 end

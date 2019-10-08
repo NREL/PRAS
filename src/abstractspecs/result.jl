@@ -33,18 +33,18 @@ end
 
 """
 
-    accumulator(::SimulationSpec, ::ResultSpec, ::SystemModel,
-                seed::UInt)::ResultAccumulator
+    accumulator(::Type{SimulationSpec}, ::ResultSpec, ::SystemModel
+                )::ResultAccumulator
 
 Returns a `ResultAccumulator` corresponding to the provided `ResultSpec`.
 """
-accumulator(::SimulationSpec, ::S, ::SystemModel{N,L,T,P,E}, seed::UInt
-) where {N,L,T,P,E,V,S<:ResultSpec} = 
-    error("An `accumulator` method has not been defined for ResultSpec $T")
+accumulator(s::Type{<:SimulationSequentiality}, ::R, ::SystemModel{N,L,T,P,E}
+) where {N,L,T,P,E,R<:ResultSpec} =
+    error("An `accumulator` method has not been defined for $s $R")
 
 """
 
-    update!(::ResultAccumulator, ::NetworkState, t::Int, i::Int)::nothing
+    update!(::ResultAccumulator, ::SystemOutputStateSample, t::Int, i::Int)::nothing
 
 Records a simulation sample of supply, demand, and flows from timestep `t`
 and simulation `i` in the provided `ResultAccumulator`.
@@ -67,7 +67,7 @@ update!(::A, ::SystemOutputStateSample, t::Int, i::Int) where {A <: ResultAccumu
 
 """
 
-    update!(acc::ResultAccumulator, ::NetworkSolution, t::Int)::nothing
+    update!(acc::ResultAccumulator, ::SystemOutputStateSummary, t::Int)::nothing
 
 Store analytical (non-sampled) final results for the time period `t`.
 
@@ -79,15 +79,16 @@ threads during `finalize`.
 """
 update!(::R, ::SystemOutputStateSummary, t::Int) where {R <: ResultAccumulator} =
     error("Analytical / solution-based update! has not yet " *
-          "been defined for ResultAccumulator $A")
+          "been defined for ResultAccumulator $R")
 
 """
 
-    finalize(::SimulationSpec, ::ResultAccumulator)::Result
+    finalize(::SimulationCache, ::ResultAccumulator)::Result
 
 Returns a `Result` corresponding to the provided `ResultAccumulator`.
 """
-finalize(::A) where {A <: ResultAccumulator} =
+finalize(::SimulationCache{N,L,T,P,E}, ::A
+) where {N,L,T,P,E,A<:ResultAccumulator} =
     error("finalize not defined for ResultAccumulator $A")
 
 """

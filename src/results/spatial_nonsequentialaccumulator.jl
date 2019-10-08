@@ -1,4 +1,5 @@
-struct NonSequentialSpatialResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
+struct NonSequentialSpatialResultAccumulator{N,L,T,P,E} <:
+    ResultAccumulator{Spatial,NonSequential}
 
     droppedcount_overall_valsum::Vector{Float64}
     droppedcount_overall_varsum::Vector{Float64}
@@ -16,15 +17,11 @@ struct NonSequentialSpatialResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     droppedcount_region_period::Matrix{MeanVariance}
     droppedsum_region_period::Matrix{MeanVariance}
 
-    system::S
-    simulationspec::SS
-    rngs::Vector{MersenneTwister}
-
 end
 
-function accumulator(simulationspec::SimulationSpec{NonSequential},
-                     resultspec::Spatial, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E}
+function accumulator(
+    ::Type{NonSequential}, resultspec::Spatial, sys::SystemModel{N,L,T,P,E}
+) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nregions = length(sys.regions)
@@ -45,8 +42,6 @@ function accumulator(simulationspec::SimulationSpec{NonSequential},
     droppedcount_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
     droppedsum_region_period = Matrix{MeanVariance}(undef, nregions, nthreads)
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
     localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
@@ -56,19 +51,17 @@ function accumulator(simulationspec::SimulationSpec{NonSequential},
             droppedcount_region_period[r, i] = Series(Mean(), Variance())
             droppedsum_region_period[r, i] = Series(Mean(), Variance())
         end
-        rngs[i] = copy(rngs_temp[i])
         localshortfalls[i] = zeros(Int, nregions)
     end
 
-    return NonSequentialSpatialResultAccumulator(
+    return NonSequentialSpatialResultAccumulator{N,L,T,P,E}(
         droppedcount_overall_valsum, droppedcount_overall_varsum,
         droppedsum_overall_valsum, droppedsum_overall_varsum,
         droppedcount_region_valsum, droppedcount_region_varsum,
         droppedsum_region_valsum, droppedsum_region_varsum,
         localshortfalls,
         periodidx, droppedcount_overall_period, droppedsum_overall_period,
-        droppedcount_region_period, droppedsum_region_period,
-        sys, simulationspec, rngs)
+        droppedcount_region_period, droppedsum_region_period)
 
 end
 
@@ -76,11 +69,12 @@ function update!(acc::NonSequentialSpatialResultAccumulator,
                  result::SystemOutputStateSummary, t::Int)
 
     thread = Threads.threadid()
+    nregions = length(acc.localshortfalls[thread])
 
     acc.droppedcount_overall_valsum[thread] += result.lolp_system
     acc.droppedsum_overall_valsum[thread] += sum(result.eue_regions)
 
-    for r in 1:length(acc.system.regions)
+    for r in 1:nregions
         acc.droppedcount_region_valsum[r, thread] += result.lolp_regions[r]
         acc.droppedsum_region_valsum[r, thread] += result.eue_regions[r]
     end
@@ -89,11 +83,13 @@ function update!(acc::NonSequentialSpatialResultAccumulator,
 
 end
 
-function update!(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
+function update!(
+    acc::NonSequentialSpatialResultAccumulator{N,L,T,P,E},
+    sample::SystemOutputStateSample{L,T,P}, t::Int, i::Int
+) where {N,L,T,P,E}
 
     thread = Threads.threadid()
-    nregions = length(acc.system.regions)
+    nregions = length(acc.localshortfalls[thread])
 
     if t != acc.periodidx[thread]
 
@@ -108,7 +104,7 @@ function update!(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,
             acc.droppedsum_overall_valsum, acc.droppedsum_overall_varsum,
             acc.droppedsum_overall_period, thread)
 
-        for r in 1:length(acc.system.regions)
+        for r in 1:nregions
 
             transferperiodresults!(
                 acc.droppedcount_region_valsum, acc.droppedcount_region_varsum,
@@ -142,10 +138,12 @@ function update!(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,
 
 end
 
-function finalize(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E}
+function finalize(
+    cache::SimulationCache{N,L,T,P,E},
+    acc::NonSequentialSpatialResultAccumulator{N,L,T,P,E}
+) where {N,L,T,P,E}
 
-    regions = acc.system.regions.names
+    regions = cache.system.regions.names
 
     # Transfer the final thread-local results
     for thread in 1:Threads.nthreads()
@@ -177,9 +175,9 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P
     eue = sum(acc.droppedsum_overall_valsum)
     eues = vec(sum(acc.droppedsum_region_valsum, dims=2))
 
-    if ismontecarlo(acc.simulationspec)
+    if ismontecarlo(cache.simulationspec)
 
-        nsamples = acc.simulationspec.nsamples
+        nsamples = cache.simulationspec.nsamples
         lole_stderr = sqrt(sum(acc.droppedcount_overall_varsum) / nsamples)
         loles_stderr = sqrt.(vec(sum(acc.droppedcount_region_varsum, dims=2)) ./ nsamples)
         eue_stderr = sqrt(sum(acc.droppedsum_overall_varsum) / nsamples)
@@ -197,6 +195,6 @@ function finalize(acc::NonSequentialSpatialResultAccumulator{SystemModel{N,L,T,P
                          LOLE{N,L,T}.(loles, loles_stderr),
                          EUE{N,L,T,E}(eue, eue_stderr),
                          EUE{N,L,T,E}.(eues, eues_stderr),
-                         acc.simulationspec)
+                         cache.simulationspec)
 
 end

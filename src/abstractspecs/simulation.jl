@@ -9,6 +9,15 @@ generally possible when this is true.
 iscopperplate(::S) where {S <: SimulationSpec} = 
     error("iscopperplate not yet defined for SimulationSpec $S")
 
+"""
+
+    cache(::SimulationSpec, ::SystemModel, seed::UInt)
+
+Preallocate a memory cache to be used when simulating `SystemModel` according
+to `SimulationSpec`, with random seed `seed`.
+"""
+cache(::S, ::SystemModel, ::UInt) where {S <: SimulationSpec} =
+    error("cache not yet defined for SimulationSpec $S")
 
 """
 
@@ -38,17 +47,16 @@ function assess(simulationspec::SimulationSpec{NonSequential},
                 system::SystemModel{N},
                 seed::UInt=rand(UInt)) where {N}
 
-    acc = accumulator(simulationspec, resultspec, system, seed)
+    cch = cache(simulationspec, system, seed)
+    acc = accumulator(NonSequential, resultspec, system)
 
-    #TODO: If storage devices exist, warn that they may be ignored or
-    #      treated as firm capacity - need to decide how exactly that
-    #      should work first though...
+    #TODO: If storage devices exist, warn that they will be ignored
 
     Threads.@threads for t in 1:N 
-        assess!(acc, simulationspec, system, t)
+        assess!(cch, acc, system, t)
     end
 
-    return finalize(acc)
+    return finalize(cch, acc)
 
 end
 
@@ -57,12 +65,13 @@ function assess(simulationspec::SimulationSpec{Sequential},
                 system::SystemModel,
                 seed::UInt=rand(UInt))
 
-    acc = accumulator(simulationspec, resultspec, system, seed)
+    cch = cache(simulationspec, system, seed)
+    acc = accumulator(Sequential, resultspec, system)
 
     Threads.@threads for i in 1:simulationspec.nsamples
-        assess!(acc, simulationspec, system, i)
+        assess!(cch, acc, system, i)
     end
 
-    return finalize(acc)
+    return finalize(cch, acc)
 
 end

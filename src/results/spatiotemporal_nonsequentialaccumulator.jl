@@ -1,4 +1,5 @@
-struct NonSequentialSpatioTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
+struct NonSequentialSpatioTemporalResultAccumulator{N,L,T,P,E} <:
+    ResultAccumulator{SpatioTemporal,NonSequential}
 
     # LOLP / LOLE
     droppedcount::Vector{MeanVariance}
@@ -10,28 +11,11 @@ struct NonSequentialSpatioTemporalResultAccumulator{S,SS} <: ResultAccumulator{S
 
     localshortfalls::Vector{Vector{Int}}
 
-    system::S
-    simulationspec::SS
-    rngs::Vector{MersenneTwister}
-
-    NonSequentialSpatioTemporalResultAccumulator(
-        droppedcount::Vector{MeanVariance},
-        droppedcount_regions::Matrix{MeanVariance},
-        droppedsum::Vector{MeanVariance},
-        droppedsum_regions::Matrix{MeanVariance},
-        localshortfalls::Vector{Vector{Int}},
-        system::S, simulationspec::SS,
-        rngs::Vector{MersenneTwister}) where {
-        S<:SystemModel,SS<:SimulationSpec} =
-        new{S,SS}(
-            droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-            localshortfalls, system, simulationspec, rngs)
-
 end
 
-function accumulator(simulationspec::SimulationSpec{NonSequential},
-                     resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E}
+function accumulator(
+    ::Type{NonSequential}, resultspec::SpatioTemporal, sys::SystemModel{N,L,T,P,E}
+) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
@@ -52,19 +36,15 @@ function accumulator(simulationspec::SimulationSpec{NonSequential},
         end
     end
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
     localshortfalls = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
-        rngs[i] = copy(rngs_temp[i])
         localshortfalls[i] = zeros(Int, nregions)
     end
 
-    return NonSequentialSpatioTemporalResultAccumulator(
+    return NonSequentialSpatioTemporalResultAccumulator{N,L,T,P,E}(
         droppedcount, droppedcount_regions, droppedsum, droppedsum_regions,
-        localshortfalls,
-        sys, simulationspec, rngs)
+        localshortfalls)
 
 end
 
@@ -75,10 +55,13 @@ exact results for the timestep `t`.
 function update!(acc::NonSequentialSpatioTemporalResultAccumulator,
                  result::SystemOutputStateSummary, t::Int)
 
+    thread = Threads.threadid()
+    nregions = length(acc.localshortfalls[thread])
+
     fit!(acc.droppedcount[t], result.lolp_system)
     fit!(acc.droppedsum[t], sum(result.eue_regions))
 
-    for r in 1:length(acc.system.regions)
+    for r in 1:nregions
         fit!(acc.droppedcount_regions[r, t], result.lolp_regions[r])
         fit!(acc.droppedsum_regions[r, t], result.eue_regions[r])
     end
@@ -91,10 +74,11 @@ end
 Updates a NonSequentialSpatioTemporalResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{N,L,T,P,E}},
+function update!(acc::NonSequentialSpatioTemporalResultAccumulator{N,L,T,P,E},
                  sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
 
     thread = Threads.threadid()
+    nregions = length(acc.localshortfalls[thread])
 
     isshortfall, totalshortfall, localshortfalls =
         droppedloads!(acc.localshortfalls[thread], sample)
@@ -102,7 +86,7 @@ function update!(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{N
     fit!(acc.droppedcount[t], isshortfall)
     fit!(acc.droppedsum[t], powertoenergy(E, totalshortfall, P, L, T))
 
-    for r in 1:length(acc.system.regions)
+    for r in 1:nregions
         shortfall = localshortfalls[r]
         fit!(acc.droppedcount_regions[r, t], shortfall > 0)
         fit!(acc.droppedsum_regions[r, t], powertoenergy(E, shortfall, P, L, T))
@@ -112,10 +96,12 @@ function update!(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{N
 
 end
 
-function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E}
+function finalize(
+    cache::SimulationCache{N,L,T,P,E},
+    acc::NonSequentialSpatioTemporalResultAccumulator{N,L,T,P,E}
+) where {N,L,T,P,E}
 
-    nregions = length(acc.system.regions)
+    nregions = length(cache.system.regions)
 
     periodlolps = makemetric.(LOLP{L,T}, acc.droppedcount)
     lole = LOLE(periodlolps)
@@ -128,9 +114,9 @@ function finalize(acc::NonSequentialSpatioTemporalResultAccumulator{SystemModel{
     regioneues = [EUE(regionalperiodeues[r, :]) for r in 1:nregions]
 
     return SpatioTemporalResult(
-        acc.system.regions.names, acc.system.timestamps,
+        cache.system.regions.names, cache.system.timestamps,
         lole, regionloles, periodlolps, regionalperiodlolps,
         eue, regioneues, periodeues, regionalperiodeues,
-        acc.simulationspec)
+        cache.simulationspec)
 
 end
