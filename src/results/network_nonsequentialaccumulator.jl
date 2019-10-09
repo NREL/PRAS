@@ -83,8 +83,10 @@ end
 Updates a NonSequentialNetworkResultAccumulator `acc` with the results of a
 single Monte Carlo sample `i` for the timestep `t`.
 """
-function update!(acc::NonSequentialNetworkResultAccumulator{N,L,T,P,E},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
+function update!(
+    acc::NonSequentialNetworkResultAccumulator{N,L,T,P,E},
+    sample::SystemOutputStateSample, t::Int, i::Int
+) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     nregions = length(acc.localshortfalls[thread])

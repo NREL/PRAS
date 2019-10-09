@@ -9,20 +9,60 @@ end
 
 iscopperplate(::SequentialCopperplate) = true
 
-function assess!(
-    acc::ResultAccumulator,
+struct SequentialCopperplateCache{N,L,T,P,E} <:
+    SimulationCache{N,L,T,P,E,SequentialCopperplate}
+
+    simulationspec::SequentialCopperplate
+    system::SystemModel{N,L,T,P,E}
+    rngs::Vector{MersenneTwister}
+    gens_available::Vector{Vector{Bool}}
+    stors_available::Vector{Vector{Bool}}
+    stors_energy::Vector{Vector{Int}} 
+
+end
+
+function cache(
     simulationspec::SequentialCopperplate,
-    sys::SystemModel{N,L,T,P,E},
-    i::Int
+    system::SystemModel, seed::UInt)
+
+    nthreads = Threads.nthreads()
+
+    ngens = length(system.generators)
+    nstors = length(system.storages)
+
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
+
+    gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
+
+    Threads.@threads for i in 1:nthreads
+        rngs[i] = copy(rngs_temp[i])
+        gens_available[i] = Vector{Bool}(undef, ngens)
+        stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
+    end
+
+    return SequentialCopperplateCache(
+        simulationspec, system, rngs,
+        gens_available, stors_available, stors_energy)
+
+end
+
+function assess!(
+    cache::SequentialCopperplateCache{N,L,T,P,E},
+    acc::ResultAccumulator,
+    sys::SystemModel{N,L,T,P,E}, i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     threadid = Threads.threadid()
 
-    rng = acc.rngs[threadid]
+    rng = cache.rngs[threadid]
 
-    gens_available = acc.gens_available[threadid]
-    stors_available = acc.stors_available[threadid]
-    stors_energy = acc.stors_energy[threadid]
+    gens_available = cache.gens_available[threadid]
+    stors_available = cache.stors_available[threadid]
+    stors_energy = cache.stors_energy[threadid]
 
     ngens = length(sys.generators)
     nstors = length(sys.storages)

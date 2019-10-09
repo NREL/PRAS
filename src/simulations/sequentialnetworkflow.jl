@@ -10,21 +10,65 @@ end
 ismontecarlo(::SequentialNetworkFlow) = true
 iscopperplate(::SequentialNetworkFlow) = false
 
-function assess!(
-    acc::ResultAccumulator,
+struct SequentialNetworkFlowCache{N,L,T,P,E} <:
+    SimulationCache{N,L,T,P,E,SequentialNetworkFlow}
+
+    simulationspec::SequentialNetworkFlow
+    system::SystemModel{N,L,T,P,E}
+    rngs::Vector{MersenneTwister}
+    gens_available::Vector{Vector{Bool}}
+    lines_available::Vector{Vector{Bool}}
+    stors_available::Vector{Vector{Bool}}
+    stors_energy::Vector{Vector{Int}} 
+
+end
+
+function cache(
     simulationspec::SequentialNetworkFlow,
-    sys::SystemModel{N,L,T,P,E},
-    i::Int
+    system::SystemModel, seed::UInt)
+
+    nthreads = Threads.nthreads()
+
+    ngens = length(system.generators)
+    nlines = length(system.lines)
+    nstors = length(system.storages)
+
+    rngs = Vector{MersenneTwister}(undef, nthreads)
+    rngs_temp = initrngs(nthreads, seed=seed)
+
+    gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    lines_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_energy = Vector{Vector{Int}}(undef, nthreads)
+
+    Threads.@threads for i in 1:nthreads
+        rngs[i] = copy(rngs_temp[i])
+        gens_available[i] = Vector{Bool}(undef, ngens)
+        lines_available[i] = Vector{Bool}(undef, nlines)
+        stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_energy[i] = Vector{Int}(undef, nstors)
+    end
+
+    return SequentialNetworkFlowCache(
+        simulationspec, system, rngs,
+        gens_available, lines_available, stors_available, stors_energy)
+
+end
+
+function assess!(
+    cache::SequentialNetworkFlowCache{N,L,T,P,E},
+    acc::ResultAccumulator,
+    sys::SystemModel{N,L,T,P,E}, i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     threadid = Threads.threadid()
 
-    rng = acc.rngs[threadid]
+    rng = cache.rngs[threadid]
 
-    gens_available = acc.gens_available[threadid]
-    lines_available = acc.lines_available[threadid]
-    stors_available = acc.stors_available[threadid]
-    stors_energy = acc.stors_energy[threadid]
+    gens_available = cache.gens_available[threadid]
+    lines_available = cache.lines_available[threadid]
+    stors_available = cache.stors_available[threadid]
+    stors_energy = cache.stors_energy[threadid]
 
     nregions = length(sys.regions)
     ngens = length(sys.generators)
@@ -59,7 +103,7 @@ function assess!(
 
     fill!(stors_energy, 0)
 
-    flowproblem = FlowProblem(simulationspec, sys)
+    flowproblem = FlowProblem(cache.simulationspec, sys)
 
     genranges = assetgrouprange(sys.generators_regionstart, ngens)
     storranges = assetgrouprange(sys.storages_regionstart, nstors)
@@ -90,7 +134,7 @@ function assess!(
             storranges, sys.storages, stors_available,
             flowproblem, ninterfaces)
 
-        update!(simulationspec, outputsample, flowproblem)
+        update!(cache.simulationspec, outputsample, flowproblem)
         update!(acc, outputsample, t, i)
 
     end

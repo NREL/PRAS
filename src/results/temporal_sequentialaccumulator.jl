@@ -1,4 +1,6 @@
-struct SequentialTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
+struct SequentialTemporalResultAccumulator{N,L,T,P,E} <:
+    ResultAccumulator{Minimal,Sequential}
+
     droppedcount_overall::Vector{MeanVariance}
     droppedsum_overall::Vector{MeanVariance}
     droppedcount_period::Matrix{MeanVariance}
@@ -6,42 +8,24 @@ struct SequentialTemporalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
     simidx::Vector{Int}
     droppedcount_sim::Vector{Int}
     droppedsum_sim::Vector{Int}
-    system::S
-    simulationspec::SS
-    rngs::Vector{MersenneTwister}
-    gens_available::Vector{Vector{Bool}}
-    lines_available::Vector{Vector{Bool}}
-    stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{Int}}
+
 end
 
-function accumulator(simulationspec::SimulationSpec{Sequential},
-                     resultspec::Temporal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E}
+function accumulator(
+    ::Type{Sequential}, resultspec::Temporal, sys::SystemModel{N,L,T,P,E}
+) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
     nperiods = length(sys.timestamps)
-
-    ngens = length(sys.generators)
-    nstors = length(sys.storages)
-    nlines = length(sys.lines)
 
     droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
     droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
     droppedcount_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
     droppedsum_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
-
     simidx = zeros(Int, nthreads)
     simcount = Vector{Int}(undef, nthreads)
     simsum = Vector{Int}(undef, nthreads)
-
-    gens_available = Vector{Vector{Bool}}(undef, nthreads)
-    lines_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
         droppedcount_overall[i] = Series(Mean(), Variance())
@@ -50,20 +34,12 @@ function accumulator(simulationspec::SimulationSpec{Sequential},
             droppedsum_period[t, i] = Series(Mean(), Variance())
             droppedcount_period[t, i] = Series(Mean(), Variance())
         end
-        rngs[i] = copy(rngs_temp[i])
-        gens_available[i] = Vector{Bool}(undef, ngens)
-        lines_available[i] = Vector{Bool}(undef, nlines)
-        stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{Int}(undef, nstors)
     end
 
-    return SequentialTemporalResultAccumulator(
+    return SequentialTemporalResultAccumulator{N,L,T,P,E}(
         droppedcount_overall, droppedsum_overall,
         droppedcount_period, droppedsum_period,
-        simidx, simcount, simsum,
-        sys, simulationspec, rngs,
-        gens_available, lines_available, stors_available,
-        stors_energy)
+        simidx, simcount, simsum)
 
 end
 
@@ -74,8 +50,10 @@ function update!(acc::SequentialTemporalResultAccumulator,
 
 end
 
-function update!(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
+function update!(
+    acc::SequentialTemporalResultAccumulator{N,L,T,P,E},
+    sample::SystemOutputStateSample, t::Int, i::Int
+) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     isshortfall, unservedload = droppedload(sample)
@@ -113,10 +91,12 @@ function update!(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}
 
 end
 
-function finalize(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E}
+function finalize(
+    cache::SimulationCache{N,L,T,P,E},
+    acc::SequentialTemporalResultAccumulator{N,L,T,P,E}
+) where {N,L,T,P,E}
 
-    timestamps = acc.system.timestamps
+    timestamps = cache.system.timestamps
     nperiods = length(timestamps)
     nthreads = Threads.nthreads()
 
@@ -141,7 +121,7 @@ function finalize(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E
 
     end
 
-    nsamples = acc.simulationspec.nsamples
+    nsamples = cache.simulationspec.nsamples
 
     lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1], nsamples)...)
     eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1], nsamples)...)
@@ -151,6 +131,6 @@ function finalize(acc::SequentialTemporalResultAccumulator{SystemModel{N,L,T,P,E
     eues = map(r -> EUE{1,L,T,E}(r...),
                mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
 
-    return TemporalResult(timestamps, lole, lolps, eue, eues, acc.simulationspec)
+    return TemporalResult(timestamps, lole, lolps, eue, eues, cache.simulationspec)
 
 end

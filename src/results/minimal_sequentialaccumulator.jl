@@ -1,21 +1,17 @@
-struct SequentialMinimalResultAccumulator{S,SS} <: ResultAccumulator{S,SS}
+struct SequentialMinimalResultAccumulator{N,L,T,P,E} <:
+    ResultAccumulator{Minimal,Sequential}
+
     droppedcount::Vector{MeanVariance} # LOL mean and variance
     droppedsum::Vector{MeanVariance} #UE mean and variance
     simidx::Vector{Int} # Current thread-local simulation idx
     droppedcount_sim::Vector{Int} # LOL count for thread-local simulations
     droppedsum_sim::Vector{Int} # UE sum for thread-local simulations
-    system::S
-    simulationspec::SS
-    rngs::Vector{MersenneTwister}
-    gens_available::Vector{Vector{Bool}}
-    lines_available::Vector{Vector{Bool}}
-    stors_available::Vector{Vector{Bool}}
-    stors_energy::Vector{Vector{Int}}
+
 end
 
-function accumulator(simulationspec::SimulationSpec{Sequential},
-                     resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
-                     seed::UInt) where {N,L,T,P,E}
+function accumulator(
+    ::Type{Sequential}, resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
+) where {N,L,T,P,E}
 
     nthreads = Threads.nthreads()
 
@@ -26,33 +22,17 @@ function accumulator(simulationspec::SimulationSpec{Sequential},
     droppedcount = Vector{MeanVariance}(undef, nthreads)
     droppedsum = Vector{MeanVariance}(undef, nthreads)
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
-
     simidx = zeros(Int, nthreads)
     simcount = Vector{Int}(undef, nthreads)
     simsum = Vector{Int}(undef, nthreads)
 
-    gens_available = Vector{Vector{Bool}}(undef, nthreads)
-    lines_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_energy = Vector{Vector{Int}}(undef, nthreads)
-
     Threads.@threads for i in 1:nthreads
         droppedcount[i] = Series(Mean(), Variance())
         droppedsum[i] = Series(Mean(), Variance())
-        rngs[i] = copy(rngs_temp[i])
-        gens_available[i] = Vector{Bool}(undef, ngens)
-        lines_available[i] = Vector{Bool}(undef, nlines)
-        stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_energy[i] = Vector{Int}(undef, nstors)
     end
 
-    return SequentialMinimalResultAccumulator(
-        droppedcount, droppedsum, simidx, simcount, simsum,
-        sys, simulationspec, rngs,
-        gens_available, lines_available, stors_available,
-        stors_energy)
+    return SequentialMinimalResultAccumulator{N,L,T,P,E}(
+        droppedcount, droppedsum, simidx, simcount, simsum)
 
 end
 
@@ -63,8 +43,10 @@ function update!(acc::SequentialMinimalResultAccumulator,
 
 end
 
-function update!(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}},
-                 sample::SystemOutputStateSample, t::Int, i::Int) where {N,L,T,P,E}
+function update!(
+    acc::SequentialMinimalResultAccumulator{N,L,T,P,E},
+    sample::SystemOutputStateSample, t::Int, i::Int
+) where {N,L,T,P,E}
 
     thread = Threads.threadid()
     isshortfall, unservedload = droppedload(sample)
@@ -97,8 +79,10 @@ function update!(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}}
 
 end
 
-function finalize(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}}
-                  ) where {N,L,T,P,E}
+function finalize(
+    cache::SimulationCache{N,L,T,P,E},
+    acc::SequentialMinimalResultAccumulator{N,L,T,P,E}
+) where {N,L,T,P,E}
 
    nthreads = Threads.nthreads()
 
@@ -117,13 +101,13 @@ function finalize(acc::SequentialMinimalResultAccumulator{SystemModel{N,L,T,P,E}
     end
 
     # Convert cross-simulation stats to final metrics
-    nsamples = acc.simulationspec.nsamples
+    nsamples = cache.simulationspec.nsamples
     lole, lole_stderr = mean_stderr(acc.droppedcount[1], nsamples)
     eue, eue_stderr = mean_stderr(acc.droppedsum[1], nsamples)
 
     return MinimalResult(
         LOLE{N,L,T}(lole, lole_stderr),
         EUE{N,L,T,E}(eue, eue_stderr),
-        acc.simulationspec)
+        cache.simulationspec)
 
 end

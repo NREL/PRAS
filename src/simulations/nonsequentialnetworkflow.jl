@@ -15,9 +15,11 @@ iscopperplate(::NonSequentialNetworkFlow) = false
 # Simulation cache
 struct NonSequentialNetworkFlowCache{N,L,T,P,E} <:
     SimulationCache{N,L,T,P,E,NonSequentialNetworkFlow}
+
     simulationspec::NonSequentialNetworkFlow
     system::SystemModel{N,L,T,P,E}
     rngs::Vector{MersenneTwister}
+
 end
 
 function cache(simulationspec::NonSequentialNetworkFlow,
