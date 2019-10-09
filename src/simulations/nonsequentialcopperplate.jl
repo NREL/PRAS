@@ -22,11 +22,10 @@ end
 
 function assess!(
     cache::NonSequentialCopperplateCache{N,L,T,P,E},
-    acc::ResultAccumulator,
-    sys::SystemModel{N,L,T,P,E}, t::Int
+    acc::ResultAccumulator, t::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    statedistr = SystemInputStateDistribution(sys, t, copperplate=true)
+    statedistr = SystemInputStateDistribution(cache.system, t, copperplate=true)
     lolp, eul = assess(statedistr.regions[1])
     eue = powertoenergy(E, eul, P, L, T)
     update!(acc, SystemOutputStateSummary{L,T,E}(lolp, [lolp], [eue]), t)

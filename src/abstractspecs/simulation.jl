@@ -53,7 +53,7 @@ function assess(simulationspec::SimulationSpec{NonSequential},
     #TODO: If storage devices exist, warn that they will be ignored
 
     Threads.@threads for t in 1:N 
-        assess!(cch, acc, system, t)
+        assess!(cch, acc, t)
     end
 
     return finalize(cch, acc)
@@ -69,7 +69,7 @@ function assess(simulationspec::SimulationSpec{Sequential},
     acc = accumulator(Sequential, resultspec, system)
 
     Threads.@threads for i in 1:simulationspec.nsamples
-        assess!(cch, acc, system, i)
+        assess!(cch, acc, i)
     end
 
     return finalize(cch, acc)

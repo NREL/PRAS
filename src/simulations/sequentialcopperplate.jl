@@ -52,8 +52,7 @@ end
 
 function assess!(
     cache::SequentialCopperplateCache{N,L,T,P,E},
-    acc::ResultAccumulator,
-    sys::SystemModel{N,L,T,P,E}, i::Int
+    acc::ResultAccumulator, i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     threadid = Threads.threadid()
@@ -64,8 +63,8 @@ function assess!(
     stors_available = cache.stors_available[threadid]
     stors_energy = cache.stors_energy[threadid]
 
-    ngens = length(sys.generators)
-    nstors = length(sys.storages)
+    ngens = length(cache.system.generators)
+    nstors = length(cache.system.storages)
 
     sample = SystemOutputStateSample{L,T,P}(Int[], Int[], 1) # Preallocate?
 
@@ -73,14 +72,14 @@ function assess!(
     # based on long-run probabilities from period 1
 
     for i in 1:ngens
-        μ = sys.generators.μ[i, 1]
-        λ = sys.generators.λ[i, 1]
+        μ = cache.system.generators.μ[i, 1]
+        λ = cache.system.generators.λ[i, 1]
         gens_available[i] = rand(rng) < μ / (λ + μ)
     end
 
     for i in 1:nstors
-        μ = sys.storages.μ[i, 1]
-        λ = sys.storages.λ[i, 1]
+        μ = cache.system.storages.μ[i, 1]
+        λ = cache.system.storages.λ[i, 1]
         stors_available[i] = rand(rng) < μ / (λ + μ)
     end
 
@@ -92,18 +91,20 @@ function assess!(
     # Main simulation loop
     for t in 1:N
 
-        update_availability!(rng, gens_available, sys.generators, t)
-        update_availability!(rng, stors_available, sys.storages, t)
-        decay_energy!(stors_energy, sys.storages, t)
+        update_availability!(rng, gens_available, cache.system.generators, t)
+        update_availability!(rng, stors_available, cache.system.storages, t)
+        decay_energy!(stors_energy, cache.system.storages, t)
 
-        residual_generation = available_capacity(gens_available, sys.generators, all_gens, t)
-        residual_generation -= colsum(sys.regions.load, t)
+        residual_generation = available_capacity(
+            gens_available, cache.system.generators, all_gens, t)
+        residual_generation -= colsum(cache.system.regions.load, t)
 
         if residual_generation >= 0
 
             # Charge to consume residual_generation
             surplus = charge_storage!(
-                stors_available, stors_energy, residual_generation, sys.storages, all_stors, t)
+                stors_available, stors_energy, residual_generation,
+                cache.system.storages, all_stors, t)
             sample.regions[1] = RegionResult{L,T,P}(
                 residual_generation, surplus, 0.)
 
@@ -111,8 +112,10 @@ function assess!(
 
             # Discharge to meet residual_generation shortfall
             shortfall = discharge_storage!(
-                stors_available, stors_energy, -residual_generation, sys.storages, all_stors, t)
-            sample.regions[1] = RegionResult{L,T,P}(residual_generation, 0., shortfall)
+                stors_available, stors_energy, -residual_generation,
+                cache.system.storages, all_stors, t)
+            sample.regions[1] = RegionResult{L,T,P}(
+                residual_generation, 0., shortfall)
 
         end
 

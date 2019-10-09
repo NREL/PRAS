@@ -41,16 +41,18 @@ end
 
 function assess!(
     cache::NonSequentialNetworkFlowCache{N,L,T,P,E},
-    acc::ResultAccumulator,
-    sys::SystemModel{N,L,T,P,E}, t::Int
+    acc::ResultAccumulator, t::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     thread = Threads.threadid()
 
-    statesampler = sampler(SystemInputStateDistribution(sys, t, copperplate=false))
-    flowproblem = FlowProblem(cache.simulationspec, sys)
+    statesampler = sampler(
+        SystemInputStateDistribution(cache.system, t, copperplate=false))
+    flowproblem = FlowProblem(cache.simulationspec, cache.system)
     outputsample = SystemOutputStateSample{L,T,P}(
-        sys.interfaces.regions_from, sys.interfaces.regions_to, length(sys.regions))
+        cache.system.interfaces.regions_from,
+        cache.system.interfaces.regions_to,
+        length(cache.system.regions))
 
     for i in 1:cache.simulationspec.nsamples
         rand!(cache.rngs[thread], flowproblem, statesampler)

@@ -57,8 +57,7 @@ end
 
 function assess!(
     cache::SequentialNetworkFlowCache{N,L,T,P,E},
-    acc::ResultAccumulator,
-    sys::SystemModel{N,L,T,P,E}, i::Int
+    acc::ResultAccumulator, i::Int
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     threadid = Threads.threadid()
@@ -70,68 +69,69 @@ function assess!(
     stors_available = cache.stors_available[threadid]
     stors_energy = cache.stors_energy[threadid]
 
-    nregions = length(sys.regions)
-    ngens = length(sys.generators)
-    nstors = length(sys.storages)
+    nregions = length(cache.system.regions)
+    ngens = length(cache.system.generators)
+    nstors = length(cache.system.storages)
 
-    ninterfaces = length(sys.interfaces)
-    nlines = length(sys.lines)
+    ninterfaces = length(cache.system.interfaces)
+    nlines = length(cache.system.lines)
 
     outputsample = SystemOutputStateSample{L,T,P}(
-        sys.interfaces.regions_from, sys.interfaces.regions_to, nregions)
+        cache.system.interfaces.regions_from,
+        cache.system.interfaces.regions_to, nregions)
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
 
     for i in 1:ngens
-        μ = sys.generators.μ[i, 1]
-        λ = sys.generators.λ[i, 1]
+        μ = cache.system.generators.μ[i, 1]
+        λ = cache.system.generators.λ[i, 1]
         gens_available[i] = rand(rng) < μ / (λ + μ)
     end
 
     for i in 1:nlines
-        μ = sys.lines.μ[i, 1]
-        λ = sys.lines.λ[i, 1]
+        μ = cache.system.lines.μ[i, 1]
+        λ = cache.system.lines.λ[i, 1]
         lines_available[i] = rand(rng) < μ / (λ + μ)
     end
 
     for i in 1:nstors
-        μ = sys.storages.μ[i, 1]
-        λ = sys.storages.λ[i, 1]
+        μ = cache.system.storages.μ[i, 1]
+        λ = cache.system.storages.λ[i, 1]
         stors_available[i] = rand(rng) < μ / (λ + μ)
     end
 
     fill!(stors_energy, 0)
 
-    flowproblem = FlowProblem(cache.simulationspec, sys)
+    flowproblem = FlowProblem(cache.simulationspec, cache.system)
 
-    genranges = assetgrouprange(sys.generators_regionstart, ngens)
-    storranges = assetgrouprange(sys.storages_regionstart, nstors)
-    lineranges = assetgrouprange(sys.lines_interfacestart, nlines)
+    genranges = assetgrouprange(cache.system.generators_regionstart, ngens)
+    storranges = assetgrouprange(cache.system.storages_regionstart, nstors)
+    lineranges = assetgrouprange(cache.system.lines_interfacestart, nlines)
 
     # Main simulation loop
     for t in 1:N
 
         # Update assets for timestep
-        update_availability!(rng, gens_available, sys.generators, t)
-        update_availability!(rng, lines_available, sys.lines, t)
-        update_availability!(rng, stors_available, sys.storages, t)
-        decay_energy!(stors_energy, sys.storages, t)
+        update_availability!(rng, gens_available, cache.system.generators, t)
+        update_availability!(rng, lines_available, cache.system.lines, t)
+        update_availability!(rng, stors_available, cache.system.storages, t)
+        decay_energy!(stors_energy, cache.system.storages, t)
 
         update_flownodes!(
-            flowproblem, t, sys.regions.load,
-            genranges, sys.generators, gens_available,
-            storranges, sys.storages, stors_available, stors_energy)
+            flowproblem, t, cache.system.regions.load,
+            genranges, cache.system.generators, gens_available,
+            storranges, cache.system.storages, stors_available, stors_energy)
 
         update_flowedges!(
             flowproblem, t,
-            lineranges, sys.lines, lines_available)
+            lineranges, cache.system.lines, lines_available)
 
         solveflows!(flowproblem)
 
         update_energy!(
             stors_energy, t,
-            storranges, sys.storages, stors_available,
+            storranges, cache.system.storages, stors_available,
             flowproblem, ninterfaces)
 
         update!(cache.simulationspec, outputsample, flowproblem)
@@ -270,7 +270,8 @@ function update!(
         forwardflow = forwardedge.flow
         reverseflow = flowproblem.edges[ninterfaces+i].flow
         flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        outputsample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
+        outputsample.interfaces[i] =
+            InterfaceResult{L,T,P}(forwardedge.limit, flow)
     end
 
 end
