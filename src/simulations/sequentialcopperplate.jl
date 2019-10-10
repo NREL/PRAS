@@ -15,8 +15,12 @@ struct SequentialCopperplateCache{N,L,T,P,E} <:
     simulationspec::SequentialCopperplate
     system::SystemModel{N,L,T,P,E}
     rngs::Vector{MersenneTwister}
+
     gens_available::Vector{Vector{Bool}}
+    gens_nexttransition::Vector{Vector{Int}}
+
     stors_available::Vector{Vector{Bool}}
+    stors_nexttransition::Vector{Vector{Int}}
     stors_energy::Vector{Vector{Int}} 
 
 end
@@ -34,19 +38,29 @@ function cache(
     rngs_temp = initrngs(nthreads, seed=seed)
 
     gens_available = Vector{Vector{Bool}}(undef, nthreads)
+    gens_nexttransition = Vector{Vector{Int}}(undef, nthreads)
+
     stors_available = Vector{Vector{Bool}}(undef, nthreads)
+    stors_nexttransition = Vector{Vector{Int}}(undef, nthreads)
     stors_energy = Vector{Vector{Int}}(undef, nthreads)
 
     Threads.@threads for i in 1:nthreads
+
         rngs[i] = copy(rngs_temp[i])
+
         gens_available[i] = Vector{Bool}(undef, ngens)
+        gens_nexttransition[i] = Vector{Int}(undef, ngens)
+
         stors_available[i] = Vector{Bool}(undef, nstors)
+        stors_nexttransition[i] = Vector{Int}(undef, nstors)
         stors_energy[i] = Vector{Int}(undef, nstors)
+
     end
 
     return SequentialCopperplateCache(
         simulationspec, system, rngs,
-        gens_available, stors_available, stors_energy)
+        gens_available, gens_nexttransition,
+        stors_available, stors_nexttransition, stors_energy)
 
 end
 
@@ -59,44 +73,40 @@ function assess!(
 
     rng = cache.rngs[threadid]
 
+    gens = cache.system.generators
     gens_available = cache.gens_available[threadid]
-    stors_available = cache.stors_available[threadid]
-    stors_energy = cache.stors_energy[threadid]
+    gens_nexttransition = cache.gens_nexttransition[threadid]
+    all_gens = (1, length(gens))
 
-    ngens = length(cache.system.generators)
-    nstors = length(cache.system.storages)
+    stors = cache.system.storages
+    stors_available = cache.stors_available[threadid]
+    stors_nexttransition = cache.stors_nexttransition[threadid]
+    stors_energy = cache.stors_energy[threadid]
+    all_stors = (1, length(stors))
 
     sample = SystemOutputStateSample{L,T,P}(Int[], Int[], 1) # Preallocate?
 
     # Initialize generator and storage state vector
     # based on long-run probabilities from period 1
+    initialize_availability!(rng, gens_available, gens_nexttransition, gens, N)
+    initialize_availability!(rng, stors_available, stors_nexttransition, stors, N)
 
-    for i in 1:ngens
-        μ = cache.system.generators.μ[i, 1]
-        λ = cache.system.generators.λ[i, 1]
-        gens_available[i] = rand(rng) < μ / (λ + μ)
-    end
-
-    for i in 1:nstors
-        μ = cache.system.storages.μ[i, 1]
-        λ = cache.system.storages.λ[i, 1]
-        stors_available[i] = rand(rng) < μ / (λ + μ)
-    end
-
+    # Initialize storage devices as empty
     fill!(stors_energy, 0)
-
-    all_gens = (1, ngens)
-    all_stors = (1, nstors)
 
     # Main simulation loop
     for t in 1:N
 
-        update_availability!(rng, gens_available, cache.system.generators, t)
-        update_availability!(rng, stors_available, cache.system.storages, t)
-        decay_energy!(stors_energy, cache.system.storages, t)
+        update_availability!(
+            rng, gens_available, gens_nexttransition, gens, t, N)
+
+        update_availability!(
+            rng, stors_available, stors_nexttransition, stors, t, N)
+
+        decay_energy!(stors_energy, stors, t)
 
         residual_generation = available_capacity(
-            gens_available, cache.system.generators, all_gens, t)
+            gens_available, gens, all_gens, t)
         residual_generation -= colsum(cache.system.regions.load, t)
 
         if residual_generation >= 0
@@ -104,7 +114,7 @@ function assess!(
             # Charge to consume residual_generation
             surplus = charge_storage!(
                 stors_available, stors_energy, residual_generation,
-                cache.system.storages, all_stors, t)
+                stors, all_stors, t)
             sample.regions[1] = RegionResult{L,T,P}(
                 residual_generation, surplus, 0.)
 
@@ -113,7 +123,7 @@ function assess!(
             # Discharge to meet residual_generation shortfall
             shortfall = discharge_storage!(
                 stors_available, stors_energy, -residual_generation,
-                cache.system.storages, all_stors, t)
+                stors, all_stors, t)
             sample.regions[1] = RegionResult{L,T,P}(
                 residual_generation, 0., shortfall)
 

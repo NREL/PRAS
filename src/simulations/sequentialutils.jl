@@ -1,12 +1,37 @@
-function update_availability!(rng::MersenneTwister, availability::Vector{Bool},
-                              devices::AbstractAssets, t::Int)
+function initialize_availability!(
+    rng::MersenneTwister,
+    availability::Vector{Bool}, nexttransition::Vector{Int},
+    devices::AbstractAssets, t_last::Int)
 
-    for i in 1:length(availability)
+    for i in 1:length(devices)
 
-        if availability[i] # Unit is online
-            rand(rng) < devices.λ[i, t] && (availability[i] = false) # Unit fails
-        else # Unit is offline
-            rand(rng) < devices.μ[i, t] && (availability[i] = true) # Unit is repaired
+        λ = devices.λ[i, 1]
+        μ = devices.μ[i, 1]
+        online = rand(rng) < μ / (λ + μ)
+
+        availability[i] = online
+
+        transitionprobs = online ? devices.λ : devices.μ
+        nexttransition[i] = randtransitiontime(
+            rng, transitionprobs, i, 1, t_last)
+
+    end
+
+    return availability
+
+end
+
+function update_availability!(
+    rng::MersenneTwister,
+    availability::Vector{Bool}, nexttransition::Vector{Int},
+    devices::AbstractAssets, t_now::Int, t_last::Int)
+
+    for i in 1:length(devices)
+
+        if nexttransition[i] == t_now # Unit switches states
+            transitionprobs = (availability[i] ⊻= true) ? devices.λ : devices.μ
+            nexttransition[i] = randtransitiontime(
+                rng, transitionprobs, i, t_now, t_last)
         end
 
     end
@@ -155,5 +180,28 @@ function discharge_storage!(
     end
 
     return energytopower(P, shortfall, E, L, T)
+
+end
+
+function randtransitiontime(
+    rng::MersenneTwister, p::Matrix{Float64},
+    i::Int, t_now::Int, t_last::Int
+)
+
+    cdf = 0
+    p_noprevtransition = 1
+
+    x = rand(rng)
+    t = t_now + 1
+
+    while t <= t_last
+        p_it = p[i,t]
+        cdf += p_noprevtransition * p_it
+        x < cdf && return t
+        p_noprevtransition *= (1 - p_it)
+        t += 1
+    end
+
+    return t_last + 1
 
 end
