@@ -38,18 +38,6 @@ function update_availability!(
 
 end
 
-function decay_energy!(
-    stors_energy::Vector{Int},
-    stors::Storages,
-    t::Int
-)
-
-    for i in 1:length(stors_energy)
-        stors_energy[i] *= round(Int, stors.carryoverefficiency[i,t])
-    end
-
-end
-
 function available_capacity(
     availability::Vector{Bool},
     lines::Lines,
@@ -100,13 +88,20 @@ function available_storage_capacity(
         if stors_available[i]
 
             stor_energy = stors_energy[i]
-
-            maxcharge = stors.chargecapacity[i, t]
-            maxdischarge = stors.dischargecapacity[i, t]
             maxenergy = stors.energycapacity[i, t]
 
-            charge_capacity += min(maxcharge, round(Int, energytopower(P, maxenergy - stor_energy, E, L, T)))
-            discharge_capacity += min(maxdischarge, round(Int, energytopower(P, stor_energy, E, L, T)))
+            maxcharge = stors.chargecapacity[i, t]
+            chargeefficiency = stors.chargeefficiency[i, t]
+
+            maxdischarge = stors.dischargecapacity[i, t]
+            dischargeefficiency = stors.chargeefficiency[i, t]
+
+            charge_capacity +=
+                min(maxcharge, round(Int, energytopower(
+                    P, (maxenergy - stor_energy) / chargeefficiency, E, L, T)))
+            discharge_capacity +=
+                min(maxdischarge, round(Int, energytopower(
+                    P, stor_energy * dischargeefficiency, E, L, T)))
 
         end
     end
@@ -123,7 +118,7 @@ function charge_storage!(
     stors_range::Tuple{Int,Int}, t::Int
 ) where {N,L,T,P,E}
 
-    # TODO: Replace with copperplate charging from Evans et al
+    # TODO: Replace with time-to-go charging from Evans et al
 
     surplus = powertoenergy(E, surplus, P, L, T)
 
@@ -131,8 +126,11 @@ function charge_storage!(
 
         if stors_available[i]
 
+            chargeefficiency = stors.chargeefficiency[i, t]
             power_limit = powertoenergy(E, stors.chargecapacity[i, t], P, L, T)
-            energy_limit = stors.energycapacity[i, t] - stors_energy[i]
+            energy_limit =
+                round(Int, (stors.energycapacity[i, t] - stors_energy[i]) /
+                      chargeefficiency)
 
             if energy_limit <= min(power_limit, surplus) # Charge to full energy
 
@@ -141,12 +139,12 @@ function charge_storage!(
 
             elseif power_limit <= min(energy_limit, surplus) # Charge at full power
 
-                stors_energy[i] += power_limit
+                stors_energy[i] += round(Int, power_limit * chargeefficiency)
                 surplus -= power_limit
 
             else # Surplus is exhausted, allocate the last of it and return
 
-                stors_energy[i] += surplus
+                stors_energy[i] += round(Int, surplus * chargeefficiency)
                 return 0
 
             end
@@ -167,7 +165,7 @@ function discharge_storage!(
     stor_range::Tuple{Int,Int}, t::Int
 ) where {N,L,T,P,E}
 
-    # TODO: Replace with optimal copperplate charging from Evans et al
+    # TODO: Replace with time-to-go discharging from Evans et al
 
     shortfall = powertoenergy(E, shortfall, P, L, T)
 
@@ -175,8 +173,9 @@ function discharge_storage!(
 
         if stors_available[i]
 
+            dischargeefficiency = stors.dischargeefficiency[i, t]
             power_limit = powertoenergy(E, stors.dischargecapacity[i, t], P, L, T)
-            energy_limit = stors_energy[i]
+            energy_limit = round(Int, stors_energy[i] * dischargeefficiency)
 
             if energy_limit <= min(power_limit, shortfall) # Discharge to zero energy
 
@@ -185,12 +184,12 @@ function discharge_storage!(
 
             elseif power_limit <= min(energy_limit, shortfall) # Discharge at full power
 
-                stors_energy[i] -= power_limit
+                stors_energy[i] -= round(Int, power_limit / dischargeefficiency)
                 shortfall -= power_limit
 
             else # Shortfall is exhausted, allocate the last of it and return
 
-                stors_energy[i] -= shortfall
+                stors_energy[i] -= round(Int, shortfall / dischargeefficiency)
                 return 0
 
             end
@@ -200,6 +199,18 @@ function discharge_storage!(
     end
 
     return energytopower(P, shortfall, E, L, T)
+
+end
+
+function decay_energy!(
+    stors_energy::Vector{Int},
+    stors::Storages,
+    t::Int
+)
+
+    for i in 1:length(stors_energy)
+        stors_energy[i] *= round(Int, stors.carryoverefficiency[i,t])
+    end
 
 end
 
