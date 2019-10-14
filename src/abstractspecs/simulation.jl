@@ -50,7 +50,17 @@ function assess(simulationspec::SimulationSpec{NonSequential},
     cch = cache(simulationspec, system, seed)
     acc = accumulator(NonSequential, resultspec, system)
 
-    #TODO: If storage devices exist, warn that they will be ignored
+    nstors = length(system.storages)
+    ngenstors = length(system.generatorstorages)
+
+    if nstors + ngenstors > 0
+        resources = String[]
+        nstors > 0 && push!(resources, "$nstors Storage")
+        ngenstors > 0 && push!(resources, "$ngenstors GeneratorStorage")
+        @warn "$simulationspec is a non-sequential simulation method. " *
+              "The system's " * join(resources, " and ") * " resources " *
+              "will be ignored in the assessment."
+    end
 
     Threads.@threads for t in 1:N 
         assess!(cch, acc, t)
