@@ -1,5 +1,5 @@
 struct RegionResult{L,T<:Period,P<:PowerUnit}
-    net_injection::Int
+    net_available_capacity::Int
     surplus::Int
     shortfall::Int
 end
