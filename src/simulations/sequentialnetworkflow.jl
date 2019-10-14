@@ -209,11 +209,11 @@ function update_flowedges!(
         interface_backwardedge = flowproblem.edges[ninterfaces + i]
         line_range = lineranges[i]
 
-        interface_capacity =
+        interface_capacity_forward, interface_capacity_backward =
             available_capacity(lines_available, lines, line_range, t)
 
-        updateflowlimit!(interface_forwardedge, interface_capacity)
-        updateflowlimit!(interface_backwardedge, interface_capacity)
+        updateflowlimit!(interface_forwardedge, interface_capacity_forward)
+        updateflowlimit!(interface_backwardedge, interface_capacity_backward)
 
     end
 

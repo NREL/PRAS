@@ -52,6 +52,26 @@ end
 
 function available_capacity(
     availability::Vector{Bool},
+    lines::Lines,
+    i_bounds::Tuple{Int,Int}, t::Int
+)
+
+    avcap_forward = 0
+    avcap_backward = 0
+
+    for i in first(i_bounds):last(i_bounds)
+        if availability[i]
+            avcap_forward += lines.forwardcapacity[i, t]
+            avcap_backward += lines.backwardcapacity[i, t]
+        end
+    end
+
+    return avcap_forward, avcap_backward
+
+end
+
+function available_capacity(
+    availability::Vector{Bool},
     assets::AbstractAssets,
     i_bounds::Tuple{Int,Int}, t::Int
 )
