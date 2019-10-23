@@ -1,10 +1,16 @@
 struct SequentialNetworkFlow <: SimulationSpec{Sequential}
     nsamples::Int
+    collapsestorage::Bool
 
-    function SequentialNetworkFlow(nsamples::Int)
-        @assert nsamples > 0
-        new(nsamples)
+    function SequentialNetworkFlow(;
+        samples::Int=10_000,
+        collapsestorage::Bool=false)
+
+        @assert samples > 0
+        new(samples, collapsestorage)
+
     end
+
 end
 
 ismontecarlo(::SequentialNetworkFlow) = true

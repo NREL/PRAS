@@ -1,10 +1,16 @@
 struct SequentialCopperplate <: SimulationSpec{Sequential}
     nsamples::Int
+    collapsestorage::Bool
 
-    function SequentialCopperplate(nsamples::Int)
-        @assert nsamples > 0
-        new(nsamples)
+    function SequentialCopperplate(;
+        samples::Int=10_000,
+        collapsestorage::Bool=false)
+
+        @assert samples > 0
+        new(samples, collapsestorage)
+
     end
+
 end
 
 iscopperplate(::SequentialCopperplate) = true

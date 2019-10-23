@@ -3,10 +3,13 @@
 struct NonSequentialNetworkFlow <: SimulationSpec{NonSequential}
     nsamples::Int
 
-    function NonSequentialNetworkFlow(nsamples::Int)
-        @assert nsamples > 0
-        new(nsamples)
+    function NonSequentialNetworkFlow(;samples::Int=10_000)
+
+        @assert samples > 0
+        new(samples)
+
     end
+
 end
 
 ismontecarlo(::NonSequentialNetworkFlow) = true

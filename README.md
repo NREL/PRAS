@@ -3,9 +3,6 @@
 [![Build Status](https://travis-ci.org/NREL/ResourceAdequacy.jl.svg?branch=master)](https://travis-ci.org/NREL/ResourceAdequacy.jl)
 [![Coverage Status](https://coveralls.io/repos/github/NREL/ResourceAdequacy.jl/badge.svg?branch=master)](https://coveralls.io/github/NREL/ResourceAdequacy.jl?branch=master)
 
-_Note: This package is still very much a work in progress and is subject
-to change. Email Gord for the latest status._
-
 The Probabilistic Resource Adequacy Suite (PRAS) provides a modular collection
 of data processing and system simulation tools to assess power system reliability.
 
@@ -30,22 +27,19 @@ export JULIA_NUM_THREADS=36
 
 ### Architecture Overview
 
-PRAS functionality is distributed across a range of different types of
-modules that can be mixed, matched, extended, or replaced to support the needs
+PRAS functionality is distributed across groups of
+modular specifications that can be mixed, extended, or replaced to support the needs
 of a particular analysis. When assessing reliability or capacity value, one can
-define the modules to be used while passing along any associated parameters
+define the specs to be used while passing along any associated parameters
 or options.
 
-The categories of modules are:
+The categories of specifications are:
 
-**Extractions**: How should VG or load data be extracted from historical
-time-series data to create probability distributions at each timestep?
-Options are `Backcast` or `REPRA`.
+**Simulation Specifications**: How should power system operations be simulated?
+Options are `NonSequentialCopperplate`, `NonSequentialNetworkFlow`,
+`SequentialCopperplate`, or `SequentialNetworkFlow`.
 
-**Simulations**: How should power system operations be simulated?
-Options are `NonSequentialCopperplate` or `NonSequentialNetworkFlow`.
-
-**Results**: What level of detail should be saved out during simulations?
+**Result Specifications**: What level of detail should be saved out during simulations?
 Options are `Minimal`, `Temporal`, `Spatial`, `SpatioTemporal`, and `Network`.
 
 ### Running an analysis
@@ -53,37 +47,29 @@ Options are `Minimal`, `Temporal`, `Spatial`, `SpatioTemporal`, and `Network`.
 Analysis centers around the `assess` method with different arguments passed
 depending on the desired analysis to run.
 For example, to run a convolution-based reliability assessment
-(`NonSequentialCopperplate`) with VG distributions derived from simple
-backcasts (`Backcast`) and aggregate LOLE and EUE reporting (`Minimal`),
+(`NonSequentialCopperplate`) with aggregate LOLE and EUE reporting (`Minimal`),
 one would run:
 
 ```julia
-assess(Backcast(), NonSequentialCopperplate(), Minimal(), mysystemmodel)
+assess(NonSequentialCopperplate(), Minimal(), mysystemmodel)
 ```
 
 To run a network flow simulation instead with 100,000 Monte Carlo samples,
 the method call becomes:
 
 ```julia
-assess(Backcast(), NonSequentialNetworkFlow(100_000), Minimal(), mysystemmodel)
-```
-
-To use REPRA-style windowing (with a +/- 1-hour, +/- 10-day window)
-to generate VG distributions, the call becomes:
-
-```julia
-assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Minimal(), mysystemmodel)
+assess(NonSequentialNetworkFlow(samples=100_000), Minimal(), mysystemmodel)
 ```
 
 To save regional results in a multi-area system, change `Minimal` to `Spatial`:
 ```julia
-assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), Spatial(), mysystemmodel)
+assess(NonSequentialNetworkFlow(samples=100_000), Spatial(), mysystemmodel)
 ```
 
 To save regional results for each simulation period, use the `SpatioTemporal`
 result specification instead:
 ```julia
-assess(REPRA(1, 10), NonSequentialNetworkFlow(100_000), SpatioTemporal(), mysystemmodel)
+assess(NonSequentialNetworkFlow(samples=100_000), SpatioTemporal(), mysystemmodel)
 ```
 
 ### Querying Results
@@ -94,7 +80,7 @@ appropriate metric's constructor with the result object.
 For example, to obtain the system-wide LOLE over the simulation period:
 
 ```julia
-result = assess(Backcast(), NonSequentialNetworkFlow(100_000), SpatioTemporal(), mysystemmodel)
+result = assess(NonSequentialNetworkFlow(100_000), SpatioTemporal(), mysystemmodel)
 lole = LOLE(result)
 ```
 Single-period metrics such as LOLP can also be extracted if the appropriate
