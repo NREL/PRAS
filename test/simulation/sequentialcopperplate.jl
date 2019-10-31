@@ -2,7 +2,7 @@
 
     seed = UInt(1234)
     nstderr_tol = 3
-    simspec = SequentialCopperplate(samples=100_000)
+    simspec = SequentialCopperplate(samples=100_000, collapsestorage=true)
 
     # TODO: Add test case with storage
     assess(simspec, Minimal(), singlenode_stor, seed)

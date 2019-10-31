@@ -76,6 +76,26 @@ function assetgrouprange(starts::Vector{Int}, nassets::Int)
 
 end
 
+function assetgrouplist(starts::Vector{Int}, nassets::Int)
+
+    ngroups = length(starts)
+    results = Vector{Int}(undef, nassets)
+
+    g = 1
+
+    while g < ngroups
+        for i in starts[g]:(starts[g+1]-1)
+            results[i] = g
+        end
+        g += 1
+    end
+
+    results[starts[ngroups]:nassets] = g
+
+    return results
+
+end
+
 function colsum(x::Matrix{T}, col::Int) where {T}
 
     result = zero(T)

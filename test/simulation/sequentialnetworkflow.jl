@@ -2,10 +2,11 @@
 
     seed = UInt(2345)
     nstderr_tol = 3
-    simspec = SequentialNetworkFlow(samples=100_000)
+    simspec = SequentialNetworkFlow(samples=100_000, collapsestorage=true)
 
     # TODO: More test cases with storage
-    assess(SequentialNetworkFlow(samples=10), Minimal(), singlenode_stor, seed)
+    assess(SequentialNetworkFlow(samples=10, collapsestorage=true),
+           Minimal(), singlenode_stor, seed)
 
     # Single-region system A
     timestampcol = collect(singlenode_a.timestamps)
