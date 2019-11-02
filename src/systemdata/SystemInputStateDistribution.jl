@@ -74,29 +74,3 @@ function convolvepartitions(
     return distrs
 
 end
-
-function rand!(rng::MersenneTwister, fp::FlowProblem,
-               sampler::SystemInputStateSampler)
-
-    slacknode = fp.nodes[end]
-    nregions = length(sampler.regions)
-    ninterfaces = length(sampler.interfaces)
-
-    # Draw random capacity surplus / deficits
-    for i in 1:nregions
-        injection = rand(rng, sampler.regions[i])
-        updateinjection!(fp.nodes[i], slacknode, injection)
-    end
-
-    # Assign random interface limits
-    # TODO: Model seperate forward and reverse flow limits
-    #       (based on common line outages)
-    for i in 1:ninterfaces
-        flowlimit = rand(rng, sampler.interfaces[i])
-        updateflowlimit!(fp.edges[i], flowlimit) # Forward transmission
-        updateflowlimit!(fp.edges[ninterfaces + i], flowlimit) # Reverse transmission
-    end
-
-    return fp
-
-end

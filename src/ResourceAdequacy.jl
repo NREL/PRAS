@@ -10,6 +10,7 @@ import Distributions: AliasTable,
                       DiscreteNonParametric, DiscreteNonParametricSampler,
                       probs, sampler, support
 import Future: randjump
+import MinCostFlows: solveflows!
 import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
 import Random: MersenneTwister, rand, rand!, SamplerRangeFast
 import StatsBase: countmap, stderror
@@ -46,14 +47,14 @@ include("simulations/sequentialutils.jl")
 
 # Spec instances
 spec_instances = [
+    ("flowproblem", ["transmission", "dispatch", "transmissiondispatch"]),
     ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
                     "nonsequentialnetworkflow", "sequentialnetworkflow"]),
-    ("result", ["minimal", "temporal", "spatial", "spatiotemporal", "network"])
+    ("result", ["minimal", "temporal", "spatial",
+                "spatiotemporal", "network"])
 ]
 for (spec, instances) in spec_instances, instance in instances
     include(spec * "s/" * instance * ".jl")
 end
-
-include("simulations/flowproblems.jl")
 
 end # module

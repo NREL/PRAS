@@ -90,7 +90,7 @@ function assetgrouplist(starts::Vector{Int}, nassets::Int)
         g += 1
     end
 
-    results[starts[ngroups]:nassets] = g
+    results[starts[ngroups]:nassets] .= g
 
     return results
 

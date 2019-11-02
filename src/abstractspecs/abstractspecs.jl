@@ -29,6 +29,10 @@ Check the documentation for each function for required type signatures.
 abstract type SimulationCache{
     N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,SS<:SimulationSpec} end
 
+abstract type OptimizationProblem end
+
+solveflows!(op::OptimizationProblem) = solveflows!(flowproblem(op))
+
 # Results
 
 """
