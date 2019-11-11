@@ -44,14 +44,12 @@ include("systemdata/systemdata.jl")
 include("metrics/metrics.jl")
 include("abstractspecs/abstractspecs.jl")
 include("simulations/sequentialutils.jl")
+include("simulations/dispatchproblem.jl")
 
 # Spec instances
 spec_instances = [
-    ("flowproblem", ["transmission", "dispatch", "transmissiondispatch"]),
-    ("simulation", ["nonsequentialcopperplate", "sequentialcopperplate",
-                    "nonsequentialnetworkflow", "sequentialnetworkflow"]),
-    ("result", ["minimal", "temporal", "spatial",
-                "spatiotemporal", "network"])
+    ("simulation", ["classic", "modern"]),
+    ("result", ["minimal", "temporal", "spatial", "spatiotemporal", "network"])
 ]
 for (spec, instances) in spec_instances, instance in instances
     include(spec * "s/" * instance * ".jl")

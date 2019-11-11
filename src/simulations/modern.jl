@@ -1,20 +1,31 @@
-struct SequentialNetworkFlow <: SimulationSpec{Sequential}
+include("modern_dispatchproblem.jl")
+include("modern_utils.jl")
+
+struct Modern <: SimulationSpec
     nsamples::Int
-    collapsestorage::Bool
 
-    function SequentialNetworkFlow(;
-        samples::Int=10_000,
-        collapsestorage::Bool=false)
-
-        @assert samples > 0
-        new(samples, collapsestorage)
-
+    function SequentialNetworkFlow(;nsamples::Int=10_000)
+        @assert nsamples > 0
+        new(nsamples)
     end
 
 end
 
-ismontecarlo(::SequentialNetworkFlow) = true
-iscopperplate(::SequentialNetworkFlow) = false
+function assess(simulationspec::Modern,
+                resultspec::ResultSpec,
+                system::SystemModel,
+                seed::UInt=rand(UInt))
+
+    cch = cache(simulationspec, system, seed)
+    acc = accumulator(Sequential, resultspec, system)
+
+    Threads.@threads for i in 1:simulationspec.nsamples
+        assess!(cch, acc, i)
+    end
+
+    return finalize(cch, acc)
+
+end
 
 struct SequentialNetworkFlowCache{N,L,T,P,E} <:
     SimulationCache{N,L,T,P,E,SequentialNetworkFlow}
@@ -34,6 +45,10 @@ struct SequentialNetworkFlowCache{N,L,T,P,E} <:
     stors_energy::Vector{Vector{Int}}
 
 end
+
+# TODO: Switch cache over to collection of thread-specific caches (SystemState).
+#       Or, use parallel Tasks/Channels with thread-local allocations instead
+#       (potentially reworking result accumulation eventually)
 
 function cache(
     simulationspec::SequentialNetworkFlow,

@@ -1,21 +1,15 @@
 # Simulation
 
-abstract type SimulationSequentiality end
-struct NonSequential <: SimulationSequentiality end
-struct Sequential <: SimulationSequentiality end
-
 """
 An abstract parent type for specifying specific simulation methods. When
 defining a new type `S where {S <: SimulationSpec}`, you must also define
 methods for the following functions:
 
- - `ismontecarlo`
- - `iscopperplate`
- - `assess!`
+ - `assess`
 
 Check the documentation for each function for required type signatures.
 """
-abstract type SimulationSpec{SS<:SimulationSequentiality} end
+abstract type SimulationSpec end
 
 """
 An abstract parent type for holding cached data and memory allocation
@@ -28,10 +22,6 @@ Check the documentation for each function for required type signatures.
 """
 abstract type SimulationCache{
     N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,SS<:SimulationSpec} end
-
-abstract type OptimizationProblem end
-
-solveflows!(op::OptimizationProblem) = solveflows!(flowproblem(op))
 
 # Results
 
