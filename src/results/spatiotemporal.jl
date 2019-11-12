@@ -73,6 +73,3 @@ EUE(x::SpatioTemporalResult, r::AbstractString) =
 EUE(x::SpatioTemporalResult, r::AbstractString, t::DateTime)  =
     x.regionalperiodeues[findfirstunique(x.regions, r),
                          findfirstunique(x.timestamps, t)]
-
-include("spatiotemporal_nonsequentialaccumulator.jl")
-include("spatiotemporal_sequentialaccumulator.jl")

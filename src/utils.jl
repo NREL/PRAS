@@ -1,15 +1,3 @@
-CapacityDistribution =
-    DiscreteNonParametric{Int,Float64,Vector{Int},Vector{Float64}}
-
-CapacitySampler =
-    DiscreteNonParametricSampler{
-        Int, Vector{Int},
-        AliasTable{SamplerRangeFast{UInt64,Int64}}}
-
-MeanVariance = Series{
-    Number, Tuple{Mean{Float64, EqualWeight}, Variance{Float64, EqualWeight}}
-}
-
 function makemetric(f, mv::MeanVariance)
     nsamples = first(mv.stats).n
     samplemean, samplevar = value(mv)
@@ -105,27 +93,5 @@ function colsum(x::Matrix{T}, col::Int) where {T}
     end
 
     return result
-
-end
-
-function assess(distr::CapacityDistribution)
-
-    xs = support(distr)
-    ps = probs(distr)
-
-    i = 1
-    lolp = 0.
-    eul = 0.
-
-    while i <= length(xs)
-
-       xs[i] >= 0 && break
-       lolp += ps[i]
-       eul -= ps[i] * xs[i]
-       i += 1
-
-    end
-
-    return lolp, eul
 
 end

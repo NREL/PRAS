@@ -1,8 +1,6 @@
 @testset "Simulation" begin
 
-    include("simulation/nonsequentialcopperplate.jl")
-    include("simulation/sequentialcopperplate.jl")
-    include("simulation/nonsequentialnetworkflow.jl")
-    include("simulation/sequentialnetworkflow.jl")
+    include("simulation/classic.jl")
+    #include("simulation/modern.jl")
 
 end

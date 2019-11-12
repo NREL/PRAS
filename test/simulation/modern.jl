@@ -1,11 +1,11 @@
-@testset "SequentialNetworkFlow" begin
+@testset "Modern" begin
 
     seed = UInt(2345)
     nstderr_tol = 3
-    simspec = SequentialNetworkFlow(samples=100_000, collapsestorage=true)
+    simspec = Modern(samples=100_000)
 
     # TODO: More test cases with storage
-    assess(SequentialNetworkFlow(samples=10, collapsestorage=true),
+    assess(Modern(samples=10),
            Minimal(), singlenode_stor, seed)
 
     # Single-region system A

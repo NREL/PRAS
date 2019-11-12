@@ -33,6 +33,3 @@ EUE(x::TemporalResult) = x.eue
 EUE(x::TemporalResult, t::Int) = x.eues[t]
 EUE(x::TemporalResult, dt::DateTime) =
     x.eues[findfirstunique(x.timestamps, dt)]
-
-include("temporal_nonsequentialaccumulator.jl")
-include("temporal_sequentialaccumulator.jl")

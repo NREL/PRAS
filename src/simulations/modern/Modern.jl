@@ -1,5 +1,6 @@
 include("modern_dispatchproblem.jl")
 include("modern_utils.jl")
+include("SystemOutputStateSample.jl")
 
 struct Modern <: SimulationSpec
     nsamples::Int

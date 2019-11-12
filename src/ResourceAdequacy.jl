@@ -3,7 +3,8 @@ module ResourceAdequacy
 using MinCostFlows
 using PRASBase
 
-import Base: -
+import Base: -, broadcastable
+import Base.Threads: nthreads, @spawn
 import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
 import Decimals: Decimal
 import Distributions: AliasTable,
@@ -17,8 +18,6 @@ import StatsBase: countmap, stderror
 
 export
 
-    -,
-
     assess,
 
     # Units
@@ -31,28 +30,30 @@ export
     val, stderror,
 
     # Simulation specifications
-    NonSequentialCopperplate, SequentialCopperplate,
-    NonSequentialNetworkFlow, SequentialNetworkFlow,
+    Classic, Modern,
 
     # Result specifications
-    Minimal, Spatial, Temporal, SpatioTemporal, Network
+    Minimal, Temporal, SpatioTemporal, Network
 
 
-# Basic / common functionality
-include("utils/utils.jl")
-include("systemdata/systemdata.jl")
+abstract type ReliabilityMetric end
+abstract type SimulationSpec end
+abstract type ResultSpec end
+abstract type ResultAccumulator{R<:ResultSpec} end
+abstract type Result{
+    N, # Number of timesteps simulated
+    L, # Length of each simulation timestep
+    T <: Period, # Units of each simulation timestep
+    SS <: SimulationSpec # Type of simulation that produced the result
+} end
+
+MeanVariance = Series{
+    Number, Tuple{Mean{Float64, EqualWeight}, Variance{Float64, EqualWeight}}
+}
+
 include("metrics/metrics.jl")
-include("abstractspecs/abstractspecs.jl")
-include("simulations/sequentialutils.jl")
-include("simulations/dispatchproblem.jl")
+include("results/results.jl")
+include("simulations/simulations.jl")
+include("utils.jl")
 
-# Spec instances
-spec_instances = [
-    ("simulation", ["classic", "modern"]),
-    ("result", ["minimal", "temporal", "spatial", "spatiotemporal", "network"])
-]
-for (spec, instances) in spec_instances, instance in instances
-    include(spec * "s/" * instance * ".jl")
 end
-
-end # module

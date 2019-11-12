@@ -21,6 +21,3 @@ end
 
 LOLE(x::MinimalResult) = x.lole
 EUE(x::MinimalResult) = x.eue
-
-include("minimal_nonsequentialaccumulator.jl")
-include("minimal_sequentialaccumulator.jl")

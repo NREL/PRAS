@@ -17,7 +17,6 @@ Base.isapprox(x::DiscreteNonParametric, y::DiscreteNonParametric) =
     include("metrics.jl")
     include("results.jl")
     include("systems.jl")
-    include("systemdata.jl")
     include("simulation.jl")
 
 end

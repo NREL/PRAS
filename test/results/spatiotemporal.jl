@@ -21,7 +21,7 @@
         regions, tstamps,
         lole, regionalloles, periodlolps, regionalperiodlolps,
         eue, regionaleues, periodeues, regionalperiodeues,
-        NonSequentialCopperplate())
+        Modern())
 
     # Disallow metrics defined over different time periods
     @test_throws MethodError ResourceAdequacy.SpatioTemporalResult(
@@ -31,7 +31,7 @@
         EUE{168,30,Minute,MWh}.(val.(regionaleues), stderror.(regionaleues)),
         EUE{1,30,Minute,MWh}.(val.(periodeues), stderror.(periodeues)),
         EUE{1,30,Minute,MWh}.(val.(regionalperiodeues), stderror.(regionalperiodeues)),
-        NonSequentialCopperplate()
+        Modern()
     )
 
     # Metric constructors

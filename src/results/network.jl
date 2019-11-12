@@ -128,6 +128,3 @@ function ExpectedInterfaceUtilization(x::NetworkResult, i::Tuple{Int,Int}, t::Da
     t_idx = findfirstunique(x.timestamps, t) 
     return x.utilizations[i_idx, t_idx]
 end
-
-include("network_nonsequentialaccumulator.jl")
-include("network_sequentialaccumulator.jl")
