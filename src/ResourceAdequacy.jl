@@ -7,14 +7,12 @@ import Base: -, broadcastable
 import Base.Threads: nthreads, @spawn
 import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
 import Decimals: Decimal
-import Distributions: AliasTable,
-                      DiscreteNonParametric, DiscreteNonParametricSampler,
-                      probs, sampler, support
+import Distributions: DiscreteNonParametric, probs, support
 import Future: randjump
 import MinCostFlows: solveflows!
 import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
-import Random: MersenneTwister, rand, rand!, SamplerRangeFast
-import StatsBase: countmap, stderror
+import Random: MersenneTwister, rand
+import StatsBase: stderror
 
 export
 

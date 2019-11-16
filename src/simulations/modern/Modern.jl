@@ -72,7 +72,7 @@ function assess(
 
         for t in 1:nperiods
 
-            advance!(rng, systemstate, dispatchproblem, system, t) # TODO
+            advance!(rng, systemstate, dispatchproblem, system, t)
             solve!(dispatchproblem, systemstate)
             record!(recorder, systemstate, dispatchproblem, s, t)
 
@@ -155,6 +155,5 @@ end
 
 #include("result_minimal.jl")
 #include("result_temporal.jl")
-#include("result_spatial.jl")
 #include("result_spatiotemporal.jl")
 #include("result_network.jl")
