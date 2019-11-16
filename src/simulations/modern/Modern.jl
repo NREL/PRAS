@@ -1,177 +1,160 @@
-include("modern_dispatchproblem.jl")
-include("modern_utils.jl")
-include("SystemOutputStateSample.jl")
+include("SystemState.jl")
+include("DispatchProblem.jl")
+include("utils.jl")
 
 struct Modern <: SimulationSpec
+
     nsamples::Int
+    seed::UInt
 
-    function SequentialNetworkFlow(;nsamples::Int=10_000)
-        @assert nsamples > 0
-        new(nsamples)
+    function Modern(;
+        samples::Int=10_000, seed::UInt=rand(UInt))
+        @assert samples > 0
+        new(samples, seed)
     end
 
 end
 
-function assess(simulationspec::Modern,
-                resultspec::ResultSpec,
-                system::SystemModel,
-                seed::UInt=rand(UInt))
+function assess(
+    simspec::Modern,
+    resultspec::ResultSpec,
+    system::SystemModel)
 
-    cch = cache(simulationspec, system, seed)
-    acc = accumulator(Sequential, resultspec, system)
+    threads = nthreads()
+    samples = Channel{Tuple{Int,MersenneTwister}}(2*threads)
+    results = Channel{accumulatortype(simspec, resultspec, system)}(threads)
 
-    Threads.@threads for i in 1:simulationspec.nsamples
-        assess!(cch, acc, i)
+    @spawn makesamples(samples, simspec)
+
+    for _ in 1:threads
+        @spawn assess(simspec, resultspec, system, samples, results)
     end
 
-    return finalize(cch, acc)
+   return finalize(results, system, threads)
 
 end
 
-struct SequentialNetworkFlowCache{N,L,T,P,E} <:
-    SimulationCache{N,L,T,P,E,SequentialNetworkFlow}
+function makesamples(
+    periods::Channel{Tuple{Int,MersenneTwister}},
+    simspec::Modern,
+    step::Integer=big(10)^20)
 
-    simulationspec::SequentialNetworkFlow
-    system::SystemModel{N,L,T,P,E}
-    rngs::Vector{MersenneTwister}
+    rng = MersenneTwister(seed)
 
-    gens_available::Vector{Vector{Bool}}
-    gens_nexttransition::Vector{Vector{Int}}
+    for s in 1:simspec.nsamples
+        put!(periods, (s, rng))
+        rng = randjump(rng, step)
+    end
 
-    lines_available::Vector{Vector{Bool}}
-    lines_nexttransition::Vector{Vector{Int}}
-
-    stors_available::Vector{Vector{Bool}}
-    stors_nexttransition::Vector{Vector{Int}}
-    stors_energy::Vector{Vector{Int}}
+    close(periods)
 
 end
 
-# TODO: Switch cache over to collection of thread-specific caches (SystemState).
-#       Or, use parallel Tasks/Channels with thread-local allocations instead
-#       (potentially reworking result accumulation eventually)
+function assess(
+    simspec::Modern, resultspec::R, system::SystemModel,
+    samples::Channel{Tuple{Int,MersenneTwister}},
+    recorders::Channel{<:ResultAccumulator{R}}
+) where {R<:ResultSpec}
 
-function cache(
-    simulationspec::SequentialNetworkFlow,
-    system::SystemModel, seed::UInt)
+    dispatchproblem = DispatchProblem(system)
+    systemstate = SystemState(system)
+    recorder = accumulator(simspec, resultspec, system)
 
-    nthreads = Threads.nthreads()
+    # TODO: Maybe just store range indices in this format directly
+    genranges = assetgrouprange(system.generators_regionstart, ngens)
+    storranges = assetgrouprange(system.storages_regionstart, nstors)
+    genstorranges = assetgrouprange(system.storages_regionstart, ngenstors)
+    lineranges = assetgrouprange(system.lines_interfacestart, nlines)
 
-    ngens = length(system.generators)
-    nlines = length(system.lines)
-    nstors = length(system.storages)
+    for (s, rng) in samples
 
-    rngs = Vector{MersenneTwister}(undef, nthreads)
-    rngs_temp = initrngs(nthreads, seed=seed)
+        initialize!(rng, systemstate, system)
 
-    gens_available = Vector{Vector{Bool}}(undef, nthreads)
-    gens_nexttransition = Vector{Vector{Int}}(undef, nthreads)
+        for t in 1:nperiods
 
-    lines_available = Vector{Vector{Bool}}(undef, nthreads)
-    lines_nexttransition = Vector{Vector{Int}}(undef, nthreads)
+            advance!(rng, systemstate, dispatchproblem, system, t) # TODO
+            solve!(dispatchproblem, systemstate)
+            record!(recorder, systemstate, dispatchproblem, s, t)
 
-    stors_available = Vector{Vector{Bool}}(undef, nthreads)
-    stors_nexttransition = Vector{Vector{Int}}(undef, nthreads)
-    stors_energy = Vector{Vector{Int}}(undef, nthreads)
+        end
 
-    Threads.@threads for i in 1:nthreads
-
-        rngs[i] = copy(rngs_temp[i])
-
-        gens_available[i] = Vector{Bool}(undef, ngens)
-        gens_nexttransition[i] = Vector{Int}(undef, ngens)
-
-        lines_available[i] = Vector{Bool}(undef, nlines)
-        lines_nexttransition[i] = Vector{Int}(undef, nlines)
-
-        stors_available[i] = Vector{Bool}(undef, nstors)
-        stors_nexttransition[i] = Vector{Int}(undef, nstors)
-        stors_energy[i] = Vector{Int}(undef, nstors)
+        reset!(recorder, s)
 
     end
 
-    return SequentialNetworkFlowCache(
-        simulationspec, system, rngs,
-        gens_available, gens_nexttransition,
-        lines_available, lines_nexttransition,
-        stors_available, stors_nexttransition, stors_energy)
+    put!(recorders, recorder)
 
 end
 
-function assess!(
-    cache::SequentialNetworkFlowCache{N,L,T,P,E},
-    acc::ResultAccumulator, i::Int
-) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+function initialize!(
+    rng::MersenneTwister, state::SystemState, system::SystemModel
+)
 
-    threadid = Threads.threadid()
+        nperiods = length(system.timesteps)
 
-    rng = cache.rngs[threadid]
+        initialize_availability!(
+            rng, state.gens_available, state.gens_nexttransition,
+            system.gens, nperiods)
 
-    gens = cache.system.generators
-    gens_available = cache.gens_available[threadid]
-    gens_nexttransition = cache.gens_nexttransition[threadid]
-    genranges = assetgrouprange(cache.system.generators_regionstart, length(gens))
+        initialize_availability!(
+            rng, state.stors_available, state.stors_nexttransition,
+            system.storages, nperiods)
 
-    stors = cache.system.storages
-    stors_available = cache.stors_available[threadid]
-    stors_nexttransition = cache.stors_nexttransition[threadid]
-    stors_energy = cache.stors_energy[threadid]
-    storranges = assetgrouprange(cache.system.storages_regionstart, length(stors))
+        initialize_availability!(
+            rng, state.genstors_available, state.genstors_nexttransition,
+            system.generatorstorages, nperiods)
 
-    lines = cache.system.lines
-    lines_available = cache.lines_available[threadid]
-    lines_nexttransition = cache.lines_nexttransition[threadid]
-    lineranges = assetgrouprange(cache.system.lines_interfacestart, length(lines))
+        initialize_availability!(
+            rng, state.lines_available, state.lines_nexttransition,
+            system.lines, nperiods)
 
-    nregions = length(cache.system.regions)
-    ninterfaces = length(cache.system.interfaces)
+        fill!(state.stors_energy, 0)
+        fill!(state.genstors_energy, 0)
 
-    outputsample = SystemOutputStateSample{L,T,P}(  # Preallocate?
-        cache.system.interfaces.regions_from,
-        cache.system.interfaces.regions_to, nregions)
-
-    # Initialize generator and storage state vector
-    # based on long-run probabilities from period 1
-    initialize_availability!(rng, gens_available, gens_nexttransition, gens, N)
-    initialize_availability!(rng, stors_available, stors_nexttransition, stors, N)
-    initialize_availability!(rng, lines_available, lines_nexttransition, lines, N)
-
-    # Initialize storage devices as empty
-    fill!(stors_energy, 0)
-
-    flowproblem = TransmissionDispatchProblem(cache.system)
-
-    # Main simulation loop
-    for t in 1:N
-
-        # Update assets for timestep
-        update_availability!(
-            rng, gens_available, gens_nexttransition, gens, t, N)
-        update_availability!(
-            rng, lines_available, lines_nexttransition, lines, t, N)
-        update_availability!(
-            rng, stors_available, stors_nexttransition, stors, t, N)
-        decay_energy!(stors_energy, stors, t)
-
-        update_flownodes!(
-            flowproblem, t, cache.system.regions.load,
-            genranges, gens, gens_available,
-            storranges, stors, stors_available, stors_energy)
-
-        update_flowedges!(
-            flowproblem, t,
-            lineranges, lines, lines_available)
-
-        solveflows!(flowproblem)
-
-        update_energy!(
-            stors_energy, t,
-            storranges, stors, stors_available,
-            flowproblem, ninterfaces)
-
-        update!(cache.simulationspec, outputsample, flowproblem)
-        update!(acc, outputsample, t, i)
-
-    end
+        return
 
 end
+
+function advance!(
+    rng::MersenneTwister,
+    state::SystemState,
+    dispatchproblem::DispatchProblem,
+    system::SystemModel, t::Int)
+
+    nperiods = length(system.timesteps)
+
+    update_availability!(
+        rng, state.gens_available, state.gens_nexttransition,
+        system.generators, t, nperiods)
+
+    update_availability!(
+        rng, state.stors_available, state.stors_nexttransition,
+        system.storages, t, nperiods)
+
+    update_availability!(
+        rng, state.genstors_available, state.genstors_nexttransition,
+        system.generatorstorages, t, nperiods)
+
+    update_availability!(
+        rng, state.lines_available, state.lines_nexttransition,
+        system.lines, t, nperiods)
+
+    decay_energy!(state.stors_energy, system.storages, t)
+    decay_energy!(state.genstors_energy, system.generatorstorages, t)
+
+    update_problem!(dispatchproblem, state, system, t)
+
+end
+
+function solve!(dispatchproblem::DispatchProblem, state::SystemState)
+
+    solveflows!(dispatchproblem.fp)
+    update_state!(state, dispatchproblem)
+
+end
+
+#include("result_minimal.jl")
+#include("result_temporal.jl")
+#include("result_spatial.jl")
+#include("result_spatiotemporal.jl")
+#include("result_network.jl")

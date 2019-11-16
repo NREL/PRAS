@@ -1,155 +1,169 @@
 @testset "Modern" begin
 
+    @testset "DispatchProblem" begin
+
+    end
+
     seed = UInt(2345)
     nstderr_tol = 3
     simspec = Modern(samples=100_000)
 
-    # TODO: More test cases with storage
-    assess(Modern(samples=10),
-           Minimal(), singlenode_stor, seed)
-
-    # Single-region system A
-    timestampcol = collect(singlenode_a.timestamps)
-
-    result_1ab = assess(simspec, Minimal(), singlenode_a, seed)
-    @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-
-    result_1ab = assess(simspec, Spatial(), singlenode_a, seed)
-    @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
-
-    result_1ab = assess(simspec, Temporal(), singlenode_a, seed)
-    @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-
-    @test all(withinrange.(LOLP.(result_1ab, timestampcol),
-                           singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, timestampcol),
-                           singlenode_a_eues, nstderr_tol))
-
-    result_1ab = assess(simspec, SpatioTemporal(), singlenode_a, seed)
-    @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1ab, timestampcol),
-                           singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, timestampcol),
-                           singlenode_a_eues, nstderr_tol))
-    @test all(withinrange.(LOLP.(result_1ab, "Region", timestampcol),
-                           singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol),
-                           singlenode_a_eues, nstderr_tol))
-
-    result_1ab = assess(simspec, Network(), singlenode_a, seed)
-    @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
-    @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1ab, timestampcol),
-                           singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, timestampcol),
-                           singlenode_a_eues, nstderr_tol))
-    @test all(withinrange.(LOLP.(result_1ab, "Region", timestampcol),
-                           singlenode_a_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol),
-                           singlenode_a_eues, nstderr_tol))
-    @test length(result_1ab.flows) == 0
-    @test length(result_1ab.utilizations) == 0
-
-    # Single-region system B
-    timestampcol = collect(singlenode_b.timestamps)
-
-    result_1bb = assess(simspec, Minimal(), singlenode_b, seed)
-    @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-
-    result_1bb = assess(simspec, Spatial(), singlenode_b, seed)
-    @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
-
-    result_1bb = assess(simspec, Temporal(), singlenode_b, seed)
-    @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1bb, timestampcol),
-                           singlenode_b_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, timestampcol),
-                           singlenode_b_eues, nstderr_tol))
-
-    result_1bb = assess(simspec, SpatioTemporal(), singlenode_b, seed)
-    @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1bb, timestampcol),
-              singlenode_b_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, timestampcol),
-                           singlenode_b_eues, nstderr_tol))
-    @test all(withinrange.(LOLP.(result_1bb, "Region", timestampcol),
-                           reshape(singlenode_b_lolps, :, 1), nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
-                           reshape(singlenode_b_eues, :, 1), nstderr_tol))
-
-    result_1bb = assess(simspec, Network(), singlenode_b, seed)
-    @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
-    @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
-    @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_1bb, timestampcol),
-              singlenode_b_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, timestampcol),
-                           singlenode_b_eues, nstderr_tol))
-    @test all(withinrange.(LOLP.(result_1bb, "Region", timestampcol),
-                           reshape(singlenode_b_lolps, :, 1), nstderr_tol))
-    @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
-                           reshape(singlenode_b_eues, :, 1), nstderr_tol))
-    @test length(result_1bb.flows) == 0
-    @test length(result_1bb.utilizations) == 0
-
-    println("\nThree-region system")
+    timestampcol_a = collect(singlenode_a.timestamps)
+    timestampcol_b = collect(singlenode_b.timestamps)
+    timestampcol_3 = collect(threenode.timestamps)
     regionsrow = reshape(threenode.regions.names, 1, :)
-    timestampcol = collect(threenode.timestamps)
 
-    result_3mb = assess(simspec, Minimal(), threenode, seed)
-    @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-    @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+    @testset "Minimal Result" begin
 
-    println("Spatial:")
-    result_3mb = assess(simspec, Spatial(), threenode, seed)
-    @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-    @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    # TODO:  Test spatially-disaggregated results
-    display(hcat(threenode.regions.names,
-                 LOLE.(result_3mb, threenode.regions.names),
-                 EUE.(result_3mb, threenode.regions.names)))
-    println()
+        # TODO: More test cases with storage
+        assess(Modern(samples=10), Minimal(), singlenode_stor)
 
-    result_3mb = assess(simspec, Temporal(), threenode, seed)
-    @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-    @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_3mb, threenode.timestamps),
-                           threenode_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_3mb, threenode.timestamps),
-                           threenode_eues, nstderr_tol))
+        result_1ab = assess(simspec, Minimal(), singlenode_a)
+        @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
+
+        # Single-region system B
+        result_1bb = assess(simspec, Minimal(), singlenode_b)
+        @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
+
+        # Three-region system
+        result_3mb = assess(simspec, Minimal(), threenode)
+        @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+
+    end
+
+    @testset "Temporal Result" begin
+
+        # Single-region system A
+        result_1ab = assess(simspec, Temporal(), singlenode_a)
+        @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
+
+        @test all(withinrange.(LOLP.(result_1ab, timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1ab, timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+
+        # Single-region system B
+        result_1bb = assess(simspec, Temporal(), singlenode_b)
+        @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1bb, timestampcol_b),
+                               singlenode_b_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1bb, timestampcol_b),
+                               singlenode_b_eues, nstderr_tol))
+
+        # Three-region system
+        result_3mb = assess(simspec, Temporal(), threenode)
+        @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_3mb, timestampcol_3),
+                               threenode_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_3mb, timestampcol_3),
+                               threenode_eues, nstderr_tol))
+
+    end
+
+    @testset "SpatioTemporal Result" begin
+
+        # Single-region system A
+        result_1ab = assess(simspec, SpatioTemporal(), singlenode_a)
+        @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
+        @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1ab, timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1ab, timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1ab, "Region", timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+
+        # Single-region system B
+        result_1bb = assess(simspec, SpatioTemporal(), singlenode_b)
+        @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
+        @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1bb, timestampcol),
+                  singlenode_b_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1bb, timestampcol),
+                               singlenode_b_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1bb, "Region", timestampcol),
+                               reshape(singlenode_b_lolps, :, 1), nstderr_tol))
+        @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
+                               reshape(singlenode_b_eues, :, 1), nstderr_tol))
+
+        # Three-region system
+        result_3mb = assess(simspec, SpatioTemporal(), threenode)
+        @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_3mb, timestampcol_3),
+                               threenode_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_3mb, timestampcol_3),
+                               threenode_eues, nstderr_tol))
+
+        @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+
+    end
+
+    @testset "Network Result" begin
+
+        # Single-region system A
+        result_1ab = assess(simspec, Network(), singlenode_a)
+        @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
+        @test withinrange(LOLE(result_1ab, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1ab, "Region"), singlenode_a_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1ab, timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1ab, timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1ab, "Region", timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1ab, "Region", timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+        @test length(result_1ab.flows) == 0
+        @test length(result_1ab.utilizations) == 0
+
+        # Single-region system B
+        result_1bb = assess(simspec, Network(), singlenode_b)
+        @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
+        @test withinrange(LOLE(result_1bb, "Region"), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1bb, "Region"), singlenode_b_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1bb, timestampcol),
+                  singlenode_b_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1bb, timestampcol),
+                               singlenode_b_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1bb, "Region", timestampcol),
+                               reshape(singlenode_b_lolps, :, 1), nstderr_tol))
+        @test all(withinrange.(EUE.(result_1bb, "Region", timestampcol),
+                               reshape(singlenode_b_eues, :, 1), nstderr_tol))
+        @test length(result_1bb.flows) == 0
+        @test length(result_1bb.utilizations) == 0
+
+        # Three-region system
+        result_3mb = assess(simspec, Network(), threenode)
+        @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_3mb, timestampcol_3),
+                               threenode_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_3mb, timestampcol_3),
+                               threenode_eues, nstderr_tol))
+
+        @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+
+    end
 
     # SpatioTemporal
     println("SpatioTemporal")
-    result_3mb = assess(simspec, SpatioTemporal(), threenode, seed)
-    @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-    @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_3mb, threenode.timestamps),
-                           threenode_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_3mb, threenode.timestamps),
-                           threenode_eues, nstderr_tol))
-
-    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
-    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
-
     # TODO:  Test spatially-disaggregated results
     println("SpatioTemporal LOLPs:")
     display(
@@ -168,17 +182,6 @@
     )); println()
 
     println("\nNetwork")
-    result_3mb = assess(simspec, Network(), threenode, seed)
-    @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-    @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
-    @test all(withinrange.(LOLP.(result_3mb, threenode.timestamps),
-                           threenode_lolps, nstderr_tol))
-    @test all(withinrange.(EUE.(result_3mb, threenode.timestamps),
-                           threenode_eues, nstderr_tol))
-
-    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
-    @test withinrange(LOLP(result_3mb, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
-
     println("Network ExpectedInterfaceFlows:")
     threenode_interfaces = tuple.(threenode.interfaces.regions_from,
                                   threenode.interfaces.regions_to)

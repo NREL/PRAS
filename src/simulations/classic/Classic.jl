@@ -5,7 +5,7 @@ struct Classic <: SimulationSpec end
 function assess(
     simspec::Classic,       # TODO: Look into traits for defining
     resultspec::ResultSpec, #       valid SimSpec/ResultSpec pairs
-    system::SystemModel{N}, seed::UInt=rand(UInt)) where {N}
+    system::SystemModel{N}) where {N}
 
     nregions = length(system.regions)
     nstors = length(system.storages)
@@ -33,7 +33,7 @@ function assess(
 
     @spawn makeperiods(periods, N)
 
-    for _ in 1:nthreads() 
+    for _ in 1:threads
         @spawn assess(simspec, resultspec, system, periods, results)
     end
 

@@ -215,28 +215,11 @@ end
 indices_after(lastset::UnitRange{Int}, setsize::Int) =
     1:setsize .+ last(lastset) 
 
-function update!(
-    rng::MersenneTwister,
-    systemstate::SystemState,
-    dispatchproblem::DispatchProblem)
+# TODO
+function update_problem!(
+    problem::DispatchProblem, state::SystemState,
+    system::SystemModel, t::Int)
 
-    # Calculate generators and storage device state transitions
-    # Update dispatchproblem if required
-
-end
-
-function update_flownodes!(
-    tdprob::TransmissionDispatchProblem,
-    t::Int,
-    loads::Matrix{Int},
-    genranges::Vector{Tuple{Int,Int}},
-    gens::Generators,
-    gens_available::Vector{Bool},
-    storranges::Vector{Tuple{Int,Int}},
-    stors::Storages,
-    stors_available::Vector{Bool},
-    stors_energy::Vector{Int},
-)
 
     nregions = length(genranges)
     fp = flowproblem(tdprob)
@@ -263,15 +246,6 @@ function update_flownodes!(
 
     end
 
-end
-
-function update_flowedges!(
-    tdprob::TransmissionDispatchProblem,
-    t::Int,
-    lineranges::Vector{Tuple{Int,Int}},
-    lines::Lines,
-    lines_available::Vector{Bool}
-) where {V <: Real}
 
     ninterfaces = length(lineranges)
     fp = flowproblem(tdprob)
@@ -292,14 +266,9 @@ function update_flowedges!(
 
 end
 
-function update_energy!(
-    stors_energy::Vector{Int},
-    t::Int,
-    storranges::Vector{Tuple{Int,Int}},
-    stors::Storages,
-    stors_available::Vector{Bool},
-    tdprob::TransmissionDispatchProblem,
-    ninterfaces::Int
+# TODO
+function update_state!(
+    state::SystemState, problem::DispatchProblem
 )
 
     nregions = length(storranges)
@@ -327,37 +296,6 @@ function update_energy!(
 
         end
 
-    end
-
-end
-
-# TODO: Use a macro to abstract out the significant commonalities with
-#       update! methods for DispatchProblem and TranmssionProblem
-function update!(
-    sample::SystemOutputStateSample{L,T,P},
-    tdprob::TransmissionDispatchProblem
-) where {L,T<:Period,P<:PowerUnit}
-
-    nregions = length(outputsample.regions)
-    ninterfaces = length(outputsample.interfaces)
-    fp = flowproblem(tdprob)
-
-    # Save gen available, gen dispatched, demand, demand served for each region
-    for i in 1:nregions
-        node = fp.nodes[i]
-        surplus_edge = fp.edges[2*ninterfaces + i]
-        shortfall_edge = fp.edges[2*ninterfaces + 5*nregions + i]
-        sample.regions[i] = RegionResult{L,T,P}(
-            node.injection, surplus_edge.flow, shortfall_edge.flow)
-    end
-
-    # Save flow available, flow for each interface
-    for i in 1:ninterfaces
-        forwardedge = fp.edges[i]
-        forwardflow = forwardedge.flow
-        reverseflow = fp.edges[ninterfaces+i].flow
-        flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        sample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
     end
 
 end

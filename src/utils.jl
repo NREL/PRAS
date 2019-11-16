@@ -15,21 +15,6 @@ function findfirstunique(a::AbstractVector{T}, i::T) where T
     return i_idx
 end
 
-"""
-Generate a vector of `n` MersenneTwister random number generators, derived from
-a MersenneTwister seeded with `seed`, with `step` steps between each generated
-RNG.
-"""
-function initrngs(n::Int; seed::UInt=rand(UInt), step::Integer=big(10)^20)
-    result = Vector{MersenneTwister}(undef, n)
-    prev = MersenneTwister(seed)
-    for i in 1:n
-        prev = randjump(prev, step)
-        result[i] = prev
-    end
-    return result
-end
-
 function transferperiodresults!(
     dest_sum::Array{V,N}, dest_var::Array{V,N},
     src::Array{MeanVariance,N}, idxs::Vararg{Int,N}) where {V,N}

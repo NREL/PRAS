@@ -111,3 +111,71 @@ function finalize(
         cache.simulationspec)
 
 end
+
+function update!(
+    sample::SystemOutputStateSample{L,T,P},
+    tdprob::TransmissionDispatchProblem
+) where {L,T<:Period,P<:PowerUnit}
+
+    nregions = length(outputsample.regions)
+    ninterfaces = length(outputsample.interfaces)
+    fp = flowproblem(tdprob)
+
+    # Save gen available, gen dispatched, demand, demand served for each region
+    for i in 1:nregions
+        node = fp.nodes[i]
+        surplus_edge = fp.edges[2*ninterfaces + i]
+        shortfall_edge = fp.edges[2*ninterfaces + 5*nregions + i]
+        sample.regions[i] = RegionResult{L,T,P}(
+            node.injection, surplus_edge.flow, shortfall_edge.flow)
+    end
+
+    # Save flow available, flow for each interface
+    for i in 1:ninterfaces
+        forwardedge = fp.edges[i]
+        forwardflow = forwardedge.flow
+        reverseflow = fp.edges[ninterfaces+i].flow
+        flow = forwardflow > reverseflow ? forwardflow : -reverseflow
+        sample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
+    end
+
+end
+
+function droppedload(sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
+
+    isshortfall = false
+    totalshortfall = 0
+
+    for region in sample.regions
+        shortfall = region.shortfall
+        if shortfall > 0
+            isshortfall = true
+            totalshortfall += shortfall
+        end
+    end
+
+    return isshortfall, totalshortfall
+
+end
+
+function droppedloads!(localshortfalls::Vector{Int},
+                       sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
+
+    nregions = length(sample.regions)
+    isshortfall = false
+    totalshortfall = 0
+
+    for i in 1:nregions
+        shortfall = sample.regions[i].shortfall
+        if shortfall > 0
+            isshortfall = true
+            totalshortfall += shortfall
+            localshortfalls[i] = shortfall
+        else
+            localshortfalls[i] = 0
+        end
+    end
+
+    return isshortfall, totalshortfall, localshortfalls
+
+end
