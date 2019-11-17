@@ -1,3 +1,4 @@
+# TODO: Incorporate extra GeneratorStorage discharge node for proper discharge costing
 """
 
     DispatchProblem(sys::SystemModel)
@@ -41,8 +42,8 @@ Nodes in the problem are ordered as:
  1. Regions generation surplus/shortfall (Regions order)
  2. Storage discharge capacity (Storage order)
  3. Storage charge capacity (Storage order)
- 4. GenerationStorage discharge capacity (GenerationStorage order)
- 5. GenerationStorage charge capacity (GenerationStorage order)
+ 4. GenerationStorage discharge capacity (GeneratorStorage order)
+ 5. GenerationStorage charge capacity (GeneratorStorage order)
  6. GenerationStorage inflow capacity (GeneratorStorage order)
  7. Slack node
 
@@ -56,13 +57,13 @@ Edges are ordered as:
  6. Storage discharge unused capacity (Storage order)
  7. Storage charge dispatch (Storage order)
  8. Storage charge unused capacity (Storage order)
- 9. GenerationStorage discharge dispatch (GenerationStorage order)
- 10. GenerationStorage discharge unused capacity (GenerationStorage order)
- 11. GenerationStorage charge dispatch (GenerationStorage order)
- 12. GenerationStorage charge unused capacity (GenerationStorage order)
- 13. GenerationStorage inflow discharged (GenerationStorage order)
- 14. GenerationStorage inflow charged (GenerationStorage order)
- 15. GenerationStorage inflow unused (GenerationStorage order)
+ 9. GenerationStorage discharge dispatch (GeneratorStorage order)
+ 10. GenerationStorage discharge unused capacity (GeneratorStorage order)
+ 11. GenerationStorage charge dispatch (GeneratorStorage order)
+ 12. GenerationStorage charge unused capacity (GeneratorStorage order)
+ 13. GenerationStorage inflow discharged (GeneratorStorage order)
+ 14. GenerationStorage inflow charged (GeneratorStorage order)
+ 15. GenerationStorage inflow unused (GeneratorStorage order)
 
 """
 struct DispatchProblem
@@ -217,9 +218,17 @@ indices_after(lastset::UnitRange{Int}, setsize::Int) =
 
 # TODO
 function update_problem!(
-    problem::DispatchProblem, state::SystemState,
-    system::SystemModel, t::Int)
+    problem::DispatchProblem, state::SystemState, system::SystemModel, t::Int
+)
 
+    region_nodes # Net available generation
+
+    storage_discharge_nodes # Storage discharge limit
+    storage_charge_nodes # Storage charge limit
+
+    genstorage_discharge_nodes # Storage discharge limit
+    genstorage_charge_nodes # Storage charge limit
+    genstorage_inflow_nodes # Inflow limit
 
     nregions = length(genranges)
     fp = flowproblem(tdprob)
@@ -247,6 +256,18 @@ function update_problem!(
     end
 
 
+    interface_forward_edges # Forward transmission limits
+    interface_reverse_edges # Reverse transmission limits
+
+    storage_dischargedispatch_edges # Time-to-go priority
+    storage_chargedispatch_edges # Time-to-go priority
+
+    genstorage_dischargedispatch_edges # Time-to-go priority + grid injection limit
+    genstorage_chargedispatch_edges # Time-to-go priority + grid withdrawal limit
+    genstorage_inflowdischarge_edges # TODO: Add extra set of discharge edges
+    genstorage_inflowcharge_edges # Time-to-go priority
+
+
     ninterfaces = length(lineranges)
     fp = flowproblem(tdprob)
 
@@ -266,36 +287,30 @@ function update_problem!(
 
 end
 
-# TODO
 function update_state!(
-    state::SystemState, problem::DispatchProblem
+    state::SystemState, problem::DispatchProblem, system::SystemModel, t::Int
 )
 
-    nregions = length(storranges)
-    nstors = length(stors)
-    fp = flowproblem(tdprob)
+    edges = problem.fp.edges
 
-    for r in 1:nregions
+    for (i, e) in enumerate(fp.storage_dischargedispatch_edges)
+       state.stors_energy[i] -=
+           round(Int, edges[e].flow / system.storages.dischargeefficiency[i, t])
+    end
 
-        region_discharge = fp.edges[2*ninterfaces + nregions + r].flow
-        region_charge = fp.edges[2*ninterfaces + 3*nregions + r].flow
+    for (i, e) in enumerate(fp.storage_chargedispatch_edges)
+       state.stors_energy[i] +=
+           round(Int, edges[e].flow * system.storages.chargeefficiency[i, t])
+    end
 
-        storrange = storranges[r]
+    for (i, e) in enumerate(fp.genstorage_dischargedispatch_edges)
+       state.genstors_energy[i] -=
+           round(Int, edges[e].flow / system.generatorstorages.dischargeefficiency[i, t])
+    end
 
-        if region_charge > 0
-
-            charge_storage!(
-                stors_available, stors_energy,
-                region_charge, stors, storrange, t)
-
-        elseif region_discharge > 0
-
-            discharge_storage!(
-                stors_available, stors_energy,
-                region_discharge, stors, storrange, t)
-
-        end
-
+    for (i, e) in enumerate(fp.genstorage_chargedispatch_edges)
+       state.genstors_energy[i] +=
+           round(Int, edges[e].flow * system.generatorstorages.chargeefficiency[i, t])
     end
 
 end

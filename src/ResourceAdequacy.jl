@@ -9,7 +9,6 @@ import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
 import Decimals: Decimal
 import Distributions: DiscreteNonParametric, probs, support
 import Future: randjump
-import MinCostFlows: solveflows!
 import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
 import Random: MersenneTwister, rand
 import StatsBase: stderror

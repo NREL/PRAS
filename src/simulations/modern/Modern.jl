@@ -146,10 +146,13 @@ function advance!(
 
 end
 
-function solve!(dispatchproblem::DispatchProblem, state::SystemState)
+function solve!(
+    dispatchproblem::DispatchProblem, state::SystemState,
+    system::SystemModel, t::Int
+)
 
     solveflows!(dispatchproblem.fp)
-    update_state!(state, dispatchproblem)
+    update_state!(state, dispatchproblem, system, t)
 
 end
 
