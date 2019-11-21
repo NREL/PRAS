@@ -42,28 +42,30 @@ Nodes in the problem are ordered as:
  1. Regions generation surplus/shortfall (Regions order)
  2. Storage discharge capacity (Storage order)
  3. Storage charge capacity (Storage order)
- 4. GenerationStorage discharge capacity (GeneratorStorage order)
- 5. GenerationStorage charge capacity (GeneratorStorage order)
- 6. GenerationStorage inflow capacity (GeneratorStorage order)
- 7. Slack node
+ 4. GenerationStorage inflow capacity (GeneratorStorage order)
+ 5. GenerationStorage discharge capacity (GeneratorStorage order)
+ 6. GenerationStorage grid injection (GeneratorStorage order)
+ 7. GenerationStorage charge capacity (GeneratorStorage order)
+ 8. Slack node
 
 Edges are ordered as:
 
- 1. Regions unserved energy (Regions order)
- 2. Regions generation capacity (Regions order)
- 3. Interfaces forward capacity (Interfaces order)
- 4. Interfaces reverse capacity (Interfaces order)
- 5. Storage discharge dispatch (Storage order)
- 6. Storage discharge unused capacity (Storage order)
- 7. Storage charge dispatch (Storage order)
- 8. Storage charge unused capacity (Storage order)
- 9. GenerationStorage discharge dispatch (GeneratorStorage order)
- 10. GenerationStorage discharge unused capacity (GeneratorStorage order)
- 11. GenerationStorage charge dispatch (GeneratorStorage order)
- 12. GenerationStorage charge unused capacity (GeneratorStorage order)
- 13. GenerationStorage inflow discharged (GeneratorStorage order)
- 14. GenerationStorage inflow charged (GeneratorStorage order)
- 15. GenerationStorage inflow unused (GeneratorStorage order)
+ 1. Regions demand unserved (Regions order)
+ 2. Regions generation unused (Regions order)
+ 3. Interfaces forward flow (Interfaces order)
+ 4. Interfaces reverse flow (Interfaces order)
+ 5. Storage discharge to grid (Storage order)
+ 6. Storage discharge unused (Storage order)
+ 7. Storage charge from grid (Storage order)
+ 8. Storage charge unused (Storage order)
+ 9. GenerationStorage discharge to grid (GeneratorStorage order)
+ 10. GenerationStorage discharge unused (GeneratorStorage order)
+ 11. GenerationStorage inflow to grid (GenerationStorage order)
+ 12. GenerationStorage total to grid (GeneratorStorage order)
+ 13. GenerationStorage charge from grid (GeneratorStorage order)
+ 14. GenerationStorage charge from inflow (GeneratorStorage order)
+ 15. GenerationStorage charge unused (GeneratorStorage order)
+ 16. GenerationStorage inflow unused (GeneratorStorage order)
 
 """
 struct DispatchProblem
@@ -74,26 +76,28 @@ struct DispatchProblem
     region_nodes::UnitRange{Int}
     storage_discharge_nodes::UnitRange{Int}
     storage_charge_nodes::UnitRange{Int}
-    genstorage_discharge_nodes::UnitRange{Int}
-    genstorage_charge_nodes::UnitRange{Int}
     genstorage_inflow_nodes::UnitRange{Int}
-    slacknode::Int
+    genstorage_discharge_nodes::UnitRange{Int}
+    genstorage_togrid_nodes::UnitRange{Int}
+    genstorage_charge_nodes::UnitRange{Int}
+    slack_node::Int
 
     # Edge labels
     region_unserved_edges::UnitRange{Int}
     region_unused_edges::UnitRange{Int}
     interface_forward_edges::UnitRange{Int}
     interface_reverse_edges::UnitRange{Int}
-    storage_dischargedispatch_edges::UnitRange{Int}
+    storage_discharge_edges::UnitRange{Int}
     storage_dischargeunused_edges::UnitRange{Int}
-    storage_chargedispatch_edges::UnitRange{Int}
+    storage_charge_edges::UnitRange{Int}
     storage_chargeunused_edges::UnitRange{Int}
-    genstorage_dischargedispatch_edges::UnitRange{Int}
+    genstorage_dischargegrid_edges::UnitRange{Int}
     genstorage_dischargeunused_edges::UnitRange{Int}
-    genstorage_chargedispatch_edges::UnitRange{Int}
-    genstorage_chargeunused_edges::UnitRange{Int}
-    genstorage_inflowdischarge_edges::UnitRange{Int}
+    genstorage_inflowgrid_edges::UnitRange{Int}
+    genstorage_totalgrid_edges::UnitRange{Int}
+    genstorage_gridcharge_edges::UnitRange{Int}
     genstorage_inflowcharge_edges::UnitRange{Int}
+    genstorage_chargeunused_edges::UnitRange{Int}
     genstorage_inflowunused_edges::UnitRange{Int}
 
     function DispatchProblem(
@@ -110,12 +114,13 @@ struct DispatchProblem
             assetgrouplist(sys.generatorstorages_regionstart, ngenstors)
 
         region_nodes = 1:nregions
-        stor_discharge_nodes = indices_after(regionnodes, nstors)
-        stor_charge_nodes = indices_after(storagedischargenodes, nstors)
-        genstor_discharge_nodes = indices_after(storagechargenodes, ngenstors)
-        genstor_charge_nodes = indices_after(genstordischargenodes, ngenstors)
-        genstor_inflow_nodes = indices_after(genstorchargenodes, ngenstors)
-        slacknode = nnodes = last(genstorinflownodes) + 1
+        stor_discharge_nodes = indices_after(region_nodes, nstors)
+        stor_charge_nodes = indices_after(stor_discharge_nodes, nstors)
+        genstor_inflow_nodes = indices_after(stor_charge_nodes, ngenstors)
+        genstor_discharge_nodes = indices_after(genstor_inflow_nodes, ngenstors)
+        genstor_togrid_nodes = indices_after(genstor_discharge_nodes, ngenstors)
+        genstor_charge_nodes = indices_after(genstor_togrid_nodes, ngenstors)
+        slack_node = nnodes = last(genstor_charge_nodes) + 1
 
         region_unservedenergy = 1:nregions
         region_unusedcapacity = indices_after(region_unservedenergy, nregions)
@@ -125,88 +130,80 @@ struct DispatchProblem
         stor_dischargeunused = indices_after(stor_discharge, nstors)
         stor_chargeused = indices_after(stor_dischargeunused, nstors)
         stor_chargeunused = indices_after(stor_charge, nstors)
-        genstor_dischargeused = indices_after(stor_chargeunused, ngenstors)
-        genstor_dischargeunused = indices_after(genstor_discharge, ngenstors)
-        genstor_chargeused = indices_after(genstor_dischargeunused, ngenstors)
-        genstor_chargeunused = indices_after(genstor_charge, ngenstors)
-        genstor_inflowdischarge = indices_after(genstor_chargeunused, ngenstors)
-        genstor_inflowcharge = indices_after(genstor_inflowdischarge, ngenstors)
-        genstor_inflowunused = indices_after(genstor_inflowcharge, ngenstors)
+        genstor_dischargegrid = indices_after(stor_chargeunused, ngenstors)
+        genstor_dischargeunused = indices_after(genstor_dischargegrid, ngenstors)
+        genstor_inflowgrid = indices_after(genstor_dischargeunused, ngenstors)
+        genstor_totalgrid = indices_after(genstor_inflowgrid, ngenstors)
+        genstor_gridcharge = indices_after(genstor_totalgrid, ngenstors)
+        genstor_inflowcharge = indices_after(genstor_gridcharge, ngenstors)
+        genstor_chargeunused = indices_after(genstor_inflowcharge, ngenstors)
+        genstor_inflowunused = indices_after(genstor_chargeunused, ngenstors)
         nedges = last(genstor_inflowunused)
 
         nodesfrom = Vector{Int}(undef, nedges)
         nodesto = Vector{Int}(undef, nedges)
-        costs = Vector{Int}(undef, nedges)
-        limits = Vector{Int}(undef, nedges)
+        costs = zeros(Int, nedges)
+        limits = fill(unlimited, nedges)
         injections = zeros(Int, nnodes)
 
-        function initused(idxs::UnitRange{Int}, from::Vector{Int}, to::Int)
+        function initedges(idxs::UnitRange{Int}, from::Vector{Int}, to::Int)
             nodesfrom[idxs] = from
             nodesto[idxs] .= to
-            limits[idxs] .= unlimited
         end
 
-        function initused(idxs::UnitRange{Int}, from::Int, to::Vector{Int})
+        function initedges(idxs::UnitRange{Int}, from::Int, to::Vector{Int})
             nodesfrom[idxs] .= from
             nodesto[idxs] = to
-            limits[idxs] .= unlimited
-        end
-
-        function initunused(idxs::UnitRange{Int}, from, to)
-            initused(idxs, from, to)
-            costs[idxs] .= 0
         end
 
         # Unserved energy edges
-        initused(region_unservedenergy, slacknode, region_nodes)
+        initedges(region_unservedenergy, slack_node, region_nodes)
         costs[region_unservedenergy] .= shortagepenalty
 
         # Unused generation edges
-        initunused(region_unusedcapacity, regionnodes, slacknode)
+        initedges(region_unusedcapacity, regionnodes, slack_node)
 
-        # Forward transmission edges
-        nodesfrom[iface_forward] = sys.interfaces.regions_from
-        nodesto[iface_forward] = sys.interfaces.regions_to
+        # Transmission edges
+        initedges(iface_forward, sys.interfaces.regions_from, sys.interfaces.regions_to)
         costs[iface_forward] .= 1
-
-        # Reverse transmission edges
-        nodesfrom[iface_reverse] = sys.interfaces.regions_to
-        nodesto[iface_reverse] = sys.interfaces.regions_from
+        initedges(iface_reverse, sys.interfaces.regions_to, sys.interfaces.regions_from)
         costs[iface_reverse] .= 1
 
-        # Storage charging / discharging
-        initused(stor_dischargeused, stor_discharge_nodes, stor_regions)
-        initunused(stor_dischargeunused, stor_discharge_nodes, slacknode)
-        initused(stor_chargeused, stor_regions, stor_charge_nodes)
-        initunused(stor_chargeunused, slacknode, stor_charge_nodes)
+        # Storage discharging / charging
+        initedges(stor_dischargeused, stor_discharge_nodes, stor_regions)
+        initedges(stor_dischargeunused, stor_discharge_nodes, slacknode)
+        initedges(stor_chargeused, stor_regions, stor_charge_nodes)
+        initedges(stor_chargeunused, slacknode, stor_charge_nodes)
 
-        # GeneratorStorage charging / discharging
-        initused(genstor_dischargeused, genstor_discharge_nodes, genstor_regions)
-        initunused(genstor_dischargeunused, genstor_discharge_nodes, slacknode)
-        initused(genstor_chargeused, genstor_regions, genstor_charge_nodes)
-        initunused(genstor_chargeunused, slacknode, genstor_charge)
+        # GeneratorStorage discharging / grid injections
+        initedges(genstor_dischargegrid, genstor_discharge_nodes, genstor_togrid_nodes)
+        initedges(genstor_dischargeunused, genstor_discharge_nodes, slacknode)
+        initedges(genstor_inflowgrid, genstor_inflow_nodes, genstor_togrid_nodes)
+        initedges(genstor_totalgrid, genstor_togrid_nodes, genstor_regions)
 
-        # GeneratorStorage inflow charging /  discharging
-        nodesfrom[genstor_inflowdischarge] = genstor_inflow_nodes
-        nodesto[genstor_inflowdischarge] = genstor_discharge_nodes
-        costs[genstor_inflowdischarge] .= 0
-        nodesfrom[genstor_inflowcharge] = genstor_inflow_nodes
-        nodesto[genstor_inflowcharge] = genstor_charge_nodes
-        costs[genstor_inflowcharge] .= 1 # Avoid spilling through unused charge
+        # GeneratorStorage charging
+        initedges(genstor_gridcharge, genstor_regions, genstor_charge_nodes)
+        initedges(genstor_inflowcharge, genstor_inflow_nodes, genstor_charge_nodes)
+        initedges(genstor_chargeunused, slacknode, genstor_charge_nodes)
+
         initunused(genstor_inflowunused, genstor_inflow_nodes, slacknode)
 
         return TransmissionDispatchProblem(
+
             FlowProblem(nodesfrom, nodesto, limits, costs, injections),
+
             region_nodes, storage_discharge_nodes, storage_charge_nodes,
-            genstorage_discharge_nodes, genstorage_charge_nodes,
-            genstorage_inflow_nodes, slacknode,
+            genstorage_inflow_nodes, genstorage_discharge_nodes,
+            genstorage_togrid_nodes, genstorage_charge_nodes, slacknode,
+
             region_unservedenergy, region_unusedcapacity,
             iface_forward, iface_reverse,
             stor_dischargeused, stor_dischargeunused,
             stor_chargeused, stor_chargeunused,
-            genstor_dischargeused, genstor_dischargeunused,
-            genstor_chargeused, genstor_chargeunused,
-            genstor_inflowdischarge, genstor_inflowcharge, genstor_inflowunused
+            genstor_dischargegrid, genstor_dischargeunused, genstor_inflowgrid,
+            genstor_totalgrid,
+            genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
+            genstor_inflowunused
         )
 
     end
@@ -216,74 +213,59 @@ end
 indices_after(lastset::UnitRange{Int}, setsize::Int) =
     1:setsize .+ last(lastset) 
 
-# TODO
 function update_problem!(
     problem::DispatchProblem, state::SystemState, system::SystemModel, t::Int
 )
 
-    region_nodes # Net available generation
+    fp = problem.fp
 
-    storage_discharge_nodes # Storage discharge limit
-    storage_charge_nodes # Storage charge limit
-
-    genstorage_discharge_nodes # Storage discharge limit
-    genstorage_charge_nodes # Storage charge limit
-    genstorage_inflow_nodes # Inflow limit
-
-    nregions = length(genranges)
-    fp = flowproblem(tdprob)
-    slacknode = flowproblem.nodes[end]
-
-    for r in 1:nregions
+    # Update regional net available injection / withdrawal (from generators)
+    for (r, gen_range) in zip(problem.region_nodes,
+                              system.region_gen_ranges)
 
         region_node = fp.nodes[r]
-        region_dischargenode = fp.nodes[nregions + r]
-        region_chargenode = fp.nodes[2*nregions + r]
 
-        # Update generators
-        gen_range = genranges[r]
-        region_gensurplus =
-            available_capacity(gens_available, gens, gen_range, t) - loads[r, t]
-        updateinjection!(region_node, slacknode, region_gensurplus)
+        region_netgenavailable = available_capacity(
+            state.gens_available, system.generators, gen_range, t
+            ) - loads[r, t]
 
-        # Update storages
-        stor_range = storranges[r]
-        charge_capacity, discharge_capacity = available_storage_capacity(
-            stors_available, stors_energy, stors, stor_range, t)
-        updateinjection!(region_chargenode, slacknode, -charge_capacity)
-        updateinjection!(region_dischargenode, slacknode, discharge_capacity)
+        updateinjection!(region_node, problem.slack_node, region_netgenavailable)
 
     end
 
+    # Update bidirectional interface limits (from lines)
+    for (forward, back, line_range) in zip(problem.interface_forward_edges,
+                                           problem.interface_reverse_edges,
+                                           system.interface_line_ranges)
 
-    interface_forward_edges # Forward transmission limits
-    interface_reverse_edges # Reverse transmission limits
-
-    storage_dischargedispatch_edges # Time-to-go priority
-    storage_chargedispatch_edges # Time-to-go priority
-
-    genstorage_dischargedispatch_edges # Time-to-go priority + grid injection limit
-    genstorage_chargedispatch_edges # Time-to-go priority + grid withdrawal limit
-    genstorage_inflowdischarge_edges # TODO: Add extra set of discharge edges
-    genstorage_inflowcharge_edges # Time-to-go priority
-
-
-    ninterfaces = length(lineranges)
-    fp = flowproblem(tdprob)
-
-    for i in 1:ninterfaces
-
-        interface_forwardedge = fp.edges[i]
-        interface_backwardedge = fp.edges[ninterfaces + i]
-        line_range = lineranges[i]
+        interface_forwardedge = fp.edges[forward]
+        interface_backwardedge = fp.edges[backward]
 
         interface_capacity_forward, interface_capacity_backward =
-            available_capacity(lines_available, lines, line_range, t)
+            available_capacity(state.lines_available, system.lines, line_range, t)
 
         updateflowlimit!(interface_forwardedge, interface_capacity_forward)
         updateflowlimit!(interface_backwardedge, interface_capacity_backward)
 
     end
+
+    # TODO: Update Storages
+    problem.storage_discharge_nodes # Storage discharge limit
+    problem.storage_charge_nodes # Storage charge limit
+
+    problem.storage_discharge_edges # Time-to-go priority
+    problem.storage_charge_edges # Time-to-go priority
+
+    # TODO: Update GenStorages
+    problem.genstorage_discharge_nodes # GenStorage discharge limit
+    problem.genstorage_charge_nodes # GenStorage charge limit
+    problem.genstorage_inflow_nodes # Inflow limit
+
+    problem.genstorage_dischargegrid_edges # Time-to-go priority
+    problem.genstorage_totalgrid_edges # Grid injection limit
+
+    problem.genstorage_gridcharge_edges # Time-to-go priority + grid withdrawal limit
+    problem.genstorage_inflowcharge_edges # Time-to-go priority
 
 end
 

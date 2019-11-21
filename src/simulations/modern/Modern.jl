@@ -139,6 +139,8 @@ function advance!(
         rng, state.lines_available, state.lines_nexttransition,
         system.lines, t, nperiods)
 
+    # TODO: Adjust storage SoC if max energy lower than stored energy
+
     decay_energy!(state.stors_energy, system.storages, t)
     decay_energy!(state.genstors_energy, system.generatorstorages, t)
 
