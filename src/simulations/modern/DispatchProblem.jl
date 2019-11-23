@@ -257,7 +257,9 @@ function update_problem!(
 
     # Update Storage charge/discharge limits and priorities
     for (i, charge_node, charge_edge, discharge_node, discharge_edge) in
-        enumerate(zip(problem.storage_charge_nodes, problem.storage_discharge_nodes))
+        enumerate(zip(
+        problem.storage_charge_nodes, problem.storage_charge_edges,
+        problem.storage_discharge_nodes, problem.discharge_edges))
 
         stor_energy = state.stors_energy[i]
         maxenergy = system.storages.energycapacity[i, t]
@@ -298,16 +300,67 @@ function update_problem!(
 
     end
 
-    # TODO: Update GenStorages
-    problem.genstorage_discharge_nodes # GenStorage discharge limit
-    problem.genstorage_charge_nodes # GenStorage charge limit
-    problem.genstorage_inflow_nodes # Inflow limit
+    # Update GeneratorStorage inflow/charge/discharge limits and priorities
+    for (i, charge_node, gridcharge_edge, inflowcharge_edge,
+            discharge_node, dischargegrid_edge, totalgrid_edge
+            inflow_node) in enumerate(zip(
+        problem.genstorage_charge_nodes, problem.genstorage_gridcharge_edges,
+        problem.genstorage_inflowcharge_edges, problem.genstorage_discharge_nodes,
+        problem.genstorage_dischargegrid_edges, problem.genstorage_totalgrid_edges,
+        problem.genstorage_inflow_nodes))
 
-    problem.genstorage_dischargegrid_edges # Time-to-go priority
-    problem.genstorage_totalgrid_edges # Grid injection limit
+        stor_energy = state.genstors_energy[i]
+        maxenergy = system.generatorstorages.storage_energycapacity[i, t]
 
-    problem.genstorage_gridcharge_edges # Time-to-go priority + grid withdrawal limit
-    problem.genstorage_inflowcharge_edges # Time-to-go priority
+        # Update inflow and grid injection / withdrawal limits
+        inflow_capacity = system.generatorstorages.inflowcapacity[i, t]
+        updateinjection!(
+            problem.nodes[inflow_node], problem.slack_node, inflow_capacity)
+
+        gridinjection_capacity = system.generatorstorages.dischargecapacity[i, t]
+        updateinjection!(
+            problem.edges[totalgrid_edge], problem.slack_node, gridinjection_capacity)
+
+        gridwithdrawal_capacity = system.generatorstorages.chargecapacity[i, t]
+        updateinjection!(
+            problem.edges[gridcharge_edge], problem.slack_node, gridinjection_capacity)
+
+        # Update charging
+
+        maxcharge = system.generatorstorages.storage_chargecapacity[i, t]
+        chargeefficiency = system.generatorstorages.storage_chargeefficiency[i, t]
+        energychargeable = (maxenergy - stor_energy) / chargeefficiency
+        timetocharge = energychargeable / maxcharge
+
+        charge_capacity =
+            min(maxcharge, round(Int, energytopower(
+                P, energychargeable, E, L, T)))
+        updateinjection!(
+            problem.nodes[charge_node], problem.slack_node, charge_capacity)
+
+        # Smallest time-to-charge = highest priority
+        chargecost = problem.min_chargecost + timetocharge # Negative cost
+        updateflowcost!(problem.edges[gridcharge_edge], chargecost)
+        updateflowcost!(problem.edges[inflowcharge_edge], chargecost)
+
+        # Update discharging
+
+        maxdischarge = system.generatorstorages.storage_dischargecapacity[i, t]
+        dischargeefficiency = system.generatorstorages.storage_chargeefficiency[i, t]
+        energydischargeable = stor_energy * dischargeefficiency
+        timetodischarge = energydischargeable / maxdischarge
+
+        discharge_capacity =
+            min(maxdischarge, round(Int, energytopower(
+                P, energydischargeable, E, L, T)))
+        updateinjection!(
+            problem.nodes[discharge_node], problem.slack_node, discharge_capacity)
+
+        # Largest time-to-discharge = highest priority
+        dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
+        updateflowcost!(problem.edges[dischargegrid_edge], dischargecost)
+
+    end
 
 end
 

@@ -155,10 +155,26 @@ function update_energy!(
 
 end
 
-maxtimetodischarge(system::SystemModel) =
-    ceil(Int, maximum(
+function maxtimetodischarge(system::SystemModel)
+
+    stor_max = ceil(Int, maximum(
         system.storages.energycapacity ./ system.storages.dischargecapacity))
 
-maxtimetocharge(system::SystemModel) =
-    ceil(Int, maximum(
+    genstor_max = ceil(Int, maximum(
+        system.generatorstorages.energycapacity ./ system.generatorstorages.dischargecapacity))
+
+    return max(stor_max, genstor_max)
+
+end
+
+function maxtimetocharge(system::SystemModel)
+
+    stor_max = ceil(Int, maximum(
         system.storages.energycapacity ./ system.storages.chargecapacity))
+
+    genstor_max = ceil(Int, maximum(
+        system.generatorstorages.energycapacity ./ system.generatorstorages.chargecapacity))
+
+    return max(stor_max, genstor_max)
+
+end
