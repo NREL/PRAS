@@ -133,16 +133,32 @@ function available_storage_capacity(
 
 end
 
-function decay_energy!(
+function update_energy!(
     stors_energy::Vector{Int},
-    stors::Storages,
+    stors::AbstractAssets,
     t::Int
 )
 
     for i in 1:length(stors_energy)
-        stors_energy[i] *= round(Int, stors.carryoverefficiency[i,t])
+
+        soc = stors_energy[i]
+        efficiency = stors.carryoverefficiency[i,t]
+        maxenergy = stors.energycapacity[i,t]
+
+        # Decay SoC
+        soc = round(Int, soc * efficiency)
+
+        # Shed SoC above current energy limit
+        stors_energy[i] = min(soc, maxenergy)
+
     end
 
 end
 
+maxtimetodischarge(system::SystemModel) =
+    ceil(Int, maximum(
+        system.storages.energycapacity ./ system.storages.dischargecapacity))
 
+maxtimetocharge(system::SystemModel) =
+    ceil(Int, maximum(
+        system.storages.energycapacity ./ system.storages.chargecapacity))

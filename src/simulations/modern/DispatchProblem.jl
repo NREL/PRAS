@@ -1,4 +1,3 @@
-# TODO: Incorporate extra GeneratorStorage discharge node for proper discharge costing
 """
 
     DispatchProblem(sys::SystemModel)
@@ -100,13 +99,20 @@ struct DispatchProblem
     genstorage_chargeunused_edges::UnitRange{Int}
     genstorage_inflowunused_edges::UnitRange{Int}
 
+    min_chargecost::Int
+    max_dischargecost::Int
+
     function DispatchProblem(
-        sys::SystemModel; unlimited::Int=999999, shortagepenalty::Int=9999)
+        sys::SystemModel; unlimited::Int=999_999_999)
 
         nregions = length(sys.regions)
         nifaces = length(sys.interfaces)
         nstors = length(sys.storages)
         ngenstors = length(sys.generatorstorages)
+
+        min_chargecost = - maxtimetocharge(sys) - 1
+        max_dischargecost = - min_chargecost + maxtimetodischarge(sys) + 1
+        shortagepenalty = 10 * (nifaces + max_dischargecost)
 
         stor_regions =
             assetgrouplist(sys.storages_regionstart, nstors)
@@ -203,7 +209,7 @@ struct DispatchProblem
             genstor_dischargegrid, genstor_dischargeunused, genstor_inflowgrid,
             genstor_totalgrid,
             genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
-            genstor_inflowunused
+            genstor_inflowunused, min_chargecost, max_dischargecost
         )
 
     end
@@ -249,12 +255,48 @@ function update_problem!(
 
     end
 
-    # TODO: Update Storages
-    problem.storage_discharge_nodes # Storage discharge limit
-    problem.storage_charge_nodes # Storage charge limit
+    # Update Storage charge/discharge limits and priorities
+    for (i, charge_node, charge_edge, discharge_node, discharge_edge) in
+        enumerate(zip(problem.storage_charge_nodes, problem.storage_discharge_nodes))
 
-    problem.storage_discharge_edges # Time-to-go priority
-    problem.storage_charge_edges # Time-to-go priority
+        stor_energy = state.stors_energy[i]
+        maxenergy = system.storages.energycapacity[i, t]
+
+        # Update charging
+
+        maxcharge = system.storages.chargecapacity[i, t]
+        chargeefficiency = system.storages.chargeefficiency[i, t]
+        energychargeable = (maxenergy - stor_energy) / chargeefficiency
+        timetocharge = energychargeable / maxcharge
+
+        charge_capacity =
+            min(maxcharge, round(Int, energytopower(
+                P, energychargeable, E, L, T)))
+        updateinjection!(
+            problem.nodes[charge_node], problem.slack_node, charge_capacity)
+
+        # Smallest time-to-charge = highest priority
+        chargecost = problem.min_chargecost + timetocharge # Negative cost
+        updateflowcost!(problem.edges[charge_edge], chargecost)
+
+        # Update discharging
+
+        maxdischarge = system.storages.dischargecapacity[i, t]
+        dischargeefficiency = system.storages.chargeefficiency[i, t]
+        energydischargeable = stor_energy * dischargeefficiency
+        timetodischarge = energydischargeable / maxdischarge
+
+        discharge_capacity =
+            min(maxdischarge, round(Int, energytopower(
+                P, energydischargeable, E, L, T)))
+        updateinjection!(
+            problem.nodes[discharge_node], problem.slack_node, discharge_capacity)
+
+        # Largest time-to-discharge = highest priority
+        dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
+        updateflowcost!(problem.edges[discharge_edge], dischargecost)
+
+    end
 
     # TODO: Update GenStorages
     problem.genstorage_discharge_nodes # GenStorage discharge limit
