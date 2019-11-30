@@ -14,9 +14,10 @@ emptystors1 = Storages{4,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
                   (empty_int(4) for _ in 1:3)...,
                   (empty_float(4) for _ in 1:5)...)
 
-emptygenstors1 = GeneratorStorages{4,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
-                              (empty_int(4) for _ in 1:6)...,
-                              (empty_float(4) for _ in 1:5)...)
+emptygenstors1 = GeneratorStorages{4,1,Hour,MW,MWh}(
+    (empty_str for _ in 1:2)...,
+    (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
+    (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
 
 singlenode_a = ResourceAdequacy.SystemModel{4,1,Hour,MW,MWh}(
     gens1, emptystors1, emptygenstors1,
@@ -41,9 +42,10 @@ emptystors2 = Storages{6,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
                   (empty_int(6) for _ in 1:3)...,
                   (empty_float(6) for _ in 1:5)...)
 
-emptygenstors2 = GeneratorStorages{6,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
-                              (empty_int(6) for _ in 1:6)...,
-                              (empty_float(6) for _ in 1:5)...)
+emptygenstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
+    (empty_str for _ in 1:2)...,
+    (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:3)...,
+    (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:2)...)
 
 singlenode_b = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
     gens2, emptystors2, emptygenstors2,
@@ -98,9 +100,9 @@ lines = Lines{4,1,Hour,MW}(
 
 threenode =
     ResourceAdequacy.SystemModel{4,1,Hour,MW,MWh}(
-        regions, generators, emptystors1, emptygenstors1,
-        interfaces, lines,
-        [1,3,6], [1,1,1], [1,1,1], [1,2,3],
+        regions, interfaces, generators, [1:2, 3:5, 6:8],
+       emptystors1, fill(1:0, 3), emptygenstors1, fill(1:0, 3),
+        lines, [1:1, 2:2, 3:3],
         DateTime(2018,10,30,0):Hour(1):DateTime(2018,10,30,3))
 
 threenode_lole = 1.3756

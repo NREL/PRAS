@@ -110,14 +110,13 @@ struct DispatchProblem
         nstors = length(sys.storages)
         ngenstors = length(sys.generatorstorages)
 
-        min_chargecost = - maxtimetocharge(sys) - 1
-        max_dischargecost = - min_chargecost + maxtimetodischarge(sys) + 1
+        maxchargetime, maxdischargetime = maxtimetocharge_discharge(sys)
+        min_chargecost = - maxchargetime - 1
+        max_dischargecost = - min_chargecost + maxdischargetime + 1
         shortagepenalty = 10 * (nifaces + max_dischargecost)
 
-        stor_regions =
-            assetgrouplist(sys.storages_regionstart, nstors)
-        genstor_regions =
-            assetgrouplist(sys.generatorstorages_regionstart, ngenstors)
+        stor_regions = assetgrouplist(sys.region_stor_idxs)
+        genstor_regions = assetgrouplist(sys.region_genstor_idxs)
 
         region_nodes = 1:nregions
         stor_discharge_nodes = indices_after(region_nodes, nstors)
@@ -133,9 +132,9 @@ struct DispatchProblem
         iface_forward = indices_after(region_unusedcapacity, nifaces)
         iface_reverse = indices_after(iface_forward, nifaces)
         stor_dischargeused = indices_after(iface_reverse, nstors)
-        stor_dischargeunused = indices_after(stor_discharge, nstors)
+        stor_dischargeunused = indices_after(stor_dischargeused, nstors)
         stor_chargeused = indices_after(stor_dischargeunused, nstors)
-        stor_chargeunused = indices_after(stor_charge, nstors)
+        stor_chargeunused = indices_after(stor_chargeused, nstors)
         genstor_dischargegrid = indices_after(stor_chargeunused, ngenstors)
         genstor_dischargeunused = indices_after(genstor_dischargegrid, ngenstors)
         genstor_inflowgrid = indices_after(genstor_dischargeunused, ngenstors)
@@ -152,12 +151,17 @@ struct DispatchProblem
         limits = fill(unlimited, nedges)
         injections = zeros(Int, nnodes)
 
-        function initedges(idxs::UnitRange{Int}, from::Vector{Int}, to::Int)
+        function initedges(idxs::UnitRange{Int}, from::AbstractVector{Int}, to::AbstractVector{Int})
+            nodesfrom[idxs] = from
+            nodesto[idxs] = to
+        end
+
+        function initedges(idxs::UnitRange{Int}, from::AbstractVector{Int}, to::Int)
             nodesfrom[idxs] = from
             nodesto[idxs] .= to
         end
 
-        function initedges(idxs::UnitRange{Int}, from::Int, to::Vector{Int})
+        function initedges(idxs::UnitRange{Int}, from::Int, to::AbstractVector{Int})
             nodesfrom[idxs] .= from
             nodesto[idxs] = to
         end
@@ -167,7 +171,7 @@ struct DispatchProblem
         costs[region_unservedenergy] .= shortagepenalty
 
         # Unused generation edges
-        initedges(region_unusedcapacity, regionnodes, slack_node)
+        initedges(region_unusedcapacity, region_nodes, slack_node)
 
         # Transmission edges
         initedges(iface_forward, sys.interfaces.regions_from, sys.interfaces.regions_to)
@@ -177,30 +181,30 @@ struct DispatchProblem
 
         # Storage discharging / charging
         initedges(stor_dischargeused, stor_discharge_nodes, stor_regions)
-        initedges(stor_dischargeunused, stor_discharge_nodes, slacknode)
+        initedges(stor_dischargeunused, stor_discharge_nodes, slack_node)
         initedges(stor_chargeused, stor_regions, stor_charge_nodes)
-        initedges(stor_chargeunused, slacknode, stor_charge_nodes)
+        initedges(stor_chargeunused, slack_node, stor_charge_nodes)
 
         # GeneratorStorage discharging / grid injections
         initedges(genstor_dischargegrid, genstor_discharge_nodes, genstor_togrid_nodes)
-        initedges(genstor_dischargeunused, genstor_discharge_nodes, slacknode)
+        initedges(genstor_dischargeunused, genstor_discharge_nodes, slack_node)
         initedges(genstor_inflowgrid, genstor_inflow_nodes, genstor_togrid_nodes)
         initedges(genstor_totalgrid, genstor_togrid_nodes, genstor_regions)
 
         # GeneratorStorage charging
         initedges(genstor_gridcharge, genstor_regions, genstor_charge_nodes)
         initedges(genstor_inflowcharge, genstor_inflow_nodes, genstor_charge_nodes)
-        initedges(genstor_chargeunused, slacknode, genstor_charge_nodes)
+        initedges(genstor_chargeunused, slack_node, genstor_charge_nodes)
 
-        initunused(genstor_inflowunused, genstor_inflow_nodes, slacknode)
+        initedges(genstor_inflowunused, genstor_inflow_nodes, slack_node)
 
-        return TransmissionDispatchProblem(
+        return new(
 
             FlowProblem(nodesfrom, nodesto, limits, costs, injections),
 
-            region_nodes, storage_discharge_nodes, storage_charge_nodes,
-            genstorage_inflow_nodes, genstorage_discharge_nodes,
-            genstorage_togrid_nodes, genstorage_charge_nodes, slacknode,
+            region_nodes, stor_discharge_nodes, stor_charge_nodes,
+            genstor_inflow_nodes, genstor_discharge_nodes,
+            genstor_togrid_nodes, genstor_charge_nodes, slack_node,
 
             region_unservedenergy, region_unusedcapacity,
             iface_forward, iface_reverse,
@@ -217,38 +221,38 @@ struct DispatchProblem
 end
 
 indices_after(lastset::UnitRange{Int}, setsize::Int) =
-    1:setsize .+ last(lastset) 
+    last(lastset) .+ (1:setsize)
 
 function update_problem!(
-    problem::DispatchProblem, state::SystemState, system::SystemModel, t::Int
-)
+    problem::DispatchProblem, state::SystemState, system::SystemModel{N,L,T,P,E}, t::Int
+) where {N,L,T,P,E}
 
     fp = problem.fp
+    slack_node = fp.nodes[problem.slack_node]
 
     # Update regional net available injection / withdrawal (from generators)
-    for (r, gen_range) in zip(problem.region_nodes,
-                              system.region_gen_ranges)
+    for (r, gen_idxs) in zip(problem.region_nodes, system.region_gen_idxs)
 
         region_node = fp.nodes[r]
 
         region_netgenavailable = available_capacity(
-            state.gens_available, system.generators, gen_range, t
-            ) - loads[r, t]
+            state.gens_available, system.generators, gen_idxs, t
+            ) - system.regions.load[r, t]
 
-        updateinjection!(region_node, problem.slack_node, region_netgenavailable)
+        updateinjection!(region_node, slack_node, region_netgenavailable)
 
     end
 
     # Update bidirectional interface limits (from lines)
-    for (forward, back, line_range) in zip(problem.interface_forward_edges,
+    for (e_forward, e_back, line_idxs) in zip(problem.interface_forward_edges,
                                            problem.interface_reverse_edges,
-                                           system.interface_line_ranges)
+                                           system.interface_line_idxs)
 
-        interface_forwardedge = fp.edges[forward]
-        interface_backwardedge = fp.edges[backward]
+        interface_forwardedge = fp.edges[e_forward]
+        interface_backwardedge = fp.edges[e_back]
 
         interface_capacity_forward, interface_capacity_backward =
-            available_capacity(state.lines_available, system.lines, line_range, t)
+            available_capacity(state.lines_available, system.lines, line_idxs, t)
 
         updateflowlimit!(interface_forwardedge, interface_capacity_forward)
         updateflowlimit!(interface_backwardedge, interface_capacity_backward)
@@ -256,53 +260,53 @@ function update_problem!(
     end
 
     # Update Storage charge/discharge limits and priorities
-    for (i, charge_node, charge_edge, discharge_node, discharge_edge) in
+    for (i, (charge_node, charge_edge, discharge_node, discharge_edge)) in
         enumerate(zip(
         problem.storage_charge_nodes, problem.storage_charge_edges,
-        problem.storage_discharge_nodes, problem.discharge_edges))
+        problem.storage_discharge_nodes, problem.storage_discharge_edges))
 
         stor_energy = state.stors_energy[i]
-        maxenergy = system.storages.energycapacity[i, t]
+        maxenergy = system.storages.energy_capacity[i, t]
 
         # Update charging
 
-        maxcharge = system.storages.chargecapacity[i, t]
-        chargeefficiency = system.storages.chargeefficiency[i, t]
+        maxcharge = system.storages.charge_capacity[i, t]
+        chargeefficiency = system.storages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
-        timetocharge = energychargeable / maxcharge
+        timetocharge = round(Int, energychargeable / maxcharge)
 
         charge_capacity =
             min(maxcharge, round(Int, energytopower(
                 P, energychargeable, E, L, T)))
         updateinjection!(
-            problem.nodes[charge_node], problem.slack_node, charge_capacity)
+            fp.nodes[charge_node], slack_node, -charge_capacity)
 
         # Smallest time-to-charge = highest priority
         chargecost = problem.min_chargecost + timetocharge # Negative cost
-        updateflowcost!(problem.edges[charge_edge], chargecost)
+        updateflowcost!(fp.edges[charge_edge], chargecost)
 
         # Update discharging
 
-        maxdischarge = system.storages.dischargecapacity[i, t]
-        dischargeefficiency = system.storages.chargeefficiency[i, t]
+        maxdischarge = system.storages.discharge_capacity[i, t]
+        dischargeefficiency = system.storages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
-        timetodischarge = energydischargeable / maxdischarge
+        timetodischarge = round(Int, energydischargeable / maxdischarge)
 
         discharge_capacity =
             min(maxdischarge, round(Int, energytopower(
                 P, energydischargeable, E, L, T)))
         updateinjection!(
-            problem.nodes[discharge_node], problem.slack_node, discharge_capacity)
+            fp.nodes[discharge_node], slack_node, discharge_capacity)
 
         # Largest time-to-discharge = highest priority
         dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
-        updateflowcost!(problem.edges[discharge_edge], dischargecost)
+        updateflowcost!(fp.edges[discharge_edge], dischargecost)
 
     end
 
     # Update GeneratorStorage inflow/charge/discharge limits and priorities
     for (i, charge_node, gridcharge_edge, inflowcharge_edge,
-            discharge_node, dischargegrid_edge, totalgrid_edge
+            discharge_node, dischargegrid_edge, totalgrid_edge,
             inflow_node) in enumerate(zip(
         problem.genstorage_charge_nodes, problem.genstorage_gridcharge_edges,
         problem.genstorage_inflowcharge_edges, problem.genstorage_discharge_nodes,
@@ -310,25 +314,23 @@ function update_problem!(
         problem.genstorage_inflow_nodes))
 
         stor_energy = state.genstors_energy[i]
-        maxenergy = system.generatorstorages.storage_energycapacity[i, t]
+        maxenergy = system.generatorstorages.energy_capacity[i, t]
 
         # Update inflow and grid injection / withdrawal limits
-        inflow_capacity = system.generatorstorages.inflowcapacity[i, t]
+        inflow_capacity = system.generatorstorages.inflow[i, t]
         updateinjection!(
-            problem.nodes[inflow_node], problem.slack_node, inflow_capacity)
+            fp.nodes[inflow_node], slack_node, inflow_capacity)
 
-        gridinjection_capacity = system.generatorstorages.dischargecapacity[i, t]
-        updateinjection!(
-            problem.edges[totalgrid_edge], problem.slack_node, gridinjection_capacity)
+        gridinjection_capacity = system.generatorstorages.gridinjection_capacity[i, t]
+        updateflowlimit!(fp.edges[totalgrid_edge], gridinjection_capacity)
 
-        gridwithdrawal_capacity = system.generatorstorages.chargecapacity[i, t]
-        updateinjection!(
-            problem.edges[gridcharge_edge], problem.slack_node, gridinjection_capacity)
+        gridwithdrawal_capacity = system.generatorstorages.gridwithdrawal_capacity[i, t]
+        updateflowlimit!(fp.edges[gridcharge_edge], gridwithdrawal_capacity)
 
         # Update charging
 
-        maxcharge = system.generatorstorages.storage_chargecapacity[i, t]
-        chargeefficiency = system.generatorstorages.storage_chargeefficiency[i, t]
+        maxcharge = system.generatorstorages.charge_capacity[i, t]
+        chargeefficiency = system.generatorstorages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
         timetocharge = energychargeable / maxcharge
 
@@ -336,17 +338,17 @@ function update_problem!(
             min(maxcharge, round(Int, energytopower(
                 P, energychargeable, E, L, T)))
         updateinjection!(
-            problem.nodes[charge_node], problem.slack_node, charge_capacity)
+            fp.nodes[charge_node], slack_node, -charge_capacity)
 
         # Smallest time-to-charge = highest priority
         chargecost = problem.min_chargecost + timetocharge # Negative cost
-        updateflowcost!(problem.edges[gridcharge_edge], chargecost)
-        updateflowcost!(problem.edges[inflowcharge_edge], chargecost)
+        updateflowcost!(fp.edges[gridcharge_edge], chargecost)
+        updateflowcost!(fp.edges[inflowcharge_edge], chargecost)
 
         # Update discharging
 
-        maxdischarge = system.generatorstorages.storage_dischargecapacity[i, t]
-        dischargeefficiency = system.generatorstorages.storage_chargeefficiency[i, t]
+        maxdischarge = system.generatorstorages.discharge_capacity[i, t]
+        dischargeefficiency = system.generatorstorages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
         timetodischarge = energydischargeable / maxdischarge
 
@@ -354,11 +356,11 @@ function update_problem!(
             min(maxdischarge, round(Int, energytopower(
                 P, energydischargeable, E, L, T)))
         updateinjection!(
-            problem.nodes[discharge_node], problem.slack_node, discharge_capacity)
+            fp.nodes[discharge_node], slack_node, discharge_capacity)
 
         # Largest time-to-discharge = highest priority
         dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
-        updateflowcost!(problem.edges[dischargegrid_edge], dischargecost)
+        updateflowcost!(fp.edges[dischargegrid_edge], dischargecost)
 
     end
 
@@ -370,24 +372,51 @@ function update_state!(
 
     edges = problem.fp.edges
 
-    for (i, e) in enumerate(fp.storage_dischargedispatch_edges)
+    for (i, e) in enumerate(problem.storage_discharge_edges)
        state.stors_energy[i] -=
-           round(Int, edges[e].flow / system.storages.dischargeefficiency[i, t])
+           round(Int, edges[e].flow / system.storages.discharge_efficiency[i, t])
     end
 
-    for (i, e) in enumerate(fp.storage_chargedispatch_edges)
+    for (i, e) in enumerate(problem.storage_charge_edges)
        state.stors_energy[i] +=
-           round(Int, edges[e].flow * system.storages.chargeefficiency[i, t])
+           round(Int, edges[e].flow * system.storages.charge_efficiency[i, t])
     end
 
-    for (i, e) in enumerate(fp.genstorage_dischargedispatch_edges)
+    for (i, e) in enumerate(problem.genstorage_dischargegrid_edges)
        state.genstors_energy[i] -=
-           round(Int, edges[e].flow / system.generatorstorages.dischargeefficiency[i, t])
+           round(Int, edges[e].flow / system.generatorstorages.discharge_efficiency[i, t])
     end
 
-    for (i, e) in enumerate(fp.genstorage_chargedispatch_edges)
+    for (i, (e1, e2)) in enumerate(zip(problem.genstorage_gridcharge_edges,
+                                       problem.genstorage_inflowcharge_edges))
+       totalcharge = edges[e1].flow + edges[e2].flow
        state.genstors_energy[i] +=
-           round(Int, edges[e].flow * system.generatorstorages.chargeefficiency[i, t])
+           round(Int, totalcharge * system.generatorstorages.charge_efficiency[i, t])
     end
+
+end
+
+droppedload(problem::DispatchProblem) =
+    sum(problem.fp.edges[i].flow for i in problem.region_unserved_edges)
+
+function droppedloads!(shortfalls::Vector{Int},
+                       problem::DispatchProblem)
+
+    nregions = length(problem.region_unserved_edges)
+    isshortfall = false
+    totalshortfall = 0
+
+    for i in problem.region_unserved_edges
+        shortfall = problem.edges[i].flow
+        if shortfall > 0
+            isshortfall = true
+            totalshortfall += shortfall
+            shortfalls[i] = shortfall
+        else
+            shortfalls[i] = 0
+        end
+    end
+
+    return isshortfall, totalshortfall, shortfalls
 
 end

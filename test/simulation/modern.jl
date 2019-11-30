@@ -18,19 +18,20 @@
         # TODO: More test cases with storage
         assess(Modern(samples=10), Minimal(), singlenode_stor)
 
-        result_1ab = assess(simspec, Minimal(), singlenode_a)
-        @test withinrange(LOLE(result_1ab), singlenode_a_lole, nstderr_tol)
-        @test withinrange(EUE(result_1ab), singlenode_a_eue, nstderr_tol)
+        # Single-region system A
+        result_1a = assess(simspec, Minimal(), singlenode_a)
+        @test withinrange(LOLE(result_1a), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a), singlenode_a_eue, nstderr_tol)
 
         # Single-region system B
-        result_1bb = assess(simspec, Minimal(), singlenode_b)
-        @test withinrange(LOLE(result_1bb), singlenode_b_lole, nstderr_tol)
-        @test withinrange(EUE(result_1bb), singlenode_b_eue, nstderr_tol)
+        result_1b = assess(simspec, Minimal(), singlenode_b)
+        @test withinrange(LOLE(result_1b), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1b), singlenode_b_eue, nstderr_tol)
 
         # Three-region system
-        result_3mb = assess(simspec, Minimal(), threenode)
-        @test withinrange(LOLE(result_3mb), threenode_lole, nstderr_tol)
-        @test withinrange(EUE(result_3mb), threenode_eue, nstderr_tol)
+        result_3 = assess(simspec, Minimal(), threenode)
+        @test withinrange(LOLE(result_3), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3), threenode_eue, nstderr_tol)
 
     end
 

@@ -21,7 +21,7 @@ function assess(
     system::SystemModel)
 
     threads = nthreads()
-    samples = Channel{Tuple{Int,MersenneTwister}}(2*threads)
+    samples = Channel{Tuple{Int,Nothing}}(2*threads)
     results = Channel{accumulatortype(simspec, resultspec, system)}(threads)
 
     @spawn makesamples(samples, simspec)
@@ -30,20 +30,22 @@ function assess(
         @spawn assess(simspec, resultspec, system, samples, results)
     end
 
-   return finalize(results, system, threads)
+   return finalize(results, simspec, system, threads)
 
 end
 
 function makesamples(
-    periods::Channel{Tuple{Int,MersenneTwister}},
+    periods::Channel{Tuple{Int,Nothing}},
     simspec::Modern,
     step::Integer=big(10)^20)
 
-    rng = MersenneTwister(seed)
+    # TODO: Find a faster alternative to randjump for simulation-local RNG
+    #       Maybe Random123? For now just falling back on thread-local RNG
+    #rng = MersenneTwister(simspec.seed)
 
     for s in 1:simspec.nsamples
-        put!(periods, (s, rng))
-        rng = randjump(rng, step)
+        put!(periods, (s, nothing))
+        #rng = randjump(rng, step)
     end
 
     close(periods)
@@ -51,29 +53,25 @@ function makesamples(
 end
 
 function assess(
-    simspec::Modern, resultspec::R, system::SystemModel,
-    samples::Channel{Tuple{Int,MersenneTwister}},
+    simspec::Modern, resultspec::R, system::SystemModel{N},
+    samples::Channel{Tuple{Int,Nothing}},
     recorders::Channel{<:ResultAccumulator{R}}
-) where {R<:ResultSpec}
+) where {R<:ResultSpec, N}
 
     dispatchproblem = DispatchProblem(system)
     systemstate = SystemState(system)
     recorder = accumulator(simspec, resultspec, system)
 
-    # TODO: Maybe just store range indices in this format directly
-    genranges = assetgrouprange(system.generators_regionstart, ngens)
-    storranges = assetgrouprange(system.storages_regionstart, nstors)
-    genstorranges = assetgrouprange(system.storages_regionstart, ngenstors)
-    lineranges = assetgrouprange(system.lines_interfacestart, nlines)
-
-    for (s, rng) in samples
+    # TODO: Implement simulation-level RNG (Random123?)
+    rng = GLOBAL_RNG
+    for (s, _) in samples
 
         initialize!(rng, systemstate, system)
 
-        for t in 1:nperiods
+        for t in 1:N
 
             advance!(rng, systemstate, dispatchproblem, system, t)
-            solve!(dispatchproblem, systemstate)
+            solve!(dispatchproblem, systemstate, system, t)
             record!(recorder, systemstate, dispatchproblem, s, t)
 
         end
@@ -87,14 +85,14 @@ function assess(
 end
 
 function initialize!(
-    rng::MersenneTwister, state::SystemState, system::SystemModel
+    rng::AbstractRNG, state::SystemState, system::SystemModel
 )
 
-        nperiods = length(system.timesteps)
+        nperiods = length(system.timestamps)
 
         initialize_availability!(
             rng, state.gens_available, state.gens_nexttransition,
-            system.gens, nperiods)
+            system.generators, nperiods)
 
         initialize_availability!(
             rng, state.stors_available, state.stors_nexttransition,
@@ -116,12 +114,12 @@ function initialize!(
 end
 
 function advance!(
-    rng::MersenneTwister,
+    rng::AbstractRNG,
     state::SystemState,
     dispatchproblem::DispatchProblem,
     system::SystemModel, t::Int)
 
-    nperiods = length(system.timesteps)
+    nperiods = length(system.timestamps)
 
     update_availability!(
         rng, state.gens_available, state.gens_nexttransition,
@@ -150,13 +148,12 @@ function solve!(
     dispatchproblem::DispatchProblem, state::SystemState,
     system::SystemModel, t::Int
 )
-
+    fp = dispatchproblem.fp
     solveflows!(dispatchproblem.fp)
     update_state!(state, dispatchproblem, system, t)
-
 end
 
-#include("result_minimal.jl")
+include("result_minimal.jl")
 #include("result_temporal.jl")
 #include("result_spatiotemporal.jl")
 #include("result_network.jl")

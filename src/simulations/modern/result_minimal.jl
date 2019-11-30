@@ -1,181 +1,82 @@
-struct SequentialMinimalResultAccumulator{N,L,T,P,E} <:
-    ResultAccumulator{Minimal,Sequential}
+mutable struct ModernMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
 
-    droppedcount::Vector{MeanVariance} # LOL mean and variance
-    droppedsum::Vector{MeanVariance} #UE mean and variance
-    simidx::Vector{Int} # Current thread-local simulation idx
-    droppedcount_sim::Vector{Int} # LOL count for thread-local simulations
-    droppedsum_sim::Vector{Int} # UE sum for thread-local simulations
+    periodsdropped_currentsim::Int # LOL count for current simulation
+    periodsdropped::MeanVariance # Cross-simulation total LOL mean and variance
+
+    unservedenergy_currentsim::Int # UE sum for current simulation
+    unservedenergy::MeanVariance # Cross-simulation total UE mean and variance
 
 end
 
-function accumulator(
-    ::Type{Sequential}, resultspec::Minimal, sys::SystemModel{N,L,T,P,E},
+accumulatortype(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    ModernMinimalAccumulator{N,L,T,P,E}
+
+accumulator(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    ModernMinimalAccumulator{N,L,T,P,E}(
+        0, Series(Mean(), Variance()),
+        0, Series(Mean(), Variance()))
+
+function record!(
+    acc::ModernMinimalAccumulator{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    nthreads = Threads.nthreads()
+    unservedload = droppedload(problem)
 
-    ngens = length(sys.generators)
-    nstors = length(sys.storages)
-    nlines = length(sys.lines)
-
-    droppedcount = Vector{MeanVariance}(undef, nthreads)
-    droppedsum = Vector{MeanVariance}(undef, nthreads)
-
-    simidx = zeros(Int, nthreads)
-    simcount = Vector{Int}(undef, nthreads)
-    simsum = Vector{Int}(undef, nthreads)
-
-    Threads.@threads for i in 1:nthreads
-        droppedcount[i] = Series(Mean(), Variance())
-        droppedsum[i] = Series(Mean(), Variance())
-    end
-
-    return SequentialMinimalResultAccumulator{N,L,T,P,E}(
-        droppedcount, droppedsum, simidx, simcount, simsum)
-
-end
-
-function update!(acc::SequentialMinimalResultAccumulator,
-                 result::SystemOutputStateSummary, t::Int)
-
-    error("Sequential analytical solutions are not currently supported.")
-
-end
-
-function update!(
-    acc::SequentialMinimalResultAccumulator{N,L,T,P,E},
-    sample::SystemOutputStateSample, t::Int, i::Int
-) where {N,L,T,P,E}
-
-    thread = Threads.threadid()
-    isshortfall, unservedload = droppedload(sample)
-    unservedenergy = powertoenergy(E, unservedload, P, L, T)
-
-    prev_i = acc.simidx[thread]
-    if i != prev_i # Previous thread-local simulation has finished
-
-        if prev_i != 0 # Previous simulation had results, so store them
-            fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
-        end
-
-        # Reset thread-local tracking for new simulation
-        acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = isshortfall
-        acc.droppedsum_sim[thread] = unservedenergy
-
-    elseif isshortfall
-
-        # Previous thread-local simulation is still ongoing
-        # Load was dropped, update thread-local tracking
-
-        acc.droppedcount_sim[thread] += 1
-        acc.droppedsum_sim[thread] += unservedenergy
-
+    if unservedload > 0
+        acc.periodsdropped_currentsim += 1
+        acc.unservedenergy_currentsim +=
+            powertoenergy(E, unservedload, P, L, T)
     end
 
     return
 
 end
 
+function reset!(acc::ModernMinimalAccumulator, sampleid::Int)
+
+        # Store totals for current simulation
+        fit!(acc.periodsdropped, acc.periodsdropped_currentsim)
+        fit!(acc.unservedenergy, acc.unservedenergy_currentsim)
+
+        # Reset for new simulation
+        acc.periodsdropped_currentsim = 0
+        acc.unservedenergy_currentsim = 0
+
+        return
+
+end
+
 function finalize(
-    cache::SimulationCache{N,L,T,P,E},
-    acc::SequentialMinimalResultAccumulator{N,L,T,P,E}
+    results::Channel{ModernMinimalAccumulator{N,L,T,P,E}},
+    simspec::Modern,
+    system::SystemModel{N,L,T,P,E},
+    accsremaining::Int
 ) where {N,L,T,P,E}
 
-   nthreads = Threads.nthreads()
+    periodsdropped = Series(Mean(), Variance())
+    unservedenergy = Series(Mean(), Variance())
 
-   # Store final simulation results
-    for thread in 1:nthreads
-        if acc.simidx[thread] != 0 # Previous simulation had results, so store them
-            fit!(acc.droppedcount[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum[thread], acc.droppedsum_sim[thread])
-        end
+    while accsremaining > 0
+
+        acc = take!(results)
+
+        merge!(periodsdropped, acc.periodsdropped)
+        merge!(unservedenergy, acc.unservedenergy)
+
+        accsremaining -= 1
+
     end
 
-    # Merge thread-local cross-simulation stats into final stats
-    for i in 2:nthreads
-        merge!(acc.droppedcount[1], acc.droppedcount[i])
-        merge!(acc.droppedsum[1], acc.droppedsum[i])
-    end
+    close(results)
 
-    # Convert cross-simulation stats to final metrics
-    nsamples = cache.simulationspec.nsamples
-    lole, lole_stderr = mean_stderr(acc.droppedcount[1], nsamples)
-    eue, eue_stderr = mean_stderr(acc.droppedsum[1], nsamples)
+    lole, lole_stderr = mean_stderr(periodsdropped, simspec.nsamples)
+    eue, eue_stderr = mean_stderr(unservedenergy, simspec.nsamples)
 
     return MinimalResult(
         LOLE{N,L,T}(lole, lole_stderr),
         EUE{N,L,T,E}(eue, eue_stderr),
-        cache.simulationspec)
-
-end
-
-function update!(
-    sample::SystemOutputStateSample{L,T,P},
-    tdprob::TransmissionDispatchProblem
-) where {L,T<:Period,P<:PowerUnit}
-
-    nregions = length(outputsample.regions)
-    ninterfaces = length(outputsample.interfaces)
-    fp = flowproblem(tdprob)
-
-    # Save gen available, gen dispatched, demand, demand served for each region
-    for i in 1:nregions
-        node = fp.nodes[i]
-        surplus_edge = fp.edges[2*ninterfaces + i]
-        shortfall_edge = fp.edges[2*ninterfaces + 5*nregions + i]
-        sample.regions[i] = RegionResult{L,T,P}(
-            node.injection, surplus_edge.flow, shortfall_edge.flow)
-    end
-
-    # Save flow available, flow for each interface
-    for i in 1:ninterfaces
-        forwardedge = fp.edges[i]
-        forwardflow = forwardedge.flow
-        reverseflow = fp.edges[ninterfaces+i].flow
-        flow = forwardflow > reverseflow ? forwardflow : -reverseflow
-        sample.interfaces[i] = InterfaceResult{L,T,P}(forwardedge.limit, flow)
-    end
-
-end
-
-function droppedload(sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
-
-    isshortfall = false
-    totalshortfall = 0
-
-    for region in sample.regions
-        shortfall = region.shortfall
-        if shortfall > 0
-            isshortfall = true
-            totalshortfall += shortfall
-        end
-    end
-
-    return isshortfall, totalshortfall
-
-end
-
-function droppedloads!(localshortfalls::Vector{Int},
-                       sample::SystemOutputStateSample{L,T,P}) where {L,T,P}
-
-    nregions = length(sample.regions)
-    isshortfall = false
-    totalshortfall = 0
-
-    for i in 1:nregions
-        shortfall = sample.regions[i].shortfall
-        if shortfall > 0
-            isshortfall = true
-            totalshortfall += shortfall
-            localshortfalls[i] = shortfall
-        else
-            localshortfalls[i] = 0
-        end
-    end
-
-    return isshortfall, totalshortfall, localshortfalls
+        simspec)
 
 end

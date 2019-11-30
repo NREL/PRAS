@@ -1,5 +1,5 @@
 function initialize_availability!(
-    rng::MersenneTwister,
+    rng::AbstractRNG,
     availability::Vector{Bool}, nexttransition::Vector{Int},
     devices::AbstractAssets, t_last::Int)
 
@@ -22,7 +22,7 @@ function initialize_availability!(
 end
 
 function update_availability!(
-    rng::MersenneTwister,
+    rng::AbstractRNG,
     availability::Vector{Bool}, nexttransition::Vector{Int},
     devices::AbstractAssets, t_now::Int, t_last::Int)
 
@@ -39,7 +39,7 @@ function update_availability!(
 end
 
 function randtransitiontime(
-    rng::MersenneTwister, p::Matrix{Float64},
+    rng::AbstractRNG, p::Matrix{Float64},
     i::Int, t_now::Int, t_last::Int
 )
 
@@ -64,16 +64,16 @@ end
 function available_capacity(
     availability::Vector{Bool},
     lines::Lines,
-    i_bounds::Tuple{Int,Int}, t::Int
+    idxs::UnitRange{Int}, t::Int
 )
 
     avcap_forward = 0
     avcap_backward = 0
 
-    for i in first(i_bounds):last(i_bounds)
+    for i in idxs
         if availability[i]
-            avcap_forward += lines.forwardcapacity[i, t]
-            avcap_backward += lines.backwardcapacity[i, t]
+            avcap_forward += lines.forward_capacity[i, t]
+            avcap_backward += lines.backward_capacity[i, t]
         end
     end
 
@@ -83,53 +83,17 @@ end
 
 function available_capacity(
     availability::Vector{Bool},
-    assets::AbstractAssets,
-    i_bounds::Tuple{Int,Int}, t::Int
+    gens::Generators,
+    idxs::UnitRange{Int}, t::Int
 )
 
     avcap = 0
 
-    for i in first(i_bounds):last(i_bounds)
-        availability[i] && (avcap += capacity(assets)[i, t])
+    for i in idxs
+        availability[i] && (avcap += gens.capacity[i, t])
     end
 
     return avcap
-
-end
-
-function available_storage_capacity(
-    stors_available::Vector{Bool},
-    stors_energy::Vector{Int},
-    stors::Storages{N,L,T,P,E},
-    i_bounds::Tuple{Int,Int}, t::Int
-) where {N,L,T,P,E}
-
-    charge_capacity = 0
-    discharge_capacity = 0
-
-    for i in first(i_bounds):last(i_bounds)
-        if stors_available[i]
-
-            stor_energy = stors_energy[i]
-            maxenergy = stors.energycapacity[i, t]
-
-            maxcharge = stors.chargecapacity[i, t]
-            chargeefficiency = stors.chargeefficiency[i, t]
-
-            maxdischarge = stors.dischargecapacity[i, t]
-            dischargeefficiency = stors.chargeefficiency[i, t]
-
-            charge_capacity +=
-                min(maxcharge, round(Int, energytopower(
-                    P, (maxenergy - stor_energy) / chargeefficiency, E, L, T)))
-            discharge_capacity +=
-                min(maxdischarge, round(Int, energytopower(
-                    P, stor_energy * dischargeefficiency, E, L, T)))
-
-        end
-    end
-
-    return charge_capacity, discharge_capacity
 
 end
 
@@ -142,8 +106,8 @@ function update_energy!(
     for i in 1:length(stors_energy)
 
         soc = stors_energy[i]
-        efficiency = stors.carryoverefficiency[i,t]
-        maxenergy = stors.energycapacity[i,t]
+        efficiency = stors.carryover_efficiency[i,t]
+        maxenergy = stors.energy_capacity[i,t]
 
         # Decay SoC
         soc = round(Int, soc * efficiency)
@@ -155,26 +119,43 @@ function update_energy!(
 
 end
 
-function maxtimetodischarge(system::SystemModel)
+function maxtimetocharge_discharge(system::SystemModel)
 
-    stor_max = ceil(Int, maximum(
-        system.storages.energycapacity ./ system.storages.dischargecapacity))
+    if length(system.storages) > 0
 
-    genstor_max = ceil(Int, maximum(
-        system.generatorstorages.energycapacity ./ system.generatorstorages.dischargecapacity))
+        stor_charge_durations =
+            system.storages.energy_capacity ./ system.storages.charge_capacity
+        stor_charge_max = ceil(Int, maximum(stor_charge_durations))
 
-    return max(stor_max, genstor_max)
+        stor_discharge_durations =
+            system.storages.energy_capacity ./ system.storages.discharge_capacity
+        stor_discharge_max = ceil(Int, maximum(stor_discharge_durations))
 
-end
+    else
 
-function maxtimetocharge(system::SystemModel)
+        stor_charge_max = 0
+        stor_discharge_max = 0
 
-    stor_max = ceil(Int, maximum(
-        system.storages.energycapacity ./ system.storages.chargecapacity))
+    end
 
-    genstor_max = ceil(Int, maximum(
-        system.generatorstorages.energycapacity ./ system.generatorstorages.chargecapacity))
+    if length(system.generatorstorages) > 0
 
-    return max(stor_max, genstor_max)
+        genstor_charge_durations =
+            system.generatorstorages.energy_capacity ./ system.generatorstorages.charge_capacity
+        genstor_charge_max = ceil(Int, maximum(genstor_charge_durations))
+
+        genstor_discharge_durations =
+            system.generatorstorages.energy_capacity ./ system.generatorstorages.discharge_capacity
+        genstor_discharge_max = ceil(Int, maximum(genstor_discharge_durations))
+
+    else
+
+        genstor_charge_max = 0
+        genstor_discharge_max = 0
+
+    end
+
+    return (max(stor_charge_max, genstor_charge_max),
+            max(stor_discharge_max, genstor_discharge_max))
 
 end

@@ -10,7 +10,7 @@ import Decimals: Decimal
 import Distributions: DiscreteNonParametric, probs, support
 import Future: randjump
 import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
-import Random: MersenneTwister, rand
+import Random: AbstractRNG, GLOBAL_RNG, MersenneTwister, rand
 import StatsBase: stderror
 
 export
