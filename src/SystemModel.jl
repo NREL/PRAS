@@ -1,68 +1,43 @@
 struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     regions::Regions{N,P}
-    generators::Generators{N,L,T,P}
-    storages::Storages{N,L,T,P,E}
-    generatorstorages::GeneratorStorages{N,L,T,P,E}
-
     interfaces::Interfaces{N,P}
-    lines::Lines{N,L,T,P}
 
-    # starting index of each region in the generator vector
-    # e.g. for region i, corresponding generators are stored in
-    # generators[generators_regionstart[i]:generators_regionsstart[i+1]-1]
-    # (in the last region i == length(regions), it would be
-    # generators[generators_regionstart[i]:end])
-    generators_regionstart::Vector{Int}
-    storages_regionstart::Vector{Int}
-    generatorstorages_regionstart::Vector{Int}
-    lines_interfacestart::Vector{Int}
+    generators::Generators{N,L,T,P}
+    region_gen_idxs::Vector{UnitRange{Int}}
+
+    storages::Storages{N,L,T,P,E}
+    region_stor_idxs::Vector{UnitRange{Int}}
+
+    generatorstorages::GeneratorStorages{N,L,T,P,E}
+    region_genstor_idxs::Vector{UnitRange{Int}}
+
+    lines::Lines{N,L,T,P}
+    interface_line_idxs::Vector{UnitRange{Int}}
 
     timestamps::StepRange{DateTime,T}
 
     function SystemModel{N,L,T,P,E}(
-        regions::Regions{N,P},
-        generators::Generators{N,L,T,P},
-        storages::Storages{N,L,T,P,E},
-        generatorstorages::GeneratorStorages{N,L,T,P,E},
-        interfaces::Interfaces{N,P},
-        lines::Lines{N,L,T,P},
-        generators_regionstart::Vector{Int},
-        storages_regionstart::Vector{Int},
-        generatorstorages_regionstart::Vector{Int},
-        lines_interfacestart::Vector{Int},
+        regions::Regions{N,P}, interfaces::Interfaces{N,P},
+        generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+        storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+        generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+        lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
         timestamps::StepRange{DateTime,T}
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
         n_regions = length(regions)
-        n_generators = length(generators)
-        n_storages = length(storages)
-        n_generatorstorages = length(generatorstorages)
+        n_gens = length(generators)
+        n_stors = length(storages)
+        n_genstors = length(generatorstorages)
 
         n_interfaces = length(interfaces)
         n_lines = length(lines)
 
-        @assert length(generators_regionstart) == n_regions
-        @assert issorted(generators_regionstart)
-        @assert first(generators_regionstart) == 1
-        @assert last(generators_regionstart) <= n_generators + 1
-
-        @assert length(storages_regionstart) == n_regions
-        @assert issorted(storages_regionstart)
-        @assert first(storages_regionstart) == 1
-        @assert last(storages_regionstart) <= n_storages + 1
-
-        @assert length(generatorstorages_regionstart) == n_regions
-        @assert issorted(generatorstorages_regionstart)
-        @assert first(generatorstorages_regionstart) == 1
-        @assert last(generatorstorages_regionstart) <= n_generatorstorages + 1
-
-        @assert length(lines_interfacestart) == n_interfaces
-        @assert issorted(lines_interfacestart)
-        if n_lines > 0
-            @assert first(lines_interfacestart) == 1
-            @assert lines_interfacestart[end] <= n_lines + 1
-        end
+        @assert consistent_idxs(region_gen_idxs, n_gens, n_regions)
+        @assert consistent_idxs(region_stor_idxs, n_stors, n_regions)
+        @assert consistent_idxs(region_genstor_idxs, n_genstors, n_regions)
+        @assert consistent_idxs(interface_line_idxs, n_lines, n_interfaces)
 
         @assert all(
             1 <= interfaces.regions_from[i] < interfaces.regions_to[i] <= n_regions
@@ -72,13 +47,27 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
         @assert length(timestamps) == N
 
         new{N,L,T,P,E}(
-            regions, generators, storages, generatorstorages,
-            interfaces, lines,
-            generators_regionstart, storages_regionstart,
-            generatorstorages_regionstart, lines_interfacestart,
+            regions, interfaces,
+            generators, region_gen_idxs, storages, region_stor_idxs,
+            generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
             timestamps)
 
     end
+
+end
+
+function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::Int)
+
+    length(idxss) == ngroups || return false
+
+    expected_next = 1
+    for idxs in idxss
+        first(idxs) == expected_next || return false
+        expected_next = last(idxs) + 1
+    end
+
+    expected_next == nitems + 1 || return false
+    return true
 
 end
 
@@ -93,14 +82,16 @@ function SystemModel{N,L,T,P,E}(
 
     return SystemModel{N,L,T,P,E}(
         Regions{N,P}(["Region"], reshape(load, 1, :)),
-        generators, storages, generatorstorages,
         Interfaces{N,P}(
             Int[], Int[],
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N)),
+        generators, [1:length(generators)],
+        storages, [1:length(storages)],
+        generatorstorages, [1:length(generatorstorages)],
         Lines{N,L,T,P}(
             String[], String[],
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
             Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
-        [1], [1], [1], Int[], timestamps)
+        UnitRange{Int}[], timestamps)
 
 end

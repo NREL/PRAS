@@ -34,19 +34,18 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
 end
 
-capacity(g::Generators) = g.capacity
-
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
     categories::Vector{String}
 
-    chargecapacity::Matrix{Int} # power
-    dischargecapacity::Matrix{Int} # power
-    energycapacity::Matrix{Int} # energy
-    chargeefficiency::Matrix{Float64}
-    dischargeefficiency::Matrix{Float64}
-    carryoverefficiency::Matrix{Float64}
+    charge_capacity::Matrix{Int} # power
+    discharge_capacity::Matrix{Int} # power
+    energy_capacity::Matrix{Int} # energy
+
+    charge_efficiency::Matrix{Float64}
+    discharge_efficiency::Matrix{Float64}
+    carryover_efficiency::Matrix{Float64}
 
     λ::Matrix{Float64}
     μ::Matrix{Float64}
@@ -96,25 +95,29 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
     names::Vector{String}
     categories::Vector{String}
 
-    inflowcapacity::Matrix{Int} # power
-    chargecapacity::Matrix{Int} # power
-    dischargecapacity::Matrix{Int} # power
-    storage_chargecapacity::Matrix{Int} # power
-    storage_dischargecapacity::Matrix{Int} # power
-    storage_energycapacity::Matrix{Int} # energy
-    storage_chargeefficiency::Matrix{Float64}
-    storage_dischargeefficiency::Matrix{Float64}
-    storage_carryoverefficiency::Matrix{Float64}
+    charge_capacity::Matrix{Int} # power
+    discharge_capacity::Matrix{Int} # power
+    energy_capacity::Matrix{Int} # energy
+
+    charge_efficiency::Matrix{Float64}
+    discharge_efficiency::Matrix{Float64}
+    carryover_efficiency::Matrix{Float64}
+
+    inflow::Matrix{Int} # power
+    gridwithdrawal_capacity::Matrix{Int} # power
+    gridinjection_capacity::Matrix{Int} # power
 
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
     function GeneratorStorages{N,L,T,P,E}(
-        names::Vector{String}, categories::Vector{String}, inflowcapacity::Matrix{Int},
-        chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
-        storage_chargecapacity::Matrix{Int}, storage_dischargecapacity::Matrix{Int},
-        storage_energycapacity::Matrix{Int}, storage_chargeefficiency::Matrix{Float64},
-        storage_dischargeefficiency::Matrix{Float64}, storage_carryoverefficiency::Matrix{Float64},
+        names::Vector{String}, categories::Vector{String},
+        charge_capacity::Matrix{Int}, discharge_capacity::Matrix{Int},
+        energy_capacity::Matrix{Int},
+        charge_efficiency::Matrix{Float64}, discharge_efficiency::Matrix{Float64},
+        carryover_efficiency::Matrix{Float64},
+        inflow::Matrix{Int},
+        gridwithdrawal_capacity::Matrix{Int}, gridinjection_capacity::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P,E}
 
@@ -122,39 +125,41 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert length(categories) == n_stors
         @assert allunique(names)
 
-        @assert size(inflowcapacity) == (n_stors, N)
-        @assert size(chargecapacity) == (n_stors, N)
-        @assert size(dischargecapacity) == (n_stors, N)
-        @assert all(inflowcapacity .>= 0)
-        @assert all(chargecapacity .>= 0)
-        @assert all(dischargecapacity .>= 0)
+        @assert size(charge_capacity) == (n_stors, N)
+        @assert size(discharge_capacity) == (n_stors, N)
+        @assert size(energy_capacity) == (n_stors, N)
 
-        @assert size(storage_chargecapacity) == (n_stors, N)
-        @assert size(storage_dischargecapacity) == (n_stors, N)
-        @assert size(storage_energycapacity) == (n_stors, N)
-        @assert all(storage_chargecapacity .>= 0)
-        @assert all(storage_dischargecapacity .>= 0)
-        @assert all(storage_energycapacity .>= 0)
+        @assert all(charge_capacity .>= 0)
+        @assert all(discharge_capacity .>= 0)
+        @assert all(energy_capacity .>= 0)
 
-        @assert size(storage_chargeefficiency) == (n_stors, N)
-        @assert size(storage_dischargeefficiency) == (n_stors, N)
-        @assert size(storage_carryoverefficiency) == (n_stors, N)
-        @assert all(0 .<= storage_chargeefficiency .<= 1)
-        @assert all(0 .<= storage_dischargeefficiency .<= 1)
-        @assert all(0 .<= storage_carryoverefficiency .<= 1)
+        @assert size(charge_efficiency) == (n_stors, N)
+        @assert size(discharge_efficiency) == (n_stors, N)
+        @assert size(carryover_efficiency) == (n_stors, N)
+
+        @assert all(0 .<= charge_efficiency .<= 1)
+        @assert all(0 .<= discharge_efficiency .<= 1)
+        @assert all(0 .<= carryover_efficiency .<= 1)
+
+        @assert size(inflow) == (n_stors, N)
+        @assert size(gridwithdrawal_capacity) == (n_stors, N)
+        @assert size(gridinjection_capacity) == (n_stors, N)
+
+        @assert all(inflow .>= 0)
+        @assert all(gridwithdrawal_capacity .>= 0)
+        @assert all(gridinjection_capacity .>= 0)
 
         @assert size(λ) == (n_stors, N)
         @assert size(μ) == (n_stors, N)
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(names, categories,
-                       inflowcapacity, chargecapacity, dischargecapacity,
-                       storage_chargecapacity, storage_dischargecapacity,
-                       storage_energycapacity,
-                       storage_chargeefficiency, storage_dischargeefficiency,
-                       storage_carryoverefficiency,
-                       λ, μ)
+        new{N,L,T,P,E}(
+            names, categories,
+            charge_capacity, discharge_capacity, energy_capacity,
+            charge_efficiency, discharge_efficiency, carryover_efficiency,
+            inflow, gridwithdrawal_capacity, gridinjection_capacity,
+            λ, μ)
 
     end
 
@@ -165,15 +170,15 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     names::Vector{String}
     categories::Vector{String}
 
-    forwardcapacity::Matrix{Int} # power
-    backwardcapacity::Matrix{Int} # power
+    forward_capacity::Matrix{Int} # power
+    backward_capacity::Matrix{Int} # power
 
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
     function Lines{N,L,T,P}(
         names::Vector{String}, categories::Vector{String},
-        forwardcapacity::Matrix{Int}, backwardcapacity::Matrix{Int},
+        forward_capacity::Matrix{Int}, backward_capacity::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P}
 
@@ -181,20 +186,18 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert length(categories) == n_lines
         @assert allunique(names)
 
-        @assert size(forwardcapacity) == (n_lines, N)
-        @assert size(backwardcapacity) == (n_lines, N)
-        @assert all(forwardcapacity .>= 0)
-        @assert all(backwardcapacity .>= 0)
+        @assert size(forward_capacity) == (n_lines, N)
+        @assert size(backward_capacity) == (n_lines, N)
+        @assert all(forward_capacity .>= 0)
+        @assert all(backward_capacity .>= 0)
 
         @assert size(λ) == (n_lines, N)
         @assert size(μ) == (n_lines, N)
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(names, categories, forwardcapacity, backwardcapacity, λ, μ)
+        new{N,L,T,P}(names, categories, forward_capacity, backward_capacity, λ, μ)
 
     end
 
 end
-
-capacity(l::Lines) = l.forwardcapacity
