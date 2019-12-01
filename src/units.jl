@@ -22,12 +22,22 @@ unitsymbol(::Type{Hour}) = "h"
 unitsymbol(::Type{Day}) = "d"
 unitsymbol(::Type{Year}) = "y"
 
+powertoenergy(
+    p::Real, P::Type{<:PowerUnit},
+    L::Real, T::Type{<:Period},
+    E::Type{<:EnergyUnit}) = p*powertoenergy(P,L,T,E)
+
+energytopower(
+    e::Real, E::Type{<:EnergyUnit},
+    L::Real, T::Type{<:Period},
+    P::Type{<:PowerUnit}) = e*energytopower(E,L,T,P)
+
 #TODO: Need to generalize all of this. Maybe define all relationships
 #      in terms of conversions to a common set of units (MW, MWh, Hour?)
 #      and ship all conversions through those?
 
-powertoenergy(::Type{MWh}, p::Real, ::Type{MW}, n::Real, ::Type{Hour})   = n*p
-powertoenergy(::Type{MWh}, p::Real, ::Type{MW}, n::Real, ::Type{Minute}) = n*p/60
+powertoenergy(::Type{MW}, L::Real, ::Type{Hour}, ::Type{MWh}) = L
+powertoenergy(::Type{MW}, L::Real, ::Type{Minute}, ::Type{MWh}) = L/60
 
-energytopower(::Type{MW}, e::Real, ::Type{MWh}, n::Real, ::Type{Hour})   = e/n
-energytopower(::Type{MW}, e::Real, ::Type{MWh}, n::Real, ::Type{Minute}) = e/n*60
+energytopower(::Type{MWh}, L::Real, ::Type{Hour}, ::Type{MW}) = 1/L
+energytopower(::Type{MWh}, L::Real, ::Type{Minute}, ::Type{MW}) = 60/L

@@ -1,9 +1,9 @@
 @testset "Units and Conversions" begin
 
-    @test powertoenergy(MWh, 10, MW, 2, Hour) == 20
-    @test powertoenergy(MWh, 10, MW, 30, Minute) == 5
+    @test powertoenergy(10, MW, 2, Hour, MWh) == 20
+    @test powertoenergy(10, MW, 30, Minute, MWh) == 5
 
-    @test energytopower(MW, 100, MWh, 10, Hour) == 10
-    @test energytopower(MW, 100, MWh, 30, Minute) == 200
+    @test energytopower(100, MWh, 10, Hour, MW) == 10
+    @test energytopower(100, MWh, 30, Minute, MW) == 200
 
 end

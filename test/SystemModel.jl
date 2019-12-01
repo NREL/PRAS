@@ -13,8 +13,8 @@
     generatorstorages = GeneratorStorages{10,1,Hour,MW,MWh}(
         ["GS1"], ["CSP"],
         rand(1:10, 1, 10), rand(1:10, 1, 10), rand(1:10, 1, 10),
-        rand(1:10, 1, 10), rand(1:10, 1, 10), rand(1:10, 1, 10),
         fill(0.9, 1, 10), fill(1.0, 1, 10), fill(0.99, 1, 10),
+        rand(1:10, 1, 10), rand(1:10, 1, 10), rand(1:10, 1, 10),
         fill(0.1, 1, 10), fill(0.5, 1, 10))
 
     timestamps = DateTime(2020, 1, 1, 0):Hour(1):DateTime(2020,1,1,9)
@@ -33,16 +33,17 @@
         ["Line 1", "Line 2"], ["Line", "Line"],
         fill(10, 2, 10), fill(10, 2, 10), fill(0., 2, 10), fill(1.0, 2, 10))
 
-    gen_regions = [1, 2]
-    stor_regions = [1, 1]
-    genstor_regions = [1,2]
-    line_interfaces = [1]
+    gen_regions = [1:1, 2:2]
+    stor_regions = [1:0, 1:2]
+    genstor_regions = [1:1, 2:1]
+    line_interfaces = [1:2]
 
     # Multi-region constructor
     SystemModel{10,1,Hour,MW,MWh}(
-        regions, generators, storages, generatorstorages,
-        interfaces, lines,
-        gen_regions, stor_regions, genstor_regions, line_interfaces,
+        regions, interfaces,
+        generators, gen_regions, storages, stor_regions,
+        generatorstorages, genstor_regions,
+        lines, line_interfaces,
         timestamps)
 
 end

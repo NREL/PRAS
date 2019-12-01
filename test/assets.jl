@@ -53,28 +53,29 @@
 
         GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories,
-            vals_int, vals_int, vals_int, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
+            vals_int, vals_int, vals_int, vals_float, vals_float)
 
         @test_throws AssertionError GeneratorStorages{5,1,Hour,MW,MWh}(
             names, categories,
-            vals_int, vals_int, vals_int, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
+            vals_int, vals_int, vals_int, vals_float, vals_float)
+
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories[1:2],
-            vals_int, vals_int, vals_int, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
+            vals_int, vals_int, vals_int, vals_float, vals_float)
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2],
-            vals_int, vals_int, vals_int, vals_int, vals_int, vals_int,
-            vals_float, vals_float, vals_float, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float, vals_float,
+            vals_int, vals_int, vals_int, vals_float, vals_float)
 
         @test_throws AssertionError GeneratorStorages{10,1,Hour,MW,MWh}(
             names, categories,
-            vals_int, vals_int, vals_int, vals_int, vals_int, vals_int,
-            vals_float, vals_float, -vals_float, vals_float, vals_float)
+            vals_int, vals_int, vals_int, vals_float, vals_float, -vals_float,
+            vals_int, vals_int, vals_int, vals_float, vals_float)
 
     end
 
