@@ -72,7 +72,7 @@ function assess(
 
             advance!(rng, systemstate, dispatchproblem, system, t)
             solve!(dispatchproblem, systemstate, system, t)
-            record!(recorder, systemstate, dispatchproblem, s, t)
+            record!(recorder, system, systemstate, dispatchproblem, s, t)
 
         end
 
@@ -154,6 +154,6 @@ function solve!(
 end
 
 include("result_minimal.jl")
-#include("result_temporal.jl")
-#include("result_spatiotemporal.jl")
-#include("result_network.jl")
+include("result_temporal.jl")
+include("result_spatiotemporal.jl")
+include("result_network.jl")

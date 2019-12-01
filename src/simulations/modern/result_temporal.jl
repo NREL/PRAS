@@ -1,136 +1,96 @@
-struct SequentialTemporalResultAccumulator{N,L,T,P,E} <:
-    ResultAccumulator{Minimal,Sequential}
+mutable struct ModernTemporalAccumulator{N,L,T,P,E} <: ResultAccumulator{Temporal}
 
-    droppedcount_overall::Vector{MeanVariance}
-    droppedsum_overall::Vector{MeanVariance}
-    droppedcount_period::Matrix{MeanVariance}
-    droppedsum_period::Matrix{MeanVariance}
-    simidx::Vector{Int}
-    droppedcount_sim::Vector{Int}
-    droppedsum_sim::Vector{Int}
+    periodsdropped_period::Vector{MeanVariance} # Cross-simulation period LOL mean and variance
+    periodsdropped_total::MeanVariance # Cross-simulation total LOL mean and variance
+    periodsdropped_total_currentsim::Int # LOL count for current simulation
+
+    unservedenergy_period::Vector{MeanVariance} # Cross-simulation period UE mean and variance
+    unservedenergy_total::MeanVariance # Cross-simulation total UE mean and variance
+    unservedenergy_total_currentsim::Int # UE sum for current simulation
 
 end
 
-function accumulator(
-    ::Type{Sequential}, resultspec::Temporal, sys::SystemModel{N,L,T,P,E}
+accumulatortype(::Modern, ::Temporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    ModernTemporalAccumulator{N,L,T,P,E}
+
+accumulator(::Modern, ::Temporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    ModernTemporalAccumulator{N,L,T,P,E}(
+        [Series(Mean(), Variance()) for _ in 1:N], Series(Mean(), Variance()), 0,
+        [Series(Mean(), Variance()) for _ in 1:N], Series(Mean(), Variance()), 0)
+
+function record!(
+    acc::ModernTemporalAccumulator{N,L,T,P,E},
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    nthreads = Threads.nthreads()
-    nperiods = length(sys.timestamps)
+    isunservedload, unservedload = droppedload(problem)
+    unservedenergy = powertoenergy(unservedload, P, L, T, E)
 
-    droppedcount_overall = Vector{MeanVariance}(undef, nthreads)
-    droppedsum_overall = Vector{MeanVariance}(undef, nthreads)
-    droppedcount_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
-    droppedsum_period = Matrix{MeanVariance}(undef, nperiods, nthreads)
+    fit!(acc.periodsdropped_period[t], isunservedload)
+    fit!(acc.unservedenergy_period[t], unservedenergy)
 
-    simidx = zeros(Int, nthreads)
-    simcount = Vector{Int}(undef, nthreads)
-    simsum = Vector{Int}(undef, nthreads)
-
-    Threads.@threads for i in 1:nthreads
-        droppedcount_overall[i] = Series(Mean(), Variance())
-        droppedsum_overall[i] = Series(Mean(), Variance())
-        for t in 1:nperiods
-            droppedsum_period[t, i] = Series(Mean(), Variance())
-            droppedcount_period[t, i] = Series(Mean(), Variance())
-        end
-    end
-
-    return SequentialTemporalResultAccumulator{N,L,T,P,E}(
-        droppedcount_overall, droppedsum_overall,
-        droppedcount_period, droppedsum_period,
-        simidx, simcount, simsum)
-
-end
-
-function update!(acc::SequentialTemporalResultAccumulator,
-                 result::SystemOutputStateSummary, t::Int)
-
-    error("Sequential analytical solutions are not currently supported.")
-
-end
-
-function update!(
-    acc::SequentialTemporalResultAccumulator{N,L,T,P,E},
-    sample::SystemOutputStateSample, t::Int, i::Int
-) where {N,L,T,P,E}
-
-    thread = Threads.threadid()
-    isshortfall, unservedload = droppedload(sample)
-    unservedenergy = powertoenergy(E, unservedload, P, L, T)
-
-    # Update temporal results
-    fit!(acc.droppedcount_period[t, thread], isshortfall)
-    fit!(acc.droppedsum_period[t, thread], unservedenergy)
-
-    # Update overall results
-    prev_i = acc.simidx[thread]
-    if i != prev_i # Previous thread-local simulation has finished
-
-        if prev_i != 0 # Previous simulation had results, so store them
-            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
-        end
-
-        # Reset thread-local tracking for new simulation
-        acc.simidx[thread] = i
-        acc.droppedcount_sim[thread] = isshortfall
-        acc.droppedsum_sim[thread] = unservedenergy
-
-    elseif isshortfall
-
-        # Previous thread-local simulation is still ongoing
-        # Load was dropped, update thread-local tracking
-
-        acc.droppedcount_sim[thread] += 1
-        acc.droppedsum_sim[thread] += unservedenergy
-
+    if isunservedload
+        acc.periodsdropped_total_currentsim += 1
+        acc.unservedenergy_total_currentsim += unservedenergy
     end
 
     return
 
 end
 
+function reset!(acc::ModernTemporalAccumulator, sampleid::Int)
+
+        # Store totals for current simulation
+        fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
+        fit!(acc.unservedenergy_total, acc.unservedenergy_total_currentsim)
+
+        # Reset for new simulation
+        acc.periodsdropped_total_currentsim = 0
+        acc.unservedenergy_total_currentsim = 0
+
+        return
+
+end
+
 function finalize(
-    cache::SimulationCache{N,L,T,P,E},
-    acc::SequentialTemporalResultAccumulator{N,L,T,P,E}
+    results::Channel{ModernTemporalAccumulator{N,L,T,P,E}},
+    simspec::Modern,
+    system::SystemModel{N,L,T,P,E},
+    accsremaining::Int
 ) where {N,L,T,P,E}
 
-    timestamps = cache.system.timestamps
-    nperiods = length(timestamps)
-    nthreads = Threads.nthreads()
+    periodsdropped_total = Series(Mean(), Variance())
+    periodsdropped_period = [Series(Mean(), Variance()) for _ in 1:N]
 
-    # Store final simulation time-aggregated results
-    for thread in 1:nthreads
-        if acc.simidx[thread] != 0 # Previous simulation had results, so store them
-            fit!(acc.droppedcount_overall[thread], acc.droppedcount_sim[thread])
-            fit!(acc.droppedsum_overall[thread], acc.droppedsum_sim[thread])
+    unservedenergy_total = Series(Mean(), Variance())
+    unservedenergy_period = [Series(Mean(), Variance()) for _ in 1:N]
+
+    while accsremaining > 0
+
+        acc = take!(results)
+
+        merge!(periodsdropped_total, acc.periodsdropped_total)
+        merge!(unservedenergy_total, acc.unservedenergy_total)
+
+        for t in 1:N
+            merge!(periodsdropped_period[t], acc.periodsdropped_period[t])
+            merge!(unservedenergy_period[t], acc.unservedenergy_period[t])
         end
-    end
 
-    # Merge thread-local stats into final stats
-    for i in 2:nthreads
-
-        merge!(acc.droppedcount_overall[1], acc.droppedcount_overall[i])
-        merge!(acc.droppedsum_overall[1], acc.droppedsum_overall[i])
-
-        for t in 1:nperiods
-            merge!(acc.droppedcount_period[t, 1], acc.droppedcount_period[t, i])
-            merge!(acc.droppedsum_period[t, 1], acc.droppedsum_period[t, i])
-        end
+        accsremaining -= 1
 
     end
 
-    nsamples = cache.simulationspec.nsamples
+    close(results)
 
-    lole = LOLE{N,L,T}(mean_stderr(acc.droppedcount_overall[1], nsamples)...)
-    eue = EUE{N,L,T,E}(mean_stderr(acc.droppedsum_overall[1], nsamples)...)
+    lole = makemetric(LOLE{N,L,T}, periodsdropped_total)
+    lolps = makemetric.(LOLP{L,T}, periodsdropped_period)
 
-    lolps = map(r -> LOLP{L,T}(r...),
-                mean_stderr.(acc.droppedcount_period[:, 1], nsamples))
-    eues = map(r -> EUE{1,L,T,E}(r...),
-               mean_stderr.(acc.droppedsum_period[:, 1], nsamples))
+    eue = makemetric(EUE{N,L,T,E}, unservedenergy_total)
+    eues = makemetric.(EUE{1,L,T,E}, unservedenergy_period)
 
-    return TemporalResult(timestamps, lole, lolps, eue, eues, cache.simulationspec)
+    return TemporalResult(system.timestamps, lole, lolps, eue, eues, simspec)
 
 end

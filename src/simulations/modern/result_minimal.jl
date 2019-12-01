@@ -1,10 +1,10 @@
 mutable struct ModernMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
 
-    periodsdropped_currentsim::Int # LOL count for current simulation
-    periodsdropped::MeanVariance # Cross-simulation total LOL mean and variance
+    periodsdropped_total::MeanVariance # Cross-simulation total LOL mean and variance
+    periodsdropped_total_currentsim::Int # LOL count for current simulation
 
-    unservedenergy_currentsim::Int # UE sum for current simulation
-    unservedenergy::MeanVariance # Cross-simulation total UE mean and variance
+    unservedenergy_total::MeanVariance # Cross-simulation total UE mean and variance
+    unservedenergy_total_currentsim::Int # UE sum for current simulation
 
 end
 
@@ -13,21 +13,22 @@ accumulatortype(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
 
 accumulator(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
     ModernMinimalAccumulator{N,L,T,P,E}(
-        0, Series(Mean(), Variance()),
-        0, Series(Mean(), Variance()))
+        Series(Mean(), Variance()), 0,
+        Series(Mean(), Variance()), 0)
 
 function record!(
     acc::ModernMinimalAccumulator{N,L,T,P,E},
+    system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    unservedload = droppedload(problem)
+    isunservedload, unservedload = droppedload(problem)
 
-    if unservedload > 0
-        acc.periodsdropped_currentsim += 1
-        acc.unservedenergy_currentsim +=
-            powertoenergy(E, unservedload, P, L, T)
+    if isunservedload
+        acc.periodsdropped_total_currentsim += 1
+        acc.unservedenergy_total_currentsim +=
+            powertoenergy(unservedload, P, L, T, E)
     end
 
     return
@@ -37,12 +38,12 @@ end
 function reset!(acc::ModernMinimalAccumulator, sampleid::Int)
 
         # Store totals for current simulation
-        fit!(acc.periodsdropped, acc.periodsdropped_currentsim)
-        fit!(acc.unservedenergy, acc.unservedenergy_currentsim)
+        fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
+        fit!(acc.unservedenergy_total, acc.unservedenergy_total_currentsim)
 
         # Reset for new simulation
-        acc.periodsdropped_currentsim = 0
-        acc.unservedenergy_currentsim = 0
+        acc.periodsdropped_total_currentsim = 0
+        acc.unservedenergy_total_currentsim = 0
 
         return
 
@@ -62,8 +63,8 @@ function finalize(
 
         acc = take!(results)
 
-        merge!(periodsdropped, acc.periodsdropped)
-        merge!(unservedenergy, acc.unservedenergy)
+        merge!(periodsdropped, acc.periodsdropped_total)
+        merge!(unservedenergy, acc.unservedenergy_total)
 
         accsremaining -= 1
 
@@ -71,12 +72,9 @@ function finalize(
 
     close(results)
 
-    lole, lole_stderr = mean_stderr(periodsdropped, simspec.nsamples)
-    eue, eue_stderr = mean_stderr(unservedenergy, simspec.nsamples)
+    lole = makemetric(LOLE{N,L,T}, periodsdropped)
+    eue = makemetric(EUE{N,L,T,E}, unservedenergy)
 
-    return MinimalResult(
-        LOLE{N,L,T}(lole, lole_stderr),
-        EUE{N,L,T,E}(eue, eue_stderr),
-        simspec)
+    return MinimalResult(lole, eue, simspec)
 
 end

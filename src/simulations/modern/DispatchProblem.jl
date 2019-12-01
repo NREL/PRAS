@@ -277,7 +277,7 @@ function update_problem!(
 
         charge_capacity =
             min(maxcharge, round(Int, energytopower(
-                P, energychargeable, E, L, T)))
+                energychargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[charge_node], slack_node, -charge_capacity)
 
@@ -294,7 +294,7 @@ function update_problem!(
 
         discharge_capacity =
             min(maxdischarge, round(Int, energytopower(
-                P, energydischargeable, E, L, T)))
+                energydischargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
 
@@ -336,7 +336,7 @@ function update_problem!(
 
         charge_capacity =
             min(maxcharge, round(Int, energytopower(
-                P, energychargeable, E, L, T)))
+                energychargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[charge_node], slack_node, -charge_capacity)
 
@@ -354,7 +354,7 @@ function update_problem!(
 
         discharge_capacity =
             min(maxdischarge, round(Int, energytopower(
-                P, energydischargeable, E, L, T)))
+                energydischargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
 
@@ -396,27 +396,19 @@ function update_state!(
 
 end
 
-droppedload(problem::DispatchProblem) =
-    sum(problem.fp.edges[i].flow for i in problem.region_unserved_edges)
+function droppedload(problem::DispatchProblem)
 
-function droppedloads!(shortfalls::Vector{Int},
-                       problem::DispatchProblem)
-
-    nregions = length(problem.region_unserved_edges)
     isshortfall = false
     totalshortfall = 0
 
     for i in problem.region_unserved_edges
-        shortfall = problem.edges[i].flow
+        shortfall = problem.fp.edges[i].flow
         if shortfall > 0
             isshortfall = true
             totalshortfall += shortfall
-            shortfalls[i] = shortfall
-        else
-            shortfalls[i] = 0
         end
     end
 
-    return isshortfall, totalshortfall, shortfalls
+    return isshortfall, totalshortfall
 
 end
