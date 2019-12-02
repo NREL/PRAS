@@ -30,7 +30,7 @@ function assess(
         @spawn assess(simspec, resultspec, system, samples, results)
     end
 
-   return finalize(results, simspec, system, threads)
+    return finalize(results, simspec, system, threads)
 
 end
 
