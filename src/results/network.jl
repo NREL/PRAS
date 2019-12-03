@@ -4,45 +4,42 @@ struct NetworkResult{
     N, # Number of timesteps simulated
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
-    E <: EnergyUnit, # Units for energy results
     P <: PowerUnit, # Units for power results
-    V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
+    E <: EnergyUnit, # Units for energy results
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,SS}
 
     regions::Vector{String}
     interfaces::Vector{Tuple{Int,Int}}
     timestamps::StepRange{DateTime,T}
 
-    lole::LOLE{N,L,T,V}
-    regionloles::Vector{LOLE{N,L,T,V}}
-    periodlolps::Vector{LOLP{L,T,V}}
-    regionalperiodlolps::Matrix{LOLP{L,T,V}}
+    lole::LOLE{N,L,T}
+    regionloles::Vector{LOLE{N,L,T}}
+    periodlolps::Vector{LOLP{L,T}}
+    regionalperiodlolps::Matrix{LOLP{L,T}}
 
-    eue::EUE{N,L,T,E,V}
-    regioneues::Vector{EUE{N,L,T,E,V}}
-    periodeues::Vector{EUE{1,L,T,E,V}}
-    regionalperiodeues::Matrix{EUE{1,L,T,E,V}}
+    eue::EUE{N,L,T,E}
+    regioneues::Vector{EUE{N,L,T,E}}
+    periodeues::Vector{EUE{1,L,T,E}}
+    regionalperiodeues::Matrix{EUE{1,L,T,E}}
 
-    flows::Matrix{ExpectedInterfaceFlow{1,L,T,P,V}}
-    utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T,V}}
+    flows::Matrix{ExpectedInterfaceFlow{1,L,T,P}}
+    utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T}}
 
-    extractionspec::ES
     simulationspec::SS
 
     function NetworkResult{}(
         regions::Vector{String}, interfaces::Vector{Tuple{Int,Int}},
         timestamps::StepRange{DateTime,T},
-        lole::LOLE{N,L,T,V}, regionloles::Vector{LOLE{N,L,T,V}},
-        periodlolps::Vector{LOLP{L,T,V}},
-        regionalperiodlolps::Matrix{LOLP{L,T,V}},
-        eue::EUE{N,L,T,E,V}, regioneues::Vector{EUE{N,L,T,E,V}},
-        periodeues::Vector{EUE{1,L,T,E,V}},
-        regionalperiodeues::Matrix{EUE{1,L,T,E,V}},
-        flows::Matrix{ExpectedInterfaceFlow{1,L,T,P,V}},
-        utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T,V}},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,P,V,ES,SS}
+        lole::LOLE{N,L,T}, regionloles::Vector{LOLE{N,L,T}},
+        periodlolps::Vector{LOLP{L,T}},
+        regionalperiodlolps::Matrix{LOLP{L,T}},
+        eue::EUE{N,L,T,E}, regioneues::Vector{EUE{N,L,T,E}},
+        periodeues::Vector{EUE{1,L,T,E}},
+        regionalperiodeues::Matrix{EUE{1,L,T,E}},
+        flows::Matrix{ExpectedInterfaceFlow{1,L,T,P}},
+        utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T}},
+        simulationspec::SS) where {N,L,T,P,E,SS}
 
         nregions = length(regions)
         ninterfaces = length(interfaces)
@@ -61,11 +58,11 @@ struct NetworkResult{
         @assert size(flows) == (ninterfaces, ntimesteps)
         @assert size(utilizations) == (ninterfaces, ntimesteps)
 
-        new{N,L,T,E,P,V,ES,SS}(
+        new{N,L,T,P,E,SS}(
             regions, interfaces, timestamps,
             lole, regionloles, periodlolps, regionalperiodlolps,
             eue, regioneues, periodeues, regionalperiodeues,
-            flows, utilizations, extractionspec, simulationspec)
+            flows, utilizations, simulationspec)
 
     end
 
@@ -131,6 +128,3 @@ function ExpectedInterfaceUtilization(x::NetworkResult, i::Tuple{Int,Int}, t::Da
     t_idx = findfirstunique(x.timestamps, t) 
     return x.utilizations[i_idx, t_idx]
 end
-
-include("network_nonsequentialaccumulator.jl")
-include("network_sequentialaccumulator.jl")

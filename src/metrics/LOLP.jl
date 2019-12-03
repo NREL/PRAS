@@ -1,13 +1,13 @@
 # Loss-of-Load Probability
 
-struct LOLP{N,T<:Period,V<:Real} <: ReliabilityMetric{V}
-    val::V
-    stderr::V
+struct LOLP{N,T<:Period} <: ReliabilityMetric
+    val::Float64
+    stderr::Float64
 
-    function LOLP{N,T}(val::V, stderr::V) where {N,T<:Period,V<:Real}
+    function LOLP{N,T}(val::Float64, stderr::Float64) where {N,T<:Period}
         (0 <= val <= 1) || error("$val is not a valid probability")
         (stderr >= 0) || error("$stderr is not a valid standard error")
-        new{N,T,V}(val, stderr)
+        new{N,T}(val, stderr)
     end
 
 end

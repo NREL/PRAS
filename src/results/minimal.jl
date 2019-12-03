@@ -5,25 +5,19 @@ struct MinimalResult{
     L, # Length of each timestep
     T <: Period, # Units of timestep duration
     E <: EnergyUnit, # Units for energy results
-    V <: Real, # Numerical type of value data
-    ES <: ExtractionSpec,
     SS <: SimulationSpec
-} <: Result{N,L,T,V,ES,SS}
+} <: Result{N,L,T,SS}
 
-    lole::LOLE{N,L,T,V}
-    eue::EUE{N,L,T,E,V}
-    extractionspec::ES
+    lole::LOLE{N,L,T}
+    eue::EUE{N,L,T,E}
     simulationspec::SS
 
     MinimalResult{}(
-        lole::LOLE{N,L,T,V}, eue::EUE{N,L,T,E,V},
-        extractionspec::ES, simulationspec::SS) where {N,L,T,E,V,ES,SS} =
-        new{N,L,T,E,V,ES,SS}(lole, eue, extractionspec, simulationspec)
+        lole::LOLE{N,L,T}, eue::EUE{N,L,T,E},
+        simulationspec::SS) where {N,L,T,E,SS} =
+        new{N,L,T,E,SS}(lole, eue, simulationspec)
 
 end
 
 LOLE(x::MinimalResult) = x.lole
 EUE(x::MinimalResult) = x.eue
-
-include("minimal_nonsequentialaccumulator.jl")
-include("minimal_sequentialaccumulator.jl")

@@ -1,5 +1,3 @@
-abstract type ReliabilityMetric{V<:Real} end
-
 function roundresults(x::ReliabilityMetric)
 
     if stderror(x) == 0
@@ -42,6 +40,3 @@ for T in [LOLP, LOLE, EUE, ExpectedInterfaceFlow, ExpectedInterfaceUtilization]
         isapprox(x.stderr, y.stderr)
 
 end
-
-# Note: Result-specific constructor methods are defined
-#       in abstractspecs/results.jl and results/*.jl

@@ -8,7 +8,7 @@
 
     result = ResourceAdequacy.TemporalResult(
         tstamps, lole, lolps, eue, eues,
-        Backcast(), NonSequentialCopperplate()
+        Classic()
     )
 
     # Disallow metrics defined over different time periods
@@ -16,7 +16,7 @@
         tstamps, lole, lolps,
         EUE{168,30,Minute,MWh}(val(eue), stderror(eue)),
         EUE{1,30,Minute,MWh}.(val.(eues), stderror.(eues)),
-        Backcast(), NonSequentialCopperplate()
+        Classic()
     )
 
     # Metric constructors
