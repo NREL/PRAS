@@ -3,6 +3,7 @@ module PRASBase
 using Reexport
 
 @reexport using Dates
+using HDF5
 
 export
 
@@ -26,5 +27,6 @@ include("units.jl")
 include("collections.jl")
 include("assets.jl")
 include("SystemModel.jl")
+include("readwrite.jl")
 
 end # module

@@ -1,10 +1,11 @@
 name = "PRASBase"
 uuid = "b5ddb534-8618-11e9-23a2-3523bd004218"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.2.0"
+version = "0.2.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [extras]
