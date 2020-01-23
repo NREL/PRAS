@@ -31,6 +31,8 @@ to generically as "resource collections".
 
 ## HDF5 File Structure
 
+### Root group attributes
+
 The HDF5 file must define seven
 [attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
 on the
@@ -49,7 +51,89 @@ These attributes are all mandatory:
  - `power_unit`, providing the units for power-related data
  - `energy_unit`, providing the units for energy-related data
 
-The file may also define the following six
+Each of these attributes and their required contents are explained in more
+detail below.
+
+#### `pras_dataversion`
+
+The version of this HDF5 representation specification used to create the 
+HDF5 file should be stored in an attribute of the file's root group
+labelled `pras_dataversion`. The attribute should provide a single
+nine-character string, taking the value of the abridged semantic versioning
+representation of the specification version, `vXX.YY.ZZ`, where XX, YY, and ZZ
+represent the major, minor, and patch version numbers of the specification,
+respectively (when any of the version numbers require fewer than two digits to
+represent, the end of the string can be padded with spaces).
+
+As discussed above, the version of the specification is the same as the version
+of the PRASBase.jl package providing the specification, and so should
+match the version provided in the package's Project.toml file.
+
+(A given version of PRASBase.jl will check this attribute to determine if it is
+capable of reading the provided file, and if so, how to do so. While PRASBase
+is usually capable of reading files associated with PRASBase versions older
+than itself, it can only write files associated with its own version.)
+
+#### `start_timestamp`
+
+The starting timestamp for the system simulation should be stored in an attribute
+of the file's root group labelled `start_timestamp`, as a single
+25-character, ISO-8601-compliant string in a format matching
+`2020-12-31T23:59:59-07:00`, providing year, month, day, hour, minute, second,
+and timezone offset from UTC (in that order).
+
+#### `timestep_count`
+
+The total number of timesteps in the simulation should be stored in an
+attribute of the file's root group labelled `timestep_count`, as a single
+32-bit unsigned integer. The attribute value should match the number of rows
+(in C/HDF5 row-major format) in each property dataset in the various resource
+and resource collection groups.
+
+#### `timestep_length`
+
+The length of a single timestep (in terms of the units defined by
+`timestep_unit`) should be stored in an attribute of the file's root group
+labelled `timestep_length`, as a single 32-bit unsigned integer.
+
+#### `timestep_unit`
+
+The units for `timestep_length` should be stored in an attribute of the file's
+root group labelled `timestep_unit`, as a single three-character string. The
+following are recognized values for the string to take:
+
+ - `sec` indicates the units are seconds
+ - `min` indicates the units are minutes
+ - `hr ` indicates the units are hours
+ - `day` indicates the units are days
+
+#### `power_unit`
+
+The units for all parameters quantified in terms of power should be stored in
+an attribute of the file's root group labelled `power_unit`, as a single
+two-character string. The following are recognized values for the string to
+take:
+
+ - `kW` indicates power data is in units of kilowatts
+ - `MW` indicates power data is in units of megawatts
+ - `GW` indicates power data is in units of gigawatts
+ - `TW` indicates power data is in units of terawatts
+
+#### `energy_unit`
+
+The units for all parameters quantified in terms of energy should be stored in
+an attribute of the file's root group labelled `energy_unit`, as a single
+two-character string. The following are recognized values for the string to
+take:
+
+ - `kWh` indicates power data is in units of kilowatt-hours
+ - `MWh` indicates power data is in units of megawatt-hours
+ - `GWh` indicates power data is in units of gigawatt-hours
+ - `TWh` indicates power data is in units of terawatt-hours
+
+### Resource / resource collection data
+
+The file may define the following six
 [groups](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Group)
 as children of the root group. At least two groups are mandatory.
 
@@ -74,94 +158,200 @@ The file may include (optional):
    in the system. This group **must** be included if `interfaces` is included
    and **must not** be included if `interfaces` is omitted.
 
-Each of these attributes, groups and their required contents are explained in more detail
-below.
-      
-### `pras_dataversion` root group attribute
+For simplicity, the class of system resources or resource collections described
+by a given group are referred to as "group entities" in the following
+paragraphs.
 
-The version of this HDF5 representation specification used to create the 
-HDF5 file should be stored in an attribute of the file's root group
-labelled `pras_dataversion`. The attribute should provide a single
-nine-character string, taking the value of the abridged semantic versioning
-representation of the specification version, `vXX.YY.ZZ`, where XX, YY, and ZZ
-represent the major, minor, and patch version numbers of the specification,
-respectively (when any of the version numbers require fewer than two digits to
-represent, the end of the string can be padded with spaces).
+Each group contains one `_` dataset providing static parameters and/or relations
+for the group entities, in the form of a vector / one-dimensional array of
+[compound datatype](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Compounddatatype)
+instances. These datasets may use HDF5's automatic compression features to
+reduce filesize.
 
-As discussed above, the version of the specification is the same as the version
-of the PRASBase.jl package providing the specification, and so should
-match the version provided in the package's Project.toml file.
+Each group also contains one or more datasets representing (potentially)
+time-varying properties of the group entities. These datasets should
+be matrices / two-dimensional arrays of unsigned 32-bit integers or 64-bit
+floating point numbers, depending on the property in question. These datasets
+may also use HDF5's automatic compression features to reduce filesize.
 
-(A given version of PRASBase.jl will check this attribute to determine if it is
-capable of reading the provided file, and if so, how to do so. While PRASBase
-is usually capable of reading files associated with PRASBase versions older
-than itself, it can only write files associated with its own version.)
+The size of the inner dimension of the array (number of columns in C/HDF5
+row-major format, number of rows in Julia column-major format) should match the
+number of group entities in the system, with entity data provided in the same
+order as the entities are defined in the `_` sibling dataset.
 
-### `start_timestamp` root group attribute
+The size of the outer dimension of the array (number of rows in C/HDF5
+row-major format, number of columns in Julia column-major format)
+should match the number of timesteps to be simulated (as provided by the
+`timesteps_count` root attribute). Data should be chronologically increasing
+within a single column (row-major) / row (column-major)
 
-The starting timestamp for the system simulation should be stored in an attribute
-of the file's root group labelled `start_timestamp`, as a single
-25-character, ISO-8601-compliant string in a format matching
-`2020-12-31T23:59:59-07:00`, providing year, month, day, hour, minute, second,
-and timezone offset from UTC (in that order).
+Specific details for each of these groups and their required contents are
+provided below.
 
-### `timestep_count` root group attribute
+#### `regions` group
 
-The total number of timesteps in the simulation should be stored in an
-attribute of the file's root group labelled `timestep_count`, as a single
-32-bit unsigned integer. The attribute value should match the number of rows
-(in C/HDF5 row-major format) in each property dataset in the various resource and
-resource collection groups.
+Information relating to the regions of the represented system is stored in the
+mandatory `regions` group inside the root group. This group should contain two
+datasets, one (named `_`) providing basic data about each region and one
+providing (potentially) time-varying data.
 
-### `timestep_length` root group attribute
+The `_` dataset should be a one-dimensional array storing instances of a
+compound datatype with the following fields (in order):
 
-The length of a single timestep (in terms of the units defined by
-`timestep_unit`) should be stored in an attribute of the file's root group
-labelled `timestep_length`, as a single 32-bit unsigned integer.
+ 1. `name`: 128-byte string. Stores the **unique** name of each region.
 
-### `timestep_unit` root group attribute
+Each region in the system corresponds to a single instance of the compound
+datatype, so the array should have as many elements as there are regions in
+the system.
 
-The units for `timestep_length` should be stored in an attribute of the file's
-root group labelled `timestep_unit`, as a single three-character string. The
-following are recognized values for the string to take:
+The `regions` group should contain the following datasets describing
+(potentially) time-varying properties of the system regions:
 
- - `sec` indicates the units are seconds
- - `min` indicates the units are minutes
- - `hr ` indicates the units are hours
- - `day` indicates the units are days
+ - `load`, as unsigned 32-bit integers representing aggregated electricity
+   demand in each region for each timeperiod, expressed in units given by the
+   `power_units` attribute
 
-### `power_unit` root group attribute
+#### `generators` group
 
-The units for all parameters quantified in terms of power should be stored in
-an attribute of the file's root group labelled `power_unit`, as a single
-two-character string. The following are recognized values for the string to
-take:
+Information relating to the generators of the represented system is stored in
+the `generators` group inside the root group. This group should contain four
+datasets, one (named `_`) providing basic data about each region and three
+providing (potentially) time-varying data.
 
- - `kW` indicates power data is in units of kilowatts
- - `MW` indicates power data is in units of megawatts
- - `GW` indicates power data is in units of gigawatts
- - `TW` indicates power data is in units of terawatts
+The `_` dataset should be a vector / one-dimensional array storing instances of a
+compound datatype with the following fields (in order):
 
-### `energy_unit` root group attribute
+ 1. `name`: 128-byte string. Stores the **unique** name of each generator.
+ 2. `category`: 128-byte string. Stores the category of each generator.
+ 3. `region`: 128-byte string. Stores the region of each generator.
 
-The units for all parameters quantified in terms of energy should be stored in
-an attribute of the file's root group labelled `energy_unit`, as a single
-two-character string. The following are recognized values for the string to
-take:
+Each generator in the system corresponds to a single instance of the compound
+datatype, so the vector should have as many elements as there are generators in
+the system.
 
- - `kWh` indicates power data is in units of kilowatt-hours
- - `MWh` indicates power data is in units of megawatt-hours
- - `GWh` indicates power data is in units of gigawatt-hours
- - `TWh` indicates power data is in units of terawatt-hours
+The `generators` group should also contain the following datasets describing
+(potentially) time-varying properties of the system generators:
 
-### `regions` group
+ - `capacity`, as unsigned 32-bit integers representing maximum available
+   generation capacity for each generator in each timeperiod, expressed in
+   units given by the `power_units` attribute
+ - `failureprob`, as 64-bit floats representing the probability the generator
+   transitions from operational to forced outage during a given simulation
+   timestep, for each generator in each timeperiod. Unitless.
+ - `repairprob`, as 64-bit floats representing the probability the generator
+   transitions from forced outage to operational during a given simulation
+   timestep, for each generator in each timeperiod. Unitless.
 
-### `generators` group
+#### `storages` group
 
-### `storages` group
+Information relating to the storage-only devices of the represented system is
+stored in the `storages` group inside the root group. This group should contain
+nine datasets, one (named `_`) providing basic data about each region and eight
+providing (potentially) time-varying data.
 
-### `generatorstorages` group
+The `_` dataset should be a vector / one-dimensional array storing instances of
+a compound datatype with the following fields (in order):
 
-### `interfaces` group
+ 1. `name`: 128-byte string. Stores the **unique** name of each generator.
+ 2. `category`: 128-byte string. Stores the category of each generator.
+ 3. `region`: 128-byte string. Stores the region of each generator.
 
-### `lines` group
+Each generator in the system corresponds to a single instance of the compound
+datatype, so the vector should have as many elements as there are storages in
+the system.
+
+The `storages` group should also contain the following datasets describing
+(potentially) time-varying properties of the system storage devices:
+
+ - `chargecapacity`, as unsigned 32-bit integers representing maximum available
+   charging capacity for each storage unit in each timeperiod, expressed in
+   units given by the `power_units` attribute
+ - `dischargecapacity`, as unsigned 32-bit integers representing maximum
+   available discharging capacity for each storage unit in each timeperiod,
+   expressed in units given by the `power_units` attribute
+ - `energycapacity`, as unsigned 32-bit integers representing maximum
+   available energy storage capacity for each storage unit in each timeperiod,
+   expressed in units given by the `energy_units` attribute
+ - `chargeefficiency`, as 64-bit floats representing the ratio of power
+   injected into the storage device's reservoir to power withdrawn from the
+   grid, for each storage unit in each timeperiod. Unitless.
+ - `dischargeefficiency`, as 64-bit floats representing the ratio of power
+   injected into the grid to power withdrawn from the storage device's
+   reservoir, for each storage unit in each timeperiod. Unitless.
+ - `carryoverefficiency`, as 64-bit floats representing the ratio of energy
+   available in the storage device's reservoir at the beginning of one period
+   to energy retained in the storage device's reservoir at the end of the
+   previous period, for each storage unit in each timeperiod. Unitless.
+ - `failureprob`, as 64-bit floats representing the probability the unit
+   transitions from operational to forced outage during a given simulation
+   timestep, for each storage unit in each timeperiod. Unitless.
+ - `repairprob`, as 64-bit floats representing the probability the unit
+   transitions from forced outage to operational during a given simulation
+   timestep, for each storage unit in each timeperiod. Unitless.
+
+#### `generatorstorages` group
+
+Information relating to the combination generation-storage resources in the
+represented system is stored in the `generatorstorages` group inside the root
+group. This group should contain twelve datasets, one (named `_`) providing basic
+data about each region and eleven providing (potentially) time-varying data.
+
+The `_` dataset should be a vector / one-dimensional array storing instances of
+a compound datatype with the following fields (in order):
+
+ 1. `name`: 128-byte string. Stores the **unique** name of each
+    generator-storage unit.
+ 2. `category`: 128-byte string. Stores the category of each generator-storage
+    unit.
+ 3. `region`: 128-byte string. Stores the region of each generator-storage
+    unit.
+
+Each generator-storage unit in the system corresponds to a single instance of
+the compound datatype, so the vector should have as many elements as there are
+generator-storages units in the system.
+
+The `generatorstorages` group should also contain the following datasets
+describing (potentially) time-varying properties of the system
+generator-storage devices:
+
+ - `inflow`, as unsigned 32-bit integers representing exogenous
+   power inflow available to each generator-storage unit in each timeperiod,
+   expressed in units given by the `power_units` attribute
+ - `gridwithdrawalcapacity`, as unsigned 32-bit integers representing maximum
+   available capacity to withdraw power from the grid for each
+   generator-storage unit in each timeperiod, expressed in units given by the
+   `power_units` attribute
+ - `gridinjectioncapacity`, as unsigned 32-bit integers representing maximum
+   available capacity to inject power to the grid for each generator-storage
+   unit in each timeperiod, expressed in units given by the `power_units`
+   attribute
+ - `chargecapacity`, as unsigned 32-bit integers representing maximum available
+   charging capacity for each generator-storage unit in each timeperiod, expressed in
+   units given by the `power_units` attribute
+ - `dischargecapacity`, as unsigned 32-bit integers representing maximum
+   available discharging capacity for each generator-storage unit in each timeperiod,
+   expressed in units given by the `power_units` attribute
+ - `energycapacity`, as unsigned 32-bit integers representing maximum
+   available energy storage capacity for each generator-storage unit in each
+   timeperiod, expressed in units given by the `energy_units` attribute
+ - `chargeefficiency`, as 64-bit floats representing the ratio of power
+   injected into the generator-storage device's reservoir to power withdrawn
+   from the grid, for each generator-storage unit in each timeperiod. Unitless.
+ - `dischargeefficiency`, as 64-bit floats representing the ratio of power
+   injected into the grid to power withdrawn from the generator-storage device's
+   reservoir, for each generator-storage unit in each timeperiod. Unitless.
+ - `carryoverefficiency`, as 64-bit floats representing the ratio of energy
+   available in the generator-storage device's reservoir at the beginning of one period
+   to energy retained in the device's reservoir at the end of the
+   previous period, for each generator-storage unit in each timeperiod.
+   Unitless.
+ - `failureprob`, as 64-bit floats representing the probability the unit
+   transitions from operational to forced outage during a given simulation
+   timestep, for each generator-storage unit in each timeperiod. Unitless.
+ - `repairprob`, as 64-bit floats representing the probability the unit
+   transitions from forced outage to operational during a given simulation
+   timestep, for each generator-storage unit in each timeperiod. Unitless.
+
+#### `interfaces` group
+
+#### `lines` group
