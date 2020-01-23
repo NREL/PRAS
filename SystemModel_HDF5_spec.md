@@ -162,7 +162,7 @@ For simplicity, the class of system resources or resource collections described
 by a given group are referred to as "group entities" in the following
 paragraphs.
 
-Each group contains one `_` dataset providing static parameters and/or relations
+Each group contains one `_core` dataset providing static parameters and/or relations
 for the group entities, in the form of a vector / one-dimensional array of
 [compound datatype](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Compounddatatype)
 instances. These datasets may use HDF5's automatic compression features to
@@ -177,7 +177,7 @@ may also use HDF5's automatic compression features to reduce filesize.
 The size of the inner dimension of the array (number of columns in C/HDF5
 row-major format, number of rows in Julia column-major format) should match the
 number of group entities in the system, with entity data provided in the same
-order as the entities are defined in the `_` sibling dataset.
+order as the entities are defined in the `_core` sibling dataset.
 
 The size of the outer dimension of the array (number of rows in C/HDF5
 row-major format, number of columns in Julia column-major format)
@@ -192,10 +192,10 @@ provided below.
 
 Information relating to the regions of the represented system is stored in the
 mandatory `regions` group inside the root group. This group should contain two
-datasets, one (named `_`) providing basic data about each region and one
-providing (potentially) time-varying data.
+datasets, one (named `_core`) providing core static data about each region and
+one providing (potentially) time-varying data.
 
-The `_` dataset should be a one-dimensional array storing instances of a
+The `_core` dataset should be a one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
  1. `name`: 128-byte string. Stores the **unique** name of each region.
@@ -215,10 +215,10 @@ The `regions` group should contain the following datasets describing
 
 Information relating to the generators of the represented system is stored in
 the `generators` group inside the root group. This group should contain four
-datasets, one (named `_`) providing basic data about each region and three
-providing (potentially) time-varying data.
+datasets, one (named `_core`) providing core static data about each generator
+and three providing (potentially) time-varying data.
 
-The `_` dataset should be a vector / one-dimensional array storing instances of a
+The `_core` dataset should be a vector / one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
  1. `name`: 128-byte string. Stores the **unique** name of each generator.
@@ -246,10 +246,10 @@ The `generators` group should also contain the following datasets describing
 
 Information relating to the storage-only devices of the represented system is
 stored in the `storages` group inside the root group. This group should contain
-nine datasets, one (named `_`) providing basic data about each region and eight
-providing (potentially) time-varying data.
+nine datasets, one (named `_core`) providing core static data about each region
+and eight providing (potentially) time-varying data.
 
-The `_` dataset should be a vector / one-dimensional array storing instances of
+The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
  1. `name`: 128-byte string. Stores the **unique** name of each generator.
@@ -293,10 +293,11 @@ The `storages` group should also contain the following datasets describing
 
 Information relating to the combination generation-storage resources in the
 represented system is stored in the `generatorstorages` group inside the root
-group. This group should contain twelve datasets, one (named `_`) providing basic
-data about each region and eleven providing (potentially) time-varying data.
+group. This group should contain twelve datasets, one (named `_core`) providing
+core static data about each region and eleven providing (potentially)
+time-varying data.
 
-The `_` dataset should be a vector / one-dimensional array storing instances of
+The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
  1. `name`: 128-byte string. Stores the **unique** name of each
@@ -354,4 +355,69 @@ generator-storage devices:
 
 #### `interfaces` group
 
+Information relating to transmission interfaces between regions of the
+represented system is stored in the `interfaces` group inside the root group.
+This group should contain three datasets, one (named `_core`) providing core
+static data about each interface and two providing (potentially) time-varying
+data.
+
+The `_core` dataset should be a one-dimensional array storing instances of a
+compound datatype with the following fields (in order):
+
+ 1. `region1`: 128-byte string. Stores the name of the first of the two
+    regions connected by the interface.
+ 2. `region2`: 128-byte string. Stores the name of the second of the two
+    regions connected by the interface.
+
+Each interface in the system corresponds to a single instance of the compound
+datatype, so the array should have as many elements as there are interfaces in
+the system.
+
+The `interfaces` group should contain the following datasets describing
+(potentially) time-varying properties of the system regions:
+
+ - `forwardcapacity`, as unsigned 32-bit integers representing the maximum
+   possible total power transfer from the first region to the second
+   region, for each interface in each time period
+ - `backwardcapacity`, as unsigned 32-bit integers representing the maximum
+   possible total power transfer from the second region to the
+   first region, for each interface in each time period
+
 #### `lines` group
+
+Information relating to individual transmission lines between regions of the
+represented system is stored in the `lines` group inside the root group.
+This group should contain five datasets, one (named `_core`) providing core
+static data about each interface and four providing (potentially) time-varying
+data.
+
+The `_core` dataset should be a one-dimensional array storing instances of a
+compound datatype with the following fields (in order):
+
+ 1. `name`: 128-byte string. Stores the **unique** name of the line.
+ 2. `category`: 128-byte string. Stores the assigned category of the line.
+ 3. `region1`: 128-byte string. Stores the name of the first of the two
+    regions connected by the line.
+ 4. `region2`: 128-byte string. Stores the name of the second of the two
+    regions connected by the line.
+
+Each line in the system corresponds to a single instance of the compound
+datatype, so the array should have as many elements as there are lines in
+the system.
+
+The `lines` group should contain the following datasets describing
+(potentially) time-varying properties of the system regions:
+
+ - `forwardcapacity`, as unsigned 32-bit integers representing maximum
+   available power transfer capacity from the first region to the second
+   region along the line, for each line in each time period
+ - `backwardcapacity`, as unsigned 32-bit integers representing maximum
+   available power transfer capacity from the second region to the
+   first region along the line, for each line in each time period
+ - `failureprob`, as 64-bit floats representing the probability the line
+   transitions from operational to forced outage during a given simulation
+   timestep, for each line in each timeperiod. Unitless.
+ - `repairprob`, as 64-bit floats representing the probability the line
+   transitions from forced outage to operational during a given simulation
+   timestep, for each line in each timeperiod. Unitless.
+
