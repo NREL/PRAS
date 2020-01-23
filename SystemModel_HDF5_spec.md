@@ -3,9 +3,9 @@ _Note: A useful reference for HDF5 file structure concepts is the
 This document contains links to glossary entries to explain HDF5 terms when used
 for the first time._
 
-# Specification for HDF5 representation of `SystemModel` data
+# `SystemModel` HDF5 representation specification
 
-The following specifies a representation of the PRAS `SystemModel` data
+This document specifies a representation of the PRAS `SystemModel` data
 structure in terms of
 [objects](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Object)
 in an HDF5 file. This specification is version-controlled in the same
@@ -78,11 +78,13 @@ below.
 ### `pras_dataversion` root group attribute
 
 The version of this HDF5 representation specification used to create the 
- HDF5 file should be stored in an attribute of the file's root group
-labelled "pras_dataversion". The attribute should provide a single string, taking the
-value of the standard semantic versioning representation of the specification,
-i.e. "vX.Y.Z", where X, Y, and Z represent the major, minor, and patch version
-numbers of the specification.
+HDF5 file should be stored in an attribute of the file's root group
+labelled `pras_dataversion`. The attribute should provide a single
+nine-character string, taking the value of the abridged semantic versioning
+representation of the specification version, `vXX.YY.ZZ`, where XX, YY, and ZZ
+represent the major, minor, and patch version numbers of the specification,
+respectively (when any of the version numbers require fewer than two digits to
+represent, the end of the string can be padded with spaces).
 
 As discussed above, the version of the specification is the same as the version
 of the PRASBase.jl package providing the specification, and so should
