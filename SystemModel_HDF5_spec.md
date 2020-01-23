@@ -31,7 +31,7 @@ to generically as "resource collections".
 
 ## HDF5 File Structure
 
-The HDF5 file must define five
+The HDF5 file must define seven
 [attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
 on the
 [root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup).
@@ -46,6 +46,8 @@ These attributes are all mandatory:
  - `timestep_length`, providing the length (in `timestep_unit`s) of each
    timestep in the simulation
  - `timestep_unit`, providing the time units for `timestep_length`
+ - `power_unit`, providing the units for power-related data
+ - `energy_unit`, providing the units for energy-related data
 
 The file may also define the following six
 [groups](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Group)
@@ -127,6 +129,30 @@ following are recognized values for the string to take:
  - `min` indicates the units are minutes
  - `hr ` indicates the units are hours
  - `day` indicates the units are days
+
+### `power_unit` root group attribute
+
+The units for all parameters quantified in terms of power should be stored in
+an attribute of the file's root group labelled `power_unit`, as a single
+two-character string. The following are recognized values for the string to
+take:
+
+ - `kW` indicates power data is in units of kilowatts
+ - `MW` indicates power data is in units of megawatts
+ - `GW` indicates power data is in units of gigawatts
+ - `TW` indicates power data is in units of terawatts
+
+### `energy_unit` root group attribute
+
+The units for all parameters quantified in terms of energy should be stored in
+an attribute of the file's root group labelled `energy_unit`, as a single
+two-character string. The following are recognized values for the string to
+take:
+
+ - `kWh` indicates power data is in units of kilowatt-hours
+ - `MWh` indicates power data is in units of megawatt-hours
+ - `GWh` indicates power data is in units of gigawatt-hours
+ - `TWh` indicates power data is in units of terawatt-hours
 
 ### `regions` group
 
