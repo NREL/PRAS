@@ -3,6 +3,7 @@ module PRASBase
 using Reexport
 
 @reexport using Dates
+@reexport using TimeZones
 using HDF5
 
 export
@@ -13,15 +14,12 @@ export
     Generators, Storages, GeneratorStorages, Lines,
 
     # Units
-    PowerUnit, MW, GW,
-    EnergyUnit, MWh, GWh, TWh,
-    unitsymbol, powertoenergy, energytopower,
+    PowerUnit, kW, MW, GW, TW,
+    EnergyUnit, kWh, MWh, GWh, TWh,
+    unitsymbol, conversionfactor, powertoenergy, energytopower,
 
     # Main data structure
-    SystemModel,
-
-    # Accessors
-    capacity
+    SystemModel
 
 include("units.jl")
 include("collections.jl")

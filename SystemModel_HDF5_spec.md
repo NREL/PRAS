@@ -59,11 +59,10 @@ detail below.
 The version of this HDF5 representation specification used to create the 
 HDF5 file should be stored in an attribute of the file's root group
 labelled `pras_dataversion`. The attribute should provide a single
-nine-character string, taking the value of the abridged semantic versioning
-representation of the specification version, `vXX.YY.ZZ`, where XX, YY, and ZZ
+ASCII string, taking the value of the abridged semantic versioning
+representation of the specification version, `vX.Y.Z`, where X, Y, and Z
 represent the major, minor, and patch version numbers of the specification,
-respectively (when any of the version numbers require fewer than two digits to
-represent, the end of the string can be padded with spaces).
+respectively.
 
 As discussed above, the version of the specification is the same as the version
 of the PRASBase.jl package providing the specification, and so should
@@ -78,7 +77,7 @@ than itself, it can only write files associated with its own version.)
 
 The starting timestamp for the system simulation should be stored in an attribute
 of the file's root group labelled `start_timestamp`, as a single
-25-character, ISO-8601-compliant string in a format matching
+25-character, ISO-8601-compliant ASCII string in a format matching
 `2020-12-31T23:59:59-07:00`, providing year, month, day, hour, minute, second,
 and timezone offset from UTC (in that order).
 
@@ -86,7 +85,7 @@ and timezone offset from UTC (in that order).
 
 The total number of timesteps in the simulation should be stored in an
 attribute of the file's root group labelled `timestep_count`, as a single
-32-bit unsigned integer. The attribute value should match the number of rows
+integer. The attribute value should match the number of rows
 (in C/HDF5 row-major format) in each property dataset in the various resource
 and resource collection groups.
 
@@ -94,24 +93,24 @@ and resource collection groups.
 
 The length of a single timestep (in terms of the units defined by
 `timestep_unit`) should be stored in an attribute of the file's root group
-labelled `timestep_length`, as a single 32-bit unsigned integer.
+labelled `timestep_length`, as a single integer.
 
 #### `timestep_unit`
 
 The units for `timestep_length` should be stored in an attribute of the file's
-root group labelled `timestep_unit`, as a single three-character string. The
+root group labelled `timestep_unit`, as a single ASCII string. The
 following are recognized values for the string to take:
 
  - `sec` indicates the units are seconds
  - `min` indicates the units are minutes
- - `hr ` indicates the units are hours
- - `day` indicates the units are days
+ - `h` indicates the units are hours
+ - `d` indicates the units are days
 
 #### `power_unit`
 
 The units for all parameters quantified in terms of power should be stored in
 an attribute of the file's root group labelled `power_unit`, as a single
-two-character string. The following are recognized values for the string to
+ASCII string. The following are recognized values for the string to
 take:
 
  - `kW` indicates power data is in units of kilowatts
@@ -123,7 +122,7 @@ take:
 
 The units for all parameters quantified in terms of energy should be stored in
 an attribute of the file's root group labelled `energy_unit`, as a single
-two-character string. The following are recognized values for the string to
+ASCII string. The following are recognized values for the string to
 take:
 
  - `kWh` indicates power data is in units of kilowatt-hours
@@ -175,15 +174,16 @@ floating point numbers, depending on the property in question. These datasets
 may also use HDF5's automatic compression features to reduce filesize.
 
 The size of the inner dimension of the array (number of columns in C/HDF5
-row-major format, number of rows in Julia column-major format) should match the
-number of group entities in the system, with entity data provided in the same
-order as the entities are defined in the `_core` sibling dataset.
+row-major format, number of rows in Julia/MATLAB/Fortran column-major format)
+should match the number of group entities in the system, with entity data
+provided in the same order as the entities are defined in the `_core` sibling
+dataset.
 
 The size of the outer dimension of the array (number of rows in C/HDF5
-row-major format, number of columns in Julia column-major format)
-should match the number of timesteps to be simulated (as provided by the
-`timesteps_count` root attribute). Data should be chronologically increasing
-within a single column (row-major) / row (column-major)
+row-major format, number of columns in Julia/MATLAB/Fortran column-major
+format) should match the number of timesteps to be simulated (as provided by
+the `timesteps_count` root attribute). Data should be chronologically
+increasing within a single column (row-major) / row (column-major)
 
 Specific details for each of these groups and their required contents are
 provided below.
@@ -198,7 +198,7 @@ one providing (potentially) time-varying data.
 The `_core` dataset should be a one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte string. Stores the **unique** name of each region.
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each region.
 
 Each region in the system corresponds to a single instance of the compound
 datatype, so the array should have as many elements as there are regions in
@@ -218,12 +218,12 @@ the `generators` group inside the root group. This group should contain four
 datasets, one (named `_core`) providing core static data about each generator
 and three providing (potentially) time-varying data.
 
-The `_core` dataset should be a vector / one-dimensional array storing instances of a
-compound datatype with the following fields (in order):
+The `_core` dataset should be a vector / one-dimensional array storing
+instances of a compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte string. Stores the **unique** name of each generator.
- 2. `category`: 128-byte string. Stores the category of each generator.
- 3. `region`: 128-byte string. Stores the region of each generator.
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each generator.
+ 2. `category`: 128-byte ASCII string. Stores the category of each generator.
+ 3. `region`: 128-byte ASCII string. Stores the region of each generator.
 
 Each generator in the system corresponds to a single instance of the compound
 datatype, so the vector should have as many elements as there are generators in
@@ -235,10 +235,10 @@ The `generators` group should also contain the following datasets describing
  - `capacity`, as unsigned 32-bit integers representing maximum available
    generation capacity for each generator in each timeperiod, expressed in
    units given by the `power_units` attribute
- - `failureprob`, as 64-bit floats representing the probability the generator
+ - `failureprobability`, as 64-bit floats representing the probability the generator
    transitions from operational to forced outage during a given simulation
    timestep, for each generator in each timeperiod. Unitless.
- - `repairprob`, as 64-bit floats representing the probability the generator
+ - `repairprobability`, as 64-bit floats representing the probability the generator
    transitions from forced outage to operational during a given simulation
    timestep, for each generator in each timeperiod. Unitless.
 
@@ -252,9 +252,9 @@ and eight providing (potentially) time-varying data.
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte string. Stores the **unique** name of each generator.
- 2. `category`: 128-byte string. Stores the category of each generator.
- 3. `region`: 128-byte string. Stores the region of each generator.
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each generator.
+ 2. `category`: 128-byte ASCII string. Stores the category of each generator.
+ 3. `region`: 128-byte ASCII string. Stores the region of each generator.
 
 Each generator in the system corresponds to a single instance of the compound
 datatype, so the vector should have as many elements as there are storages in
@@ -282,10 +282,10 @@ The `storages` group should also contain the following datasets describing
    available in the storage device's reservoir at the beginning of one period
    to energy retained in the storage device's reservoir at the end of the
    previous period, for each storage unit in each timeperiod. Unitless.
- - `failureprob`, as 64-bit floats representing the probability the unit
+ - `failureprobability`, as 64-bit floats representing the probability the unit
    transitions from operational to forced outage during a given simulation
    timestep, for each storage unit in each timeperiod. Unitless.
- - `repairprob`, as 64-bit floats representing the probability the unit
+ - `repairprobability`, as 64-bit floats representing the probability the unit
    transitions from forced outage to operational during a given simulation
    timestep, for each storage unit in each timeperiod. Unitless.
 
@@ -300,11 +300,11 @@ time-varying data.
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte string. Stores the **unique** name of each
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each
     generator-storage unit.
- 2. `category`: 128-byte string. Stores the category of each generator-storage
+ 2. `category`: 128-byte ASCII string. Stores the category of each generator-storage
     unit.
- 3. `region`: 128-byte string. Stores the region of each generator-storage
+ 3. `region`: 128-byte ASCII string. Stores the region of each generator-storage
     unit.
 
 Each generator-storage unit in the system corresponds to a single instance of
@@ -346,10 +346,10 @@ generator-storage devices:
    to energy retained in the device's reservoir at the end of the
    previous period, for each generator-storage unit in each timeperiod.
    Unitless.
- - `failureprob`, as 64-bit floats representing the probability the unit
+ - `failureprobability`, as 64-bit floats representing the probability the unit
    transitions from operational to forced outage during a given simulation
    timestep, for each generator-storage unit in each timeperiod. Unitless.
- - `repairprob`, as 64-bit floats representing the probability the unit
+ - `repairprobability`, as 64-bit floats representing the probability the unit
    transitions from forced outage to operational during a given simulation
    timestep, for each generator-storage unit in each timeperiod. Unitless.
 
@@ -364,9 +364,9 @@ data.
 The `_core` dataset should be a one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
- 1. `region1`: 128-byte string. Stores the name of the first of the two
+ 1. `region1`: 128-byte ASCII string. Stores the name of the first of the two
     regions connected by the interface.
- 2. `region2`: 128-byte string. Stores the name of the second of the two
+ 2. `region2`: 128-byte ASCII string. Stores the name of the second of the two
     regions connected by the interface.
 
 Each interface in the system corresponds to a single instance of the compound
@@ -394,11 +394,11 @@ data.
 The `_core` dataset should be a one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte string. Stores the **unique** name of the line.
- 2. `category`: 128-byte string. Stores the assigned category of the line.
- 3. `region1`: 128-byte string. Stores the name of the first of the two
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of the line.
+ 2. `category`: 128-byte ASCII string. Stores the assigned category of the line.
+ 3. `region1`: 128-byte ASCII string. Stores the name of the first of the two
     regions connected by the line.
- 4. `region2`: 128-byte string. Stores the name of the second of the two
+ 4. `region2`: 128-byte ASCII string. Stores the name of the second of the two
     regions connected by the line.
 
 Each line in the system corresponds to a single instance of the compound
@@ -414,10 +414,10 @@ The `lines` group should contain the following datasets describing
  - `backwardcapacity`, as unsigned 32-bit integers representing maximum
    available power transfer capacity from the second region to the
    first region along the line, for each line in each time period
- - `failureprob`, as 64-bit floats representing the probability the line
+ - `failureprobability`, as 64-bit floats representing the probability the line
    transitions from operational to forced outage during a given simulation
    timestep, for each line in each timeperiod. Unitless.
- - `repairprob`, as 64-bit floats representing the probability the line
+ - `repairprobability`, as 64-bit floats representing the probability the line
    transitions from forced outage to operational during a given simulation
    timestep, for each line in each timeperiod. Unitless.
 

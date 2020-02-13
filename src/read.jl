@@ -12,9 +12,9 @@ function SystemModel(inputfile::String)
 
         # Determine the appropriate version of the constructor to use 
         return if (0,2,2) <= version < (0,3,0)
-            SystemModel(f, Val((0,2,2))
+            SystemModel(f, Val((0,2,2)))
         else
-            error("File format $versionstring not supported by this version of PRASBase.")
+            @error("File format $versionstring not supported by this version of PRASBase.")
         end
 
     end
@@ -37,8 +37,8 @@ function getversion(f::HDF5File)
 
     # TODO
 
-    error("File format version indicator could not be found - the file may "
-          "not be a PRAS SystemModel representation."
+    error("File format version indicator could not be found - the file may " *
+          "not be a PRAS SystemModel representation.")
 
     error("File format version $versionstring not recognized")
 

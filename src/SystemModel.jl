@@ -15,7 +15,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
     lines::Lines{N,L,T,P}
     interface_line_idxs::Vector{UnitRange{Int}}
 
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{ZonedDateTime,T}
 
     function SystemModel{N,L,T,P,E}(
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
