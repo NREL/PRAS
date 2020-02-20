@@ -123,13 +123,21 @@ function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.storages) > 0
 
-        stor_charge_durations =
-            system.storages.energy_capacity ./ system.storages.charge_capacity
-        stor_charge_max = ceil(Int, maximum(stor_charge_durations))
+        if any(iszero, system.storages.charge_capacity)
+            stor_charge_max = length(system.timestamps) + 1
+        else
+            stor_charge_durations =
+                system.storages.energy_capacity ./ system.storages.charge_capacity
+            stor_charge_max = ceil(Int, maximum(stor_charge_durations))
+        end
 
-        stor_discharge_durations =
-            system.storages.energy_capacity ./ system.storages.discharge_capacity
-        stor_discharge_max = ceil(Int, maximum(stor_discharge_durations))
+        if any(iszero, system.storages.discharge_capacity)
+            stor_discharge_max = length(system.timestamps) + 1
+        else
+            stor_discharge_durations =
+                system.storages.energy_capacity ./ system.storages.discharge_capacity
+            stor_discharge_max = ceil(Int, maximum(stor_discharge_durations))
+        end
 
     else
 
@@ -140,13 +148,21 @@ function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.generatorstorages) > 0
 
-        genstor_charge_durations =
-            system.generatorstorages.energy_capacity ./ system.generatorstorages.charge_capacity
-        genstor_charge_max = ceil(Int, maximum(genstor_charge_durations))
+        if any(iszero, system.generatorstorages.charge_capacity)
+            genstor_charge_max = length(system.timestamps) + 1
+        else
+            genstor_charge_durations =
+                system.generatorstorages.energy_capacity ./ system.generatorstorages.charge_capacity
+            genstor_charge_max = ceil(Int, maximum(genstor_charge_durations))
+        end
 
-        genstor_discharge_durations =
-            system.generatorstorages.energy_capacity ./ system.generatorstorages.discharge_capacity
-        genstor_discharge_max = ceil(Int, maximum(genstor_discharge_durations))
+        if any(iszero, system.generatorstorages.discharge_capacity)
+            genstor_discharge_max = length(system.timestamps) + 1
+        else
+            genstor_discharge_durations =
+                system.generatorstorages.energy_capacity ./ system.generatorstorages.discharge_capacity
+            genstor_discharge_max = ceil(Int, maximum(genstor_discharge_durations))
+        end
 
     else
 
