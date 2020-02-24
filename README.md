@@ -34,18 +34,19 @@ base_system
 # The base system augmented with some incremental resource of interest
 augmented_system
 
-assess(EFC{EUE}(1000, "A"),
-       Modern(nsamples=100_000), Minimal(),
-       base_system, augmented_system)
+# Get the lower and upper bounds on the EFC estimate for the resource
+min_efc, max_efc = assess(
+    EFC{EUE}(1000, "A"), Modern(nsamples=100_000), Minimal(),
+    base_system, augmented_system)
 ```
 
 If the study resource were instead split between regions "A" (600MW) and "B"
 (400 MW), one could specify the firm capacity distribution as:
 
 ```julia
-assess(EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]),
-       Modern(nsamples=100_000), Minimal(),
-       base_system, augmented_system)
+min_efc, max_efc = assess(
+    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), Modern(nsamples=100_000), Minimal(),
+    base_system, augmented_system)
 ```
 
 ### Equivalent Load Carrying Capability (ELCC)
@@ -74,18 +75,19 @@ base_system
 # The base system augmented with some incremental resource of interest
 augmented_system
 
-assess(ELCC{EUE}(1000, "A"),
-       Modern(nsamples=100_000), Minimal(),
-       base_system, augmented_system)
+# Get the lower and upper bounds on the ELCC estimate for the resource
+min_elcc, max_elcc = assess(
+    ELCC{EUE}(1000, "A"), Modern(nsamples=100_000), Minimal(),
+    base_system, augmented_system)
 ```
 
 If instead the goal was to study the ability of the new resource to provide
 load evenly to regions "A" and "B", one could use:
 
 ```julia
-assess(ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]),
-       Modern(nsamples=100_000), Minimal(),
-       base_system, augmented_system)
+min_elcc, max_elcc = assess(
+    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), Modern(nsamples=100_000), Minimal(),
+    base_system, augmented_system)
 ```
 
 ## Comparisons under uncertainty in RA metric estimates
@@ -117,13 +119,15 @@ ideal case is that the upper and lower bounds on the capacity
 credit metric converge to be sufficiently tight relative to a desired level
 of precision. This target precision is 1 system power unit by default, but can
 be relaxed to loosen the convergence bounds if desired via the `capacity_gap`
-keyword argument.
+keyword argument. Once the lower and upper bounds are tighter than this gap,
+their values are returned.
 
 Additionally, at each bisection step, a hypothesis test is performed to ensure
-that the upper bounding metric is larger than the lower bounding metric with
-a specified level of statistical significance. By default, this is a maximum
-p-value of 0.05, although this value can be changed as desired via the
-`p_value` keyword argument. If at some point the null hypothesis (the upper
-bound is not larger than the lower bound) cannot be rejected at the desired
-significance level, the assessment will provide a warning indicating the size
-of the remaining capacity gap and return the midpoint between the two bounds.
+that the theoretically-larger bounding risk metric is in fact larger than the
+smaller-valued risk metric with a specified level of statistical significance.
+By default, this criteria is a maximum p-value of 0.05, although this value
+can be changed as desired via the `p_value` keyword argument. If at some point
+the null hypothesis (the higher risk is not in fact larger than the lower
+risk) cannot be rejected at the desired significance level, the assessment
+will provide a warning indicating the size of the remaining capacity gap and
+return the lower and upper bounds on the capacity credit estimate.

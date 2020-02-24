@@ -67,21 +67,21 @@ function assess(params::EFC{M},
 
         # Stopping conditions
 
-        ## Return midpoint if bounds are within solution tolerance of each other
+        ## Return the bounds if they are within solution tolerance of each other
         if capacity_gap <= params.capacity_gap
             @info "Capacity bound gap within tolerance, stopping bisection."
-            return midpoint
+            return lower_bound, upper_bound
         end
 
         # If the null hypothesis lower_bound_metric !>= upper_bound_metric
-        # cannot be rejected, terminate
+        # cannot be rejected, terminate and return the loose bounds
         pval = pvalue(lower_bound_metric, upper_bound_metric)
         if pval >= params.p_value
             @warn "Gap between upper and lower bound risk metrics is not " *
                   "statistically significant (p_value=$pval), stopping bisection. " *
                   "The gap between capacity bounds is $(capacity_gap) $powerunit, " *
                   "while the target stopping gap was $(params.capacity_gap) $powerunit."
-            return midpoint
+            return lower_bound, upper_bound
         end
 
         # Evaluate metric at midpoint
