@@ -21,9 +21,10 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
         generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
         storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
-        generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+        generatorstorages::GeneratorStorages{N,L,T,P,E},
+        region_genstor_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::StepRange{DateTime,T}
+        timestamps::StepRange{ZonedDateTime,T}
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
         n_regions = length(regions)
@@ -56,18 +57,32 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
 end
 
-function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::Int)
+# No time zone constructor
+function SystemModel{N,L,T,P,E}(
+    regions, interfaces,
+    generators, region_gen_idxs,
+    storages, region_stor_idxs,
+    generatorstorages, region_genstor_idxs,
+    lines, interface_line_idxs,
+    timestamps::StepRange{DateTime,T}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    length(idxss) == ngroups || return false
+    @warn "No time zone data provided - defaulting to UTC. To specify a " *
+          "time zone for the system timestamps, provide a range of " *
+          "`ZonedDateTime` instead of `DateTime`."
 
-    expected_next = 1
-    for idxs in idxss
-        first(idxs) == expected_next || return false
-        expected_next = last(idxs) + 1
-    end
+    utc = TimeZone("UTC")
+    time_start = ZonedDateTime(first(timestamps), utc)
+    time_end = ZonedDateTime(last(timestamps), utc)
+    timestamps_tz = time_start:step(timestamps):time_end
 
-    expected_next == nitems + 1 || return false
-    return true
+    return SystemModel{N,L,T,P,E}(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        lines, interface_line_idxs,
+        timestamps_tz)
 
 end
 
@@ -76,7 +91,7 @@ function SystemModel{N,L,T,P,E}(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
-    timestamps::StepRange{DateTime,T},
+    timestamps::StepRange{<:AbstractDateTime,T},
     load::Vector{Int}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
@@ -93,5 +108,24 @@ function SystemModel{N,L,T,P,E}(
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
             Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
         UnitRange{Int}[], timestamps)
+
+end
+
+unitsymbol(::SystemModel{N,L,T,P,E}) where {
+    N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} =
+    unitsymbol(T), unitsymbol(P), unitsymbol(E)
+
+function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::Int)
+
+    length(idxss) == ngroups || return false
+
+    expected_next = 1
+    for idxs in idxss
+        first(idxs) == expected_next || return false
+        expected_next = last(idxs) + 1
+    end
+
+    expected_next == nitems + 1 || return false
+    return true
 
 end

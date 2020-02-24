@@ -34,6 +34,41 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
 end
 
+Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
+    G(g.names[idxs], g.categories[idxs],
+      g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
+
+function vcat(gs::G...) where {G <: Generators{N,L,T,P}}
+
+    n_gens = sum(length(g) for g in gs)
+
+    names = Vector{String}(undef, n_gens)
+    categories = Vector{String}(undef, n_gens)
+
+    capacity = Matrix{Int}(undef, n_gens, N)
+
+    λ = Matrix{Float64}(undef, n_gens, N)
+    μ = Matrix{Float64}(undef, n_gens, N)
+
+    last_idx = 0
+
+    for g in gs
+
+        n = length(g)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = g.names
+        categories[rows] = g.categories
+        capacity[rows, :] = g.capacity
+        λ[rows, :] = g.λ
+        μ[rows, :] = g.μ
+
+        last_idx += n
+
+    end
+
+end
+
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
