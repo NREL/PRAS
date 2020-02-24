@@ -1,43 +1,45 @@
-normdist = Normal()
-function pequal(x::T, y::T) where {T<:RA.ReliabilityMetric}
-    z = abs((RA.val(x) - RA.val(y)) /
-            sqrt(RA.stderror(x)^2 + RA.stderror(y)^2))
-    return 2 * ccdf(normdist, z)
+function pvalue(lower::T, upper::T) where {T<:ReliabilityMetric}
+
+    vl = val(lower)
+    sl = stderror(lower)
+
+    vu = val(upper)
+    su = stderror(upper)
+
+    if iszero(sl) && iszero(su)
+        result = Float64(vl ≈ vu)
+    else
+        # single-sided z-test with null hypothesis that (vu - vl) not > 0
+        z = (vu - vl) / sqrt(su^2 + sl^2)
+        result = ccdf(Normal(), z)
+    end
+
+    return result
+
 end
 
-function addfirmcapacity(
-    system::RA.SystemModel{N,L,T,P,E,V},
-    regions::DiscreteNonParametric{Int,V,Vector{Int}},
-    totalcapacity::V) where {N,L,T,P,E,V}
+function allocate_regions(
+    region_names::Vector{String},
+    regionname_shares::Vector{Tuple{String,Float64}}
+)
 
-    region_idxs = support(regions)
-    region_shares = Distributions.probs(regions)
+    region_allocations = similar(regionname_shares, Tuple{Int,Float64})
 
-    n_gensets = size(system.generators, 2)
-    newgenerators = system.generators
-    newgenerators_regionstart = copy(system.generators_regionstart)
+    for (i, (name, share)) in enumerate(regionname_shares)
 
-    for (r, share) in zip(region_idxs, region_shares)
+        r = findfirst(isequal(name), region_names)
 
-        firmgen = RA.DispatchableGeneratorSpec(
-            totalcapacity * share, 0., 1.)
+        isnothing(r) &&
+            error("$name is not a region name in the provided systems")
 
-        g = system.generators_regionstart[r]
-        newgenerators = vcat(
-            newgenerators[1:(g-1), :],
-            fill(firmgen, 1, n_gensets),
-            newgenerators[g:end, :]
-        )
-        newgenerators_regionstart[(r+1):end] .+= 1
+        region_allocations[i] = (r, share)
 
     end
 
-    return RA.SystemModel{N,L,T,P,E}(
-        system.regions, newgenerators, newgenerators_regionstart,
-        system.storages, system.storages_regionstart,
-        system.interfaces, system.lines, system.lines_interfacestart,
-        system.timestamps, system.timestamps_generatorset,
-        system.timestamps_storageset, system.timestamps_lineset,
-        system.vg, system.load)
+    return sort!(region_allocations)
 
 end
+
+incr_range(rnge::UnitRange{Int}, inc::Int) = rnge .+ inc
+incr_range(rnge::UnitRange{Int}, inc1::Int, inc2::Int) =
+    (first(rnge) + inc1):(last(rnge) + inc2)

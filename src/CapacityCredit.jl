@@ -1,13 +1,13 @@
 module CapacityCredit
 
-using Distributions
+import Distributions: ccdf, Normal
+import PRASBase: Generators, SystemModel, unitsymbol
+import ResourceAdequacy: assess, ResultSpec, ReliabilityMetric,
+                         SimulationSpec, stderror, val
 
-import ResourceAdequacy
-const RA = ResourceAdequacy
+export EFC, ELCC
 
-export EFC
-
-abstract type CapacityValuationMethod end
+abstract type CapacityValuationMethod{M<:ReliabilityMetric} end
 
 include("utils.jl")
 include("EFC.jl")
