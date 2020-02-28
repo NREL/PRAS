@@ -47,6 +47,13 @@ emptygenstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:3)...,
     (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:2)...)
 
+genstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
+    ["Genstor1", "Genstor2"], ["Genstorage", "Genstorage"],
+    fill(0, 2, 6), fill(0, 2, 6), fill(4, 2, 6),
+    fill(1.0, 2, 6), fill(1.0, 2, 6), fill(.99, 2, 6),
+    fill(0, 2, 6), fill(0, 2, 6), fill(0, 2, 6),
+    fill(0.0, 2, 6), fill(1.0, 2, 6))
+
 singlenode_b = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
     gens2, emptystors2, emptygenstors2,
     DateTime(2015,6,1,0):Hour(1):DateTime(2015,6,1,5),
@@ -62,13 +69,13 @@ singlenode_b_eues = [1.29, 1.29, 1.29, 0.85, 1.05, 1.34]
 #TODO: Storage tests
 
 stors2 = Storages{6,1,Hour,MW,MWh}(
-    ["Stor1"], ["Storage"],
-    fill(1, 1, 6), fill(1, 1, 6), fill(4, 1, 6),
-    fill(1.0, 1, 6), fill(1.0, 1, 6), fill(.99, 1, 6),
-    fill(0.0, 1, 6), fill(1.0, 1, 6))
+    ["Stor1", "Stor2"], ["Storage", "Storage"],
+    repeat([1,0], 1, 6), repeat([1,0], 1, 6), fill(4, 2, 6),
+    fill(1.0, 2, 6), fill(1.0, 2, 6), fill(.99, 2, 6),
+    fill(0.0, 2, 6), fill(1.0, 2, 6))
 
 singlenode_stor = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
-    gens2, stors2, emptygenstors2,
+    gens2, stors2, genstors2,
     DateTime(2015,6,1,0):Hour(1):DateTime(2015,6,1,5),
     [28,29,30,31,32,33])
 

@@ -29,7 +29,7 @@ function assess(
     for _ in 1:threads
         @spawn assess(simspec, resultspec, system, samples, results)
     end
-    
+
     return finalize(results, simspec, system, threads)
 
 end
@@ -65,6 +65,7 @@ function assess(
     # TODO: Implement simulation-level RNG (Random123?)
     rng = GLOBAL_RNG
     for (s, _) in samples
+
         initialize!(rng, systemstate, system)
 
         for t in 1:N
@@ -76,9 +77,11 @@ function assess(
         end
 
         reset!(recorder, s)
+
     end
 
     put!(recorders, recorder)
+
 end
 
 function initialize!(

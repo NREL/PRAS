@@ -315,9 +315,9 @@ function update_problem!(
     end
 
     # Update GeneratorStorage inflow/charge/discharge limits and priorities
-    for (i, charge_node, gridcharge_edge, inflowcharge_edge,
+    for (i, (charge_node, gridcharge_edge, inflowcharge_edge,
             discharge_node, dischargegrid_edge, totalgrid_edge,
-            inflow_node) in enumerate(zip(
+            inflow_node)) in enumerate(zip(
         problem.genstorage_charge_nodes, problem.genstorage_gridcharge_edges,
         problem.genstorage_inflowcharge_edges, problem.genstorage_discharge_nodes,
         problem.genstorage_dischargegrid_edges, problem.genstorage_totalgrid_edges,
