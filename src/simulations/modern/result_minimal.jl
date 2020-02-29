@@ -3,8 +3,9 @@ mutable struct ModernMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
     periodsdropped_total::MeanVariance # Cross-simulation total LOL mean and variance
     periodsdropped_total_currentsim::Int # LOL count for current simulation
 
-    unservedenergy_total::MeanVariance # Cross-simulation total UE mean and variance
-    unservedenergy_total_currentsim::Int # UE sum for current simulation
+    # Note: Unserved load (not energy) does not consider time units
+    unservedload_total::MeanVariance # Cross-simulation total UL mean and variance
+    unservedload_total_currentsim::Int # UL sum for current simulation
 
 end
 
@@ -27,8 +28,7 @@ function record!(
 
     if isunservedload
         acc.periodsdropped_total_currentsim += 1
-        acc.unservedenergy_total_currentsim +=
-            powertoenergy(unservedload, P, L, T, E)
+        acc.unservedload_total_currentsim += unservedload
     end
 
     return
@@ -39,11 +39,11 @@ function reset!(acc::ModernMinimalAccumulator, sampleid::Int)
 
         # Store totals for current simulation
         fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
-        fit!(acc.unservedenergy_total, acc.unservedenergy_total_currentsim)
+        fit!(acc.unservedload_total, acc.unservedload_total_currentsim)
 
         # Reset for new simulation
         acc.periodsdropped_total_currentsim = 0
-        acc.unservedenergy_total_currentsim = 0
+        acc.unservedload_total_currentsim = 0
 
         return
 
@@ -57,14 +57,14 @@ function finalize(
 ) where {N,L,T,P,E}
 
     periodsdropped = Series(Mean(), Variance())
-    unservedenergy = Series(Mean(), Variance())
+    unservedload = Series(Mean(), Variance())
 
     while accsremaining > 0
 
         acc = take!(results)
 
         merge!(periodsdropped, acc.periodsdropped_total)
-        merge!(unservedenergy, acc.unservedenergy_total)
+        merge!(unservedload, acc.unservedload_total)
 
         accsremaining -= 1
 
@@ -72,8 +72,9 @@ function finalize(
 
     close(results)
 
+    p2e = powertoenergy(P,L,T,E)
     lole = makemetric(LOLE{N,L,T}, periodsdropped)
-    eue = makemetric(EUE{N,L,T,E}, unservedenergy)
+    eue = makemetric_scale(EUE{N,L,T,E}, p2e, unservedload)
 
     return MinimalResult(lole, eue, simspec)
 

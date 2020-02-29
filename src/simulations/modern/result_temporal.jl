@@ -4,9 +4,9 @@ mutable struct ModernTemporalAccumulator{N,L,T,P,E} <: ResultAccumulator{Tempora
     periodsdropped_total::MeanVariance # Cross-simulation total LOL mean and variance
     periodsdropped_total_currentsim::Int # LOL count for current simulation
 
-    unservedenergy_period::Vector{MeanVariance} # Cross-simulation period UE mean and variance
-    unservedenergy_total::MeanVariance # Cross-simulation total UE mean and variance
-    unservedenergy_total_currentsim::Int # UE sum for current simulation
+    unservedload_period::Vector{MeanVariance} # Cross-simulation period UE mean and variance
+    unservedload_total::MeanVariance # Cross-simulation total UE mean and variance
+    unservedload_total_currentsim::Int # UE sum for current simulation
 
 end
 
@@ -26,14 +26,13 @@ function record!(
 ) where {N,L,T,P,E}
 
     isunservedload, unservedload = droppedload(problem)
-    unservedenergy = powertoenergy(unservedload, P, L, T, E)
 
     fit!(acc.periodsdropped_period[t], isunservedload)
-    fit!(acc.unservedenergy_period[t], unservedenergy)
+    fit!(acc.unservedload_period[t], unservedload)
 
     if isunservedload
         acc.periodsdropped_total_currentsim += 1
-        acc.unservedenergy_total_currentsim += unservedenergy
+        acc.unservedload_total_currentsim += unservedload
     end
 
     return
@@ -44,11 +43,11 @@ function reset!(acc::ModernTemporalAccumulator, sampleid::Int)
 
         # Store totals for current simulation
         fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
-        fit!(acc.unservedenergy_total, acc.unservedenergy_total_currentsim)
+        fit!(acc.unservedload_total, acc.unservedload_total_currentsim)
 
         # Reset for new simulation
         acc.periodsdropped_total_currentsim = 0
-        acc.unservedenergy_total_currentsim = 0
+        acc.unservedload_total_currentsim = 0
 
         return
 
@@ -64,19 +63,19 @@ function finalize(
     periodsdropped_total = Series(Mean(), Variance())
     periodsdropped_period = [Series(Mean(), Variance()) for _ in 1:N]
 
-    unservedenergy_total = Series(Mean(), Variance())
-    unservedenergy_period = [Series(Mean(), Variance()) for _ in 1:N]
+    unservedload_total = Series(Mean(), Variance())
+    unservedload_period = [Series(Mean(), Variance()) for _ in 1:N]
 
     while accsremaining > 0
 
         acc = take!(results)
 
         merge!(periodsdropped_total, acc.periodsdropped_total)
-        merge!(unservedenergy_total, acc.unservedenergy_total)
+        merge!(unservedload_total, acc.unservedload_total)
 
         for t in 1:N
             merge!(periodsdropped_period[t], acc.periodsdropped_period[t])
-            merge!(unservedenergy_period[t], acc.unservedenergy_period[t])
+            merge!(unservedload_period[t], acc.unservedload_period[t])
         end
 
         accsremaining -= 1
@@ -88,8 +87,9 @@ function finalize(
     lole = makemetric(LOLE{N,L,T}, periodsdropped_total)
     lolps = makemetric.(LOLP{L,T}, periodsdropped_period)
 
-    eue = makemetric(EUE{N,L,T,E}, unservedenergy_total)
-    eues = makemetric.(EUE{1,L,T,E}, unservedenergy_period)
+    p2e = powertoenergy(P,L,T,E)
+    eue = makemetric_scale(EUE{N,L,T,E}, p2e, unservedload_total)
+    eues = makemetric_scale.(EUE{1,L,T,E}, p2e, unservedload_period)
 
     return TemporalResult(system.timestamps, lole, lolps, eue, eues, simspec)
 

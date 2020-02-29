@@ -9,6 +9,7 @@
     simspec = Modern(samples=100_000)
 
     timestampcol_a = collect(singlenode_a.timestamps)
+    timestampcol_a5 = collect(singlenode_a_5min.timestamps)
     timestampcol_b = collect(singlenode_b.timestamps)
     timestampcol_3 = collect(threenode.timestamps)
     regionsrow = reshape(threenode.regions.names, 1, :)
@@ -22,6 +23,11 @@
         result_1a = assess(simspec, Minimal(), singlenode_a)
         @test withinrange(LOLE(result_1a), singlenode_a_lole, nstderr_tol)
         @test withinrange(EUE(result_1a), singlenode_a_eue, nstderr_tol)
+
+        # Single-region system A - 5 min version
+        result_1a5 = assess(simspec, Minimal(), singlenode_a_5min)
+        @test withinrange(LOLE(result_1a5), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5), singlenode_a_eue/12, nstderr_tol)
 
         # Single-region system B
         result_1b = assess(simspec, Minimal(), singlenode_b)
@@ -46,6 +52,16 @@
                                singlenode_a_lolps, nstderr_tol))
         @test all(withinrange.(EUE.(result_1a, timestampcol_a),
                                singlenode_a_eues, nstderr_tol))
+
+        # Single-region system A - 5 min version
+        result_1a5 = assess(simspec, Temporal(), singlenode_a_5min)
+        @test withinrange(LOLE(result_1a5), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5), singlenode_a_eue/12, nstderr_tol)
+
+        @test all(withinrange.(LOLP.(result_1a5, timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
 
         # Single-region system B
         result_1b = assess(simspec, Temporal(), singlenode_b)
@@ -83,6 +99,21 @@
                                singlenode_a_lolps, nstderr_tol))
         @test all(withinrange.(EUE.(result_1a, "Region", timestampcol_a),
                                singlenode_a_eues, nstderr_tol))
+
+        # Single-region system A - 5 min version
+        result_1a5 = assess(simspec, SpatioTemporal(), singlenode_a_5min)
+        @test withinrange(LOLE(result_1a5), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5), singlenode_a_eue/12, nstderr_tol)
+        @test withinrange(LOLE(result_1a5, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5, "Region"), singlenode_a_eue/12, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1a5, timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
 
         # Single-region system B
         result_1b = assess(simspec, SpatioTemporal(), singlenode_b)
@@ -148,6 +179,23 @@
                                singlenode_a_eues, nstderr_tol))
         @test length(result_1a.flows) == 0
         @test length(result_1a.utilizations) == 0
+
+        # Single-region system A
+        result_1a5 = assess(simspec, Network(), singlenode_a_5min)
+        @test withinrange(LOLE(result_1a5), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5), singlenode_a_eue/12, nstderr_tol)
+        @test withinrange(LOLE(result_1a5, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5, "Region"), singlenode_a_eue/12, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1a5, timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
+        @test length(result_1a5.flows) == 0
+        @test length(result_1a5.utilizations) == 0
 
         # Single-region system B
         result_1b = assess(simspec, Network(), singlenode_b)

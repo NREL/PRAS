@@ -3,8 +3,8 @@ mutable struct ClassicTemporalAccumulator{N,L,T,E} <: ResultAccumulator{Temporal
     lole::Float64
     lolps::Vector{Float64}
 
-    eue::Float64
-    eues::Vector{Float64}
+    eul::Float64
+    euls::Vector{Float64}
 
 end
 
@@ -16,14 +16,14 @@ accumulator(::Classic, ::Temporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
 
 function update!(
     acc::ClassicTemporalAccumulator,
-    t::Int, lolp::Float64, eue::Float64
+    t::Int, lolp::Float64, eul::Float64
 )
 
     acc.lole += lolp
     acc.lolps[t] = lolp
 
-    acc.eue += eue
-    acc.eues[t] = eue
+    acc.eul += eul
+    acc.euls[t] = eul
 
     return
 
@@ -35,9 +35,9 @@ function finalize(
     accsremaining::Int
 ) where {N,L,T,P,E}
 
-    lole = eue = 0.
+    lole = eul = 0.
     lolps = zeros(N)
-    eues = zeros(N)
+    euls = zeros(N)
 
     while accsremaining > 0
 
@@ -46,8 +46,8 @@ function finalize(
         lole += acc.lole
         lolps .+= acc.lolps
 
-        eue += acc.eue
-        eues .+= acc.eues
+        eul += acc.eul
+        euls .+= acc.euls
 
         accsremaining -= 1
 
@@ -55,10 +55,12 @@ function finalize(
 
     close(results)
 
+    p2e = powertoenergy(P,L,T,E)
+
     return TemporalResult(
         system.timestamps,
         LOLE{N,L,T}(lole, 0.), LOLP{L,T}.(lolps, 0.),
-        EUE{N,L,T,E}(eue, 0.), EUE{1,L,T,E}.(eues, 0.),
+        EUE{N,L,T,E}(p2e * eul, 0.), EUE{1,L,T,E}.(p2e .* euls, 0.),
         Classic())
 
 end
