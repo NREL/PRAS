@@ -13,7 +13,7 @@ function SystemModel(inputfile::String)
 
         # Determine the appropriate version of the constructor to use 
         return if (0,2,0) <= version < (0,3,0)
-            systemmodel_0_2_0(f)
+            systemmodel_0_2(f)
         else
             @error("File format $versionstring not supported by this version of PRASBase.")
         end
@@ -25,7 +25,7 @@ function SystemModel(inputfile::String)
 end
 
 
-function systemmodel_0_2_0(f::HDF5File)
+function systemmodel_0_2(f::HDF5File)
 
     metadata = attrs(f)
 

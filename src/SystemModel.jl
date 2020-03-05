@@ -17,7 +17,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     timestamps::StepRange{ZonedDateTime,T}
 
-    function SystemModel{N,L,T,P,E}(
+    function SystemModel{}(
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
         generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
         storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
@@ -58,7 +58,7 @@ struct SystemModel{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 end
 
 # No time zone constructor
-function SystemModel{N,L,T,P,E}(
+function SystemModel(
     regions, interfaces,
     generators, region_gen_idxs,
     storages, region_stor_idxs,
@@ -76,7 +76,7 @@ function SystemModel{N,L,T,P,E}(
     time_end = ZonedDateTime(last(timestamps), utc)
     timestamps_tz = time_start:step(timestamps):time_end
 
-    return SystemModel{N,L,T,P,E}(
+    return SystemModel(
         regions, interfaces,
         generators, region_gen_idxs,
         storages, region_stor_idxs,
@@ -87,15 +87,15 @@ function SystemModel{N,L,T,P,E}(
 end
 
 # Single-node constructor
-function SystemModel{N,L,T,P,E}(
+function SystemModel(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
-    timestamps::StepRange{<:AbstractDateTime,T},
+    timestamps::StepRange{<:Dates.AbstractDateTime,T},
     load::Vector{Int}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    return SystemModel{N,L,T,P,E}(
+    return SystemModel(
         Regions{N,P}(["Region"], reshape(load, 1, :)),
         Interfaces{N,P}(
             Int[], Int[],

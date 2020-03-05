@@ -17,6 +17,10 @@ conversionfactor(::Type{Hour}, ::Type{Hour}) = 1
 conversionfactor(::Type{Hour}, ::Type{Day}) = 1 / 24
 conversionfactor(::Type{Day}, ::Type{Hour}) = 24
 
+timeunits = Dict(
+    unitsymbol(T) => T
+    for T in [Minute, Hour, Day, Year])
+
 # Define power units
 
 abstract type PowerUnit end

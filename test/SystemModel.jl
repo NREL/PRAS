@@ -20,7 +20,7 @@
     timestamps = DateTime(2020, 1, 1, 0):Hour(1):DateTime(2020,1,1,9)
 
     # Single-region constructor
-    SystemModel{10,1,Hour,MW,MWh}(
+    SystemModel(
         generators, storages, generatorstorages, timestamps, rand(1:20, 10))
 
     regions = Regions{10,MW}(
@@ -39,7 +39,7 @@
     line_interfaces = [1:2]
 
     # Multi-region constructor
-    SystemModel{10,1,Hour,MW,MWh}(
+    SystemModel(
         regions, interfaces,
         generators, gen_regions, storages, stor_regions,
         generatorstorages, genstor_regions,

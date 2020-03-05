@@ -38,7 +38,7 @@ Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
     G(g.names[idxs], g.categories[idxs],
       g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
 
-function vcat(gs::G...) where {G <: Generators{N,L,T,P}}
+function Base.vcat(gs::G...) where {N, L, T, P, G <: Generators{N,L,T,P}}
 
     n_gens = sum(length(g) for g in gs)
 
@@ -66,6 +66,8 @@ function vcat(gs::G...) where {G <: Generators{N,L,T,P}}
         last_idx += n
 
     end
+
+    return Generators{N,L,T,P}(names, categories, capacity, λ, μ)
 
 end
 
