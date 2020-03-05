@@ -29,6 +29,32 @@ singlenode_a_lolps = [0.028, 0.271, 0.028, 0.028]
 singlenode_a_eue = 1.59
 singlenode_a_eues = [0.29, 0.832, 0.29, 0.178]
 
+## Single-Region System A - 5 minute version
+
+gens1_5min = Generators{4,5,Minute,MW}(
+    ["Gen1", "Gen2", "Gen3", "VG"], ["Gens", "Gens", "Gens", "VG"],
+    [fill(10, 3, 4); [5 6 7 8]],
+    [fill(0.1, 3, 4); fill(0.0, 1, 4)],
+    [fill(0.9, 3, 4); fill(1.0, 1, 4)])
+
+emptystors1_5min = Storages{4,5,Minute,MW,MWh}((empty_str for _ in 1:2)...,
+                  (empty_int(4) for _ in 1:3)...,
+                  (empty_float(4) for _ in 1:5)...)
+
+emptygenstors1_5min = GeneratorStorages{4,5,Minute,MW,MWh}(
+    (empty_str for _ in 1:2)...,
+    (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
+    (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
+
+singlenode_a_5min = ResourceAdequacy.SystemModel{4,5,Minute,MW,MWh}(
+    gens1_5min, emptystors1_5min, emptygenstors1_5min,
+    DateTime(2010,1,1,0,0):Minute(5):DateTime(2010,1,1,0,15),
+    [25, 28, 27, 24])
+
+singlenode_a_lole = 0.355
+singlenode_a_lolps = [0.028, 0.271, 0.028, 0.028]
+singlenode_a_eue = 1.59
+singlenode_a_eues = [0.29, 0.832, 0.29, 0.178]
 
 ## Single-Region System B
 

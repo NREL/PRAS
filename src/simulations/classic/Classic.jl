@@ -59,8 +59,7 @@ function assess(
 
         # TODO: Deduplicate identical available capacity distributions?
         lolp, eul = assess(CapacityDistribution(system, t))
-        eue = powertoenergy(eul, P, L, T, E)
-        update!(acc, t, lolp, eue)
+        update!(acc, t, lolp, eul)
 
     end
 

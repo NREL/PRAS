@@ -1,7 +1,7 @@
 mutable struct ClassicMinimalAccumulator{N,L,T,E} <: ResultAccumulator{Minimal}
 
     lole::Float64
-    eue::Float64
+    eul::Float64
 
 end
 
@@ -13,11 +13,11 @@ accumulator(::Classic, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
 
 function update!(
     acc::ClassicMinimalAccumulator,
-    t::Int, lolp::Float64, eue::Float64
+    t::Int, lolp::Float64, eul::Float64
 )
 
     acc.lole += lolp
-    acc.eue += eue
+    acc.eul += eul
     return
 
 end
@@ -28,12 +28,13 @@ function finalize(
     accsremaining::Int
 ) where {N,L,T,P,E}
 
-    lole = eue = 0.
+    lole = eul = 0.
+    p2e = powertoenergy(P, L, T, E)
 
     while accsremaining > 0
         acc = take!(results)
         lole += acc.lole
-        eue += acc.eue
+        eul += acc.eul
         accsremaining -= 1
     end
 
@@ -41,7 +42,7 @@ function finalize(
 
     return MinimalResult(
         LOLE{N,L,T}(lole, 0.),
-        EUE{N,L,T,E}(eue, 0.),
+        EUE{N,L,T,E}(eul * p2e, 0.),
         Classic())
 
 end

@@ -9,6 +9,11 @@
         @test LOLE(result_1ab) ≈ LOLE{4,1,Hour}(0.355, 0.)
         @test EUE(result_1ab) ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
 
+        # Overall result - singlenode_a_5min
+        result_1a5 = assess(simspec, Minimal(), singlenode_a_5min)
+        @test LOLE(result_1a5) ≈ LOLE{4,5,Minute}(singlenode_a_lole, 0.)
+        @test EUE(result_1a5) ≈ EUE{4,5,Minute,MWh}(singlenode_a_eue/12, 0.)
+
         # Overall result - singlenode_b
         result_1bb = assess(simspec, Minimal(), singlenode_b)
         @test LOLE(result_1bb) ≈ LOLE{6,1,Hour}(0.96, 0.)
@@ -31,6 +36,15 @@
         @test EUE(result_1ab) ≈ EUE{4,1,Hour,MWh}(1.59, 0.)
         @test all(EUE.(result_1ab, singlenode_a.timestamps) .≈
                   EUE{1,1,Hour,MWh}.([0.29, 0.832, 0.29, 0.178], zeros(4)))
+
+        # Hourly result - singlenode_a_5min
+        result_1a5 = assess(simspec, Temporal(), singlenode_a_5min)
+        @test LOLE(result_1a5) ≈ LOLE{4,5,Minute}(singlenode_a_lole, 0.)
+        @test all(LOLP.(result_1a5, singlenode_a_5min.timestamps) .≈
+                  LOLP{5,Minute}.(singlenode_a_lolps, zeros(4)))
+        @test EUE(result_1a5) ≈ EUE{4,5,Minute,MWh}(singlenode_a_eue/12, 0.)
+        @test all(EUE.(result_1a5, singlenode_a_5min.timestamps) .≈
+                  EUE{1,5,Minute,MWh}.(singlenode_a_eues ./ 12, zeros(4)))
 
         # Hourly result - singlenode_b
         result_1bb = assess(simspec, Temporal(), singlenode_b)
