@@ -273,7 +273,12 @@ function update_problem!(
         maxcharge = system.storages.charge_capacity[i, t]
         chargeefficiency = system.storages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
-        timetocharge = round(Int, energychargeable / maxcharge)
+
+        if maxcharge == 0
+            timetocharge = length(system.timestamps) + 1
+        else
+            timetocharge = round(Int, energychargeable / maxcharge)
+        end
 
         charge_capacity =
             min(maxcharge, round(Int, energytopower(
@@ -290,7 +295,12 @@ function update_problem!(
         maxdischarge = system.storages.discharge_capacity[i, t]
         dischargeefficiency = system.storages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
-        timetodischarge = round(Int, energydischargeable / maxdischarge)
+
+        if maxdischarge == 0
+            timetodischarge = length(system.timestamps) + 1
+        else
+            timetodischarge = round(Int, energydischargeable / maxdischarge)
+        end
 
         discharge_capacity =
             min(maxdischarge, round(Int, energytopower(
@@ -305,9 +315,9 @@ function update_problem!(
     end
 
     # Update GeneratorStorage inflow/charge/discharge limits and priorities
-    for (i, charge_node, gridcharge_edge, inflowcharge_edge,
+    for (i, (charge_node, gridcharge_edge, inflowcharge_edge,
             discharge_node, dischargegrid_edge, totalgrid_edge,
-            inflow_node) in enumerate(zip(
+            inflow_node)) in enumerate(zip(
         problem.genstorage_charge_nodes, problem.genstorage_gridcharge_edges,
         problem.genstorage_inflowcharge_edges, problem.genstorage_discharge_nodes,
         problem.genstorage_dischargegrid_edges, problem.genstorage_totalgrid_edges,
@@ -332,7 +342,12 @@ function update_problem!(
         maxcharge = system.generatorstorages.charge_capacity[i, t]
         chargeefficiency = system.generatorstorages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
-        timetocharge = energychargeable / maxcharge
+
+        if maxcharge == 0
+            timetocharge = length(system.timestamps) + 1
+        else
+            timetocharge = round(Int, energychargeable / maxcharge)
+        end
 
         charge_capacity =
             min(maxcharge, round(Int, energytopower(
@@ -350,7 +365,12 @@ function update_problem!(
         maxdischarge = system.generatorstorages.discharge_capacity[i, t]
         dischargeefficiency = system.generatorstorages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
-        timetodischarge = energydischargeable / maxdischarge
+
+        if maxdischarge == 0
+            timetodischarge = length(system.timestamps) + 1
+        else
+            timetodischarge = round(Int, energydischargeable / maxdischarge)
+        end
 
         discharge_capacity =
             min(maxdischarge, round(Int, energytopower(
