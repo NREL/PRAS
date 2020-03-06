@@ -49,6 +49,10 @@ conversionfactor(::Type{GW}, ::Type{MW}) = 1000
 conversionfactor(::Type{MW}, ::Type{TW}) = 1 / 1_000_000
 conversionfactor(::Type{TW}, ::Type{MW}) = 1_000_000
 
+powerunits = Dict(
+    unitsymbol(T) => T
+    for T in [kW, MW, GW, TW])
+
 # Define energy units
 
 abstract type EnergyUnit end
@@ -67,6 +71,10 @@ subunits(::Type{kWh}) = (kW, Hour)
 subunits(::Type{MWh}) = (MW, Hour)
 subunits(::Type{GWh}) = (GW, Hour)
 subunits(::Type{TWh}) = (TW, Hour)
+
+energyunits = Dict(
+    unitsymbol(T) => T
+    for T in [kWh, MWh, GWh, TWh])
 
 function conversionfactor(F::Type{<:EnergyUnit}, T::Type{<:EnergyUnit})
 

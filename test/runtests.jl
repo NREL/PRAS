@@ -7,5 +7,6 @@ using PRASBase
     include("assets.jl")
     include("collections.jl")
     include("SystemModel.jl")
+    include("read.jl")
 
 end
