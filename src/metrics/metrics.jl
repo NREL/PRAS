@@ -2,7 +2,7 @@ function roundresults(x::ReliabilityMetric)
 
     if stderror(x) == 0
 
-        v_rounded = string(val(x))
+        v_rounded = @sprintf "%0.5f" val(x)
         s_rounded = "0"
 
     else

@@ -19,7 +19,7 @@ emptygenstors1 = GeneratorStorages{4,1,Hour,MW,MWh}(
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
 
-singlenode_a = ResourceAdequacy.SystemModel{4,1,Hour,MW,MWh}(
+singlenode_a = SystemModel(
     gens1, emptystors1, emptygenstors1,
     DateTime(2010,1,1,0):Hour(1):DateTime(2010,1,1,3),
     [25, 28, 27, 24])
@@ -80,7 +80,7 @@ genstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     fill(0, 2, 6), fill(0, 2, 6), fill(0, 2, 6),
     fill(0.0, 2, 6), fill(1.0, 2, 6))
 
-singlenode_b = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
+singlenode_b = SystemModel(
     gens2, emptystors2, emptygenstors2,
     DateTime(2015,6,1,0):Hour(1):DateTime(2015,6,1,5),
     [28,29,30,31,32,33])
@@ -100,7 +100,7 @@ stors2 = Storages{6,1,Hour,MW,MWh}(
     fill(1.0, 2, 6), fill(1.0, 2, 6), fill(.99, 2, 6),
     fill(0.0, 2, 6), fill(1.0, 2, 6))
 
-singlenode_stor = ResourceAdequacy.SystemModel{6,1,Hour,MW,MWh}(
+singlenode_stor = SystemModel(
     gens2, stors2, genstors2,
     DateTime(2015,6,1,0):Hour(1):DateTime(2015,6,1,5),
     [28,29,30,31,32,33])
@@ -132,7 +132,7 @@ lines = Lines{4,1,Hour,MW}(
     fill(8, 3, 4), fill(8, 3, 4), fill(0., 3, 4), fill(1., 3, 4))
 
 threenode =
-    ResourceAdequacy.SystemModel{4,1,Hour,MW,MWh}(
+    SystemModel(
         regions, interfaces, generators, [1:2, 3:5, 6:8],
        emptystors1, fill(1:0, 3), emptygenstors1, fill(1:0, 3),
         lines, [1:1, 2:2, 3:3],
@@ -147,14 +147,3 @@ threenode_lole_copperplate = 1.17877
 threenode_lolps_copperplate = [.14707, .40951, .21268, .40951]
 threenode_eue_copperplate = 11.73276
 threenode_eues_copperplate = [1.75783, 3.13343, 2.47954, 4.36196]
-
-
-# Unused (?)
-#lines1 = [ResourceAdequacy.LineSpec(10., 0.004, 0.04),
-          #ResourceAdequacy.LineSpec(10., 0.017, 0.04),
-          #ResourceAdequacy.LineSpec(10., 0.017, 0.04)]
-#storages2 = Storages{6,1,Hour,MW,MWh}(
-    #["Stor1"], ["Storage"],
-    #fill(1, 1, 6), fill(1, 1, 6), fill(4, 1, 6),
-    #fill(1.0, 1, 6), fill(1.0, 1, 6), fill(.99, 1, 6),
-    #fill(0.05, 1, 6), fill(0.5, 1, 6))

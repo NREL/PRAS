@@ -9,7 +9,7 @@ struct SpatioTemporalResult{
 } <: Result{N,L,T,SS}
 
     regions::Vector{String}
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{ZonedDateTime,T}
 
     lole::LOLE{N,L,T}
     regionloles::Vector{LOLE{N,L,T}}
@@ -24,7 +24,7 @@ struct SpatioTemporalResult{
     simulationspec::SS
 
     function SpatioTemporalResult{}(
-        regions::Vector{String}, timestamps::StepRange{DateTime,T},
+        regions::Vector{String}, timestamps::StepRange{ZonedDateTime,T},
         lole::LOLE{N,L,T}, regionloles::Vector{LOLE{N,L,T}},
         periodlolps::Vector{LOLP{L,T}},
         regionalperiodlolps::Matrix{LOLP{L,T}},
@@ -57,19 +57,19 @@ struct SpatioTemporalResult{
 end
 
 LOLE(x::SpatioTemporalResult) = x.lole
-LOLP(x::SpatioTemporalResult, t::DateTime) =
+LOLP(x::SpatioTemporalResult, t::ZonedDateTime) =
     x.periodlolps[findfirstunique(x.timestamps, t)]
 LOLE(x::SpatioTemporalResult, r::AbstractString) =
     x.regionloles[findfirstunique(x.regions, r)]
-LOLP(x::SpatioTemporalResult, r::AbstractString, t::DateTime) =
+LOLP(x::SpatioTemporalResult, r::AbstractString, t::ZonedDateTime) =
     x.regionalperiodlolps[findfirstunique(x.regions, r),
                           findfirstunique(x.timestamps, t)]
 
 EUE(x::SpatioTemporalResult) = x.eue
-EUE(x::SpatioTemporalResult, t::DateTime) =
+EUE(x::SpatioTemporalResult, t::ZonedDateTime) =
     x.periodeues[findfirstunique(x.timestamps, t)]
 EUE(x::SpatioTemporalResult, r::AbstractString) =
     x.regioneues[findfirstunique(x.regions, r)]
-EUE(x::SpatioTemporalResult, r::AbstractString, t::DateTime)  =
+EUE(x::SpatioTemporalResult, r::AbstractString, t::ZonedDateTime)  =
     x.regionalperiodeues[findfirstunique(x.regions, r),
                          findfirstunique(x.timestamps, t)]

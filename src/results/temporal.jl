@@ -8,7 +8,7 @@ struct TemporalResult{
     SS <: SimulationSpec
 } <: Result{N,L,T,SS}
 
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{ZonedDateTime,T}
     lole::LOLE{N,L,T}
     lolps::Vector{LOLP{L,T}}
     eue::EUE{N,L,T,E}
@@ -16,7 +16,7 @@ struct TemporalResult{
     simulationspec::SS
 
     TemporalResult{}(
-        timestamps::StepRange{DateTime,T},
+        timestamps::StepRange{ZonedDateTime,T},
         lole::LOLE{N,L,T}, lolps::Vector{LOLP{L,T}},
         eue::EUE{N,L,T,E}, eues::Vector{EUE{1,L,T,E}},
         simulationspec::SS) where {N,L,T,E,SS} =

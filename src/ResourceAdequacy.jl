@@ -11,6 +11,7 @@ import Distributions: DiscreteNonParametric, probs, support
 import Future: randjump
 import OnlineStatsBase: EqualWeight, fit!, Mean, value, Variance
 import OnlineStats: Series
+import Printf: @sprintf
 import Random: AbstractRNG, GLOBAL_RNG, MersenneTwister, rand
 import StatsBase: stderror
 
