@@ -9,7 +9,8 @@ import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
 import Decimals: Decimal
 import Distributions: DiscreteNonParametric, probs, support
 import Future: randjump
-import OnlineStats: EqualWeight, Mean, Series, Sum, Variance, fit!, value
+import OnlineStatsBase: EqualWeight, fit!, Mean, value, Variance
+import OnlineStats: Series
 import Random: AbstractRNG, GLOBAL_RNG, MersenneTwister, rand
 import StatsBase: stderror
 
