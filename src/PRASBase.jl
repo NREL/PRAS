@@ -4,6 +4,7 @@ using Reexport
 
 @reexport using Dates
 @reexport using TimeZones
+import Base: write
 
 using HDF5
 
