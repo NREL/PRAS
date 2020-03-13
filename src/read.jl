@@ -11,9 +11,9 @@ function SystemModel(inputfile::String)
         version, versionstring = readversion(f)
         println("$versionstring = $version")
 
-        # Determine the appropriate version of the constructor to use 
-        return if (0,2,0) <= version < (0,3,0)
-            systemmodel_0_2(f)
+        # Determine the appropriate version of the importer to use
+        return if (0,2,0) <= version < (0,4,0)
+            systemmodel_0_3(f)
         else
             @error("File format $versionstring not supported by this version of PRASBase.")
         end
@@ -25,7 +25,7 @@ function SystemModel(inputfile::String)
 end
 
 
-function systemmodel_0_2(f::HDF5File)
+function systemmodel_0_3(f::HDF5File)
 
     metadata = attrs(f)
 
@@ -62,16 +62,15 @@ function systemmodel_0_2(f::HDF5File)
         Int.(read(f["regions/load"]))
     )
     regionlookup = Dict(n=>i for (i, n) in enumerate(regionnames))
-
-    placeholders = fill(1:0, length(regions)-1) # TODO: Eliminate
+    n_regions = length(regions)
 
     if has_generators
 
-        gen_names, gen_categories, gen_regions = readvector.(
+        gen_names, gen_categories, gen_regionnames = readvector.(
             Ref(f["generators/_core"]), ["name", "category", "region"])
 
-        gen_regions
-        region_order = _
+        gen_regions = getindex.(Ref(regionlookup), gen_regionnames)
+        region_order = sortperm(gen_regions)
 
         generators = Generators{N,L,T,P}(
             gen_names[region_order], gen_categories[region_order],
@@ -80,8 +79,7 @@ function systemmodel_0_2(f::HDF5File)
             read(f["generators/repairprobability"])[region_order, :]
         )
 
-        # TODO
-        region_gen_idxs = push!(copy(placeholders), 1:length(generators))
+        region_gen_idxs = makeidxlist(gen_regions[region_order], n_regions)
 
     else
 
@@ -95,23 +93,25 @@ function systemmodel_0_2(f::HDF5File)
 
     if has_storages
 
-        stor_names, stor_categories, stor_regions = readvector.(
+        stor_names, stor_categories, stor_regionnames = readvector.(
             Ref(f["storages/_core"]), ["name", "category", "region"])
 
+        stor_regions = getindex.(Ref(regionlookup), stor_regionnames)
+        region_order = sortperm(stor_regions)
+
         storages = Storages{N,L,T,P,E}(
-            readvector.(Ref(f["storages/_core"]), ["name", "category"])...,
-            Int.(read(f["storages/chargecapacity"])),
-            Int.(read(f["storages/dischargecapacity"])),
-            Int.(read(f["storages/energycapacity"])),
-            read(f["storages/chargeefficiency"]),
-            read(f["storages/dischargeefficiency"]),
-            read(f["storages/carryoverefficiency"]),
-            read(f["storages/failureprobability"]),
-            read(f["storages/repairprobability"])
+            stor_names[region_order], stor_categories[region_order],
+            Int.(read(f["storages/chargecapacity"]))[region_order, :],
+            Int.(read(f["storages/dischargecapacity"]))[region_order, :],
+            Int.(read(f["storages/energycapacity"]))[region_order, :],
+            read(f["storages/chargeefficiency"])[region_order, :],
+            read(f["storages/dischargeefficiency"])[region_order, :],
+            read(f["storages/carryoverefficiency"])[region_order, :],
+            read(f["storages/failureprobability"])[region_order, :],
+            read(f["storages/repairprobability"])[region_order, :]
         )
 
-        # TODO
-        region_stor_idxs = push!(copy(placeholders), 1:length(storages))
+        region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
 
     else
 
@@ -128,22 +128,27 @@ function systemmodel_0_2(f::HDF5File)
 
     if has_generatorstorages
 
-        generatorstorages = GeneratorStorages{N,L,T,P,E}(
-            readvector.(Ref(f["generatorstorages/_core"]), ["name", "category"])...,
-            Int.(read(f["generatorstorages/chargecapacity"])),
-            Int.(read(f["generatorstorages/dischargecapacity"])),
-            Int.(read(f["generatorstorages/energycapacity"])),
-            read(f["generatorstorages/chargeefficiency"]),
-            read(f["generatorstorages/dischargeefficiency"]),
-            read(f["generatorstorages/carryoverefficiency"]),
-            Int.(read(f["generatorstorages/inflow"])),
-            Int.(read(f["generatorstorages/gridinjectioncapacity"])),
-            Int.(read(f["generatorstorages/gridwithdrawalcapacity"])),
-            read(f["generatorstorages/failureprobability"]),
-            read(f["generatorstorages/repairprobability"]))
+        genstor_names, genstor_categories, genstor_regionnames = readvector.(
+            Ref(f["generatorstorages/_core"]), ["name", "category", "region"])
 
-        # TODO
-        region_genstor_idxs = push!(copy(placeholders), 1:length(generatorstorages))
+        genstor_regions = getindex.(Ref(regionlookup), genstor_regionnames)
+        region_order = sortperm(genstor_regions)
+
+        generatorstorages = GeneratorStorages{N,L,T,P,E}(
+            genstor_names[region_order], genstor_categories[region_order],
+            Int.(read(f["generatorstorages/chargecapacity"]))[region_order, :],
+            Int.(read(f["generatorstorages/dischargecapacity"]))[region_order, :],
+            Int.(read(f["generatorstorages/energycapacity"]))[region_order, :],
+            read(f["generatorstorages/chargeefficiency"])[region_order, :],
+            read(f["generatorstorages/dischargeefficiency"])[region_order, :],
+            read(f["generatorstorages/carryoverefficiency"])[region_order, :],
+            Int.(read(f["generatorstorages/inflow"]))[region_order, :],
+            Int.(read(f["generatorstorages/gridinjectioncapacity"]))[region_order, :],
+            Int.(read(f["generatorstorages/gridwithdrawalcapacity"]))[region_order, :],
+            read(f["generatorstorages/failureprobability"])[region_order, :],
+            read(f["generatorstorages/repairprobability"])[region_order, :])
+
+        region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
 
     else
 
@@ -169,15 +174,24 @@ function systemmodel_0_2(f::HDF5File)
             Int.(read(f["interfaces/forwardcapacity"])),
             Int.(read(f["interfaces/backwardcapacity"])))
 
-        lines = Lines{N,L,T,P}(
-            readvector.(Ref(f["lines/_core"]), ["name", "category"])...,
-            Int.(read(f["lines/forwardcapacity"])),
-            Int.(read(f["lines/backwardcapacity"])),
-            read(f["lines/failureprobability"]),
-            read(f["lines/repairprobability"]))
+        n_interfaces = length(interfaces)
+        interface_lookup = Dict((r1, r2) => i for (i, (r1, r2))
+                                in enumerate(tuple.(from_regions, to_regions)))
 
-        # TODO
-        interface_line_idxs = push!(copy(placeholders), 1:length(lines))
+        line_names, line_categories, line_fromregions, line_toregions =
+            readvector.(Ref(f["lines/_core"]), ["name", "category", "region1", "region2"])
+
+        line_interfaces = getindex.(Ref(interface_lookup), tuple.(line_fromregions, line_toregions))
+        interface_order = sortperm(line_interfaces)
+
+        lines = Lines{N,L,T,P}(
+            line_names[interface_order], line_categories[interface_order],
+            Int.(read(f["lines/forwardcapacity"]))[interface_order, :],
+            Int.(read(f["lines/backwardcapacity"]))[interface_order, :],
+            read(f["lines/failureprobability"])[interface_order, :],
+            read(f["lines/repairprobability"])[interface_order, :])
+
+        interface_line_idxs = makeidxlist(line_interfaces[interface_order], n_interfaces)
 
     else
 
