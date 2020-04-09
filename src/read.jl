@@ -165,29 +165,70 @@ function systemmodel_0_3(f::HDF5File)
 
     if has_interfaces
 
-        from_regions, to_regions =
-            readvector.(Ref(f["interfaces/_core"]), ["region1", "region2"])
+        from_regionnames, to_regionnames =
+            readvector.(Ref(f["interfaces/_core"]), ["region_from", "region_to"])
+        forwardcapacity = Int.(read(f["interfaces/forwardcapacity"]))
+        backwardcapacity = Int.(read(f["interfaces/backwardcapacity"]))
+
+        n_interfaces = length(from_regionnames)
+        from_regions = getindex.(Ref(regionlookup), from_regionnames)
+        to_regions = getindex.(Ref(regionlookup), to_regionnames)
+
+        # Force interface definitions as smaller => larger region numbers
+        for i in 1:n_interfaces
+            from_region = from_regions[i]
+            to_region = to_regions[i]
+            if from_region > to_region
+                from_regions[i] = to_region
+                to_regions[i] = from_region
+                new_forwardcapacity = backwardcapacity[i, :]
+                backwardcapacity[i, :] .= forwardcapacity[i, :]
+                forwardcapacity[i, :] .= new_forwardcapacity
+            elseif from_region == to_region
+                error("Cannot have an interface to and from " *
+                      "the same region ($(from_region))")
+            end
+        end
 
         interfaces = Interfaces{N,P}(
-            getindex.(Ref(regionlookup), from_regions),
-            getindex.(Ref(regionlookup), to_regions),
-            Int.(read(f["interfaces/forwardcapacity"])),
-            Int.(read(f["interfaces/backwardcapacity"])))
+            from_regions, to_regions, forwardcapacity, backwardcapacity)
 
-        n_interfaces = length(interfaces)
         interface_lookup = Dict((r1, r2) => i for (i, (r1, r2))
                                 in enumerate(tuple.(from_regions, to_regions)))
 
-        line_names, line_categories, line_fromregions, line_toregions =
-            readvector.(Ref(f["lines/_core"]), ["name", "category", "region1", "region2"])
+        line_names, line_categories, line_fromregionnames, line_toregionnames =
+            readvector.(Ref(f["lines/_core"]), ["name", "category", "region_from", "region_to"])
+        line_forwardcapacity = Int.(read(f["lines/forwardcapacity"]))
+        line_backwardcapacity = Int.(read(f["lines/backwardcapacity"]))
 
-        line_interfaces = getindex.(Ref(interface_lookup), tuple.(line_fromregions, line_toregions))
+        n_lines = length(line_names)
+        line_fromregions = getindex.(Ref(regionlookup), line_fromregionnames)
+        line_toregions  = getindex.(Ref(regionlookup), line_toregionnames)
+
+        # Force line definitions as smaller => larger region numbers
+        for i in 1:n_lines
+            from_region = line_fromregions[i]
+            to_region = line_toregions[i]
+            if from_region > to_region
+                line_fromregions[i] = to_region
+                line_toregions[i] = from_region
+                new_forwardcapacity = line_backwardcapacity[i, :]
+                line_backwardcapacity[i, :] .= line_forwardcapacity[i, :]
+                line_forwardcapacity[i, :] = new_forwardcapacity
+            elseif from_region == to_region
+                error("Cannot have a line ($(line_names[i])) to and from " *
+                      "the same region ($(from_region))")
+            end
+        end
+
+        line_interfaces = getindex.(Ref(interface_lookup),
+                                    tuple.(line_fromregions, line_toregions))
         interface_order = sortperm(line_interfaces)
 
         lines = Lines{N,L,T,P}(
             line_names[interface_order], line_categories[interface_order],
-            Int.(read(f["lines/forwardcapacity"]))[interface_order, :],
-            Int.(read(f["lines/backwardcapacity"]))[interface_order, :],
+            line_forwardcapacity[interface_order, :],
+            line_backwardcapacity[interface_order, :],
             read(f["lines/failureprobability"])[interface_order, :],
             read(f["lines/repairprobability"])[interface_order, :])
 

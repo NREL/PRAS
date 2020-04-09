@@ -364,9 +364,9 @@ data.
 The `_core` dataset should be a one-dimensional array storing instances of a
 compound datatype with the following fields (in order):
 
- 1. `region1`: 128-byte ASCII string. Stores the name of the first of the two
+ 1. `region_from`: 128-byte ASCII string. Stores the name of the first of the two
     regions connected by the interface.
- 2. `region2`: 128-byte ASCII string. Stores the name of the second of the two
+ 2. `region_to`: 128-byte ASCII string. Stores the name of the second of the two
     regions connected by the interface.
 
 Each interface in the system corresponds to a single instance of the compound
@@ -377,11 +377,11 @@ The `interfaces` group should contain the following datasets describing
 (potentially) time-varying properties of the system regions:
 
  - `forwardcapacity`, as unsigned 32-bit integers representing the maximum
-   possible total power transfer from the first region to the second
-   region, for each interface in each time period
+   possible total power transfer from `region_from` to `region_to`, for each
+   interface in each time period
  - `backwardcapacity`, as unsigned 32-bit integers representing the maximum
-   possible total power transfer from the second region to the
-   first region, for each interface in each time period
+   possible total power transfer from `region_to` to `region_from`, for each
+   interface in each time period
 
 #### `lines` group
 
@@ -396,9 +396,9 @@ compound datatype with the following fields (in order):
 
  1. `name`: 128-byte ASCII string. Stores the **unique** name of the line.
  2. `category`: 128-byte ASCII string. Stores the assigned category of the line.
- 3. `region1`: 128-byte ASCII string. Stores the name of the first of the two
+ 3. `region_from`: 128-byte ASCII string. Stores the name of the first of the two
     regions connected by the line.
- 4. `region2`: 128-byte ASCII string. Stores the name of the second of the two
+ 4. `region_to`: 128-byte ASCII string. Stores the name of the second of the two
     regions connected by the line.
 
 Each line in the system corresponds to a single instance of the compound
@@ -409,11 +409,11 @@ The `lines` group should contain the following datasets describing
 (potentially) time-varying properties of the system regions:
 
  - `forwardcapacity`, as unsigned 32-bit integers representing maximum
-   available power transfer capacity from the first region to the second
-   region along the line, for each line in each time period
+   available power transfer capacity from `region_from` to `region_to` along
+   the line, for each line in each time period
  - `backwardcapacity`, as unsigned 32-bit integers representing maximum
-   available power transfer capacity from the second region to the
-   first region along the line, for each line in each time period
+   available power transfer capacity from `region_to` to `region_from` along
+   the line, for each line in each time period
  - `failureprobability`, as 64-bit floats representing the probability the line
    transitions from operational to forced outage during a given simulation
    timestep, for each line in each timeperiod. Unitless.

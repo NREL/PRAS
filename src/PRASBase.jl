@@ -4,7 +4,7 @@ using Reexport
 
 @reexport using Dates
 @reexport using TimeZones
-import Base: write
+#import Base: write
 
 using HDF5
 
@@ -29,7 +29,7 @@ include("assets.jl")
 include("SystemModel.jl")
 
 include("read.jl")
-include("write.jl")
+#include("write.jl")
 
 include("utils.jl")
 
