@@ -29,7 +29,6 @@ include("assets.jl")
 include("SystemModel.jl")
 
 include("read.jl")
-#include("write.jl")
 
 include("utils.jl")
 
