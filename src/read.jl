@@ -11,10 +11,10 @@ function SystemModel(inputfile::String)
         version, versionstring = readversion(f)
 
         # Determine the appropriate version of the importer to use
-        return if (0,2,0) <= version < (0,4,0)
-            systemmodel_0_3(f)
+        return if (0,5,0) <= version < (0,6,0)
+            systemmodel_0_5(f)
         else
-            @error("File format $versionstring not supported by this version of PRASBase.")
+            error("PRAS file format $versionstring not supported by this version of PRASBase.")
         end
 
     end
@@ -24,7 +24,7 @@ function SystemModel(inputfile::String)
 end
 
 
-function systemmodel_0_3(f::HDF5File)
+function systemmodel_0_5(f::HDF5File)
 
     metadata = attrs(f)
 
@@ -65,8 +65,9 @@ function systemmodel_0_3(f::HDF5File)
 
     if has_generators
 
+        gen_core = read(f["generators/_core"])
         gen_names, gen_categories, gen_regionnames = readvector.(
-            Ref(f["generators/_core"]), [:name, :category, :region])
+            Ref(gen_core), [:name, :category, :region])
 
         gen_regions = getindex.(Ref(regionlookup), gen_regionnames)
         region_order = sortperm(gen_regions)
@@ -92,8 +93,9 @@ function systemmodel_0_3(f::HDF5File)
 
     if has_storages
 
+        stor_core = read(f["storages/_core"])
         stor_names, stor_categories, stor_regionnames = readvector.(
-            Ref(f["storages/_core"]), [:name, :category, :region])
+            Ref(stor_core), [:name, :category, :region])
 
         stor_regions = getindex.(Ref(regionlookup), stor_regionnames)
         region_order = sortperm(stor_regions)
@@ -127,8 +129,9 @@ function systemmodel_0_3(f::HDF5File)
 
     if has_generatorstorages
 
+        genstor_core = read(f["generatorstorages/_core"])
         genstor_names, genstor_categories, genstor_regionnames = readvector.(
-            Ref(f["generatorstorages/_core"]), [:name, :category, :region])
+            Ref(genstor_core), [:name, :category, :region])
 
         genstor_regions = getindex.(Ref(regionlookup), genstor_regionnames)
         region_order = sortperm(genstor_regions)
@@ -164,8 +167,9 @@ function systemmodel_0_3(f::HDF5File)
 
     if has_interfaces
 
+        interfaces_core = read(f["interfaces/_core"])
         from_regionnames, to_regionnames =
-            readvector.(Ref(f["interfaces/_core"]), [:region_from, :region_to])
+            readvector.(Ref(interfaces_core), [:region_from, :region_to])
         forwardcapacity = Int.(read(f["interfaces/forwardcapacity"]))
         backwardcapacity = Int.(read(f["interfaces/backwardcapacity"]))
 
@@ -195,8 +199,9 @@ function systemmodel_0_3(f::HDF5File)
         interface_lookup = Dict((r1, r2) => i for (i, (r1, r2))
                                 in enumerate(tuple.(from_regions, to_regions)))
 
+        lines_core = read(f["lines/_core"])
         line_names, line_categories, line_fromregionnames, line_toregionnames =
-            readvector.(Ref(f["lines/_core"]), [:name, :category, :region_from, :region_to])
+            readvector.(Ref(lines_core), [:name, :category, :region_from, :region_to])
         line_forwardcapacity = Int.(read(f["lines/forwardcapacity"]))
         line_backwardcapacity = Int.(read(f["lines/backwardcapacity"]))
 
@@ -281,4 +286,5 @@ end
 Attempts to extract a vector of elements from an HDF5 compound datatype,
 corresponding to `field`.
 """
-readvector(d::HDF5Dataset, field::Symbol) = getindex.(read(d), field)
+readvector(d::HDF5Dataset, field::Union{Symbol,Int}) = readvector(read(d), field)
+readvector(d::Vector{<:NamedTuple}, field::Union{Symbol,Int}) = getindex.(d, field)
