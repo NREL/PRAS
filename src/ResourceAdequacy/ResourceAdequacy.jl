@@ -1,31 +1,27 @@
-module ResourceAdequacy
+@reexport module ResourceAdequacy
 
 using MinCostFlows
-using PRASBase
+using ..PRASBase
 
 import Base: -, broadcastable
 import Base.Threads: nthreads, @spawn
-import Dates: DateTime, Period, Year, Month, Week, Day, Hour, Minute
+import Dates: DateTime, Period
 import Decimals: Decimal
 import Distributions: DiscreteNonParametric, probs, support
-import Future: randjump
 import OnlineStatsBase: EqualWeight, fit!, Mean, value, Variance
 import OnlineStats: Series
 import Printf: @sprintf
 import Random: AbstractRNG, GLOBAL_RNG, MersenneTwister, rand
 import StatsBase: stderror
+import TimeZones: ZonedDateTime
 
 export
 
     assess,
 
-    # Units
-    Year, Month, Week, Day, Hour, Minute,
-    MW, GW,
-    MWh, GWh, TWh,
-
     # Metrics
-    LOLP, LOLE, EUE, ExpectedInterfaceFlow, ExpectedInterfaceUtilization,
+    ReliabilityMetric, LOLP, LOLE, EUE,
+    ExpectedInterfaceFlow, ExpectedInterfaceUtilization,
     val, stderror,
 
     # Simulation specifications

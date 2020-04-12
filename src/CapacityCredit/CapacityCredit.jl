@@ -1,9 +1,9 @@
-module CapacityCredit
+@reexport module CapacityCredit
 
 import Distributions: ccdf, Normal
-import PRASBase: Generators, Regions, SystemModel, unitsymbol
-import ResourceAdequacy: assess, ResultSpec, ReliabilityMetric,
-                         SimulationSpec, stderror, val
+import ..PRASBase: Generators, Regions, SystemModel, unitsymbol
+import ..ResourceAdequacy: assess, ResultSpec, ReliabilityMetric,
+                           SimulationSpec, stderror, val
 
 export EFC, ELCC
 
@@ -13,4 +13,4 @@ include("utils.jl")
 include("EFC.jl")
 include("ELCC.jl")
 
-end # module
+end

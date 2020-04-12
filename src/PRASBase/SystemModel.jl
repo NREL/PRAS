@@ -91,7 +91,7 @@ function SystemModel(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
-    timestamps::StepRange{<:Dates.AbstractDateTime,T},
+    timestamps::StepRange{<:AbstractDateTime,T},
     load::Vector{Int}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 

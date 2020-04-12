@@ -1,21 +1,18 @@
-module PRASBase
+@reexport module PRASBase
 
-using Reexport
-
-@reexport using Dates
-@reexport using TimeZones
-#import Base: write
-
-using HDF5
+import Dates: @dateformat_str, AbstractDateTime, DateTime,
+              Period, Minute, Hour, Day, Year
+import TimeZones: TimeZone, ZonedDateTime
+import HDF5: attrs, exists, HDF5File, HDF5Dataset, h5open
 
 export
 
     # System assets
-    AbstractAssets,
     Regions, Interfaces,
-    Generators, Storages, GeneratorStorages, Lines,
+    AbstractAssets, Generators, Storages, GeneratorStorages, Lines,
 
     # Units
+    Period, Minute, Hour, Day, Year,
     PowerUnit, kW, MW, GW, TW,
     EnergyUnit, kWh, MWh, GWh, TWh,
     unitsymbol, conversionfactor, powertoenergy, energytopower,
@@ -32,4 +29,4 @@ include("read.jl")
 
 include("utils.jl")
 
-end # module
+end

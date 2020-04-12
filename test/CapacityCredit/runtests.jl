@@ -1,9 +1,3 @@
-using ResourceAdequacy
-using CapacityCredit
-using PRASBase
-using Test
-using TimeZones
-
 @testset "CapacityCredit" begin
 
     empty_str = String[]

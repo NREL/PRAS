@@ -2,6 +2,8 @@ module PRAS
 
 using Reexport
 
-@reexport using PRASBase, ResourceAdequacy, CapacityCredit
+include("PRASBase/PRASBase.jl")
+include("ResourceAdequacy/ResourceAdequacy.jl")
+include("CapacityCredit/CapacityCredit.jl")
 
 end

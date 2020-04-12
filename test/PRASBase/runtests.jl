@@ -1,6 +1,3 @@
-using Test
-using PRASBase
-
 @testset "PRASBase" begin
 
     include("units.jl")
