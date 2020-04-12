@@ -1,4 +1,5 @@
 @testset "Read from disk" begin
+    toy = SystemModel(dirname(@__FILE__) * "/toymodel.pras")
     rts = SystemModel(dirname(@__FILE__) * "/rts.pras")
-    # TODO: Verify system accurately depicts RTS
+    # TODO: Verify systems accurately depicted
 end

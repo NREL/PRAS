@@ -244,10 +244,10 @@ function systemmodel_0_5(f::HDF5File)
             Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N))
 
         lines = Lines{N,L,T,P}(
-            Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N),
+            String[], String[], zeros(Int, 0, N), zeros(Int, 0, N),
             zeros(Float64, 0, N), zeros(Float64, 0, N))
 
-        interface_line_idxs = UnitRange[]
+        interface_line_idxs = UnitRange{Int}[]
 
     end
 
