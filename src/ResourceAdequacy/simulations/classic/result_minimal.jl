@@ -29,7 +29,7 @@ function finalize(
 ) where {N,L,T,P,E}
 
     lole = eul = 0.
-    p2e = powertoenergy(P, L, T, E)
+    p2e = conversionfactor(L, T, P, E)
 
     while accsremaining > 0
         acc = take!(results)

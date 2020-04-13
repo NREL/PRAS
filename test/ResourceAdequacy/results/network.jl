@@ -1,6 +1,6 @@
 @testset "NetworkResult" begin
 
-    tstamps = DateTime(2012,4,1,0):Hour(1):DateTime(2012,4,7,23)
+    tstamps = ZonedDateTime(2012,4,1,0,tz):Hour(1):ZonedDateTime(2012,4,7,23,tz)
     regions = ["A", "B", "C"]
     interfaces = [(1,2), (2,3)]
 
@@ -67,15 +67,15 @@
     @test ExpectedInterfaceUtilization(result, regions[2], regions[3], tstamps[4]) == interfaceutilizations[2,4]
     @test ExpectedInterfaceUtilization(result, regions[3], regions[2], tstamps[12]) == interfaceutilizations[2,12]
 
-    @test_throws BoundsError LOLP(result, DateTime(2013,1,1,12))
-    @test_throws BoundsError EUE(result, DateTime(2013,1,1,12))
+    @test_throws BoundsError LOLP(result, ZonedDateTime(2013,1,1,12,tz))
+    @test_throws BoundsError EUE(result, ZonedDateTime(2013,1,1,12,tz))
     @test_throws BoundsError LOLE(result, "NotARegion")
     @test_throws BoundsError EUE(result, "NotARegion")
     @test_throws BoundsError ExpectedInterfaceFlow(result, regions[1], regions[3], tstamps[1])
     @test_throws BoundsError ExpectedInterfaceFlow(result, regions[1], "NotARegion", tstamps[1])
-    @test_throws BoundsError ExpectedInterfaceFlow(result, "A", "B", DateTime(2013,1,1,12))
+    @test_throws BoundsError ExpectedInterfaceFlow(result, "A", "B", ZonedDateTime(2013,1,1,12,tz))
     @test_throws BoundsError ExpectedInterfaceUtilization(result, regions[1], regions[3], tstamps[1])
     @test_throws BoundsError ExpectedInterfaceUtilization(result, regions[1], "NotARegion", tstamps[1])
-    @test_throws BoundsError ExpectedInterfaceUtilization(result, "A", "B", DateTime(2013,1,1,12))
+    @test_throws BoundsError ExpectedInterfaceUtilization(result, "A", "B", ZonedDateTime(2013,1,1,12,tz))
 
 end

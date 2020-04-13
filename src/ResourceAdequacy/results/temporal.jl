@@ -26,10 +26,10 @@ end
 
 LOLE(x::TemporalResult) = x.lole
 LOLP(x::TemporalResult, t::Int) = x.lolps[t]
-LOLP(x::TemporalResult, dt::DateTime) =
+LOLP(x::TemporalResult, dt::ZonedDateTime) =
     x.lolps[findfirstunique(x.timestamps, dt)]
 
 EUE(x::TemporalResult) = x.eue
 EUE(x::TemporalResult, t::Int) = x.eues[t]
-EUE(x::TemporalResult, dt::DateTime) =
+EUE(x::TemporalResult, dt::ZonedDateTime) =
     x.eues[findfirstunique(x.timestamps, dt)]

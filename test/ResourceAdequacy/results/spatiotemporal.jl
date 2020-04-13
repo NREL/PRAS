@@ -1,6 +1,6 @@
 @testset "SpatioTemporalResult" begin
 
-    tstamps = DateTime(2012,4,1,0):Hour(1):DateTime(2012,4,7,23)
+    tstamps = ZonedDateTime(2012,4,1,0,tz):Hour(1):ZonedDateTime(2012,4,7,23,tz)
     regions = ["A", "B", "C"]
 
     periodlolps = LOLP{1,Hour}.(rand(168)/10, rand(168)/100)
@@ -46,8 +46,8 @@
     @test EUE(result, tstamps[1]) == periodeues[1]
     @test EUE(result, regions[2], tstamps[1]) == regionalperiodeues[2,1]
 
-    @test_throws BoundsError LOLP(result, DateTime(2013,1,1,12))
-    @test_throws BoundsError EUE(result, DateTime(2013,1,1,12))
+    @test_throws BoundsError LOLP(result, ZonedDateTime(2013,1,1,12,tz))
+    @test_throws BoundsError EUE(result, ZonedDateTime(2013,1,1,12,tz))
     @test_throws BoundsError LOLE(result, "NotARegion")
     @test_throws BoundsError EUE(result, "NotARegion")
 

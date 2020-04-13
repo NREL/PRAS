@@ -72,7 +72,7 @@ function finalize(
 
     close(results)
 
-    p2e = powertoenergy(P,L,T,E)
+    p2e = conversionfactor(L,T,P,E)
     lole = makemetric(LOLE{N,L,T}, periodsdropped)
     eue = makemetric_scale(EUE{N,L,T,E}, p2e, unservedload)
 

@@ -87,7 +87,7 @@ function finalize(
     lole = makemetric(LOLE{N,L,T}, periodsdropped_total)
     lolps = makemetric.(LOLP{L,T}, periodsdropped_period)
 
-    p2e = powertoenergy(P,L,T,E)
+    p2e = conversionfactor(L,T,P,E)
     eue = makemetric_scale(EUE{N,L,T,E}, p2e, unservedload_total)
     eues = makemetric_scale.(EUE{1,L,T,E}, p2e, unservedload_period)
 

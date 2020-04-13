@@ -55,7 +55,7 @@ function finalize(
 
     close(results)
 
-    p2e = powertoenergy(P,L,T,E)
+    p2e = conversionfactor(L,T,P,E)
 
     return TemporalResult(
         system.timestamps,

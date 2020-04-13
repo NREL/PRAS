@@ -11,7 +11,7 @@ struct NetworkResult{
 
     regions::Vector{String}
     interfaces::Vector{Tuple{Int,Int}}
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{ZonedDateTime,T}
 
     lole::LOLE{N,L,T}
     regionloles::Vector{LOLE{N,L,T}}
@@ -30,7 +30,7 @@ struct NetworkResult{
 
     function NetworkResult{}(
         regions::Vector{String}, interfaces::Vector{Tuple{Int,Int}},
-        timestamps::StepRange{DateTime,T},
+        timestamps::StepRange{ZonedDateTime,T},
         lole::LOLE{N,L,T}, regionloles::Vector{LOLE{N,L,T}},
         periodlolps::Vector{LOLP{L,T}},
         regionalperiodlolps::Matrix{LOLP{L,T}},
@@ -69,20 +69,20 @@ struct NetworkResult{
 end
 
 LOLE(x::NetworkResult) = x.lole
-LOLP(x::NetworkResult, t::DateTime) =
+LOLP(x::NetworkResult, t::ZonedDateTime) =
     x.periodlolps[findfirstunique(x.timestamps, t)]
 LOLE(x::NetworkResult, r::AbstractString) =
     x.regionloles[findfirstunique(x.regions, r)]
-LOLP(x::NetworkResult, r::AbstractString, t::DateTime) =
+LOLP(x::NetworkResult, r::AbstractString, t::ZonedDateTime) =
     x.regionalperiodlolps[findfirstunique(x.regions, r),
                           findfirstunique(x.timestamps, t)]
 
 EUE(x::NetworkResult) = x.eue
-EUE(x::NetworkResult, t::DateTime) =
+EUE(x::NetworkResult, t::ZonedDateTime) =
     x.periodeues[findfirstunique(x.timestamps, t)]
 EUE(x::NetworkResult, r::AbstractString) =
     x.regioneues[findfirstunique(x.regions, r)]
-EUE(x::NetworkResult, r::AbstractString, t::DateTime)  =
+EUE(x::NetworkResult, r::AbstractString, t::ZonedDateTime)  =
     x.regionalperiodeues[findfirstunique(x.regions, r),
                          findfirstunique(x.timestamps, t)]
 
@@ -90,7 +90,7 @@ function ExpectedInterfaceFlow(
     x::NetworkResult,
     r1::AbstractString,
     r2::AbstractString,
-    t::DateTime
+    t::ZonedDateTime
 )
 
     r1_idx = findfirstunique(x.regions, r1)
@@ -106,7 +106,7 @@ function ExpectedInterfaceFlow(
 
 end
 
-function ExpectedInterfaceFlow(x::NetworkResult, i::Tuple{Int,Int}, t::DateTime)
+function ExpectedInterfaceFlow(x::NetworkResult, i::Tuple{Int,Int}, t::ZonedDateTime)
     i_idx = findfirstunique(x.interfaces, i)
     t_idx = findfirstunique(x.timestamps, t) 
     return x.flows[i_idx, t_idx]
@@ -116,14 +116,14 @@ function ExpectedInterfaceUtilization(
     x::NetworkResult,
     r1::AbstractString,
     r2::AbstractString,
-    t::DateTime
+    t::ZonedDateTime
 )
     r1_idx = findfirstunique(x.regions, r1)
     r2_idx = findfirstunique(x.regions, r2)
     return ExpectedInterfaceUtilization(x, minmax(r1_idx, r2_idx), t)
 end
 
-function ExpectedInterfaceUtilization(x::NetworkResult, i::Tuple{Int,Int}, t::DateTime)
+function ExpectedInterfaceUtilization(x::NetworkResult, i::Tuple{Int,Int}, t::ZonedDateTime)
     i_idx = findfirstunique(x.interfaces, i)
     t_idx = findfirstunique(x.timestamps, t) 
     return x.utilizations[i_idx, t_idx]

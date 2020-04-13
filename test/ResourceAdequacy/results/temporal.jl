@@ -1,6 +1,6 @@
 @testset "TemporalResult" begin
 
-    tstamps = DateTime(2012,4,1,0):Hour(1):DateTime(2012,4,7,23)
+    tstamps = ZonedDateTime(2012,4,1,0,tz):Hour(1):ZonedDateTime(2012,4,7,23,tz)
     lolps = LOLP{1,Hour}.(rand(168)/10, rand(168)/100)
     lole = LOLE{168,1,Hour}(sum(val.(lolps)), sqrt(sum(stderror.(lolps).^2)))
     eues = EUE{1,1,Hour,MWh}.(rand(168), 0.)
@@ -29,7 +29,7 @@
     @test EUE(result, tstamps[1]) == eues[1]
     @test EUE(result, 1) == eues[1]
 
-    @test_throws BoundsError LOLP(result, DateTime(2013,1,1,12))
-    @test_throws BoundsError EUE(result, DateTime(2013,1,1,12))
+    @test_throws BoundsError LOLP(result, ZonedDateTime(2013,1,1,12,tz))
+    @test_throws BoundsError EUE(result, ZonedDateTime(2013,1,1,12,tz))
 
 end

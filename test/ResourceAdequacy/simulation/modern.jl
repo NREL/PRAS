@@ -139,8 +139,8 @@
         @test all(withinrange.(EUE.(result_3, timestampcol_3),
                                threenode_eues, nstderr_tol))
 
-        @test withinrange(LOLP(result_3, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
-        @test withinrange(LOLP(result_3, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,1,tz)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,2,tz)), 0.1, nstderr_tol)
 
         # TODO:  Test spatially-disaggregated results
         println("SpatioTemporal LOLPs:")
@@ -223,8 +223,8 @@
         @test all(withinrange.(EUE.(result_3, timestampcol_3),
                                threenode_eues, nstderr_tol))
 
-        @test withinrange(LOLP(result_3, "Region C", DateTime(2018,10,30,1)), 0.1, nstderr_tol)
-        @test withinrange(LOLP(result_3, "Region C", DateTime(2018,10,30,2)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,1,tz)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,2,tz)), 0.1, nstderr_tol)
 
         println("Network ExpectedInterfaceFlows:")
         threenode_interfaces = tuple.(threenode.interfaces.regions_from,

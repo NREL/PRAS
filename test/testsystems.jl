@@ -46,7 +46,7 @@ emptygenstors1_5min = GeneratorStorages{4,5,Minute,MW,MWh}(
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
 
-singlenode_a_5min = ResourceAdequacy.SystemModel{4,5,Minute,MW,MWh}(
+singlenode_a_5min = ResourceAdequacy.SystemModel(
     gens1_5min, emptystors1_5min, emptygenstors1_5min,
     DateTime(2010,1,1,0,0):Minute(5):DateTime(2010,1,1,0,15),
     [25, 28, 27, 24])
