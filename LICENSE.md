@@ -1,6 +1,6 @@
-The PRAS metapackage is licensed under a modified MIT "Expat" License:
+The PRAS package is licensed under a modified MIT "Expat" License:
 
-> Copyright 2018 Alliance for Sustainable Energy, LLC
+> Copyright 2020 Alliance for Sustainable Energy, LLC
 > 
 > Permission is hereby granted, free of charge, to any person obtaining a copy
 > of this software and associated documentation files (the "Software"), to deal
