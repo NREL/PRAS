@@ -11,7 +11,8 @@ import Distributions: DiscreteNonParametric, probs, support
 import OnlineStatsBase: EqualWeight, fit!, Mean, value, Variance
 import OnlineStats: Series
 import Printf: @sprintf
-import Random: AbstractRNG, GLOBAL_RNG, MersenneTwister, rand
+import Random: AbstractRNG, rand, seed!
+import Random123: Philox4x
 import StatsBase: stderror
 import TimeZones: ZonedDateTime
 

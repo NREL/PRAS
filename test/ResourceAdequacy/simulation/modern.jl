@@ -4,9 +4,11 @@
 
     end
 
-    seed = UInt(2345)
     nstderr_tol = 3
-    simspec = Modern(samples=100_000)
+
+    simspec = Modern(samples=100_000, seed=0)
+    smallsample = Modern(samples=10, seed=123)
+    smallsample_alt = Modern(samples=10, seed=124)
 
     timestampcol_a = collect(singlenode_a.timestamps)
     timestampcol_a5 = collect(singlenode_a_5min.timestamps)
@@ -17,7 +19,12 @@
     @testset "Minimal Result" begin
 
         # TODO: More test cases with storage
-        assess(Modern(samples=10), Minimal(), singlenode_stor)
+        r1 = assess(smallsample, Minimal(), singlenode_stor)
+        r2 = assess(smallsample, Minimal(), singlenode_stor)
+        @test EUE(r1) == EUE(r2) # with same seeds, should match exactly
+
+        r3 = assess(smallsample_alt, Minimal(), singlenode_stor)
+        @test EUE(r1) != EUE(r3) # with different seeds, should be slightly different
 
         # Single-region system A
         result_1a = assess(simspec, Minimal(), singlenode_a)
