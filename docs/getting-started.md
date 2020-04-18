@@ -264,12 +264,3 @@ the null hypothesis (the higher risk is not in fact larger than the lower
 risk) cannot be rejected at the desired significance level, the assessment
 will provide a warning indicating the size of the remaining capacity gap and
 return the lower and upper bounds on the capacity credit estimate.
-First, know that PRAS uses multi-threading, so be
-sure to set the environment variable controlling the number of threads
-available to Julia (36 in this Bash example, which is a good choice for
-nodes on NREL's Eagle supercomputer - on a laptop you would probably only
-want 4) before running scripts or launching the REPL:
-
-```sh
-export JULIA_NUM_THREADS=36
-```
