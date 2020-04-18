@@ -19,6 +19,8 @@ matrix:
 notifications:
   email: false
 
+branches: master
+
 script:
   # Need to install the NREL registry
   - julia -e 'import Pkg;
