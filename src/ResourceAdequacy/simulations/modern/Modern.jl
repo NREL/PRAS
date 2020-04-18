@@ -5,12 +5,12 @@ include("utils.jl")
 struct Modern <: SimulationSpec
 
     nsamples::Int
-    seed::UInt
+    seed::UInt64
 
-    function Modern(;
-        samples::Int=10_000, seed::UInt=rand(UInt))
-        @assert samples > 0
-        new(samples, seed)
+    function Modern(;samples::Int=10_000, seed::Integer=rand(UInt64))
+        samples <= 0 && error("Sample count must be positive")
+        seed < 0 && error("Random seed must be non-negative")
+        new(samples, UInt64(seed))
     end
 
 end
@@ -21,7 +21,7 @@ function assess(
     system::SystemModel)
 
     threads = nthreads()
-    samples = Channel{Tuple{Int,Nothing}}(2*threads)
+    samples = Channel{Int}(2*threads)
     results = Channel{accumulatortype(simspec, resultspec, system)}(threads)
 
     @spawn makesamples(samples, simspec)
@@ -34,27 +34,19 @@ function assess(
 
 end
 
-function makesamples(
-    periods::Channel{Tuple{Int,Nothing}},
-    simspec::Modern,
-    step::Integer=big(10)^20)
-
-    # TODO: Find a faster alternative to randjump for simulation-local RNG
-    #       Maybe Random123? For now just falling back on thread-local RNG
-    #rng = MersenneTwister(simspec.seed)
+function makesamples(samples::Channel{Int}, simspec::Modern)
 
     for s in 1:simspec.nsamples
-        put!(periods, (s, nothing))
-        #rng = randjump(rng, step)
+        put!(samples, s)
     end
 
-    close(periods)
+    close(samples)
 
 end
 
 function assess(
     simspec::Modern, resultspec::R, system::SystemModel{N},
-    samples::Channel{Tuple{Int,Nothing}},
+    samples::Channel{Int},
     recorders::Channel{<:ResultAccumulator{R}}
 ) where {R<:ResultSpec, N}
 
@@ -62,10 +54,14 @@ function assess(
     systemstate = SystemState(system)
     recorder = accumulator(simspec, resultspec, system)
 
-    # TODO: Implement simulation-level RNG (Random123?)
-    rng = GLOBAL_RNG
-    for (s, _) in samples
+    # TODO: Test performance of Philox vs Threefry, choice of rounds
+    # Also consider implementing an efficient Bernoulli trial with direct
+    # mantissa comparison
+    rng = Philox4x((0, 0), 10)
 
+    for s in samples
+
+        seed!(rng, (simspec.seed, s))
         initialize!(rng, systemstate, system)
 
         for t in 1:N
