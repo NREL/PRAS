@@ -164,8 +164,6 @@ For example, to assess the EUE-based EFC of a new resource with 1000 MW
 nameplate capacity, added to the system in a single region named "A":
 
 ```julia
-using ResourceAdequacy, CapacityCredit
-
 # The base system, with power units in MW
 base_system
 
@@ -205,8 +203,6 @@ For example, to assess the EUE-based ELCC of a new resource with 1000 MW namepla
 capacity, serving new load in region "A":
 
 ```julia
-using ResourceAdequacy, CapacityCredit
-
 # The base system, with power units in MW
 base_system
 

@@ -10,17 +10,3 @@ PRAS is developed and maintained at the US
 
 For help installing PRAS, see the [Installation](./installation) page. To get started using PRAS,
 see the [Getting Started](./getting-started) page.
-
-The functionality of PRAS is spread across multiple Julia packages.
-Those packages include:
-
- - [PRASBase.jl](https://github.com/NREL/PRASBase.jl): Core data
-   structures for holding power system information
- - [ResourceAdequacy.jl](https://github.com/NREL/ResourceAdequacy.jl):
-   Calculates probabilistic resource adequacy metrics
- - [CapacityCredit.jl](https://github.com/NREL/CapacityCredit.jl):
-   Computes the capacity credit of resources based on
-   probabilistic risk metrics
-
-The individual packages may provide additional documentation beyond that
-available on this site.
