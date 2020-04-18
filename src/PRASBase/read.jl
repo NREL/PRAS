@@ -145,8 +145,8 @@ function systemmodel_0_5(f::HDF5File)
             read(f["generatorstorages/dischargeefficiency"])[region_order, :],
             read(f["generatorstorages/carryoverefficiency"])[region_order, :],
             Int.(read(f["generatorstorages/inflow"]))[region_order, :],
-            Int.(read(f["generatorstorages/gridinjectioncapacity"]))[region_order, :],
             Int.(read(f["generatorstorages/gridwithdrawalcapacity"]))[region_order, :],
+            Int.(read(f["generatorstorages/gridinjectioncapacity"]))[region_order, :],
             read(f["generatorstorages/failureprobability"])[region_order, :],
             read(f["generatorstorages/repairprobability"])[region_order, :])
 
