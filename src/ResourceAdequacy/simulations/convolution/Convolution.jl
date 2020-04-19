@@ -1,4 +1,4 @@
-include("convolution.jl")
+include("conv.jl")
 
 struct Convolution <: SimulationSpec end
 
