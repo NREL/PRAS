@@ -1,4 +1,4 @@
-mutable struct ModernSpatioTemporalAccumulator{N,L,T,P,E} <:
+mutable struct SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E} <:
     ResultAccumulator{SpatioTemporal}
 
     # Cross-simulation LOL period count mean/variances
@@ -23,10 +23,10 @@ mutable struct ModernSpatioTemporalAccumulator{N,L,T,P,E} <:
 
 end
 
-accumulatortype(::Modern, ::SpatioTemporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
-    ModernSpatioTemporalAccumulator{N,L,T,P,E}
+accumulatortype(::SequentialMonteCarlo, ::SpatioTemporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E}
 
-function accumulator(::Modern, ::SpatioTemporal, sys::SystemModel{N,L,T,P,E}
+function accumulator(::SequentialMonteCarlo, ::SpatioTemporal, sys::SystemModel{N,L,T,P,E}
 ) where {N,L,T,P,E}
 
     nregions = length(sys.regions)
@@ -52,7 +52,7 @@ function accumulator(::Modern, ::SpatioTemporal, sys::SystemModel{N,L,T,P,E}
         unservedload_region_period[r,t] = meanvariance()
     end
 
-    return ModernSpatioTemporalAccumulator{N,L,T,P,E}(
+    return SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E}(
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_region_period,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
@@ -63,7 +63,7 @@ function accumulator(::Modern, ::SpatioTemporal, sys::SystemModel{N,L,T,P,E}
 end
 
 function record!(
-    acc::ModernSpatioTemporalAccumulator{N,L,T,P,E},
+    acc::SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
@@ -106,7 +106,7 @@ function record!(
 
 end
 
-function reset!(acc::ModernSpatioTemporalAccumulator{N,L,T,P,E}, sampleid::Int
+function reset!(acc::SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E}, sampleid::Int
 ) where {N,L,T,P,E}
 
     # Store regional / total sums for current simulation
@@ -130,8 +130,8 @@ function reset!(acc::ModernSpatioTemporalAccumulator{N,L,T,P,E}, sampleid::Int
 end
 
 function finalize(
-    results::Channel{ModernSpatioTemporalAccumulator{N,L,T,P,E}},
-    simspec::Modern,
+    results::Channel{SequentialMonteCarloSpatioTemporalAccumulator{N,L,T,P,E}},
+    simspec::SequentialMonteCarlo,
     system::SystemModel{N,L,T,P,E},
     accsremaining::Int
 ) where {N,L,T,P,E}

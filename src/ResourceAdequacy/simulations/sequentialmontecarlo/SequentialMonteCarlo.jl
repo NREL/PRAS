@@ -2,12 +2,12 @@ include("SystemState.jl")
 include("DispatchProblem.jl")
 include("utils.jl")
 
-struct Modern <: SimulationSpec
+struct SequentialMonteCarlo <: SimulationSpec
 
     nsamples::Int
     seed::UInt64
 
-    function Modern(;samples::Int=10_000, seed::Integer=rand(UInt64))
+    function SequentialMonteCarlo(;samples::Int=10_000, seed::Integer=rand(UInt64))
         samples <= 0 && error("Sample count must be positive")
         seed < 0 && error("Random seed must be non-negative")
         new(samples, UInt64(seed))
@@ -16,7 +16,7 @@ struct Modern <: SimulationSpec
 end
 
 function assess(
-    simspec::Modern,
+    simspec::SequentialMonteCarlo,
     resultspec::ResultSpec,
     system::SystemModel)
 
@@ -34,7 +34,7 @@ function assess(
 
 end
 
-function makesamples(samples::Channel{Int}, simspec::Modern)
+function makesamples(samples::Channel{Int}, simspec::SequentialMonteCarlo)
 
     for s in 1:simspec.nsamples
         put!(samples, s)
@@ -45,7 +45,7 @@ function makesamples(samples::Channel{Int}, simspec::Modern)
 end
 
 function assess(
-    simspec::Modern, resultspec::R, system::SystemModel{N},
+    simspec::SequentialMonteCarlo, resultspec::R, system::SystemModel{N},
     samples::Channel{Int},
     recorders::Channel{<:ResultAccumulator{R}}
 ) where {R<:ResultSpec, N}

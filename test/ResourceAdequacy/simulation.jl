@@ -1,6 +1,6 @@
 @testset "Simulation" begin
 
-    include("simulation/classic.jl")
-    include("simulation/modern.jl")
+    include("simulation/convolution.jl")
+    include("simulation/sequentialmontecarlo.jl")
 
 end

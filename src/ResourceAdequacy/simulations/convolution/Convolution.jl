@@ -1,9 +1,9 @@
-include("convolution.jl")
+include("conv.jl")
 
-struct Classic <: SimulationSpec end
+struct Convolution <: SimulationSpec end
 
 function assess(
-    simspec::Classic,       # TODO: Look into traits for defining
+    simspec::Convolution,       # TODO: Look into traits for defining
     resultspec::ResultSpec, #       valid SimSpec/ResultSpec pairs
     system::SystemModel{N}) where {N}
 
@@ -49,7 +49,7 @@ function makeperiods(periods::Channel{Int}, N::Int)
 end
 
 function assess(
-    simspec::Classic, resultspec::R, system::SystemModel{N,L,T,P,E},
+    simspec::Convolution, resultspec::R, system::SystemModel{N,L,T,P,E},
     periods::Channel{Int}, results::Channel{<:ResultAccumulator{R}}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,R<:ResultSpec}
 
