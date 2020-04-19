@@ -1,4 +1,4 @@
-mutable struct ModernMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
+mutable struct SequentialMonteCarloMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
 
     periodsdropped_total::MeanVariance # Cross-simulation total LOL mean and variance
     periodsdropped_total_currentsim::Int # LOL count for current simulation
@@ -9,16 +9,16 @@ mutable struct ModernMinimalAccumulator{N,L,T,P,E} <: ResultAccumulator{Minimal}
 
 end
 
-accumulatortype(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
-    ModernMinimalAccumulator{N,L,T,P,E}
+accumulatortype(::SequentialMonteCarlo, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    SequentialMonteCarloMinimalAccumulator{N,L,T,P,E}
 
-accumulator(::Modern, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
-    ModernMinimalAccumulator{N,L,T,P,E}(
+accumulator(::SequentialMonteCarlo, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    SequentialMonteCarloMinimalAccumulator{N,L,T,P,E}(
         Series(Mean(), Variance()), 0,
         Series(Mean(), Variance()), 0)
 
 function record!(
-    acc::ModernMinimalAccumulator{N,L,T,P,E},
+    acc::SequentialMonteCarloMinimalAccumulator{N,L,T,P,E},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
@@ -35,7 +35,7 @@ function record!(
 
 end
 
-function reset!(acc::ModernMinimalAccumulator, sampleid::Int)
+function reset!(acc::SequentialMonteCarloMinimalAccumulator, sampleid::Int)
 
         # Store totals for current simulation
         fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
@@ -50,8 +50,8 @@ function reset!(acc::ModernMinimalAccumulator, sampleid::Int)
 end
 
 function finalize(
-    results::Channel{ModernMinimalAccumulator{N,L,T,P,E}},
-    simspec::Modern,
+    results::Channel{SequentialMonteCarloMinimalAccumulator{N,L,T,P,E}},
+    simspec::SequentialMonteCarlo,
     system::SystemModel{N,L,T,P,E},
     accsremaining::Int
 ) where {N,L,T,P,E}

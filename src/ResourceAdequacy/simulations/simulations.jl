@@ -1,2 +1,2 @@
-include("classic/Classic.jl")
-include("modern/Modern.jl")
+include("convolution/Convolution.jl")
+include("sequentialmontecarlo/SequentialMonteCarlo.jl")

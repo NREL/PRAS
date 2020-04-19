@@ -26,7 +26,7 @@ export
     val, stderror,
 
     # Simulation specifications
-    Classic, Modern,
+    Convolution, SequentialMonteCarlo,
 
     # Result specifications
     Minimal, Temporal, SpatioTemporal, Network

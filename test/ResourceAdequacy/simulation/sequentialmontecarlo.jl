@@ -1,4 +1,4 @@
-@testset "Modern" begin
+@testset "SequentialMonteCarlo" begin
 
     @testset "DispatchProblem" begin
 
@@ -6,9 +6,9 @@
 
     nstderr_tol = 3
 
-    simspec = Modern(samples=100_000, seed=0)
-    smallsample = Modern(samples=10, seed=123)
-    smallsample_alt = Modern(samples=10, seed=124)
+    simspec = SequentialMonteCarlo(samples=100_000, seed=0)
+    smallsample = SequentialMonteCarlo(samples=10, seed=123)
+    smallsample_alt = SequentialMonteCarlo(samples=10, seed=124)
 
     timestampcol_a = collect(singlenode_a.timestamps)
     timestampcol_a5 = collect(singlenode_a_5min.timestamps)

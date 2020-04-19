@@ -1,6 +1,6 @@
-@testset "Classic" begin
+@testset "Convolution" begin
 
-    simspec = Classic()
+    simspec = Convolution()
 
     @testset "Minimal Result" begin
 

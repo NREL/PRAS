@@ -1,4 +1,4 @@
-mutable struct ModernNetworkAccumulator{N,L,T,P,E} <: ResultAccumulator{Network}
+mutable struct SequentialMonteCarloNetworkAccumulator{N,L,T,P,E} <: ResultAccumulator{Network}
 
     # Cross-simulation LOL period count mean/variances
     periodsdropped_total::MeanVariance
@@ -26,10 +26,10 @@ mutable struct ModernNetworkAccumulator{N,L,T,P,E} <: ResultAccumulator{Network}
 
 end
 
-accumulatortype(::Modern, ::Network, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
-    ModernNetworkAccumulator{N,L,T,P,E}
+accumulatortype(::SequentialMonteCarlo, ::Network, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} =
+    SequentialMonteCarloNetworkAccumulator{N,L,T,P,E}
 
-function accumulator(::Modern, ::Network, sys::SystemModel{N,L,T,P,E}
+function accumulator(::SequentialMonteCarlo, ::Network, sys::SystemModel{N,L,T,P,E}
 ) where {N,L,T,P,E}
 
     nregions = length(sys.regions)
@@ -68,7 +68,7 @@ function accumulator(::Modern, ::Network, sys::SystemModel{N,L,T,P,E}
 
     end
 
-    return ModernNetworkAccumulator{N,L,T,P,E}(
+    return SequentialMonteCarloNetworkAccumulator{N,L,T,P,E}(
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_region_period,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
@@ -80,7 +80,7 @@ function accumulator(::Modern, ::Network, sys::SystemModel{N,L,T,P,E}
 end
 
 function record!(
-    acc::ModernNetworkAccumulator{N,L,T,P,E},
+    acc::SequentialMonteCarloNetworkAccumulator{N,L,T,P,E},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
@@ -136,7 +136,7 @@ function record!(
 
 end
 
-function reset!(acc::ModernNetworkAccumulator{N,L,T,P,E}, sampleid::Int
+function reset!(acc::SequentialMonteCarloNetworkAccumulator{N,L,T,P,E}, sampleid::Int
 ) where {N,L,T,P,E}
 
     # Store regional / total sums for current simulation
@@ -160,8 +160,8 @@ function reset!(acc::ModernNetworkAccumulator{N,L,T,P,E}, sampleid::Int
 end
 
 function finalize(
-    results::Channel{ModernNetworkAccumulator{N,L,T,P,E}},
-    simspec::Modern,
+    results::Channel{SequentialMonteCarloNetworkAccumulator{N,L,T,P,E}},
+    simspec::SequentialMonteCarlo,
     system::SystemModel{N,L,T,P,E},
     accsremaining::Int
 ) where {N,L,T,P,E}

@@ -43,7 +43,7 @@ or options.
 The categories of specifications are:
 
 **Simulation Specifications**: How should power system operations be simulated?
-Options are `Classic` (convolution) and `Modern` (sequential Monte Carlo).
+Options are `Convolution` and `SequentialMonteCarlo`.
 
 **Result Specifications**: What level of detail should be saved out during simulations?
 Options are `Minimal`, `Temporal`, `SpatioTemporal`, and `Network`.
@@ -57,11 +57,11 @@ Options are `EFC` and `ELCC`.
 Analysis centers around the `assess` method with different arguments passed
 depending on the desired analysis to run.
 For example, to run a copper-plate convolution-based reliability assessment
-(`Classic`) with aggregate LOLE and EUE reporting (`Minimal`),
+(`Convolution`) with aggregate LOLE and EUE reporting (`Minimal`),
 one would run:
 
 ```julia
-assess(Classic(), Minimal(), mysystemmodel)
+assess(Convolution(), Minimal(), mysystemmodel)
 ```
 
 If you instead want to run a simulation that considers energy-limited resources
@@ -69,18 +69,18 @@ and transmission constraints, using 100,000 Monte Carlo samples,
 the method call becomes:
 
 ```julia
-assess(Modern(samples=100_000), Minimal(), mysystemmodel)
+assess(SequentialMonteCarlo(samples=100_000), Minimal(), mysystemmodel)
 ```
 
 To save results for each time period studied, change `Minimal` to `Temporal`:
 ```julia
-assess(Modern(samples=100_000), Temporal(), mysystemmodel)
+assess(SequentialMonteCarlo(samples=100_000), Temporal(), mysystemmodel)
 ```
 
 To save regional results for each simulation period, use the `SpatioTemporal`
 result specification instead:
 ```julia
-assess(Modern(samples=100_000), SpatioTemporal(), mysystemmodel)
+assess(SequentialMonteCarlo(samples=100_000), SpatioTemporal(), mysystemmodel)
 ```
 
 ### Querying Results
@@ -91,7 +91,7 @@ appropriate metric's constructor with the result object.
 For example, to obtain the system-wide LOLE over the simulation period:
 
 ```julia
-result = assess(Modern(100_000), SpatioTemporal(), mysystemmodel)
+result = assess(SequentialMonteCarlo(100_000), SpatioTemporal(), mysystemmodel)
 lole = LOLE(result)
 ```
 
@@ -170,7 +170,7 @@ augmented_system
 
 # Get the lower and upper bounds on the EFC estimate for the resource
 min_efc, max_efc = assess(
-    EFC{EUE}(1000, "A"), Modern(nsamples=100_000), Minimal(),
+    EFC{EUE}(1000, "A"), SequentialMonteCarlo(nsamples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -179,7 +179,7 @@ If the study resource were instead split between regions "A" (600MW) and "B"
 
 ```julia
 min_efc, max_efc = assess(
-    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), Modern(nsamples=100_000), Minimal(),
+    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), SequentialMonteCarlo(nsamples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -209,7 +209,7 @@ augmented_system
 
 # Get the lower and upper bounds on the ELCC estimate for the resource
 min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, "A"), Modern(nsamples=100_000), Minimal(),
+    ELCC{EUE}(1000, "A"), SequentialMonteCarlo(nsamples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -218,7 +218,7 @@ load evenly to regions "A" and "B", one could use:
 
 ```julia
 min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), Modern(nsamples=100_000), Minimal(),
+    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), SequentialMonteCarlo(nsamples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 

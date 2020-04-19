@@ -1,18 +1,18 @@
-mutable struct ClassicMinimalAccumulator{N,L,T,E} <: ResultAccumulator{Minimal}
+mutable struct ConvolutionMinimalAccumulator{N,L,T,E} <: ResultAccumulator{Minimal}
 
     lole::Float64
     eul::Float64
 
 end
 
-accumulatortype(::Classic, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
-    ClassicMinimalAccumulator{N,L,T,E}
+accumulatortype(::Convolution, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
+    ConvolutionMinimalAccumulator{N,L,T,E}
 
-accumulator(::Classic, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
-    ClassicMinimalAccumulator{N,L,T,E}(0., 0.)
+accumulator(::Convolution, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
+    ConvolutionMinimalAccumulator{N,L,T,E}(0., 0.)
 
 function update!(
-    acc::ClassicMinimalAccumulator,
+    acc::ConvolutionMinimalAccumulator,
     t::Int, lolp::Float64, eul::Float64
 )
 
@@ -23,7 +23,7 @@ function update!(
 end
 
 function finalize(
-    results::Channel{ClassicMinimalAccumulator{N,L,T,E}},
+    results::Channel{ConvolutionMinimalAccumulator{N,L,T,E}},
     system::SystemModel{N,L,T,P,E},
     accsremaining::Int
 ) where {N,L,T,P,E}
@@ -43,6 +43,6 @@ function finalize(
     return MinimalResult(
         LOLE{N,L,T}(lole, 0.),
         EUE{N,L,T,E}(eul * p2e, 0.),
-        Classic())
+        Convolution())
 
 end
