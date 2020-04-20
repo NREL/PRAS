@@ -91,7 +91,7 @@ appropriate metric's constructor with the result object.
 For example, to obtain the system-wide LOLE over the simulation period:
 
 ```julia
-result = assess(SequentialMonteCarlo(100_000), SpatioTemporal(), mysystemmodel)
+result = assess(SequentialMonteCarlo(samples=100_000), SpatioTemporal(), mysystemmodel)
 lole = LOLE(result)
 ```
 
@@ -170,7 +170,7 @@ augmented_system
 
 # Get the lower and upper bounds on the EFC estimate for the resource
 min_efc, max_efc = assess(
-    EFC{EUE}(1000, "A"), SequentialMonteCarlo(nsamples=100_000), Minimal(),
+    EFC{EUE}(1000, "A"), SequentialMonteCarlo(samples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -179,7 +179,7 @@ If the study resource were instead split between regions "A" (600MW) and "B"
 
 ```julia
 min_efc, max_efc = assess(
-    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), SequentialMonteCarlo(nsamples=100_000), Minimal(),
+    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), SequentialMonteCarlo(samples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -209,7 +209,7 @@ augmented_system
 
 # Get the lower and upper bounds on the ELCC estimate for the resource
 min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, "A"), SequentialMonteCarlo(nsamples=100_000), Minimal(),
+    ELCC{EUE}(1000, "A"), SequentialMonteCarlo(samples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
@@ -218,7 +218,7 @@ load evenly to regions "A" and "B", one could use:
 
 ```julia
 min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), SequentialMonteCarlo(nsamples=100_000), Minimal(),
+    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), SequentialMonteCarlo(samples=100_000), Minimal(),
     base_system, augmented_system)
 ```
 
