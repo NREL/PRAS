@@ -14,16 +14,19 @@ associated with each Storage/GeneratorStorage device, and a supplementary
 unserved energy or unused charging capability through to satisfy
 power balance constraints.
 
-Flows from the generation nodes are free, while flows from the charging and
-discharging nodes are costed according to the time-to-charge/discharge of the
-storage device, ensuring efficient coordination across units, while enforcing
-that storage is only discharged once generation capacity is exhausted,
-implying a storage operation strategy that prioritizes resource adequacy over
-economic arbitrage).
+Flows from the generation nodes are free, while flows to charging and
+from discharging nodes are costed or rewarded according to the
+time-to-discharge of the storage device, ensuring efficient coordination
+across units, while enforcing that storage is only discharged once generation
+capacity is exhausted (implying an operational strategy that prioritizes
+resource adequacy over economic arbitrage). This is based on the storage
+dispatch strategy of Evans, Tindemans, and Angeli, as outlined in "Minimizing
+Unserved Energy Using Heterogenous Storage Units" (IEEE Transactions on Power
+Systems, 2019).
 
-Flows to the charging node have an attenuated negative cost, incentivizing
-immediate storage charging if generation and transmission allows it, while
-avoiding charging by discharging other similar-priority storage (since that
+Flows to the charging node have an attenuated negative cost (reward),
+incentivizing immediate storage charging if generation and transmission
+allows it, while avoiding charging by discharging other storage (since that
 would incur an overall positive cost).
 
 Flows to the slack node (representing unused generation or storage discharge
@@ -268,28 +271,6 @@ function update_problem!(
         stor_energy = state.stors_energy[i]
         maxenergy = system.storages.energy_capacity[i, t]
 
-        # Update charging
-
-        maxcharge = system.storages.charge_capacity[i, t]
-        chargeefficiency = system.storages.charge_efficiency[i, t]
-        energychargeable = (maxenergy - stor_energy) / chargeefficiency
-
-        if maxcharge == 0
-            timetocharge = length(system.timestamps) + 1
-        else
-            timetocharge = round(Int, energychargeable / maxcharge)
-        end
-
-        charge_capacity =
-            min(maxcharge, round(Int, energytopower(
-                energychargeable, E, L, T, P)))
-        updateinjection!(
-            fp.nodes[charge_node], slack_node, -charge_capacity)
-
-        # Smallest time-to-charge = highest priority
-        chargecost = problem.min_chargecost + timetocharge # Negative cost
-        updateflowcost!(fp.edges[charge_edge], chargecost)
-
         # Update discharging
 
         maxdischarge = system.storages.discharge_capacity[i, t]
@@ -308,9 +289,25 @@ function update_problem!(
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
 
-        # Largest time-to-discharge = highest priority
+        # Largest time-to-discharge = highest priority (discharge first)
         dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
         updateflowcost!(fp.edges[discharge_edge], dischargecost)
+
+        # Update charging
+
+        maxcharge = system.storages.charge_capacity[i, t]
+        chargeefficiency = system.storages.charge_efficiency[i, t]
+        energychargeable = (maxenergy - stor_energy) / chargeefficiency
+
+        charge_capacity =
+            min(maxcharge, round(Int, energytopower(
+                energychargeable, E, L, T, P)))
+        updateinjection!(
+            fp.nodes[charge_node], slack_node, -charge_capacity)
+
+        # Smallest time-to-discharge = highest priority (charge first)
+        chargecost = problem.min_chargecost + timetodischarge # Negative cost
+        updateflowcost!(fp.edges[charge_edge], chargecost)
 
     end
 
@@ -337,29 +334,6 @@ function update_problem!(
         gridwithdrawal_capacity = system.generatorstorages.gridwithdrawal_capacity[i, t]
         updateflowlimit!(fp.edges[gridcharge_edge], gridwithdrawal_capacity)
 
-        # Update charging
-
-        maxcharge = system.generatorstorages.charge_capacity[i, t]
-        chargeefficiency = system.generatorstorages.charge_efficiency[i, t]
-        energychargeable = (maxenergy - stor_energy) / chargeefficiency
-
-        if maxcharge == 0
-            timetocharge = length(system.timestamps) + 1
-        else
-            timetocharge = round(Int, energychargeable / maxcharge)
-        end
-
-        charge_capacity =
-            min(maxcharge, round(Int, energytopower(
-                energychargeable, E, L, T, P)))
-        updateinjection!(
-            fp.nodes[charge_node], slack_node, -charge_capacity)
-
-        # Smallest time-to-charge = highest priority
-        chargecost = problem.min_chargecost + timetocharge # Negative cost
-        updateflowcost!(fp.edges[gridcharge_edge], chargecost)
-        updateflowcost!(fp.edges[inflowcharge_edge], chargecost)
-
         # Update discharging
 
         maxdischarge = system.generatorstorages.discharge_capacity[i, t]
@@ -378,9 +352,26 @@ function update_problem!(
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
 
-        # Largest time-to-discharge = highest priority
+        # Largest time-to-discharge = highest priority (discharge first)
         dischargecost = problem.max_dischargecost - timetodischarge # Positive cost
         updateflowcost!(fp.edges[dischargegrid_edge], dischargecost)
+
+        # Update charging
+
+        maxcharge = system.generatorstorages.charge_capacity[i, t]
+        chargeefficiency = system.generatorstorages.charge_efficiency[i, t]
+        energychargeable = (maxenergy - stor_energy) / chargeefficiency
+
+        charge_capacity =
+            min(maxcharge, round(Int, energytopower(
+                energychargeable, E, L, T, P)))
+        updateinjection!(
+            fp.nodes[charge_node], slack_node, -charge_capacity)
+
+        # Smallest time-to-discharge = highest priority (charge first)
+        chargecost = problem.min_chargecost + timetodischarge # Negative cost
+        updateflowcost!(fp.edges[gridcharge_edge], chargecost)
+        updateflowcost!(fp.edges[inflowcharge_edge], chargecost)
 
     end
 
