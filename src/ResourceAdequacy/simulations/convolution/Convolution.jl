@@ -58,8 +58,8 @@ function assess(
     for t in periods
 
         # TODO: Deduplicate identical available capacity distributions?
-        lolp, eul = assess(CapacityDistribution(system, t))
-        update!(acc, t, lolp, eul)
+        distr = CapacityDistribution(system, t)
+        update!(acc, t, distr)
 
     end
 

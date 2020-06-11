@@ -16,8 +16,10 @@ accumulator(::Convolution, ::Temporal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,
 
 function update!(
     acc::ConvolutionTemporalAccumulator,
-    t::Int, lolp::Float64, eul::Float64
+    t::Int,  distr::CapacityDistribution
 )
+
+    lolp, eul = assess(distr)
 
     acc.lole += lolp
     acc.lolps[t] = lolp

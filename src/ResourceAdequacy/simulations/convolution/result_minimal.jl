@@ -13,9 +13,10 @@ accumulator(::Convolution, ::Minimal, ::SystemModel{N,L,T,P,E}) where {N,L,T,P,E
 
 function update!(
     acc::ConvolutionMinimalAccumulator,
-    t::Int, lolp::Float64, eul::Float64
+    t::Int, distr::CapacityDistribution
 )
 
+    lolp, eul = assess(distr)
     acc.lole += lolp
     acc.eul += eul
     return
