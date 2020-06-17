@@ -88,7 +88,7 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
     μ::Matrix{Float64}
 
     function Storages{N,L,T,P,E}(
-        names::Vector{AbstractString}, categories::Vector{String},
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
         energycapacity::Matrix{Int}, chargeefficiency::Matrix{Float64},
         dischargeefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
@@ -118,7 +118,7 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(string.(names), categories,
+        new{N,L,T,P,E}(string.(names), string.(categories),
                        chargecapacity, dischargecapacity, energycapacity,
                        chargeefficiency, dischargeefficiency, carryoverefficiency,
                        λ, μ)
@@ -148,7 +148,7 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
     μ::Matrix{Float64}
 
     function GeneratorStorages{N,L,T,P,E}(
-        names::Vector{AbstractString}, categories::Vector{String},
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         charge_capacity::Matrix{Int}, discharge_capacity::Matrix{Int},
         energy_capacity::Matrix{Int},
         charge_efficiency::Matrix{Float64}, discharge_efficiency::Matrix{Float64},
@@ -192,7 +192,7 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert all(0 .<= μ .<= 1)
 
         new{N,L,T,P,E}(
-            string.(names), categories,
+            string.(names), string.(categories),
             charge_capacity, discharge_capacity, energy_capacity,
             charge_efficiency, discharge_efficiency, carryover_efficiency,
             inflow, gridwithdrawal_capacity, gridinjection_capacity,
@@ -214,7 +214,7 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     μ::Matrix{Float64}
 
     function Lines{N,L,T,P}(
-        names::Vector{AbstractString}, categories::Vector{String},
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         forward_capacity::Matrix{Int}, backward_capacity::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P}
@@ -233,7 +233,7 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(string.(names), categories, forward_capacity, backward_capacity, λ, μ)
+        new{N,L,T,P}(string.(names), string.(categories), forward_capacity, backward_capacity, λ, μ)
 
     end
 
