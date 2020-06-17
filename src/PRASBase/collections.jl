@@ -4,7 +4,7 @@ struct Regions{N,P<:PowerUnit}
     load::Matrix{Int}
 
     function Regions{N,P}(
-        names::Vector{String}, load::Matrix{Int}
+        names::Vector{<:AbstractString}, load::Matrix{Int}
     ) where {N,P<:PowerUnit}
 
         n_regions = length(names)
@@ -12,7 +12,7 @@ struct Regions{N,P<:PowerUnit}
         @assert size(load) == (n_regions, N)
         @assert all(load .>= 0)
 
-        new{N,P}(names, load)
+        new{N,P}(string.(names), load)
 
     end
 

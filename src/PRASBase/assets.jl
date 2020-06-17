@@ -12,7 +12,7 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     μ::Matrix{Float64}
 
     function Generators{N,L,T,P}(
-        names::Vector{String}, categories::Vector{String},
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         capacity::Matrix{Int}, λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P}
 
@@ -28,7 +28,7 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(names, categories, capacity, λ, μ)
+        new{N,L,T,P}(string.(names), string.(categories), capacity, λ, μ)
 
     end
 
