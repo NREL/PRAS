@@ -72,7 +72,7 @@ function assess(params::ELCC{M},
             return lower_bound, upper_bound
         end
 
-        # If the null hypothesis lower_bound_metric !>= upper_bound_metric
+        # If the null hypothesis upper_bound_metric !>= lower_bound_metric
         # cannot be rejected, terminate and return the loose bounds
         pval = pvalue(lower_bound_metric, upper_bound_metric)
         if pval >= params.p_value
@@ -124,6 +124,9 @@ function update_load!(
     load_base::Matrix{Int},
     load_increase::Int
 )
-    sys.regions.load .= load_base .+ load_increase
-    return
+    for (r, share) in region_shares
+        sys.regions.load[r, :] .= load_base[r, :] .+
+                                  round(Int, share * load_increase)
+    end
+
 end

@@ -40,7 +40,18 @@
     sys_after = SystemModel(
         gens_after, emptystors, emptygenstors, timestamps, load)
 
+    threenode2 = deepcopy(threenode)
+    threenode2.generators.capacity[1, :] .+= 5
+
     @testset "EFC" begin
+
+        cc_l, cc_u = assess(
+            EFC{EUE}(10, "Region"),
+            Convolution(), Minimal(), sys_before, sys_before)
+
+        @test cc_l == 0
+        @test cc_u == 1
+
 
         cc_l, cc_u = assess(
             EFC{EUE}(10, "Region"),
@@ -51,14 +62,31 @@
 
         cc_l, cc_u = assess(
             EFC{EUE}(10, "Region"),
+            SequentialMonteCarlo(samples=100_000), Minimal(),
+            sys_before, sys_after)
+
+        @test cc_l == 8
+        @test cc_u == 9
+
+        cc_l, cc_u = assess(
+            EFC{EUE}(10, "Region A"),
+            SequentialMonteCarlo(samples=100_000), Minimal(),
+            threenode, threenode2)
+
+        @test cc_l == 3
+        @test cc_u == 4
+
+    end
+
+    @testset "ELCC" begin
+
+        cc_l, cc_u = assess(
+            ELCC{EUE}(10, "Region"),
             Convolution(), Minimal(), sys_before, sys_before)
 
         @test cc_l == 0
         @test cc_u == 1
 
-    end
-
-    @testset "ELCC" begin
 
         cc_l, cc_u = assess(
             ELCC{EUE}(10, "Region"),
@@ -69,10 +97,20 @@
 
         cc_l, cc_u = assess(
             ELCC{EUE}(10, "Region"),
-            Convolution(), Minimal(), sys_before, sys_before)
+            SequentialMonteCarlo(samples=100_000), Minimal(),
+            sys_before, sys_after)
 
-        @test cc_l == 0
-        @test cc_u == 1
+        @test cc_l == 7
+        @test cc_u == 8
+
+        cc_l, cc_u = assess(
+            ELCC{EUE}(10, "Region A"),
+            SequentialMonteCarlo(samples=100_000), Minimal(),
+            threenode, threenode2)
+
+        @test cc_l == 3
+        @test cc_u == 4
+
 
     end
 
