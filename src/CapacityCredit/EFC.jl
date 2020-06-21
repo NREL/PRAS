@@ -75,7 +75,7 @@ function assess(params::EFC{M},
 
         # If the null hypothesis lower_bound_metric !>= upper_bound_metric
         # cannot be rejected, terminate and return the loose bounds
-        pval = pvalue(lower_bound_metric, upper_bound_metric)
+        pval = pvalue(upper_bound_metric, lower_bound_metric)
         if pval >= params.p_value
             @warn "Gap between upper and lower bound risk metrics is not " *
                   "statistically significant (p_value=$pval), stopping bisection. " *
