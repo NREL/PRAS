@@ -44,8 +44,8 @@ abstract type Result{
 } end
 
 MeanVariance = Series{
-    Number, Tuple{Mean{Float64, EqualWeight}, Variance{Float64, EqualWeight}}
-}
+    Number, Tuple{Mean{Float64, EqualWeight},
+                  Variance{Float64, Float64, EqualWeight}}}
 
 include("metrics/metrics.jl")
 include("results/results.jl")
