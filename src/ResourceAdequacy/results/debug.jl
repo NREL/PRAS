@@ -31,7 +31,7 @@ struct DebugResult{
     stors_available::Array{Bool,3}
     genstors_available::Array{Bool,3}
 
-    sample_ues::Vector{Int}
+    sample_ues::Vector{Float64}
 
     simulationspec::SS
 
@@ -48,7 +48,7 @@ struct DebugResult{
         utilizations::Matrix{ExpectedInterfaceUtilization{1,L,T}},
         gens_available::Array{Bool,3}, lines_available::Array{Bool,3},
         stors_available::Array{Bool,3}, genstors_available::Array{Bool,3},
-        sample_ues::Vector{Int}, simulationspec::SS
+        sample_ues::Vector{Float64}, simulationspec::SS
 ) where {N,L,T,P,E,SS}
 
         nregions = length(regions)
