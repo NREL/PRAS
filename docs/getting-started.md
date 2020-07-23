@@ -24,8 +24,9 @@ Installation requires Julia 1.3+ and the NREL package registry:
 ## Power System Data
 
 The recommended way to store and retreive PRAS system data is in an HDF5 file
-that conforms to the [PRAS system data format](SystemModel_HDF5_spec.md). Once
-your system is represented in that format you can load it into PRAS with:
+that conforms to the
+[PRAS system data format](https://github.com/NREL/PRAS/blob/master/SystemModel_HDF5_spec.md).
+Once your system is represented in that format you can load it into PRAS with:
 
 ```julia
 using PRAS
