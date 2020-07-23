@@ -29,11 +29,10 @@ export
     Convolution, SequentialMonteCarlo,
 
     # Result specifications
-    Minimal, Temporal, SpatioTemporal, Network,
+    Minimal, Temporal, SpatioTemporal, Network, Debug,
 
     # Convenience re-exports
     ZonedDateTime, @tz_str
-
 
 abstract type ReliabilityMetric end
 abstract type SimulationSpec end
