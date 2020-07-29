@@ -220,7 +220,7 @@ function finalize(
     stors_available = zeros(Bool, nstors, N, simspec.nsamples)
     genstors_available = zeros(Bool, ngenstors, N, simspec.nsamples)
 
-    sample_ues = Vector{Float64}(undef, simspec.nsamples)
+    sample_ues = zeros(Float64, simspec.nsamples)
 
     for t in 1:N
 

@@ -54,6 +54,7 @@ struct DebugResult{
         nregions = length(regions)
         ninterfaces = length(interfaces)
         ntimesteps = length(timestamps)
+        nsamples = simulationspec.nsamples
 
         @assert ntimesteps == N
 
@@ -67,6 +68,17 @@ struct DebugResult{
 
         @assert size(flows) == (ninterfaces, ntimesteps)
         @assert size(utilizations) == (ninterfaces, ntimesteps)
+
+        @assert size(gens_available, 3) == nsamples
+        @assert size(gens_available, 2) == ntimesteps
+        @assert size(lines_available, 3) == nsamples
+        @assert size(lines_available, 2) == ntimesteps
+        @assert size(stors_available, 3) == nsamples
+        @assert size(stors_available, 2) == ntimesteps
+        @assert size(genstors_available, 3) == nsamples
+        @assert size(genstors_available, 2) == ntimesteps
+
+        @assert length(sample_ues) == nsamples
 
         new{N,L,T,P,E,SS}(
             regions, interfaces, timestamps,

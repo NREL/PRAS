@@ -24,9 +24,9 @@
         rand(2,168), rand(2,168)./100)
 
     gens_available = lines_available = stors_available = genstors_available =
-        zeros(Bool, 0, 0, 0)
+        zeros(Bool, 0, length(tstamps), 10)
 
-    sample_ues = zeros(Float64, 0)
+    sample_ues = zeros(Float64, 10)
 
     result = ResourceAdequacy.DebugResult(
         regions, interfaces, tstamps,
@@ -34,7 +34,7 @@
         eue, regionaleues, periodeues, regionalperiodeues,
         interfaceflows, interfaceutilizations, gens_available,
         lines_available, stors_available, genstors_available,
-        sample_ues, SequentialMonteCarlo())
+        sample_ues, SequentialMonteCarlo(samples=10))
 
     # Disallow metrics defined over different time periods
     @test_throws MethodError ResourceAdequacy.DebugResult(
