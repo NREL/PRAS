@@ -17,7 +17,7 @@ function Base.show(io::IO, x::LOLP{N,T}) where {N,T}
     v, s = roundresults(x)
 
     print(io, "LOLP = ", v,
-          stderror(x) > 0 ? "±"*s : "",
+          stderror(x) > 0 ? "Â±"*s : "",
           "/", N == 1 ? "" : N, unitsymbol(T))
 
 end

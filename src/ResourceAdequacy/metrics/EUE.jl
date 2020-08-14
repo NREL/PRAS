@@ -32,7 +32,7 @@ function Base.show(io::IO, x::EUE{N,L,T,E}) where {N,L,T,E}
     v, s = roundresults(x)
 
     print(io, "EUE = ", v,
-          stderror(x) > 0 ? "±"*s : "", " ",
+          stderror(x) > 0 ? "Â±"*s : "", " ",
           unitsymbol(E), "/",
           N*L == 1 ? "" : N*L, unitsymbol(T))
 

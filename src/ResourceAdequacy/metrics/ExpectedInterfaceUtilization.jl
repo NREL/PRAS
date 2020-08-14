@@ -18,7 +18,7 @@ function Base.show(io::IO, x::ExpectedInterfaceUtilization{N,L,T}) where {N,L,T}
     v, s = roundresults(x)
 
     print(io, "Expected Interface Utilization = ", v,
-          stderror(x) > 0 ? "±"*s : "",
+          stderror(x) > 0 ? "Â±"*s : "",
           " (", N*L == 1 ? "" : N*L, unitsymbol(T), ")")
 
 end
