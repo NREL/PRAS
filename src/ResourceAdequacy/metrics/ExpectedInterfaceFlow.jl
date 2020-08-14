@@ -17,7 +17,7 @@ function Base.show(io::IO, x::ExpectedInterfaceFlow{N,L,T,P}) where {N,L,T,P}
     v, s = roundresults(x)
 
     print(io, "Expected Interface Flow = ", v,
-          stderror(x) > 0 ? "±"*s : "", " ",
+          stderror(x) > 0 ? "Â±"*s : "", " ",
           unitsymbol(P), " (",
           N*L == 1 ? "" : N*L, unitsymbol(T), ")")
 
