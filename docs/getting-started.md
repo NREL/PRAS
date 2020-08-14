@@ -102,7 +102,7 @@ specifications were used). For example, to get system-wide LOLP for April 27th,
 2024 at 1pm EST:
 
 ```julia
-lolp = LOLP(result, DateTime(2024, 4, 27, 13, tz"EST"))
+lolp = LOLP(result, ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 ```
 
 Similarly, if per-region information was saved (i.e. if `Spatial` or
@@ -118,7 +118,7 @@ If the results specification supports it (i.e. `SpatioTemporal` or `Network`),
 metrics can be obtained for both a specific region and time:
 
 ```julia
-eue_a = EUE(result, "Region A", DateTime(2024, 4, 27, 13, tz"EST"))
+eue_a = EUE(result, "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 ```
 
 Finally, if using the `Network` result spec, information about interface flows
@@ -127,15 +127,15 @@ and utilization factors can be obtained as well:
 ```julia
 # Average flow from Region A to Region B during the hour of interest
 flow_ab = ExpectedInterfaceFlow(
-    result, "Region A", "Region B", DateTime(2024, 4, 27, 13, tz"EST"))
+    result, "Region A", "Region B", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 
 # Same magnitude as above, but different sign
 flow_ba = ExpectedInterfaceFlow(
-    result, "Region B", "Region A", DateTime(2024, 4, 27, 13, tz"EST"))
+    result, "Region B", "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 
 # Average utilization (average ratio of absolute value of actual flow vs maximum possible after outages)
 utilization_ab = ExpectedInterfaceUtilization(
-    result, "Region A", "Region B", DateTime(2024, 4, 27, 13, tz"EST"))
+    result, "Region A", "Region B", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 ```
 
 ## Capacity Credit Calculations

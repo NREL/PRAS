@@ -14,7 +14,7 @@ import Printf: @sprintf
 import Random: AbstractRNG, rand, seed!
 import Random123: Philox4x
 import StatsBase: stderror
-import TimeZones: ZonedDateTime
+import TimeZones: ZonedDateTime, @tz_str
 
 export
 
@@ -29,7 +29,10 @@ export
     Convolution, SequentialMonteCarlo,
 
     # Result specifications
-    Minimal, Temporal, SpatioTemporal, Network
+    Minimal, Temporal, SpatioTemporal, Network,
+
+    # Convenience re-exports
+    ZonedDateTime, @tz_str
 
 
 abstract type ReliabilityMetric end
