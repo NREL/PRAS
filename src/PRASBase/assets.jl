@@ -109,9 +109,9 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert size(chargeefficiency) == (n_stors, N)
         @assert size(dischargeefficiency) == (n_stors, N)
         @assert size(carryoverefficiency) == (n_stors, N)
-        @assert all(0 .<= chargeefficiency .<= 1)
-        @assert all(0 .<= dischargeefficiency .<= 1)
-        @assert all(0 .<= carryoverefficiency .<= 1)
+        @assert all(0 .< chargeefficiency .<= 1)
+        @assert all(0 .< dischargeefficiency .<= 1)
+        @assert all(0 .< carryoverefficiency .<= 1)
 
         @assert size(λ) == (n_stors, N)
         @assert size(μ) == (n_stors, N)
@@ -174,9 +174,9 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert size(discharge_efficiency) == (n_stors, N)
         @assert size(carryover_efficiency) == (n_stors, N)
 
-        @assert all(0 .<= charge_efficiency .<= 1)
-        @assert all(0 .<= discharge_efficiency .<= 1)
-        @assert all(0 .<= carryover_efficiency .<= 1)
+        @assert all(0 .< charge_efficiency .<= 1)
+        @assert all(0 .< discharge_efficiency .<= 1)
+        @assert all(0 .< carryover_efficiency .<= 1)
 
         @assert size(inflow) == (n_stors, N)
         @assert size(gridwithdrawal_capacity) == (n_stors, N)
