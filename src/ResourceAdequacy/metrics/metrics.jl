@@ -1,21 +1,21 @@
 function roundresults(x::ReliabilityMetric)
 
-    if stderror(x) == 0
+    if iszero(stderror(x))
 
         v_rounded = @sprintf "%0.5f" val(x)
         s_rounded = "0"
 
     else
 
-        s = Decimal(stderror(x))
-        s_sigfigs = length(string(s.c))
-        s_c = round(Int, s.c / 10^(s_sigfigs-1))
-        s_q = s.q + s_sigfigs - 1
-        s_rounded = string(Decimal(s.s, s_c, s_q))
+        stderr_round = round(stderror(x), sigdigits=1)
 
-        v = Decimal(val(x))
-        v_c = round(Int, v.c / 10^(s_q - v.q))
-        v_rounded = string(Decimal(v.s, v_c, s_q))
+        digits = floor(Int, log(10, stderr_round))
+
+        rounded = round(val(x), digits=-digits)
+        reduced = round(Int, rounded / 10. ^ digits)
+        v_rounded = string(Decimal(Int(val(x) < 0), reduced, digits))
+
+        s_rounded = string(decimal(stderr_round))
 
     end
 
