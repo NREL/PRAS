@@ -4,5 +4,6 @@
     include("results/temporal.jl")
     #include("results/spatiotemporal.jl")
     #include("results/network.jl")
+    include("results/debug.jl")
 
 end

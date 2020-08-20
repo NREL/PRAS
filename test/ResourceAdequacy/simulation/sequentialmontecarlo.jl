@@ -257,4 +257,100 @@
 
     end
 
+    @testset "Debug Result" begin
+
+        # Single-region system A
+        result_1a = assess(simspec, Debug(), singlenode_a)
+        @test withinrange(LOLE(result_1a), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a), singlenode_a_eue, nstderr_tol)
+        @test sum(result_1a.sample_ues)/length(result_1a.sample_ues) ≈ val(EUE(result_1a))
+        @test withinrange(LOLE(result_1a, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a, "Region"), singlenode_a_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1a, timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a, timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1a, "Region", timestampcol_a),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a, "Region", timestampcol_a),
+                               singlenode_a_eues, nstderr_tol))
+        @test length(result_1a.flows) == 0
+        @test length(result_1a.utilizations) == 0
+        @test length(result_1a.sample_ues) == simspec.nsamples
+
+        # Single-region system A
+        result_1a5 = assess(simspec, Debug(), singlenode_a_5min)
+        @test withinrange(LOLE(result_1a5), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5), singlenode_a_eue/12, nstderr_tol)
+        @test sum(result_1a5.sample_ues)/length(result_1a5.sample_ues) ≈ val(EUE(result_1a5))
+        @test withinrange(LOLE(result_1a5, "Region"), singlenode_a_lole, nstderr_tol)
+        @test withinrange(EUE(result_1a5, "Region"), singlenode_a_eue/12, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1a5, timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1a5, "Region", timestampcol_a5),
+                               singlenode_a_eues ./ 12, nstderr_tol))
+        @test length(result_1a5.flows) == 0
+        @test length(result_1a5.utilizations) == 0
+        @test length(result_1a5.sample_ues) == simspec.nsamples
+
+        # Single-region system B
+        result_1b = assess(simspec, Debug(), singlenode_b)
+        @test withinrange(LOLE(result_1b), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1b), singlenode_b_eue, nstderr_tol)
+        @test sum(result_1b.sample_ues)/length(result_1b.sample_ues) ≈ val(EUE(result_1b))
+        @test withinrange(LOLE(result_1b, "Region"), singlenode_b_lole, nstderr_tol)
+        @test withinrange(EUE(result_1b, "Region"), singlenode_b_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_1b, timestampcol_b),
+                  singlenode_b_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_1b, timestampcol_b),
+                               singlenode_b_eues, nstderr_tol))
+        @test all(withinrange.(LOLP.(result_1b, "Region", timestampcol_b),
+                               reshape(singlenode_b_lolps, :, 1), nstderr_tol))
+        @test all(withinrange.(EUE.(result_1b, "Region", timestampcol_b),
+                               reshape(singlenode_b_eues, :, 1), nstderr_tol))
+        @test length(result_1b.flows) == 0
+        @test length(result_1b.utilizations) == 0
+        @test length(result_1b.sample_ues) == simspec.nsamples
+
+        # Three-region system
+        result_3 = assess(simspec, Debug(), threenode)
+        @test withinrange(LOLE(result_3), threenode_lole, nstderr_tol)
+        @test withinrange(EUE(result_3), threenode_eue, nstderr_tol)
+        @test all(withinrange.(LOLP.(result_3, timestampcol_3),
+                               threenode_lolps, nstderr_tol))
+        @test all(withinrange.(EUE.(result_3, timestampcol_3),
+                               threenode_eues, nstderr_tol))
+
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,1,tz)), 0.1, nstderr_tol)
+        @test withinrange(LOLP(result_3, "Region C", ZonedDateTime(2018,10,30,2,tz)), 0.1, nstderr_tol)
+        @test length(result_3.sample_ues) == simspec.nsamples
+
+        println("Debug ExpectedInterfaceFlows:")
+        threenode_interfaces = tuple.(threenode.interfaces.regions_from,
+                                      threenode.interfaces.regions_to)
+        interfacenamesrow = reshape([(threenode.regions.names[from], threenode.regions.names[to])
+                                 for (from, to) in threenode_interfaces],
+                                1, :)
+        interfacesrow = reshape(threenode_interfaces, 1, :)
+        display(
+            vcat(
+                hcat("", interfacenamesrow),
+                hcat(threenode.timestamps,
+                     ExpectedInterfaceFlow.(result_3, interfacesrow, timestampcol_3))
+        )); println()
+
+        println("Debug ExpectedInterfaceUtilizations:")
+        display(
+            vcat(
+                hcat("", interfacenamesrow),
+                hcat(threenode.timestamps,
+                     ExpectedInterfaceUtilization.(result_3, interfacesrow, timestampcol_3))
+        )); println()
+
+    end
+
 end
