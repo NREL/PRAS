@@ -81,26 +81,24 @@ function assess(
 end
 
 function initialize!(
-    rng::AbstractRNG, state::SystemState, system::SystemModel
-)
-
-        nperiods = length(system.timestamps)
+    rng::AbstractRNG, state::SystemState, system::SystemModel{N}
+) where N
 
         initialize_availability!(
             rng, state.gens_available, state.gens_nexttransition,
-            system.generators, nperiods)
+            system.generators, N)
 
         initialize_availability!(
             rng, state.stors_available, state.stors_nexttransition,
-            system.storages, nperiods)
+            system.storages, N)
 
         initialize_availability!(
             rng, state.genstors_available, state.genstors_nexttransition,
-            system.generatorstorages, nperiods)
+            system.generatorstorages, N)
 
         initialize_availability!(
             rng, state.lines_available, state.lines_nexttransition,
-            system.lines, nperiods)
+            system.lines, N)
 
         fill!(state.stors_energy, 0)
         fill!(state.genstors_energy, 0)
@@ -113,25 +111,23 @@ function advance!(
     rng::AbstractRNG,
     state::SystemState,
     dispatchproblem::DispatchProblem,
-    system::SystemModel, t::Int)
-
-    nperiods = length(system.timestamps)
+    system::SystemModel{N}, t::Int) where N
 
     update_availability!(
         rng, state.gens_available, state.gens_nexttransition,
-        system.generators, t, nperiods)
+        system.generators, t, N)
 
     update_availability!(
         rng, state.stors_available, state.stors_nexttransition,
-        system.storages, t, nperiods)
+        system.storages, t, N)
 
     update_availability!(
         rng, state.genstors_available, state.genstors_nexttransition,
-        system.generatorstorages, t, nperiods)
+        system.generatorstorages, t, N)
 
     update_availability!(
         rng, state.lines_available, state.lines_nexttransition,
-        system.lines, t, nperiods)
+        system.lines, t, N)
 
     update_energy!(state.stors_energy, system.storages, t)
     update_energy!(state.genstors_energy, system.generatorstorages, t)
@@ -144,7 +140,6 @@ function solve!(
     dispatchproblem::DispatchProblem, state::SystemState,
     system::SystemModel, t::Int
 )
-    fp = dispatchproblem.fp
     solveflows!(dispatchproblem.fp)
     update_state!(state, dispatchproblem, system, t)
 end

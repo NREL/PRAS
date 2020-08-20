@@ -277,8 +277,8 @@ function update_problem!(
         dischargeefficiency = system.storages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
 
-        if maxdischarge == 0
-            timetodischarge = length(system.timestamps) + 1
+        if iszero(maxdischarge)
+            timetodischarge = N + 1
         else
             timetodischarge = round(Int, energydischargeable / maxdischarge)
         end
@@ -340,8 +340,8 @@ function update_problem!(
         dischargeefficiency = system.generatorstorages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
 
-        if maxdischarge == 0
-            timetodischarge = length(system.timestamps) + 1
+        if iszero(maxdischarge)
+            timetodischarge = N + 1
         else
             timetodischarge = round(Int, energydischargeable / maxdischarge)
         end

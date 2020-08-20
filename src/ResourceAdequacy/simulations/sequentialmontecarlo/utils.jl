@@ -43,8 +43,8 @@ function randtransitiontime(
     i::Int, t_now::Int, t_last::Int
 )
 
-    cdf = 0
-    p_noprevtransition = 1
+    cdf = 0.
+    p_noprevtransition = 1.
 
     x = rand(rng)
     t = t_now + 1
@@ -53,7 +53,7 @@ function randtransitiontime(
         p_it = p[i,t]
         cdf += p_noprevtransition * p_it
         x < cdf && return t
-        p_noprevtransition *= (1 - p_it)
+        p_noprevtransition *= (1. - p_it)
         t += 1
     end
 
@@ -87,10 +87,11 @@ function available_capacity(
     idxs::UnitRange{Int}, t::Int
 )
 
+    caps = gens.capacity
     avcap = 0
 
     for i in idxs
-        availability[i] && (avcap += gens.capacity[i, t])
+        availability[i] && (avcap += caps[i, t])
     end
 
     return avcap
