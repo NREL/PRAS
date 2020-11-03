@@ -142,7 +142,24 @@ function record!(
         max_back = edges[f].limit
 
         fit!(acc.flows[i,t], max(flow_forward, flow_back))
-        fit!(acc.utilizations[i,t], max(flow_forward/max_forward, flow_back/max_back))
+
+        if flow_forward > 0
+
+            fit!(acc.utilizations[i,t], flow_forward/max_forward)
+
+        elseif flow_back > 0
+
+            fit!(acc.utilizations[i,t], flow_back/max_back)
+
+        elseif iszero(max_forward) && iszero(max_back)
+
+            fit!(acc.utilizations[i,t], 1.0)
+
+        else
+
+            fit!(acc.utilizations[i,t], 0.0)
+
+        end
 
     end
 
