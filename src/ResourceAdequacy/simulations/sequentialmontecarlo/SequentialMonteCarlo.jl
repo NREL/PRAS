@@ -6,11 +6,14 @@ struct SequentialMonteCarlo <: SimulationSpec
 
     nsamples::Int
     seed::UInt64
+    threaded::Bool
 
-    function SequentialMonteCarlo(;samples::Int=10_000, seed::Integer=rand(UInt64))
+    function SequentialMonteCarlo(;
+        samples::Int=10_000, seed::Integer=rand(UInt64), threaded::Bool=true
+    )
         samples <= 0 && error("Sample count must be positive")
         seed < 0 && error("Random seed must be non-negative")
-        new(samples, UInt64(seed))
+        new(samples, UInt64(seed), threaded)
     end
 
 end
@@ -26,8 +29,12 @@ function assess(
 
     @spawn makesamples(samples, simspec)
 
-    for _ in 1:threads
-        @spawn assess(simspec, resultspec, system, samples, results)
+    if simspec.threaded
+        for _ in 1:threads
+            @spawn assess(simspec, resultspec, system, samples, results)
+        end
+    else
+        assess(simspec, resultspec, system, samples, results)
     end
 
     return finalize(results, simspec, system, threads)

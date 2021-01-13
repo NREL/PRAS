@@ -227,7 +227,8 @@ indices_after(lastset::UnitRange{Int}, setsize::Int) =
     last(lastset) .+ (1:setsize)
 
 function update_problem!(
-    problem::DispatchProblem, state::SystemState, system::SystemModel{N,L,T,P,E}, t::Int
+    problem::DispatchProblem, state::SystemState,
+    system::SystemModel{N,L,T,P,E}, t::Int
 ) where {N,L,T,P,E}
 
     fp = problem.fp
@@ -284,7 +285,7 @@ function update_problem!(
         end
 
         discharge_capacity =
-            min(maxdischarge, round(Int, energytopower(
+            min(maxdischarge, floor(Int, energytopower(
                 energydischargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
@@ -300,7 +301,7 @@ function update_problem!(
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
 
         charge_capacity =
-            min(maxcharge, round(Int, energytopower(
+            min(maxcharge, floor(Int, energytopower(
                 energychargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[charge_node], slack_node, -charge_capacity)
@@ -347,7 +348,7 @@ function update_problem!(
         end
 
         discharge_capacity =
-            min(maxdischarge, round(Int, energytopower(
+            min(maxdischarge, floor(Int, energytopower(
                 energydischargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[discharge_node], slack_node, discharge_capacity)
@@ -363,7 +364,7 @@ function update_problem!(
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
 
         charge_capacity =
-            min(maxcharge, round(Int, energytopower(
+            min(maxcharge, floor(Int, energytopower(
                 energychargeable, E, L, T, P)))
         updateinjection!(
             fp.nodes[charge_node], slack_node, -charge_capacity)
@@ -384,25 +385,25 @@ function update_state!(
     edges = problem.fp.edges
 
     for (i, e) in enumerate(problem.storage_discharge_edges)
-       state.stors_energy[i] -=
-           round(Int, edges[e].flow / system.storages.discharge_efficiency[i, t])
+        state.stors_energy[i] -=
+            ceil(Int, edges[e].flow / system.storages.discharge_efficiency[i, t])
     end
 
     for (i, e) in enumerate(problem.storage_charge_edges)
-       state.stors_energy[i] +=
-           round(Int, edges[e].flow * system.storages.charge_efficiency[i, t])
+        state.stors_energy[i] +=
+            ceil(Int, edges[e].flow * system.storages.charge_efficiency[i, t])
     end
 
     for (i, e) in enumerate(problem.genstorage_dischargegrid_edges)
-       state.genstors_energy[i] -=
-           round(Int, edges[e].flow / system.generatorstorages.discharge_efficiency[i, t])
+        state.genstors_energy[i] -=
+            ceil(Int, edges[e].flow / system.generatorstorages.discharge_efficiency[i, t])
     end
 
     for (i, (e1, e2)) in enumerate(zip(problem.genstorage_gridcharge_edges,
                                        problem.genstorage_inflowcharge_edges))
-       totalcharge = edges[e1].flow + edges[e2].flow
-       state.genstors_energy[i] +=
-           round(Int, totalcharge * system.generatorstorages.charge_efficiency[i, t])
+        totalcharge = edges[e1].flow + edges[e2].flow
+        state.genstors_energy[i] +=
+            ceil(Int, totalcharge * system.generatorstorages.charge_efficiency[i, t])
     end
 
 end
