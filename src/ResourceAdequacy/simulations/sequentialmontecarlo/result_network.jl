@@ -117,7 +117,7 @@ function record!(
         max_forward = edges[f].limit
 
         flow_back = edges[b].flow
-        max_back = edges[f].limit
+        max_back = edges[b].limit
 
         fit!(acc.flows[i,t], max(flow_forward, flow_back))
 
