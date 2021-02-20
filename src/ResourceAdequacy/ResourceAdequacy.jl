@@ -3,7 +3,7 @@
 using MinCostFlows
 using ..PRASBase
 
-import Base: -, broadcastable
+import Base: -, broadcastable, getindex
 import Base.Threads: nthreads, @spawn
 import Dates: DateTime, Period
 import Decimals: Decimal, decimal
@@ -13,7 +13,7 @@ import OnlineStats: Series
 import Printf: @sprintf
 import Random: AbstractRNG, rand, seed!
 import Random123: Philox4x
-import StatsBase: stderror
+import StatsBase: mean, std, stderror
 import TimeZones: ZonedDateTime, @tz_str
 
 export
@@ -29,7 +29,12 @@ export
     Convolution, SequentialMonteCarlo,
 
     # Result specifications
-    Minimal, Temporal, SpatioTemporal, Network, Debug,
+    Shortfall, ShortfallSamples, Surplus, SurplusSamples,
+    Flow, FlowSamples, Utilization, UtilizationSamples,
+    StorageEnergy, StorageEnergySamples,
+    GeneratorStorageEnergy, GeneratorStorageEnergySamples,
+    GeneratorAvailability, StorageAvailability,
+    GeneratorStorageAvailability, LineAvailability,
 
     # Convenience re-exports
     ZonedDateTime, @tz_str
@@ -37,12 +42,11 @@ export
 abstract type ReliabilityMetric end
 abstract type SimulationSpec end
 abstract type ResultSpec end
-abstract type ResultAccumulator{R<:ResultSpec} end
+abstract type ResultAccumulator{S<:SimulationSpec,R<:ResultSpec} end
 abstract type Result{
     N, # Number of timesteps simulated
     L, # Length of each simulation timestep
     T <: Period, # Units of each simulation timestep
-    SS <: SimulationSpec # Type of simulation that produced the result
 } end
 
 MeanVariance = Series{
