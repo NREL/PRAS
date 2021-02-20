@@ -4,6 +4,8 @@ using PRAS
 using Test
 using TimeZones
 
+import PRAS.ResourceAdequacy: MeanEstimate
+
 withinrange(x::ReliabilityMetric, y::Real, n::Real) =
     isapprox(val(x), y, atol=n*stderror(x))
 

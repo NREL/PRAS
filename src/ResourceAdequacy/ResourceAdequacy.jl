@@ -49,7 +49,7 @@ MeanVariance = Series{
     Number, Tuple{Mean{Float64, EqualWeight},
                   Variance{Float64, Float64, EqualWeight}}}
 
-include("metrics/metrics.jl")
+include("metrics.jl")
 include("results/results.jl")
 include("simulations/simulations.jl")
 include("utils.jl")
