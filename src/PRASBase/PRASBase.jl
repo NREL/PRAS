@@ -3,7 +3,7 @@
 import Dates: @dateformat_str, AbstractDateTime, DateTime,
               Period, Minute, Hour, Day, Year
 import TimeZones: TimeZone, ZonedDateTime
-import HDF5: attrs, exists, HDF5File, HDF5Dataset, h5open
+import HDF5: attributes, File, Dataset, h5open
 
 export
 

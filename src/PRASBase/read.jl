@@ -6,7 +6,7 @@ Load a `SystemModel` from an appropriately-formatted HDF5 file on disk.
 """
 function SystemModel(inputfile::String)
 
-    system = h5open(inputfile, "r") do f::HDF5File
+    system = h5open(inputfile, "r") do f::File
 
         version, versionstring = readversion(f)
 
@@ -24,9 +24,9 @@ function SystemModel(inputfile::String)
 end
 
 
-function systemmodel_0_5(f::HDF5File)
+function systemmodel_0_5(f::File)
 
-    metadata = attrs(f)
+    metadata = attributes(f)
 
     start_timestamp = ZonedDateTime(read(metadata["start_timestamp"]),
                                     dateformat"yyyy-mm-ddTHH:MM:SSz")
@@ -39,12 +39,12 @@ function systemmodel_0_5(f::HDF5File)
 
     timestamps = range(start_timestamp, length=N, step=T(L))
 
-    has_regions = exists(f, "regions")
-    has_generators = exists(f, "generators")
-    has_storages = exists(f, "storages")
-    has_generatorstorages = exists(f, "generatorstorages")
-    has_interfaces = exists(f, "interfaces")
-    has_lines = exists(f, "lines")
+    has_regions = haskey(f, "regions")
+    has_generators = haskey(f, "generators")
+    has_storages = haskey(f, "storages")
+    has_generatorstorages = haskey(f, "generatorstorages")
+    has_interfaces = haskey(f, "interfaces")
+    has_lines = haskey(f, "lines")
 
     has_regions ||
         error("Region data must be provided")
@@ -265,13 +265,13 @@ end
 Attempts to parse the file's "vX.Y.Z" version label into (x::Int, y::Int, z::Int).
 Errors if the label cannot be found or parsed as expected.
 """
-function readversion(f::HDF5File)
+function readversion(f::File)
 
-    exists(attrs(f), "pras_dataversion") || error(
+    haskey(attributes(f), "pras_dataversion") || error(
           "File format version indicator could not be found - the file may " *
           "not be a PRAS SystemModel representation.")
 
-    versionstring = read(attrs(f)["pras_dataversion"])
+    versionstring = read(attributes(f)["pras_dataversion"])
 
     version = match(r"^v(\d+)\.(\d+)\.(\d+)$", versionstring)
     isnothing(version) && error("File format version $versionstring not recognized")
@@ -286,5 +286,5 @@ end
 Attempts to extract a vector of elements from an HDF5 compound datatype,
 corresponding to `field`.
 """
-readvector(d::HDF5Dataset, field::Union{Symbol,Int}) = readvector(read(d), field)
+readvector(d::Dataset, field::Union{Symbol,Int}) = readvector(read(d), field)
 readvector(d::Vector{<:NamedTuple}, field::Union{Symbol,Int}) = getindex.(d, field)
