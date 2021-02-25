@@ -124,6 +124,8 @@ Base.:(==)(x::T, y::T) where {T <: SystemModel} =
     x.interface_line_idxs == y.interface_line_idxs &&
     x.timestamps == y.timestamps
 
+broadcastable(x::SystemModel) = Ref(x)
+
 unitsymbol(::SystemModel{N,L,T,P,E}) where {
     N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} =
     unitsymbol(T), unitsymbol(P), unitsymbol(E)

@@ -38,6 +38,23 @@ function assess(distr::CapacityDistribution)
 
 end
 
+function surplus(distr::CapacityDistribution)
+
+    xs = support(distr)
+    ps = probs(distr)
+
+    i = 1
+    es = 0.
+
+    for i in 1:length(xs)
+       xs[i] <= 0 && continue
+       es += ps[i] * xs[i]
+    end
+
+    return es
+
+end
+
 function spconv(hvsraw::AbstractVector{Int}, hpsraw::AbstractVector{Float64})
 
     zeroidxs = hvsraw .!= 0
