@@ -2,6 +2,7 @@
 
 import ..PRAS_VERSION
 
+import Base: broadcastable
 import Dates: @dateformat_str, AbstractDateTime, DateTime,
               Period, Minute, Hour, Day, Year
 import HDF5: attributes, File, Group, Dataset, Datatype, dataspace,

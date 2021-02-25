@@ -1,3 +1,10 @@
+module TestSystems
+
+using PRAS
+using TimeZones
+
+const tz = tz"UTC"
+
 empty_str = String[]
 empty_int(x) = Matrix{Int}(undef, 0, x)
 empty_float(x) = Matrix{Float64}(undef, 0, x)
@@ -147,3 +154,7 @@ threenode_lole_copperplate = 1.17877
 threenode_lolps_copperplate = [.14707, .40951, .21268, .40951]
 threenode_eue_copperplate = 11.73276
 threenode_eues_copperplate = [1.75783, 3.13343, 2.47954, 4.36196]
+
+end
+
+import .TestSystems

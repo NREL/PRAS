@@ -1,18 +1,27 @@
 include("conv.jl")
 
-struct Convolution <: SimulationSpec end
+struct Convolution <: SimulationSpec
+
+    verbose::Bool
+    threaded::Bool
+
+    Convolution(;verbose::Bool=false, threaded::Bool=true) =
+        new(verbose, threaded)
+
+end
 
 function assess(
-    simspec::Convolution,       # TODO: Look into traits for defining
-    resultspec::ResultSpec, #       valid SimSpec/ResultSpec pairs
-    system::SystemModel{N}) where {N}
+    system::SystemModel{N},
+    method::Convolution,
+    resultspecs::ResultSpec...
+) where {N}
 
     nregions = length(system.regions)
     nstors = length(system.storages)
     ngenstors = length(system.generatorstorages)
 
     if nregions > 1
-        @warn "$simspec is a copper plate simulation method. " *
+        @warn "$method is a copper plate simulation method. " *
               "Transmission constraints between the system's $nregions " *
               "regions will be ignored in this assessment."
     end
@@ -21,20 +30,23 @@ function assess(
         resources = String[]
         nstors > 0 && push!(resources, "$nstors Storage")
         ngenstors > 0 && push!(resources, "$ngenstors GeneratorStorage")
-        @warn "$simspec is a non-sequential simulation method. " *
+        @warn "$method is a non-sequential simulation method. " *
               "The system's " * join(resources, " and ") * " resources " *
               "will be ignored in this assessment."
     end
 
     threads = nthreads()
-
     periods = Channel{Int}(2*threads)
-    results = Channel{accumulatortype(simspec, resultspec, system)}(threads)
+    results = resultchannel(method, resultspecs, threads)
 
     @spawn makeperiods(periods, N)
 
-    for _ in 1:threads
-        @spawn assess(simspec, resultspec, system, periods, results)
+    if method.threaded
+        for _ in 1:threads
+            @spawn assess(system, method, periods, results, resultspecs...)
+        end
+    else
+        assess(system, method, periods, results, resultspecs...)
     end
 
    return finalize(results, system, threads)
@@ -49,23 +61,24 @@ function makeperiods(periods::Channel{Int}, N::Int)
 end
 
 function assess(
-    simspec::Convolution, resultspec::R, system::SystemModel{N,L,T,P,E},
-    periods::Channel{Int}, results::Channel{<:ResultAccumulator{R}}
-) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,R<:ResultSpec}
+    system::SystemModel{N,L,T,P,E}, method::Convolution,
+    periods::Channel{Int},
+    results::Channel{<:Tuple{Vararg{ResultAccumulator{Convolution}}}},
+    resultspecs::ResultSpec...
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    acc = accumulator(simspec, resultspec, system)
+    accs = accumulator.(system, method, resultspecs)
 
     for t in periods
 
-        # TODO: Deduplicate identical available capacity distributions?
         distr = CapacityDistribution(system, t)
-        update!(acc, t, distr)
+        foreach(acc -> record!(acc, t, distr), accs)
 
     end
 
-    put!(results, acc)
+    put!(results, accs)
 
 end
 
-include("result_minimal.jl")
-include("result_temporal.jl")
+include("result_shortfall.jl")
+include("result_surplus.jl")
