@@ -6,84 +6,90 @@ struct SequentialMonteCarlo <: SimulationSpec
 
     nsamples::Int
     seed::UInt64
+    verbose::Bool
     threaded::Bool
 
     function SequentialMonteCarlo(;
-        samples::Int=10_000, seed::Integer=rand(UInt64), threaded::Bool=true
+        samples::Int=10_000, seed::Integer=rand(UInt64),
+        verbose::Bool=false, threaded::Bool=true
     )
-        samples <= 0 && error("Sample count must be positive")
-        seed < 0 && error("Random seed must be non-negative")
-        new(samples, UInt64(seed), threaded)
+        samples <= 0 && throw(DomainError("Sample count must be positive"))
+        seed < 0 && throw(DomainError("Random seed must be non-negative"))
+        new(samples, UInt64(seed), verbose, threaded)
     end
 
 end
 
 function assess(
-    simspec::SequentialMonteCarlo,
-    resultspec::ResultSpec,
-    system::SystemModel)
+    system::SystemModel,
+    method::SequentialMonteCarlo,
+    resultspecs::ResultSpec...
+)
 
     threads = nthreads()
-    samples = Channel{Int}(2*threads)
-    results = Channel{accumulatortype(simspec, resultspec, system)}(threads)
+    sampleseeds = Channel{Int}(2*threads)
+    results = resultchannel(method, resultspecs, threads)
 
-    @spawn makesamples(samples, simspec)
+    @spawn makeseeds(sampleseeds, method.nsamples)
 
-    if simspec.threaded
+    if method.threaded
         for _ in 1:threads
-            @spawn assess(simspec, resultspec, system, samples, results)
+            @spawn assess(system, method, sampleseeds, results, resultspecs...)
         end
     else
-        assess(simspec, resultspec, system, samples, results)
+        assess(system, method, sampleseeds, results, resultspecs...)
     end
 
-    return finalize(results, simspec, system, threads)
+    return finalize(results, system, threads)
 
 end
 
-function makesamples(samples::Channel{Int}, simspec::SequentialMonteCarlo)
+function makeseeds(sampleseeds::Channel{Int}, nsamples::Int)
 
-    for s in 1:simspec.nsamples
-        put!(samples, s)
+    for s in 1:nsamples
+        put!(sampleseeds, s)
     end
 
-    close(samples)
+    close(sampleseeds)
 
 end
 
 function assess(
-    simspec::SequentialMonteCarlo, resultspec::R, system::SystemModel{N},
-    samples::Channel{Int},
-    recorders::Channel{<:ResultAccumulator{R}}
+    system::SystemModel{N}, method::SequentialMonteCarlo,
+    sampleseeds::Channel{Int},
+    results::Channel{<:Tuple{Vararg{ResultAccumulator{SequentialMonteCarlo}}}},
+    resultspecs::ResultSpec...
 ) where {R<:ResultSpec, N}
 
     dispatchproblem = DispatchProblem(system)
     systemstate = SystemState(system)
-    recorder = accumulator(simspec, resultspec, system)
+    recorders = accumulator.(system, method, resultspecs)
 
     # TODO: Test performance of Philox vs Threefry, choice of rounds
     # Also consider implementing an efficient Bernoulli trial with direct
     # mantissa comparison
     rng = Philox4x((0, 0), 10)
 
-    for s in samples
+    for s in sampleseeds
 
-        seed!(rng, (simspec.seed, s))
+        seed!(rng, (method.seed, s))
         initialize!(rng, systemstate, system)
 
         for t in 1:N
 
             advance!(rng, systemstate, dispatchproblem, system, t)
             solve!(dispatchproblem, systemstate, system, t)
-            record!(recorder, system, systemstate, dispatchproblem, s, t)
+            foreach(recorder -> record!(
+                        recorder, system, systemstate, dispatchproblem, s, t
+                    ), recorders)
 
         end
 
-        reset!(recorder, s)
+        foreach(recorder -> reset!(recorder, s), recorders)
 
     end
 
-    put!(recorders, recorder)
+    put!(results, recorders)
 
 end
 
@@ -151,8 +157,9 @@ function solve!(
     update_state!(state, dispatchproblem, system, t)
 end
 
-include("result_minimal.jl")
-include("result_temporal.jl")
-include("result_spatiotemporal.jl")
-include("result_network.jl")
-include("result_debug.jl")
+include("result_shortfall.jl")
+include("result_surplus.jl")
+include("result_flow.jl")
+include("result_utilization.jl")
+include("result_energy.jl")
+include("result_availability.jl")

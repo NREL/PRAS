@@ -420,20 +420,3 @@ function update_state!(
     end
 
 end
-
-function droppedload(problem::DispatchProblem)
-
-    isshortfall = false
-    totalshortfall = 0
-
-    for i in problem.region_unserved_edges
-        shortfall = problem.fp.edges[i].flow
-        if shortfall > 0
-            isshortfall = true
-            totalshortfall += shortfall
-        end
-    end
-
-    return isshortfall, totalshortfall
-
-end
