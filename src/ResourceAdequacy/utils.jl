@@ -1,15 +1,23 @@
 meanvariance() = Series(Mean(), Variance())
 
-function makemetric(f, mv::MeanVariance)
-    nsamples = first(mv.stats).n
-    samplemean, samplevar = value(mv)
-    return f(samplemean, nsamples > 1 ? sqrt(samplevar / nsamples) : 0.)
+function mean_std(x::MeanVariance)
+    m, v = value(x)
+    return m, sqrt(v)
 end
 
-function makemetric_scale(f, a::Real, mv::MeanVariance)
-    nsamples = first(mv.stats).n
-    samplemean, samplevar = value(mv)
-    return f(a*samplemean, nsamples > 1 ? a*sqrt(samplevar / nsamples) : 0.)
+function mean_std(x::AbstractArray{<:MeanVariance})
+
+    means = similar(x, Float64)
+    vars = similar(means)
+
+    for i in eachindex(x)
+        m, v = mean_std(x[i])
+        means[i] = m
+        vars[i] = v
+    end
+
+    return means, vars
+
 end
 
 function findfirstunique_directional(a::AbstractVector{<:Pair}, i::Pair)

@@ -21,8 +21,7 @@ export
     assess,
 
     # Metrics
-    ReliabilityMetric, LOLP, LOLE, EUE,
-    ExpectedInterfaceFlow, ExpectedInterfaceUtilization,
+    ReliabilityMetric, LOLE, EUE,
     val, stderror,
 
     # Simulation specifications

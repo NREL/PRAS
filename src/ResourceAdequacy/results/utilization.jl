@@ -35,7 +35,7 @@ struct UtilizationSamplesResult{N,L,T<:Period} <: Result{N,L,T}
     interfaces::Vector{Pair{String,String}}
     timestamps::StepRange{ZonedDateTime,T}
 
-    utilization::Array{Int,3}
+    utilization::Array{Float64,3}
 
 end
 
