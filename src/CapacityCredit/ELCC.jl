@@ -26,10 +26,8 @@ function ELCC{M}(
     return ELCC{M}(capacity_max, [region=>1.0]; kwargs...)
 end
 
-function assess(params::ELCC{M},
-                simulationspec::SimulationSpec,
-                resultspec::ResultSpec,
-                sys_baseline::S, sys_augmented::S;
+function assess(sys_baseline::S, sys_augmented::S,
+                params::ELCC{M}, simulationspec::SimulationSpec;
                 verbose::Bool=true
 ) where {S <: SystemModel, M <: ReliabilityMetric}
 
@@ -39,17 +37,17 @@ function assess(params::ELCC{M},
     regionnames != sys_augmented.regions.names &&
         error("Systems provided do not have matching regions")
 
-    target_metric = M(assess(simulationspec, resultspec, sys_baseline))
+    target_metric = M(first(assess(sys_baseline, simulationspec, Shortfall())))
 
     elcc_regions, base_load, sys_variable =
         copy_load(sys_augmented, params.regions)
 
     lower_bound = 0
-    lower_bound_metric = M(assess(simulationspec, resultspec, sys_variable))
+    lower_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
     upper_bound = params.capacity_max
     update_load!(sys_variable, elcc_regions, base_load, upper_bound)
-    upper_bound_metric = M(assess(simulationspec, resultspec, sys_variable))
+    upper_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
     while true
 
@@ -81,7 +79,7 @@ function assess(params::ELCC{M},
 
         # Evaluate metric at midpoint
         update_load!(sys_variable, elcc_regions, base_load, midpoint)
-        midpoint_metric = M(assess(simulationspec, resultspec, sys_variable))
+        midpoint_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
         # Tighten capacity bounds
         if val(midpoint_metric) < val(target_metric)

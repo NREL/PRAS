@@ -2,7 +2,7 @@
 
 import Distributions: ccdf, Normal
 import ..PRASBase: Generators, Regions, SystemModel, unitsymbol
-import ..ResourceAdequacy: assess, ResultSpec, ReliabilityMetric,
+import ..ResourceAdequacy: assess, Shortfall, ReliabilityMetric,
                            SimulationSpec, stderror, val
 
 export EFC, ELCC
