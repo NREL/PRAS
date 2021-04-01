@@ -26,10 +26,9 @@ function EFC{M}(
     return EFC{M}(capacity_max, [region=>1.0]; kwargs...)
 end
 
-function assess(params::EFC{M},
-                simulationspec::SimulationSpec,
-                resultspec::ResultSpec,
-                sys_baseline::S, sys_augmented::S;
+function assess(sys_baseline::S, sys_augmented::S,
+                params::EFC{M},
+                simulationspec::SimulationSpec;
                 verbose::Bool=true
 ) where {S <: SystemModel, M <: ReliabilityMetric}
 
@@ -43,14 +42,14 @@ function assess(params::EFC{M},
     efc_gens, sys_variable, sys_target =
         add_firmcapacity(sys_baseline, sys_augmented, params.regions)
 
-    target_metric = M(assess(simulationspec, resultspec, sys_target))
+    target_metric = M(first(assess(sys_target, simulationspec, Shortfall())))
 
     lower_bound = 0
-    lower_bound_metric = M(assess(simulationspec, resultspec, sys_variable))
+    lower_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
     upper_bound = params.capacity_max
     update_firmcapacity!(sys_variable, efc_gens, upper_bound)
-    upper_bound_metric = M(assess(simulationspec, resultspec, sys_variable))
+    upper_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
     while true
 
@@ -82,7 +81,7 @@ function assess(params::EFC{M},
 
         # Evaluate metric at midpoint
         update_firmcapacity!(sys_variable, efc_gens, midpoint)
-        midpoint_metric = M(assess(simulationspec, resultspec, sys_variable))
+        midpoint_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
 
         # Tighten capacity bounds
         if val(midpoint_metric) > val(target_metric)
