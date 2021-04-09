@@ -248,17 +248,20 @@ function update_problem!(
     end
 
     # Update bidirectional interface limits (from lines)
-    for (e_forward, e_back, line_idxs) in zip(problem.interface_forward_edges,
-                                           problem.interface_reverse_edges,
-                                           system.interface_line_idxs)
+    for (i, line_idxs) in enumerate(system.interface_line_idxs)
 
-        interface_forwardedge = fp.edges[e_forward]
-        interface_backwardedge = fp.edges[e_back]
+        interface_forwardedge = fp.edges[problem.interface_forward_edges[i]]
+        interface_backwardedge = fp.edges[problem.interface_reverse_edges[i]]
 
-        interface_capacity_forward, interface_capacity_backward =
+        lines_capacity_forward, lines_capacity_backward =
             available_capacity(state.lines_available, system.lines, line_idxs, t)
 
+        interface_capacity_forward = min(
+            lines_capacity_forward, system.interfaces.limit_forward[i,t])
         updateflowlimit!(interface_forwardedge, interface_capacity_forward)
+
+        interface_capacity_backward = min(
+            lines_capacity_backward, system.interfaces.limit_backward[i,t])
         updateflowlimit!(interface_backwardedge, interface_capacity_backward)
 
     end
@@ -269,12 +272,13 @@ function update_problem!(
         problem.storage_charge_nodes, problem.storage_charge_edges,
         problem.storage_discharge_nodes, problem.storage_discharge_edges))
 
+        stor_online = state.stors_available[i]
         stor_energy = state.stors_energy[i]
         maxenergy = system.storages.energy_capacity[i, t]
 
         # Update discharging
 
-        maxdischarge = system.storages.discharge_capacity[i, t]
+        maxdischarge = stor_online * system.storages.discharge_capacity[i, t]
         dischargeefficiency = system.storages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
 
@@ -296,7 +300,7 @@ function update_problem!(
 
         # Update charging
 
-        maxcharge = system.storages.charge_capacity[i, t]
+        maxcharge = stor_online * system.storages.charge_capacity[i, t]
         chargeefficiency = system.storages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
 
@@ -321,11 +325,13 @@ function update_problem!(
         problem.genstorage_dischargegrid_edges, problem.genstorage_totalgrid_edges,
         problem.genstorage_inflow_nodes))
 
+        stor_online = state.genstors_available[i]
         stor_energy = state.genstors_energy[i]
         maxenergy = system.generatorstorages.energy_capacity[i, t]
 
         # Update inflow and grid injection / withdrawal limits
-        inflow_capacity = system.generatorstorages.inflow[i, t]
+
+        inflow_capacity = stor_online * system.generatorstorages.inflow[i, t]
         updateinjection!(
             fp.nodes[inflow_node], slack_node, inflow_capacity)
 
@@ -337,7 +343,7 @@ function update_problem!(
 
         # Update discharging
 
-        maxdischarge = system.generatorstorages.discharge_capacity[i, t]
+        maxdischarge = stor_online * system.generatorstorages.discharge_capacity[i, t]
         dischargeefficiency = system.generatorstorages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
 
@@ -359,7 +365,7 @@ function update_problem!(
 
         # Update charging
 
-        maxcharge = system.generatorstorages.charge_capacity[i, t]
+        maxcharge = stor_online * system.generatorstorages.charge_capacity[i, t]
         chargeefficiency = system.generatorstorages.charge_efficiency[i, t]
         energychargeable = (maxenergy - stor_energy) / chargeefficiency
 
