@@ -248,17 +248,20 @@ function update_problem!(
     end
 
     # Update bidirectional interface limits (from lines)
-    for (e_forward, e_back, line_idxs) in zip(problem.interface_forward_edges,
-                                           problem.interface_reverse_edges,
-                                           system.interface_line_idxs)
+    for (i, line_idxs) in enumerate(system.interface_line_idxs)
 
-        interface_forwardedge = fp.edges[e_forward]
-        interface_backwardedge = fp.edges[e_back]
+        interface_forwardedge = fp.edges[problem.interface_forward_edges[i]]
+        interface_backwardedge = fp.edges[problem.interface_reverse_edges[i]]
 
-        interface_capacity_forward, interface_capacity_backward =
+        lines_capacity_forward, lines_capacity_backward =
             available_capacity(state.lines_available, system.lines, line_idxs, t)
 
+        interface_capacity_forward = min(
+            lines_capacity_forward, system.interfaces.limit_forward[i,t])
         updateflowlimit!(interface_forwardedge, interface_capacity_forward)
+
+        interface_capacity_backward = min(
+            lines_capacity_backward, system.interfaces.limit_backward[i,t])
         updateflowlimit!(interface_backwardedge, interface_capacity_backward)
 
     end
