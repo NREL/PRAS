@@ -385,29 +385,36 @@ function update_problem!(
 end
 
 function update_state!(
-    state::SystemState, problem::DispatchProblem, system::SystemModel, t::Int
-)
+    state::SystemState, problem::DispatchProblem,
+    system::SystemModel{N,L,T,P,E}, t::Int
+) where {N,L,T,P,E}
 
     edges = problem.fp.edges
+    p2e = conversionfactor(L, T, P, E)
 
     for (i, e) in enumerate(problem.storage_discharge_edges)
-        state.stors_energy[i] -=
-            ceil(Int, edges[e].flow / system.storages.discharge_efficiency[i, t])
+        energy = state.stors_energy[i]
+        energy_drop = ceil(Int, edges[e].flow * p2e /
+                                system.storages.discharge_efficiency[i, t])
+        state.stors_energy[i] = max(0, energy - energy_drop)
+
     end
 
     for (i, e) in enumerate(problem.storage_charge_edges)
         state.stors_energy[i] +=
-            ceil(Int, edges[e].flow * system.storages.charge_efficiency[i, t])
+            ceil(Int, edges[e].flow * p2e * system.storages.charge_efficiency[i, t])
     end
 
     for (i, e) in enumerate(problem.genstorage_dischargegrid_edges)
-        state.genstors_energy[i] -=
-            ceil(Int, edges[e].flow / system.generatorstorages.discharge_efficiency[i, t])
+        energy = state.genstors_energy[i]
+        energy_drop = ceil(Int, edges[e].flow * p2e /
+                                system.generatorstorages.discharge_efficiency[i, t])
+        state.genstors_energy[i] = max(0, energy - energy_drop)
     end
 
     for (i, (e1, e2)) in enumerate(zip(problem.genstorage_gridcharge_edges,
                                        problem.genstorage_inflowcharge_edges))
-        totalcharge = edges[e1].flow + edges[e2].flow
+        totalcharge = (edges[e1].flow + edges[e2].flow) * p2e
         state.genstors_energy[i] +=
             ceil(Int, totalcharge * system.generatorstorages.charge_efficiency[i, t])
     end
