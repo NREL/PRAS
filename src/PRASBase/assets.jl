@@ -34,6 +34,13 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
 end
 
+Base.:(==)(x::T, y::T) where {T <: Generators} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.capacity == y.capacity &&
+    x.λ == y.λ &&
+    x.μ == y.μ
+
 Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
     G(g.names[idxs], g.categories[idxs],
       g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
@@ -127,6 +134,18 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
 
 end
 
+Base.:(==)(x::T, y::T) where {T <: Storages} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.charge_capacity == y.charge_capacity &&
+    x.discharge_capacity == y.discharge_capacity &&
+    x.energy_capacity == y.energy_capacity &&
+    x.charge_efficiency == y.charge_efficiency &&
+    x.discharge_efficiency == y.discharge_efficiency &&
+    x.carryover_efficiency == y.carryover_efficiency &&
+    x.λ == y.λ &&
+    x.μ == y.μ
+
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -202,6 +221,21 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
 
 end
 
+Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.charge_capacity == y.charge_capacity &&
+    x.discharge_capacity == y.discharge_capacity &&
+    x.energy_capacity == y.energy_capacity &&
+    x.charge_efficiency == y.charge_efficiency &&
+    x.discharge_efficiency == y.discharge_efficiency &&
+    x.carryover_efficiency == y.carryover_efficiency &&
+    x.inflow == y.inflow &&
+    x.gridwithdrawal_capacity == y.gridwithdrawal_capacity &&
+    x.gridinjection_capacity == y.gridinjection_capacity &&
+    x.λ == y.λ &&
+    x.μ == y.μ
+
 struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -238,3 +272,11 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     end
 
 end
+
+Base.:(==)(x::T, y::T) where {T <: Lines} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.forward_capacity == y.forward_capacity &&
+    x.backward_capacity == y.backward_capacity &&
+    x.λ == y.λ &&
+    x.μ == y.μ

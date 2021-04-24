@@ -111,6 +111,19 @@ function SystemModel(
 
 end
 
+Base.:(==)(x::T, y::T) where {T <: SystemModel} =
+    x.regions == y.regions &&
+    x.interfaces == y.interfaces &&
+    x.generators == y.generators &&
+    x.region_gen_idxs == y.region_gen_idxs &&
+    x.storages == y.storages &&
+    x.region_stor_idxs == y.region_stor_idxs &&
+    x.generatorstorages == y.generatorstorages &&
+    x.region_genstor_idxs == y.region_genstor_idxs &&
+    x.lines == y.lines &&
+    x.interface_line_idxs == y.interface_line_idxs &&
+    x.timestamps == y.timestamps
+
 unitsymbol(::SystemModel{N,L,T,P,E}) where {
     N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} =
     unitsymbol(T), unitsymbol(P), unitsymbol(E)

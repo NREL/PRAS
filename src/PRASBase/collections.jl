@@ -18,6 +18,10 @@ struct Regions{N,P<:PowerUnit}
 
 end
 
+Base.:(==)(x::T, y::T) where {T <: Regions} =
+    x.names == y.names &&
+    x.load == y.load
+
 Base.length(r::Regions) = length(r.names)
 
 struct Interfaces{N,P<:PowerUnit}
@@ -45,5 +49,11 @@ struct Interfaces{N,P<:PowerUnit}
     end
 
 end
+
+Base.:(==)(x::T, y::T) where {T <: Interfaces} =
+    x.regions_from == y.regions_from &&
+    x.regions_to == y.regions_to &&
+    x.limit_forward == y.limit_forward &&
+    x.limit_backward == y.limit_backward
 
 Base.length(i::Interfaces) = length(i.regions_from)
