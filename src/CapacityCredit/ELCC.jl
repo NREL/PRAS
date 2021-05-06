@@ -21,13 +21,9 @@ struct ELCC{M} <: CapacityValuationMethod{M}
 end
 
 function ELCC{M}(
-    capacity_max::Int, region::String;
-    capacity_gap::Int=1, p_value::Float64=0.05
+    capacity_max::Int, region::String; kwargs...
 ) where M
-    return ELCC{M}(
-        capacity_max, [region=>1.0],
-        capacity_gap=capacity_gap, p_value=p_value
-    )
+    return ELCC{M}(capacity_max, [region=>1.0]; kwargs...)
 end
 
 function assess(params::ELCC{M},

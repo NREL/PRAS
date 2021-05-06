@@ -21,13 +21,9 @@ struct EFC{M} <: CapacityValuationMethod{M}
 end
 
 function EFC{M}(
-    capacity_max::Int, region::String;
-    capacity_gap::Int=1, p_value::Float64=0.05
+    capacity_max::Int, region::String; kwargs...
 ) where M
-    return EFC{M}(
-        capacity_max, [region=>1.0],
-        capacity_gap=capacity_gap, p_value=p_value
-    )
+    return EFC{M}(capacity_max, [region=>1.0]; kwargs...)
 end
 
 function assess(params::EFC{M},
