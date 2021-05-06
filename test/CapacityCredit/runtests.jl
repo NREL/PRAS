@@ -48,61 +48,34 @@
 
     @testset "EFC" begin
 
-        cc_l, cc_u = assess(
-            sys_before, sys_before, EFC{EUE}(10, "Region"), conv)
+        cc = assess(sys_before, sys_before, EFC{EUE}(10, "Region"), conv)
+        @test extrema(cc) == (0, 1)
 
-        @test cc_l == 0
-        @test cc_u == 1
+        cc = assess(sys_before, sys_after, EFC{EUE}(10, ["Region" => 1.0]), conv)
+        @test extrema(cc) == (8, 9)
 
+        cc = assess(sys_before, sys_after, EFC{EUE}(10, "Region"), smc)
+        @test extrema(cc) == (8, 9)
 
-        cc_l, cc_u = assess(
-            sys_before, sys_after, EFC{EUE}(10, "Region"), conv)
-
-        @test cc_l == 8
-        @test cc_u == 9
-
-        cc_l, cc_u = assess(
-            sys_before, sys_after, EFC{EUE}(10, "Region"), smc)
-
-        @test cc_l == 8
-        @test cc_u == 9
-
-        cc_l, cc_u = assess(
-            TestSystems.threenode, threenode2, EFC{EUE}(10, "Region A"), smc)
-
-        @test cc_l == 3
-        @test cc_u == 4
+        cc = assess(TestSystems.threenode, threenode2, EFC{EUE}(10, "Region A"), smc)
+        @test extrema(cc) == (3, 4)
 
     end
 
     @testset "ELCC" begin
 
 
-        cc_l, cc_u = assess(
-            sys_before, sys_before, ELCC{EUE}(10, "Region"), conv)
+        cc = assess(sys_before, sys_before, ELCC{EUE}(10, "Region"), conv)
+        @test extrema(cc) == (0, 1)
 
-        @test cc_l == 0
-        @test cc_u == 1
+        cc = assess(sys_before, sys_after, ELCC{EUE}(10, ["Region" => 1.0]), conv)
+        @test extrema(cc) == (7, 8)
 
+        cc = assess(sys_before, sys_after, ELCC{EUE}(10, "Region"), smc)
+        @test extrema(cc) == (7, 8)
 
-        cc_l, cc_u = assess(
-            sys_before, sys_after, ELCC{EUE}(10, "Region"), conv)
-
-        @test cc_l == 7
-        @test cc_u == 8
-
-        cc_l, cc_u = assess(
-            sys_before, sys_after, ELCC{EUE}(10, "Region"), smc)
-
-        @test cc_l == 7
-        @test cc_u == 8
-
-        cc_l, cc_u = assess(
-            TestSystems.threenode, threenode2, ELCC{EUE}(10, "Region A"), smc)
-
-        @test cc_l == 3
-        @test cc_u == 4
-
+        cc = assess(TestSystems.threenode, threenode2, ELCC{EUE}(10, "Region A"), smc)
+        @test extrema(cc) == (3, 4)
 
     end
 
