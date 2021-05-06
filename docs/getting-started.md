@@ -36,21 +36,25 @@ sys = SystemModel("filepath/to/systemdata.pras")
 ## Resource Adequacy Assessment
 
 PRAS functionality is distributed across groups of
-modular specifications that can be mixed, extended, or replaced to support the needs
-of a particular analysis. When assessing reliability or capacity value, one can
-define the specs to be used while passing along any associated parameters
-or options.
+modular specifications that can be mixed, extended, or replaced to support the
+needs of a particular analysis. When assessing reliability or capacity value,
+one can define the specs to be used while passing along any associated
+parameters or options.
 
 The categories of specifications are:
 
 **Simulation Specifications**: How should power system operations be simulated?
 Options are `Convolution` and `SequentialMonteCarlo`.
 
-**Result Specifications**: What level of detail should be saved out during simulations?
-Options are `Minimal`, `Temporal`, `SpatioTemporal`, and `Network`.
+**Result Specifications**: What kind and level of detail of results should be
+saved out during simulations?
+Options include `Shortfall`, `Surplus`, interface `Flow`, `StorageEnergy`,
+and `GeneratorStorageEnergy`. Not all simulation specifications support all
+result specifications.
+(See the official PRAS documentation for more details.)
 
-**Capacity Credit Specifications**: If performing a capacity credit calculation,
-which method should be used?
+**Capacity Credit Specifications**: If performing a capacity credit
+calculation, which method should be used?
 Options are `EFC` and `ELCC`.
 
 ### Running an analysis
@@ -58,11 +62,11 @@ Options are `EFC` and `ELCC`.
 Analysis centers around the `assess` method with different arguments passed
 depending on the desired analysis to run.
 For example, to run a copper-plate convolution-based reliability assessment
-(`Convolution`) with aggregate LOLE and EUE reporting (`Minimal`),
+(`Convolution`) with LOLE and EUE reporting (`Shortfall`),
 one would run:
 
 ```julia
-assess(Convolution(), Minimal(), mysystemmodel)
+assess(mysystemmodel, Convolution(), Shortfall())
 ```
 
 If you instead want to run a simulation that considers energy-limited resources
@@ -70,72 +74,60 @@ and transmission constraints, using 100,000 Monte Carlo samples,
 the method call becomes:
 
 ```julia
-assess(SequentialMonteCarlo(samples=100_000), Minimal(), mysystemmodel)
+assess(mysystemmodel, SequentialMonteCarlo(samples=100_000), Shortfall())
 ```
 
-To save results for each time period studied, change `Minimal` to `Temporal`:
-```julia
-assess(SequentialMonteCarlo(samples=100_000), Temporal(), mysystemmodel)
-```
+You can request multiple kinds of result from a single assessment:
 
-To save regional results for each simulation period, use the `SpatioTemporal`
-result specification instead:
 ```julia
-assess(SequentialMonteCarlo(samples=100_000), SpatioTemporal(), mysystemmodel)
+assess(mysystemmodel, SequentialMonteCarlo(samples=100_000), Shortfall(), Flow())
 ```
 
 ### Querying Results
 
-After running an analysis, metrics of interest can be obtained by calling the
-appropriate metric's constructor with the result object.
-
-For example, to obtain the system-wide LOLE over the simulation period:
+Each result type requested returns a seperate result object. These objects can
+then be queried using indexing syntax to extract values of interest.
 
 ```julia
-result = assess(SequentialMonteCarlo(samples=100_000), SpatioTemporal(), mysystemmodel)
-lole = LOLE(result)
+shortfalls, flows =
+    assess(mysystemmodel, SequentialMonteCarlo(samples=100_000), Shortfall(), Flow())
+
+flows["Region A" => "Region B"]
 ```
 
-Single-period metrics such as LOLP can also be extracted if the appropriate
-information was saved (i.e. if `Temporal` or `SpatioTemporal` result
-specifications were used). For example, to get system-wide LOLP for April 27th,
-2024 at 1pm EST:
+The official PRAS documentation provides more details on how different result
+object types can be indexed.
 
-```julia
-lolp = LOLP(result, ZonedDateTime(2024, 4, 27, 13, tz"EST"))
-```
-
-Similarly, if per-region information was saved (i.e. if `Spatial` or
-`SpatioTemporal` result specifications were used), region-specific metrics
-can be extracted. For example, to obtain the EUE of Region A across the entire
+Because the main results of interest from resource adequacy assessments are
+probabilistic risk metrics (i.e. EUE and LOLE), `Shortfall` result objects
+define some additional methods: a particular risk metric can be
+obtained by calling that metric's constructor with the `Shortfall`
+result object. For example, to obtain the system-wide LOLE and EUE over the
 simulation period:
 
 ```julia
-eue_a = EUE(result, "Region A")
+lole = LOLE(shortfalls)
+eue = EUE(shortfalls)
 ```
 
-If the results specification supports it (i.e. `SpatioTemporal` or `Network`),
-metrics can be obtained for both a specific region and time:
+Single-period metrics can also be extracted. For example, to get system-wide
+EUE for April 27th, 2024 at 1pm EST:
 
 ```julia
-eue_a = EUE(result, "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
+period_eue = EUE(shortfalls, ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 ```
 
-Finally, if using the `Network` result spec, information about interface flows
-and utilization factors can be obtained as well:
+Region-specific metrics can also be extracted. For example, to obtain the LOLE
+of Region A across the entire simulation period:
 
 ```julia
-# Average flow from Region A to Region B during the hour of interest
-flow_ab = ExpectedInterfaceFlow(
-    result, "Region A", "Region B", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
+eue_a = LOLE(shortfalls, "Region A")
+```
 
-# Same magnitude as above, but different sign
-flow_ba = ExpectedInterfaceFlow(
-    result, "Region B", "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
+Finally, metrics can be obtained for both a specific region and time:
 
-# Average utilization (average ratio of absolute value of actual flow vs maximum possible after outages)
-utilization_ab = ExpectedInterfaceUtilization(
-    result, "Region A", "Region B", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
+```julia
+period_eue_a = EUE(shortfalls, "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST"))
 ```
 
 ## Capacity Credit Calculations
@@ -170,18 +162,19 @@ base_system
 augmented_system
 
 # Get the lower and upper bounds on the EFC estimate for the resource
-min_efc, max_efc = assess(
-    EFC{EUE}(1000, "A"), SequentialMonteCarlo(samples=100_000), Minimal(),
-    base_system, augmented_system)
+efc = assess(
+    base_system, augmented_system, EFC{EUE}(1000, "A"),
+    SequentialMonteCarlo(samples=100_000))
+min_efc, max_efc = extrema(efc)
 ```
 
 If the study resource were instead split between regions "A" (600MW) and "B"
 (400 MW), one could specify the firm capacity distribution as:
 
 ```julia
-min_efc, max_efc = assess(
-    EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]), SequentialMonteCarlo(samples=100_000), Minimal(),
-    base_system, augmented_system)
+efc = assess(
+    base_system, augmented_system, EFC{EUE}(1000, ["A"=>0.6, "B"=>0.4]),
+    SequentialMonteCarlo(samples=100_000))
 ```
 
 ### Equivalent Load Carrying Capability (ELCC)
@@ -198,8 +191,8 @@ parameters must be specified:
    somewhat ambiguous in multi-region systems, so assumptions should be clearly
    specified when reporting analysis results.
 
-For example, to assess the EUE-based ELCC of a new resource with 1000 MW nameplate
-capacity, serving new load in region "A":
+For example, to assess the EUE-based ELCC of a new resource with 1000 MW
+nameplate capacity, serving new load in region "A":
 
 ```julia
 # The base system, with power units in MW
@@ -209,18 +202,19 @@ base_system
 augmented_system
 
 # Get the lower and upper bounds on the ELCC estimate for the resource
-min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, "A"), SequentialMonteCarlo(samples=100_000), Minimal(),
-    base_system, augmented_system)
+elcc = assess(
+    base_system, augmented_system, ELCC{EUE}(1000, "A"),
+    SequentialMonteCarlo(samples=100_000))
+min_elcc, max_elcc = extrema(elcc)
 ```
 
 If instead the goal was to study the ability of the new resource to provide
 load evenly to regions "A" and "B", one could use:
 
 ```julia
-min_elcc, max_elcc = assess(
-    ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]), SequentialMonteCarlo(samples=100_000), Minimal(),
-    base_system, augmented_system)
+elcc = assess(
+    base_system, augmented_system, ELCC{EUE}(1000, ["A"=>0.5, "B"=>0.5]),
+    SequentialMonteCarlo(samples=100_000))
 ```
 
 ### Capacity credit calculations in the presence of sampling error
