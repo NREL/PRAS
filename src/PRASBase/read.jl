@@ -11,7 +11,7 @@ function SystemModel(inputfile::String)
         version, versionstring = readversion(f)
 
         # Determine the appropriate version of the importer to use
-        return if (0,5,0) <= version < (0,6,0)
+        return if (0,5,0) <= version < (0,7,0)
             systemmodel_0_5(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
