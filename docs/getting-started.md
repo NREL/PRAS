@@ -1,24 +1,18 @@
 # Getting Started with PRAS
 
-## Unleash your CPU cores
+For a complete overview of PRAS, see the
+[v0.6 documentation report](https://www.nrel.gov/docs/fy21osti/79698.pdf).
+This page provides a briefer overview to help you start running PRAS quickly.
 
-First, know that PRAS uses multi-threading, so be
-sure to set the environment variable controlling the number of threads
-available to Julia (36 in this Bash example, which is a good choice for
-Eagle nodes - on a laptop you would probably only want 4 or so) before running
-scripts or launching the REPL:
+## Parallel Processing
+
+PRAS uses multi-threading, so be sure to set the environment variable
+controlling the number of threads available to Julia (36 in this Bash example,
+which is a good choice for NREL Eagle nodes - on a laptop you would probably
+only want 4 or so) before running scripts or launching the REPL:
 
 ```sh
 export JULIA_NUM_THREADS=36
-```
-
-## Installation
-
-Installation requires Julia 1.3+ and the NREL package registry:
-
-```
-(v1.3) pkg> registry add https://github.com/NREL/JuliaRegistry.git
-(v1.3) pkg> add PRAS
 ```
 
 ## Power System Data
@@ -51,7 +45,8 @@ saved out during simulations?
 Options include `Shortfall`, `Surplus`, interface `Flow`, `StorageEnergy`,
 and `GeneratorStorageEnergy`. Not all simulation specifications support all
 result specifications.
-(See the official PRAS documentation for more details.)
+(See the [PRAS documentation](https://www.nrel.gov/docs/fy21osti/79698.pdf)
+for more details.)
 
 **Capacity Credit Specifications**: If performing a capacity credit
 calculation, which method should be used?
@@ -95,7 +90,7 @@ shortfalls, flows =
 flows["Region A" => "Region B"]
 ```
 
-The official PRAS documentation provides more details on how different result
+The full PRAS documentation provides more details on how different result
 object types can be indexed.
 
 Because the main results of interest from resource adequacy assessments are

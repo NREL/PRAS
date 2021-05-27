@@ -7,3 +7,5 @@
 
 The Probabilistic Resource Adequacy Suite (PRAS) is a collection of tools for
 bulk power system resource adequacy analysis and capacity credit calculation.
+The most recent documentation report (for version 0.6) is available
+[here](https://www.nrel.gov/docs/fy21osti/79698.pdf).
