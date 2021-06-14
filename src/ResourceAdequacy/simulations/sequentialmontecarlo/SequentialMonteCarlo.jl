@@ -40,7 +40,7 @@ function assess(
         assess(system, method, sampleseeds, results, resultspecs...)
     end
 
-    return finalize(results, system, threads)
+    return finalize(results, system, method.threaded ? threads : 1)
 
 end
 

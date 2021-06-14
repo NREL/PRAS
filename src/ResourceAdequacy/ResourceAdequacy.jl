@@ -3,7 +3,7 @@
 using MinCostFlows
 using ..PRASBase
 
-import Base: -, broadcastable, getindex
+import Base: -, broadcastable, getindex, merge!
 import Base.Threads: nthreads, @spawn
 import Dates: DateTime, Period
 import Decimals: Decimal, decimal

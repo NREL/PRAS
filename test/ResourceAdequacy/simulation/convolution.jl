@@ -1,7 +1,7 @@
 @testset "Convolution" begin
 
     simspec = Convolution(threaded=false)
-    simspec_threaded = Convolution(threaded=false)
+    simspec_threaded = Convolution(threaded=true)
     resultspecs = (Shortfall(), Surplus())
 
     result_1a, surplus_1a =
