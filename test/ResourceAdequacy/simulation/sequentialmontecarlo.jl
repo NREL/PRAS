@@ -6,9 +6,8 @@
 
     nstderr_tol = 3
 
-    simspec = SequentialMonteCarlo(samples=100_000, seed=0, threaded=false)
+    simspec = SequentialMonteCarlo(samples=100_000, seed=1, threaded=false)
     smallsample = SequentialMonteCarlo(samples=10, seed=123)
-    smallsample_alt = SequentialMonteCarlo(samples=10, seed=124)
 
     resultspecs = (Shortfall(), Surplus(), Flow(), Utilization(),
                    ShortfallSamples(), SurplusSamples(),
@@ -21,18 +20,22 @@
     timestampcol_3 = collect(TestSystems.threenode.timestamps)
     regionsrow = reshape(TestSystems.threenode.regions.names, 1, :)
 
+    assess(TestSystems.singlenode_a, smallsample, resultspecs...)
     shortfall_1a, _, flow_1a, util_1a,
     shortfall2_1a, _, flow2_1a, util2_1a, _ =
         assess(TestSystems.singlenode_a, simspec, resultspecs...)
 
+    assess(TestSystems.singlenode_a_5min, smallsample, resultspecs...)
     shortfall_1a5, _, flow_1a5, util_1a5,
     shortfall2_1a5, _, flow2_1a5, util2_1a5, _ =
         assess(TestSystems.singlenode_a_5min, simspec, resultspecs...)
 
+    assess(TestSystems.singlenode_b, smallsample, resultspecs...)
     shortfall_1b, _, flow_1b, util_1b,
     shortfall2_1b, _, flow2_1b, util2_1b, _ =
         assess(TestSystems.singlenode_b, simspec, resultspecs...)
 
+    assess(TestSystems.threenode, smallsample, resultspecs...)
     shortfall_3, _, flow_3, util_3,
     shortfall2_3, _, flow2_3, util2_3, _ =
         assess(TestSystems.threenode, simspec, resultspecs...)
