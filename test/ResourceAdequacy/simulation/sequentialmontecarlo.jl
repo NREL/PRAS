@@ -256,7 +256,7 @@
 
         sys = SystemModel(dirname(@__FILE__) * "/../../PRASBase/rts.pras")
 
-        assess(sys, SequentialMonteCarlo(samples=1000),
+        assess(sys, SequentialMonteCarlo(samples=100),
                GeneratorAvailability(), LineAvailability(),
                StorageAvailability(), GeneratorStorageAvailability(),
                StorageEnergy(), GeneratorStorageEnergy(),
