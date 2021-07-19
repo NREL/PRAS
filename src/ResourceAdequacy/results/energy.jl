@@ -1,8 +1,24 @@
+abstract type AbstractEnergyResult{N,L,T} <: Result{N,L,T} end
+
+# Colon indexing
+
+getindex(x::AbstractEnergyResult, ::Colon) =
+    getindex.(x, x.timestamps)
+
+getindex(x::AbstractEnergyResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, names(x), t)
+
+getindex(x::AbstractEnergyResult, name::String, ::Colon) =
+    getindex.(x, name, x.timestamps)
+
+getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
+    getindex.(x, names(x), permutedims(x.timestamps))
+
 # Sample-averaged Storage state-of-charge data
 
 struct StorageEnergy <: ResultSpec end
 
-struct StorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
+struct StorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     storages::Vector{String}
@@ -14,6 +30,8 @@ struct StorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
     energy_regionperiod_std::Matrix{Float64}
 
 end
+
+names(x::StorageEnergyResult) = x.storages
 
 function getindex(x::StorageEnergyResult, t::ZonedDateTime)
     i_t = findfirstunique(x.timestamps, t)
@@ -30,7 +48,7 @@ end
 
 struct GeneratorStorageEnergy <: ResultSpec end
 
-struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
+struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     generatorstorages::Vector{String}
@@ -42,6 +60,8 @@ struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T
     energy_regionperiod_std::Matrix{Float64}
 
 end
+
+names(x::GeneratorStorageEnergyResult) = x.generatorstorages
 
 function getindex(x::GeneratorStorageEnergyResult, t::ZonedDateTime)
     i_t = findfirstunique(x.timestamps, t)
@@ -58,7 +78,7 @@ end
 
 struct StorageEnergySamples <: ResultSpec end
 
-struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
+struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
 
     storages::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
@@ -66,6 +86,8 @@ struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
     energy::Array{Int,3}
 
 end
+
+names(x::StorageEnergySamplesResult) = x.storages
 
 function getindex(x::StorageEnergySamplesResult, t::ZonedDateTime)
     i_t = findfirstunique(x.timestamps, t)
@@ -82,7 +104,7 @@ end
 
 struct GeneratorStorageEnergySamples <: ResultSpec end
 
-struct GeneratorStorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
+struct GeneratorStorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
 
     generatorstorages::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
@@ -90,6 +112,8 @@ struct GeneratorStorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: Resul
     energy::Array{Int,3}
 
 end
+
+names(x::GeneratorStorageEnergySamplesResult) = x.generatorstorages
 
 function getindex(x::GeneratorStorageEnergySamplesResult, t::ZonedDateTime)
     i_t = findfirstunique(x.timestamps, t)

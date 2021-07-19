@@ -1,8 +1,23 @@
+struct Flow <: ResultSpec end
+abstract type AbstractFlowResult{N,L,T} <: Result{N,L,T} end
+
+# Colon indexing
+
+getindex(x::AbstractFlowResult, ::Colon) =
+    getindex.(x, x.interfaces)
+
+getindex(x::AbstractFlowResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, x.interfaces, t)
+
+getindex(x::AbstractFlowResult, i::Pair{<:AbstractString,<:AbstractString}, ::Colon) =
+    getindex.(x, i, x.timestamps)
+
+getindex(x::AbstractFlowResult, ::Colon, ::Colon) =
+    getindex.(x, x.interfaces, permutedims(x.timestamps))
+
 # Sample-averaged flow data
 
-struct Flow <: ResultSpec end
-
-struct FlowResult{N,L,T<:Period,P<:PowerUnit} <: Result{N,L,T}
+struct FlowResult{N,L,T<:Period,P<:PowerUnit} <: AbstractFlowResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     interfaces::Vector{Pair{String,String}}
@@ -32,7 +47,7 @@ end
 
 struct FlowSamples <: ResultSpec end
 
-struct FlowSamplesResult{N,L,T<:Period,P<:PowerUnit} <: Result{N,L,T}
+struct FlowSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractFlowResult{N,L,T}
 
     interfaces::Vector{Pair{String,String}}
     timestamps::StepRange{ZonedDateTime,T}

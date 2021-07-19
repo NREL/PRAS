@@ -14,11 +14,17 @@
                    FlowSamples(), UtilizationSamples(),
                    GeneratorAvailability())
 
-    timestampcol_a = collect(TestSystems.singlenode_a.timestamps)
-    timestampcol_a5 = collect(TestSystems.singlenode_a_5min.timestamps)
-    timestampcol_b = collect(TestSystems.singlenode_b.timestamps)
-    timestampcol_3 = collect(TestSystems.threenode.timestamps)
-    regionsrow = reshape(TestSystems.threenode.regions.names, 1, :)
+    timestamps_a = TestSystems.singlenode_a.timestamps
+    timestamps_a5 = TestSystems.singlenode_a_5min.timestamps
+    timestamps_b = TestSystems.singlenode_b.timestamps
+    timestamps_3 = TestSystems.threenode.timestamps
+
+    timestamprow_a = permutedims(timestamps_a)
+    timestamprow_a5 = permutedims(timestamps_a5)
+    timestamprow_b = permutedims(timestamps_b)
+    timestamprow_3 = permutedims(timestamps_3)
+
+    regionscol = TestSystems.threenode.regions.names
 
     assess(TestSystems.singlenode_a, smallsample, resultspecs...)
     shortfall_1a, _, flow_1a, util_1a,
@@ -58,22 +64,22 @@
         @test withinrange(EUE(shortfall_1a, "Region"),
                           TestSystems.singlenode_a_eue, nstderr_tol)
 
-        @test all(LOLE.(shortfall_1a, timestampcol_a) .≈
-              LOLE.(shortfall2_1a, timestampcol_a))
-        @test all(EUE.(shortfall_1a, timestampcol_a) .≈
-              EUE.(shortfall2_1a, timestampcol_a))
-        @test all(LOLE.(shortfall_1a, "Region", timestampcol_a) .≈
-              LOLE.(shortfall2_1a, "Region", timestampcol_a))
-        @test all(EUE.(shortfall_1a, "Region", timestampcol_a) .≈
-              EUE.(shortfall2_1a, "Region", timestampcol_a))
+        @test all(LOLE.(shortfall_1a, timestamps_a) .≈
+                  LOLE.(shortfall2_1a, timestamps_a))
+        @test all(EUE.(shortfall_1a, timestamps_a) .≈
+                  EUE.(shortfall2_1a, timestamps_a))
+        @test all(LOLE(shortfall_1a, "Region", :) .≈
+                  LOLE(shortfall2_1a, "Region", :))
+        @test all(EUE(shortfall_1a, "Region", :) .≈
+                  EUE(shortfall2_1a, "Region", :))
 
-        @test all(withinrange.(LOLE.(shortfall_1a, timestampcol_a),
+        @test all(withinrange.(LOLE.(shortfall_1a, timestamps_a),
                                TestSystems.singlenode_a_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1a, timestampcol_a),
+        @test all(withinrange.(EUE.(shortfall_1a, timestamps_a),
                                TestSystems.singlenode_a_eues, nstderr_tol))
-        @test all(withinrange.(LOLE.(shortfall_1a, "Region", timestampcol_a),
+        @test all(withinrange.(LOLE(shortfall_1a, "Region", :),
                                TestSystems.singlenode_a_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1a, "Region", timestampcol_a),
+        @test all(withinrange.(EUE(shortfall_1a, "Region", :),
                                TestSystems.singlenode_a_eues, nstderr_tol))
 
         # Single-region system A - 5 min version
@@ -92,22 +98,22 @@
         @test withinrange(EUE(shortfall_1a5, "Region"),
                           TestSystems.singlenode_a_eue/12, nstderr_tol)
 
-        @test all(LOLE.(shortfall_1a5, timestampcol_a5) .≈
-              LOLE.(shortfall2_1a5, timestampcol_a5))
-        @test all(EUE.(shortfall_1a5, timestampcol_a5) .≈
-              EUE.(shortfall2_1a5, timestampcol_a5))
-        @test all(LOLE.(shortfall_1a5, "Region", timestampcol_a5) .≈
-              LOLE.(shortfall2_1a5, "Region", timestampcol_a5))
-        @test all(EUE.(shortfall_1a5, "Region", timestampcol_a5) .≈
-              EUE.(shortfall2_1a5, "Region", timestampcol_a5))
+        @test all(LOLE.(shortfall_1a5, timestamps_a5) .≈
+                  LOLE.(shortfall2_1a5, timestamps_a5))
+        @test all(EUE.(shortfall_1a5, timestamps_a5) .≈
+                  EUE.(shortfall2_1a5, timestamps_a5))
+        @test all(LOLE(shortfall_1a5, "Region", :) .≈
+                  LOLE(shortfall2_1a5, "Region", :))
+        @test all(EUE(shortfall_1a5, "Region", :) .≈
+                  EUE(shortfall2_1a5, "Region", :))
 
-        @test all(withinrange.(LOLE.(shortfall_1a5, timestampcol_a5),
+        @test all(withinrange.(LOLE.(shortfall_1a5, timestamps_a5),
                                TestSystems.singlenode_a_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1a5, timestampcol_a5),
+        @test all(withinrange.(EUE.(shortfall_1a5, timestamps_a5),
                                TestSystems.singlenode_a_eues ./ 12, nstderr_tol))
-        @test all(withinrange.(LOLE.(shortfall_1a5, "Region", timestampcol_a5),
+        @test all(withinrange.(LOLE(shortfall_1a5, "Region", :),
                                TestSystems.singlenode_a_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1a5, "Region", timestampcol_a5),
+        @test all(withinrange.(EUE(shortfall_1a5, "Region", :),
                                TestSystems.singlenode_a_eues ./ 12, nstderr_tol))
 
         # Single-region system B
@@ -126,48 +132,46 @@
         @test withinrange(EUE(shortfall_1b, "Region"),
                           TestSystems.singlenode_b_eue, nstderr_tol)
 
-        @test all(LOLE.(shortfall_1b, timestampcol_b) .≈
-              LOLE.(shortfall2_1b, timestampcol_b))
-        @test all(EUE.(shortfall_1b, timestampcol_b) .≈
-              EUE.(shortfall2_1b, timestampcol_b))
-        @test all(LOLE.(shortfall_1b, "Region", timestampcol_b) .≈
-              LOLE.(shortfall2_1b, "Region", timestampcol_b))
-        @test all(EUE.(shortfall_1b, "Region", timestampcol_b) .≈
-              EUE.(shortfall2_1b, "Region", timestampcol_b))
+        @test all(LOLE.(shortfall_1b, timestamps_b) .≈
+                  LOLE.(shortfall2_1b, timestamps_b))
+        @test all(EUE.(shortfall_1b, timestamps_b) .≈
+                  EUE.(shortfall2_1b, timestamps_b))
+        @test all(LOLE(shortfall_1b, "Region", :) .≈
+                  LOLE(shortfall2_1b, "Region", :))
+        @test all(EUE(shortfall_1b, "Region", :) .≈
+                  EUE(shortfall2_1b, "Region", :))
 
-        @test all(withinrange.(LOLE.(shortfall_1b, timestampcol_b),
+        @test all(withinrange.(LOLE.(shortfall_1b, timestamps_b),
                                TestSystems.singlenode_b_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1b, timestampcol_b),
+        @test all(withinrange.(EUE.(shortfall_1b, timestamps_b),
                                TestSystems.singlenode_b_eues, nstderr_tol))
-        @test all(withinrange.(LOLE.(shortfall_1b, "Region", timestampcol_b),
-                               reshape(TestSystems.singlenode_b_lolps, :, 1), nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_1b, "Region", timestampcol_b),
-                               reshape(TestSystems.singlenode_b_eues, :, 1), nstderr_tol))
+        @test all(withinrange.(LOLE(shortfall_1b, "Region", :),
+                               TestSystems.singlenode_b_lolps, nstderr_tol))
+        @test all(withinrange.(EUE(shortfall_1b, "Region", :),
+                               TestSystems.singlenode_b_eues, nstderr_tol))
 
         # Three-region system
 
         @test LOLE(shortfall_3) ≈ LOLE(shortfall2_3)
         @test EUE(shortfall_3) ≈ EUE(shortfall2_3)
-        @test all(LOLE.(shortfall_3, regionsrow) .≈ LOLE.(shortfall2_3, regionsrow))
-        @test all(EUE.(shortfall_3, regionsrow) .≈ EUE.(shortfall2_3, regionsrow))
+        @test all(LOLE.(shortfall_3, regionscol) .≈ LOLE.(shortfall2_3, regionscol))
+        @test all(EUE.(shortfall_3, regionscol) .≈ EUE.(shortfall2_3, regionscol))
 
         @test withinrange(LOLE(shortfall_3),
                           TestSystems.threenode_lole, nstderr_tol)
         @test withinrange(EUE(shortfall_3),
                           TestSystems.threenode_eue, nstderr_tol)
-        @test all(withinrange.(LOLE.(shortfall_3, timestampcol_3),
+        @test all(withinrange.(LOLE.(shortfall_3, timestamps_3),
                                TestSystems.threenode_lolps, nstderr_tol))
-        @test all(withinrange.(EUE.(shortfall_3, timestampcol_3),
+        @test all(withinrange.(EUE.(shortfall_3, timestamps_3),
                                TestSystems.threenode_eues, nstderr_tol))
 
-        @test all(LOLE.(shortfall_3, timestampcol_3) .≈
-              LOLE.(shortfall2_3, timestampcol_3))
-        @test all(EUE.(shortfall_3, timestampcol_3) .≈
-              EUE.(shortfall2_3, timestampcol_3))
-        @test all(LOLE.(shortfall_3, regionsrow, timestampcol_3) .≈
-              LOLE.(shortfall2_3, regionsrow, timestampcol_3))
-        @test all(EUE.(shortfall_3, regionsrow, timestampcol_3) .≈
-              EUE.(shortfall2_3, regionsrow, timestampcol_3))
+        @test all(LOLE.(shortfall_3, timestamps_3) .≈
+                  LOLE.(shortfall2_3, timestamps_3))
+        @test all(EUE.(shortfall_3, timestamps_3) .≈
+                  EUE.(shortfall2_3, timestamps_3))
+        @test all(LOLE(shortfall_3, :, :) .≈ LOLE(shortfall2_3, :, :))
+        @test all(EUE(shortfall_3, :, :) .≈ EUE(shortfall2_3, :, :))
 
         @test withinrange(
             LOLE(shortfall_3, "Region C", ZonedDateTime(2018,10,30,1,TestSystems.tz)),
@@ -180,19 +184,16 @@
         # test systems with unique network flow solutions
 
         println("SpatioTemporal LOLPs:")
-        display(
-            vcat(
-                hcat("", regionsrow),
-                hcat(TestSystems.threenode.timestamps,
-                     LOLE.(shortfall_3, regionsrow, timestampcol_3))
+
+        display(vcat(
+            hcat("", timestamprow_3),
+            hcat(regionscol, LOLE(shortfall_3, :, :))
         )); println()
 
         println("SpatioTemporal EUEs:")
-        display(
-            vcat(
-                hcat("", regionsrow),
-                hcat(TestSystems.threenode.timestamps,
-                     EUE.(shortfall_3, regionsrow, timestampcol_3))
+        display(vcat(
+            hcat("", timestamprow_3),
+            hcat(regionscol, EUE(shortfall_3, :, :))
         )); println()
 
     end
@@ -222,33 +223,23 @@
 
         # Three-region system
 
-        interfacesrow = reshape(flow_3.interfaces, 1, :)
-
         println("Network Flows:")
-        display(
-            vcat(
-                hcat("", interfacesrow),
-                hcat(timestampcol_3,
-                     getindex.(flow_3, interfacesrow, timestampcol_3))
+        display(vcat(
+            hcat("", timestamprow_3),
+            hcat(flow_3.interfaces, flow_3[:, :])
         )); println()
 
-        @test all(getindex.(flow_3, interfacesrow) .≈
-                  getindex.(flow2_3, interfacesrow))
-        @test all(getindex.(flow_3, interfacesrow, timestampcol_3) .≈
-                  getindex.(flow2_3, interfacesrow, timestampcol_3))
+        @test all(flow_3[:] .≈ flow2_3[:])
+        @test all(flow_3[:, :] .≈ flow2_3[:, :])
 
         println("Network Utilizations:")
-        display(
-            vcat(
-                hcat("", interfacesrow),
-                hcat(timestampcol_3,
-                     getindex.(util_3, interfacesrow, timestampcol_3))
+        display(vcat(
+            hcat("", timestamprow_3),
+            hcat(flow_3.interfaces, util_3[:, :])
         )); println()
 
-        @test all(getindex.(util_3, interfacesrow) .≈
-                  getindex.(util2_3, interfacesrow))
-        @test all(getindex.(util_3, interfacesrow, timestampcol_3) .≈
-                  getindex.(util2_3, interfacesrow, timestampcol_3))
+        @test all(util_3[:] .≈ util2_3[:])
+        @test all(util_3[:, :] .≈ util2_3[:, :])
 
     end
 

@@ -1,8 +1,23 @@
+struct Utilization <: ResultSpec end
+abstract type AbstractUtilizationResult{N,L,T} <: Result{N,L,T} end
+
+# Colon indexing
+
+getindex(x::AbstractUtilizationResult, ::Colon) =
+    getindex.(x, x.interfaces)
+
+getindex(x::AbstractUtilizationResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, x.interfaces, t)
+
+getindex(x::AbstractUtilizationResult, i::Pair{<:AbstractString,<:AbstractString}, ::Colon) =
+    getindex.(x, i, x.timestamps)
+
+getindex(x::AbstractUtilizationResult, ::Colon, ::Colon) =
+    getindex.(x, x.interfaces, permutedims(x.timestamps))
+
 # Sample-averaged utilization data
 
-struct Utilization <: ResultSpec end
-
-struct UtilizationResult{N,L,T<:Period} <: Result{N,L,T}
+struct UtilizationResult{N,L,T<:Period} <: AbstractUtilizationResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     interfaces::Vector{Pair{String,String}}
@@ -30,7 +45,7 @@ end
 
 struct UtilizationSamples <: ResultSpec end
 
-struct UtilizationSamplesResult{N,L,T<:Period} <: Result{N,L,T}
+struct UtilizationSamplesResult{N,L,T<:Period} <: AbstractUtilizationResult{N,L,T}
 
     interfaces::Vector{Pair{String,String}}
     timestamps::StepRange{ZonedDateTime,T}

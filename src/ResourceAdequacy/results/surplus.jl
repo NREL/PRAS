@@ -1,8 +1,23 @@
+struct Surplus <: ResultSpec end
+abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end
+
+# Colon indexing
+
+getindex(x::AbstractSurplusResult, ::Colon) =
+    getindex.(x, x.timestamps)
+
+getindex(x::AbstractSurplusResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, x.regions, t)
+
+getindex(x::AbstractSurplusResult, r::AbstractString, ::Colon) =
+    getindex.(x, r, x.timestamps)
+
+getindex(x::AbstractSurplusResult, ::Colon, ::Colon) =
+    getindex.(x, x.regions, permutedims(x.timestamps))
+
 # Sample-averaged surplus data
 
-struct Surplus <: ResultSpec end
-
-struct SurplusResult{N,L,T<:Period,P<:PowerUnit} <: Result{N,L,T}
+struct SurplusResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     regions::Vector{String}
@@ -30,7 +45,7 @@ end
 
 struct SurplusSamples <: ResultSpec end
 
-struct SurplusSamplesResult{N,L,T<:Period,P<:PowerUnit} <: Result{N,L,T}
+struct SurplusSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
 
     regions::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
