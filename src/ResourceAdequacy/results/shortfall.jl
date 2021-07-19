@@ -1,8 +1,40 @@
+struct Shortfall <: ResultSpec end
+abstract type AbstractShortfallResult{N,L,T} <: Result{N,L,T} end
+
+# Colon indexing
+
+getindex(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    getindex.(x, x.regions, t)
+
+getindex(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    getindex.(x, r, x.timestamps)
+
+getindex(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    getindex.(x, x.regions, permutedims(x.timestamps))
+
+
+LOLE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    LOLE.(x, x.regions, t)
+
+LOLE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    LOLE.(x, r, x.timestamps)
+
+LOLE(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    LOLE.(x, x.regions, permutedims(x.timestamps))
+
+
+EUE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
+    EUE.(x, x.regions, t)
+
+EUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    EUE.(x, r, x.timestamps)
+
+EUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    EUE.(x, x.regions, permutedims(x.timestamps))
+
 # Sample-averaged shortfall data
 
-struct Shortfall <: ResultSpec end
-
-struct ShortfallResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
+struct ShortfallResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractShortfallResult{N,L,T}
 
     nsamples::Union{Int,Nothing}
     regions::Vector{String}
@@ -27,7 +59,6 @@ struct ShortfallResult{N,L,T<:Period,E<:EnergyUnit} <: Result{N,L,T}
     shortfall_region_std::Vector{Float64}
     shortfall_period_std::Vector{Float64}
     shortfall_regionperiod_std::Matrix{Float64}
-
 
     function ShortfallResult{N,L,T,E}(
         nsamples::Union{Int,Nothing},
@@ -142,12 +173,11 @@ EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
 EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
 
-
 # Full shortfall data 
 
 struct ShortfallSamples <: ResultSpec end
 
-struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: Result{N,L,T}
+struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractShortfallResult{N,L,T}
 
     regions::Vector{String}
     timestamps::StepRange{ZonedDateTime,T}
@@ -187,6 +217,7 @@ function getindex(
     p2e = conversionfactor(L, T, P, E)
     return vec(p2e * x.shortfall[i_r, i_t, :])
 end
+
 
 function LOLE(x::ShortfallSamplesResult{N,L,T}) where {N,L,T}
     eventperiods = sum(sum(x.shortfall, dims=1) .> 0, dims=2)
