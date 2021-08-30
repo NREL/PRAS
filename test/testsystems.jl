@@ -155,6 +155,53 @@ threenode_lolps_copperplate = [.14707, .40951, .21268, .40951]
 threenode_eue_copperplate = 11.73276
 threenode_eues_copperplate = [1.75783, 3.13343, 2.47954, 4.36196]
 
+# Test System 1 (2 Gens, 2 Regions)
+
+regions = Regions{1, MW}(
+    ["Region A", "Region B"], reshape([8, 9], 2, 1))
+
+gens = Generators{1,1,Hour,MW}(
+    ["Gen 1", "Gen 2"], ["Generators", "Generators"],
+    fill(15, 2, 1), fill(0.1, 2, 1), fill(0.9, 2, 1))
+
+emptystors = Storages{1,1,Hour,MW,MWh}((String[] for _ in 1:2)...,
+                  (zeros(Int, 0, 1) for _ in 1:3)...,
+                  (zeros(Float64, 0, 1) for _ in 1:5)...)
+
+emptygenstors = GeneratorStorages{1,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 1) for _ in 1:3)..., (zeros(Float64, 0, 1) for _ in 1:3)...,
+    (zeros(Int, 0, 1) for _ in 1:3)..., (zeros(Float64, 0, 1) for _ in 1:2)...)
+
+interfaces = Interfaces{1,MW}([1], [2], fill(8, 1, 1), fill(8, 1, 1))
+
+lines = Lines{1,1,Hour,MW}(
+    ["Line 1"], ["Lines"],
+    fill(8, 1, 1), fill(8, 1, 1), fill(0.1, 1, 1), fill(0.9, 1, 1)
+)
+
+zdt = ZonedDateTime(2020,1,1,0, tz"UTC")
+test1 = SystemModel(regions, interfaces,
+    gens, [1:1, 2:2], emptystors, fill(1:0, 2), emptygenstors, fill(1:0, 2),
+    lines, [1:1], zdt:Hour(1):zdt
+)
+
+test1_lole = .19
+test1_loles = [.1, .1]
+
+test1_eue = .647
+test1_eues = [.314, .333]
+
+test1_esurplus = 10.647
+test1_esurpluses = [5.733, 4.914]
+
+test1_i1_flow = 0.081
+test1_i1_util = 0.231625
+
+# TODO: Test System 2 (Gen + stor)
+
+# TODO: Test System 3 (Two region gen + stor)
+
 end
 
 import .TestSystems

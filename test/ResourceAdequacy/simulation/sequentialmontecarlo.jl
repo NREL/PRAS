@@ -46,6 +46,8 @@
     shortfall2_3, _, flow2_3, util2_3, _ =
         assess(TestSystems.threenode, simspec, resultspecs...)
 
+
+
     @testset "Shortfall Results" begin
 
         # Single-region system A
@@ -252,6 +254,102 @@
                StorageAvailability(), GeneratorStorageAvailability(),
                StorageEnergy(), GeneratorStorageEnergy(),
                StorageEnergySamples(), GeneratorStorageEnergySamples())
+
+    end
+
+    @testset "Test System 1: 2 Gens, 2 Regions" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=111)
+        dt = first(TestSystems.test1.timestamps)
+        regions = TestSystems.test1.regions.names
+
+        shortfall, surplus, flow, utilization =
+            assess(TestSystems.test1, simspec,
+                   Shortfall(), Surplus(), Flow(), Utilization())
+
+        # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall), TestSystems.test1_lole, nstderr_tol)
+        @test withinrange(LOLE(shortfall, dt), TestSystems.test1_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, regions),
+                               TestSystems.test1_loles, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, regions, dt),
+                               TestSystems.test1_loles, nstderr_tol))
+        # Shortfall - EUE
+        @test withinrange(EUE(shortfall), TestSystems.test1_eue, nstderr_tol)
+        @test withinrange(EUE(shortfall, dt), TestSystems.test1_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, regions),
+                               TestSystems.test1_eues, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, regions, dt),
+                               TestSystems.test1_eues, nstderr_tol))
+        # Surplus
+        @test withinrange(surplus[dt], TestSystems.test1_esurplus,
+                          simspec.nsamples, nstderr_tol)
+        @test all(withinrange.(getindex.(surplus, regions, dt),
+                               TestSystems.test1_esurpluses,
+                               simspec.nsamples, nstderr_tol))
+
+        # Flow
+        @test withinrange(flow["Region A" => "Region B"],
+                          TestSystems.test1_i1_flow,
+                          simspec.nsamples, nstderr_tol)
+        @test withinrange(flow["Region A" => "Region B", dt],
+                          TestSystems.test1_i1_flow,
+                          simspec.nsamples, nstderr_tol)
+
+        # Utilization
+        @test withinrange(utilization["Region A" => "Region B"],
+                          TestSystems.test1_i1_util,
+                          simspec.nsamples, nstderr_tol)
+        @test withinrange(utilization["Region A" => "Region B", dt],
+                          TestSystems.test1_i1_util,
+                          simspec.nsamples, nstderr_tol)
+
+    end
+
+    @testset "Test System 2: Gen + Storage, 1 Region" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        dts = TestSystems.test2.timestamps
+
+        shortfall, surplus, energy =
+            assess(TestSystems.test2, simspec,
+                   Shortfall(), Surplus(), Energy())
+
+        # (T1, T2, Overall)
+
+        # Shortfall - LOLE
+
+        # Shortfall - EUE
+
+        # Surplus
+
+        # Energy
+
+    end
+
+    @testset "Test System 3: Gen + Storage, 2 Regions" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=113)
+        dts = TestSystems.test3.timestamps
+        regions = TestSystems.test3.regions.names
+
+        shortfall, surplus, flow, utilization, energy =
+            assess(TestSystems.test3, simspec,
+                   Shortfall(), Surplus(), Flow(), Utilization(), Energy())
+
+        # (T1, T2, Overall) x (R1, R2, System)
+
+        # Shortfall - LOLE
+
+        # Shortfall - EUE
+
+        # Surplus
+
+        # Flow
+
+        # Utilization
+
+        # Energy
 
     end
 
