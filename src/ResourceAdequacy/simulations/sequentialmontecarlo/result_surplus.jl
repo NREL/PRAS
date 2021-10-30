@@ -48,6 +48,24 @@ function record!(
     for (r, e_idx) in enumerate(problem.region_unused_edges)
 
         regionsurplus = edges[e_idx].flow
+
+        for s in system.region_stor_idxs[r]
+            se_idx = problem.storage_dischargeunused_edges[s]
+            regionsurplus += edges[se_idx].flow
+        end
+
+        for gs in system.region_genstor_idxs[r]
+
+            gse_discharge_idx = problem.genstorage_dischargeunused_edges[gs]
+            gse_inflow_idx = problem.genstorage_inflowunused_edges[gs]
+
+            grid_limit = system.generatorstorages.gridinjection_capacity[gs, t]
+            total_unused = edges[gse_discharge_idx].flow + edges[gse_inflow_idx].flow
+
+            regionsurplus += min(grid_limit, total_unused)
+
+        end
+
         fit!(acc.surplus_regionperiod[r,t], regionsurplus)
         totalsurplus += regionsurplus
 
@@ -116,7 +134,28 @@ function record!(
 ) where {N,L,T,P,E}
 
     for (r, e) in enumerate(problem.region_unused_edges)
-        acc.surplus[r, t, sampleid] = problem.fp.edges[e].flow
+
+        regionsurplus = problem.fp.edges[e].flow
+
+        for s in system.region_stor_idxs[r]
+            se_idx = problem.storage_dischargeunused_edges[s]
+            regionsurplus += edges[se_idx].flow
+        end
+
+        for gs in system.region_genstor_idxs[r]
+
+            gse_discharge_idx = problem.genstorage_dischargeunused_edges[gs]
+            gse_inflow_idx = problem.genstorage_inflowunused_edges[gs]
+
+            grid_limit = system.generatorstorages.gridinjection_capacity[gs, t]
+            total_unused = edges[gse_discharge_idx].flow + edges[gse_inflow_idx].flow
+
+            regionsurplus += min(grid_limit, total_unused)
+
+        end
+
+        acc.surplus[r, t, sampleid] = regionsurplus
+
     end
 
     return
