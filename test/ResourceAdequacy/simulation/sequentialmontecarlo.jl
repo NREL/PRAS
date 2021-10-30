@@ -357,26 +357,65 @@
     @testset "Test System 3: Gen + Storage, 2 Regions" begin
 
         simspec = SequentialMonteCarlo(samples=1_000_000, seed=113)
-        dts = TestSystems.test3.timestamps
         regions = TestSystems.test3.regions.names
+        stor = first(TestSystems.test3.storages.names)
+        dts = TestSystems.test3.timestamps
 
         shortfall, surplus, flow, utilization, energy =
             assess(TestSystems.test3, simspec,
-                   Shortfall(), Surplus(), Flow(), Utilization(), Energy())
-
-        # (T1, T2, Overall) x (R1, R2, System)
+                   Shortfall(), Surplus(), Flow(), Utilization(), StorageEnergy())
 
         # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall),
+                          TestSystems.test3_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, regions),
+                               TestSystems.test3_lole_r, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                               TestSystems.test3_lole_t, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, regions, permutedims(dts)),
+                               TestSystems.test3_lole_rt, nstderr_tol))
 
         # Shortfall - EUE
+        @test withinrange(EUE(shortfall),
+                          TestSystems.test3_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, regions),
+                               TestSystems.test3_eue_r, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestSystems.test3_eue_t, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, regions, permutedims(dts)),
+                               TestSystems.test3_eue_rt, nstderr_tol))
 
         # Surplus
+        @test all(withinrange.(getindex.(surplus, dts), # fails?
+                               TestSystems.test3_esurplus_t,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, regions, permutedims(dts)), # fails?
+                               TestSystems.test3_esurplus_rt,
+                               simspec.nsamples, nstderr_tol))
 
         # Flow
+        @test all(withinrange.(getindex.(flow, "Region A"=>"Region B"),
+                               TestSystems.test3_flow,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(flow, "Region A"=>"Region B", dts),
+                               TestSystems.test3_flow_t,
+                               simspec.nsamples, nstderr_tol))
 
         # Utilization
+        @test all(withinrange.(getindex.(utilization, "Region A"=>"Region B"),
+                               TestSystems.test3_util,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(utilization, "Region A"=>"Region B", dts),
+                               TestSystems.test3_util_t,
+                               simspec.nsamples, nstderr_tol))
 
         # Energy
+        @test all(withinrange.(getindex.(energy, dts), # fails?
+                               TestSystems.test3_eenergy,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(energy, stor, dts), # fails?
+                               TestSystems.test3_eenergy,
+                               simspec.nsamples, nstderr_tol))
 
     end
 

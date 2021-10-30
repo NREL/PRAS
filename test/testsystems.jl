@@ -230,6 +230,43 @@ test2_eenergy = [1.62, 2.2842]
 
 # Test System 3 (Gen + Stor, 2 Regions)
 
+regions = Regions{2, MW}(["Region A", "Region B"], [8 9; 6 7])
+gen = Generators{2,1,Hour,MW}(
+    ["Gen 1"], ["Generators"],
+    fill(25, 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+interfaces = Interfaces{2,MW}([1], [2], fill(15, 1, 2), fill(15, 1, 2))
+line = Lines{2,1,Hour,MW}(
+    ["Line 1"], ["Lines"],
+    fill(15, 1, 2), fill(15, 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2)
+)
+
+test3 = SystemModel(regions, interfaces,
+                    gen, [1:1, 2:1], stor, [1:0, 1:1],
+                    emptygenstors, fill(1:0, 2),
+                    line, [1:1], timestamps)
+
+test3_lole = 0.320951
+test3_lole_r = [0.2, 0.255341]
+test3_lole_t = [0.19, 0.130951]
+test3_lole_rt = [0.1 0.1; 0.19 0.065341]
+
+test3_eue = 3.179289
+test3_eue_t = [1.94, 1.239289]
+test3_eue_r = [1.581902, 1.597387]
+test3_eue_rt = [0.8 0.781902; 1.14 0.457387]
+
+test3_esurplus_t = [3.879, 11.53228]
+test3_esurplus_rt = [3.879 6.618087; 0. 4.914189]
+
+test3_flow = 9.5424075
+test3_flow_t = [11.421, 7.663815]
+
+test3_util = 0.7440337
+test3_util_t = [0.8614, 0.626674]
+
+test3_eenergy = [6.561, 7.682202]
+
 end
 
 import .TestSystems
