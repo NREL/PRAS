@@ -309,21 +309,48 @@
     @testset "Test System 2: Gen + Storage, 1 Region" begin
 
         simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        region = first(TestSystems.test2.regions.names)
+        stor = first(TestSystems.test2.storages.names)
         dts = TestSystems.test2.timestamps
 
         shortfall, surplus, energy =
             assess(TestSystems.test2, simspec,
-                   Shortfall(), Surplus(), Energy())
-
-        # (T1, T2, Overall)
+                   Shortfall(), Surplus(), StorageEnergy())
 
         # Shortfall - LOLE
+        @test withinrange(LOLE(shortfall),
+                          TestSystems.test2_lole, nstderr_tol)
+        @test withinrange(LOLE(shortfall, region),
+                          TestSystems.test2_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                  TestSystems.test2_lolps, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, region, dts),
+                  TestSystems.test2_lolps, nstderr_tol))
 
         # Shortfall - EUE
+        @test withinrange(EUE(shortfall),
+                          TestSystems.test2_eue, nstderr_tol)
+        @test withinrange(EUE(shortfall, region),
+                          TestSystems.test2_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestSystems.test2_eues, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, region, dts),
+                               TestSystems.test2_eues, nstderr_tol))
 
         # Surplus
-
+        @test all(withinrange.(getindex.(surplus, dts),
+                               TestSystems.test2_esurplus,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, region, dts),
+                               TestSystems.test2_esurplus,
+                               simspec.nsamples, nstderr_tol))
         # Energy
+        @test all(withinrange.(getindex.(energy, dts),
+                               TestSystems.test2_eenergy,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(energy, stor, dts),
+                               TestSystems.test2_eenergy,
+                               simspec.nsamples, nstderr_tol))
 
     end
 
