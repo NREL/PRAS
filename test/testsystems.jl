@@ -198,9 +198,37 @@ test1_esurpluses = [5.733, 4.914]
 test1_i1_flow = 0.081
 test1_i1_util = 0.231625
 
-# TODO: Test System 2 (Gen + stor)
+# Test System 2 (Gen + Stor, 1 Region)
 
-# TODO: Test System 3 (Two region gen + stor)
+timestamps = ZonedDateTime(2020,1,1,0, tz"UTC"):Hour(1):ZonedDateTime(2020,1,1,1, tz"UTC")
+
+gen = Generators{2,1,Hour,MW}(
+    ["Gen 1"], ["Generators"],
+    fill(10, 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+stor = Storages{2,1,Hour,MW,MWh}(
+    ["Stor 1"], ["Storages"],
+    fill(10, 1, 2), fill(10, 1, 2), fill(10, 1, 2),
+    fill(1., 1, 2), fill(1., 1, 2), fill(1., 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+emptygenstors = GeneratorStorages{2,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:3)...,
+    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:2)...)
+
+test2 = SystemModel(gen, stor, emptygenstors, timestamps, [8, 9])
+
+test2_lole = 0.2
+test2_lolps = [0.1, 0.1]
+
+test2_eue = 1.5542
+test2_eues = [0.8, 0.7542]
+
+test2_esurplus = [0.18, 1.4022]
+
+test2_eenergy = [1.62, 2.2842]
+
+# Test System 3 (Gen + Stor, 2 Regions)
 
 end
 
