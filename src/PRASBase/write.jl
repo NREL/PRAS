@@ -304,5 +304,15 @@ function string_table!(
 
 end
 
-convertstring(s::AbstractString, strlen::Int) =
-    Vector{Char}.(rpad(ascii(s), strlen, '\0')[1:strlen])
+function convertstring(s::AbstractString, strlen::Int)
+
+    oldstring = ascii(s)
+    newstring = fill('\0', strlen)
+
+    for i in 1:min(strlen, length(s))
+        newstring[i] = oldstring[i]
+    end
+
+    return newstring
+
+end
