@@ -1,7 +1,7 @@
 name = "PRAS"
 uuid = "05348d26-1c52-11e9-35e3-9d51842d34b9"
 authors = ["Gord Stephen <gord.stephen@nrel.gov>"]
-version = "0.6.0"
+version = "0.6.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
