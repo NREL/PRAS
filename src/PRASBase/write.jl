@@ -8,7 +8,7 @@ function savemodel(
     string_length::Int=64, compression_level::Int=1, verbose::Bool=false)
 
     verbose &&
-        @info "The PRAS system being exported is of type $(typeof(pras_system))"
+        @info "The PRAS system being exported is of type $(typeof(sys))"
 
     h5open(outfile, "w") do f::File
 
