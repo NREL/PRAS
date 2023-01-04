@@ -37,7 +37,9 @@ function systemmodel_0_5(f::File)
     P = powerunits[read(metadata["power_unit"])]
     E = energyunits[read(metadata["energy_unit"])]
 
-    timestamps = range(start_timestamp, length=N, step=T(L))
+    timestep = T(L)
+    end_timestamp = start_timestamp + (N-1)*timestep
+    timestamps = StepRange(start_timestamp, timestep, end_timestamp)
 
     has_regions = haskey(f, "regions")
     has_generators = haskey(f, "generators")
