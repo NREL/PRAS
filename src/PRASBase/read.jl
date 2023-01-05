@@ -31,8 +31,8 @@ function systemmodel_0_5(f::File)
     start_timestamp = ZonedDateTime(read(metadata["start_timestamp"]),
                                     dateformat"yyyy-mm-ddTHH:MM:SSz")
 
-    N = read(metadata["timestep_count"])
-    L = read(metadata["timestep_length"])
+    N = Int(read(metadata["timestep_count"]))
+    L = Int(read(metadata["timestep_length"]))
     T = timeunits[read(metadata["timestep_unit"])]
     P = powerunits[read(metadata["power_unit"])]
     E = energyunits[read(metadata["energy_unit"])]
