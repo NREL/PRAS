@@ -2,6 +2,9 @@
 
 mutable struct SMCShortfallAccumulator <: ResultAccumulator{SequentialMonteCarlo,Shortfall}
 
+    regionmapping::Vector{Int}
+    periodmapping::Vector{Int}
+
     # Cross-simulation LOL period count mean/variances
     periodsdropped_total::MeanVariance
     periodsdropped_region::Vector{MeanVariance}
@@ -44,29 +47,34 @@ end
 
 accumulatortype(::SequentialMonteCarlo, ::Shortfall) = SMCShortfallAccumulator
 
-function accumulator(
-    sys::SystemModel{N}, ::SequentialMonteCarlo, ::Shortfall
-) where {N}
+function accumulator(sys::SystemModel, ::SequentialMonteCarlo, sf::Shortfall)
 
-    nregions = length(sys.regions)
+    regionmapping = makemapping(sf.regionmap, sys.regions.names)
+    nregions = maximum(regionmapping)
+
+    periodmapping = makemapping(sf.periodmap, sys.timestamps)
+    nperiods = maximum(periodmapping)
 
     periodsdropped_total = meanvariance()
     periodsdropped_region = [meanvariance() for _ in 1:nregions]
-    periodsdropped_period = [meanvariance() for _ in 1:N]
-    periodsdropped_regionperiod = [meanvariance() for _ in 1:nregions, _ in 1:N]
+    periodsdropped_period = [meanvariance() for _ in 1:nperiods]
+    periodsdropped_regionperiod =
+        [meanvariance() for _ in 1:nregions, _ in 1:nperiods]
 
     periodsdropped_total_currentsim = 0
     periodsdropped_region_currentsim = zeros(Int, nregions)
 
     unservedload_total = meanvariance()
     unservedload_region = [meanvariance() for _ in 1:nregions]
-    unservedload_period = [meanvariance() for _ in 1:N]
-    unservedload_regionperiod = [meanvariance() for _ in 1:nregions, _ in 1:N]
+    unservedload_period = [meanvariance() for _ in 1:nperiods]
+    unservedload_regionperiod =
+        [meanvariance() for _ in 1:nregions, _ in 1:nperiods]
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
 
     return SMCShortfallAccumulator(
+        regionmapping, periodmapping,
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_regionperiod,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,

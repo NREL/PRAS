@@ -8,6 +8,8 @@ include("utilization.jl")
 include("availability.jl")
 include("energy.jl")
 
+include("utils.jl")
+
 function resultchannel(
     method::SimulationSpec, results::T, threads::Int
 ) where T <: Tuple{Vararg{ResultSpec}}
