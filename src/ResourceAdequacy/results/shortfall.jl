@@ -1,4 +1,14 @@
-struct Shortfall <: ResultSpec end
+# TODO: Need to fix power-energy unit conversions since timestep no
+#       longer described by N,L,T,P,E relationships
+
+struct Shortfall{F1,F2} <: ResultSpec
+    regionmap::F1
+    periodmap::F2
+end
+
+Shortfall(;regionmap::Function=identity, periodmap::Function=identity) =
+    Shortfall(regionmap, periodmap)
+
 abstract type AbstractShortfallResult{N,L,T} <: Result{N,L,T} end
 
 # Colon indexing
