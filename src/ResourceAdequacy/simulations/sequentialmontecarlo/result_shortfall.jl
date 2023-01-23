@@ -2,6 +2,7 @@
 
 mutable struct SMCShortfallAccumulator <: ResultAccumulator{SequentialMonteCarlo,Shortfall}
 
+    spec::Shortfall
     regionmapping::Vector{Int}
     periodmapping::Vector{Int}
 
@@ -11,9 +12,10 @@ mutable struct SMCShortfallAccumulator <: ResultAccumulator{SequentialMonteCarlo
     periodsdropped_period::Vector{MeanVariance}
     periodsdropped_regionperiod::Matrix{MeanVariance}
 
-    # Running LOL period counts for current simulation
+    # Running LOL period counts for current simulation/timestep
     periodsdropped_total_currentsim::Int
     periodsdropped_region_currentsim::Vector{Int}
+    dropped_region_currentperiod::Vector{Bool}
 
     # Cross-simulation UE mean/variances
     unservedload_total::MeanVariance
@@ -21,9 +23,10 @@ mutable struct SMCShortfallAccumulator <: ResultAccumulator{SequentialMonteCarlo
     unservedload_period::Vector{MeanVariance}
     unservedload_regionperiod::Matrix{MeanVariance}
 
-    # Running UE totals for current simulation
+    # Running UE totals for current simulation/timestep
     unservedload_total_currentsim::Int
     unservedload_region_currentsim::Vector{Int}
+    unservedload_region_currentperiod::Vector{Int}
 
 end
 
@@ -63,6 +66,7 @@ function accumulator(sys::SystemModel, ::SequentialMonteCarlo, sf::Shortfall)
 
     periodsdropped_total_currentsim = 0
     periodsdropped_region_currentsim = zeros(Int, nregions)
+    dropped_region_currentperiod = zeros(Bool, nregions)
 
     unservedload_total = meanvariance()
     unservedload_region = [meanvariance() for _ in 1:nregions]
@@ -72,15 +76,18 @@ function accumulator(sys::SystemModel, ::SequentialMonteCarlo, sf::Shortfall)
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
+    unservedload_region_currentperiod = zeros(Int, nregions)
 
     return SMCShortfallAccumulator(
-        regionmapping, periodmapping,
+        sf, regionmapping, periodmapping,
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_regionperiod,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
+        dropped_region_currentperiod,
         unservedload_total, unservedload_region,
         unservedload_period, unservedload_regionperiod,
-        unservedload_total_currentsim, unservedload_region_currentsim)
+        unservedload_total_currentsim, unservedload_region_currentsim,
+        unservedload_region_currentperiod)
 
 end
 
@@ -88,41 +95,58 @@ function record!(
     acc::SMCShortfallAccumulator,
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
-    sampleid::Int, t::Int
+    sampleid::Int, t_base::Int
 ) where {N,L,T,P,E}
+
+    t = acc.periodmapping[t_base]
 
     totalshortfall = 0
     isshortfall = false
 
     edges = problem.fp.edges
 
-    for r in problem.region_unserved_edges
+    fill!(acc.dropped_region_currentperiod, false)
+    fill!(acc.unservedload_region_currentperiod, 0)
 
-        regionshortfall = edges[r].flow
+    for r_base in problem.region_unserved_edges
+
+        regionshortfall = edges[r_base].flow
         isregionshortfall = regionshortfall > 0
 
-        fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
-        fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
+        r = acc.regionmapping[r_base]
 
         if isregionshortfall
 
             isshortfall = true
             totalshortfall += regionshortfall
 
-            acc.periodsdropped_region_currentsim[r] += 1
-            acc.unservedload_region_currentsim[r] += regionshortfall
+            acc.dropped_region_currentperiod[r] |= true
+            acc.unservedload_region_currentperiod[r] += regionshortfall
 
         end
 
     end
 
-    if isshortfall
-        acc.periodsdropped_total_currentsim += 1
-        acc.unservedload_total_currentsim += totalshortfall
+    acc.periodsdropped_region_currentsim .+=
+        acc.dropped_region_currentperiod
+
+    acc.unservedload_region_currentsim .+=
+        acc.unservedload_region_currentperiod
+
+    for r in eachindex(acc.dropped_region_currentperiod)
+        fit!(acc.periodsdropped_regionperiod[r,t],
+             acc.dropped_region_currentperiod[r])
+        fit!(acc.unservedload_regionperiod[r,t],
+             acc.unservedload_region_currentperiod[r])
     end
 
     fit!(acc.periodsdropped_period[t], isshortfall)
     fit!(acc.unservedload_period[t], totalshortfall)
+
+    if isshortfall
+        acc.periodsdropped_total_currentsim += 1
+        acc.unservedload_total_currentsim += totalshortfall
+    end
 
     return
 
@@ -169,8 +193,10 @@ function finalize(
     nsamples = first(acc.unservedload_total.stats).n
     p2e = conversionfactor(L,T,P,E)
 
+    mapped_names = unique(acc.spec.regionmap.(system.regions.names))
+
     return ShortfallResult{N,L,T,E}(
-        nsamples, system.regions.names, system.timestamps,
+        nsamples, mapped_names, system.timestamps,
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
