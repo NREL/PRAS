@@ -82,7 +82,7 @@ function process_regions!(
 
     string_table!(regions, "_core", regions_core_colnames, regions_core, strlen)
 
-    regions["load", compress = compression] = sys.regions.load
+    regions["load", deflate = compression] = sys.regions.load
 
     return
 
@@ -103,11 +103,11 @@ function process_generators!(
 
     string_table!(generators, "_core", gens_core_colnames, gens_core, strlen)
 
-    generators["capacity", compress = compression] = sys.generators.capacity
+    generators["capacity", deflate = compression] = sys.generators.capacity
 
-    generators["failureprobability", compress = compression] = sys.generators.λ
+    generators["failureprobability", deflate = compression] = sys.generators.λ
 
-    generators["repairprobability", compress = compression] = sys.generators.μ
+    generators["repairprobability", deflate = compression] = sys.generators.μ
 
     return
 
@@ -128,27 +128,27 @@ function process_storages!(
 
     string_table!(storages, "_core", stors_core_colnames, stors_core, strlen)
 
-    storages["chargecapacity", compress = compression] =
+    storages["chargecapacity", deflate = compression] =
         sys.storages.charge_capacity
 
-    storages["dischargecapacity", compress = compression] =
+    storages["dischargecapacity", deflate = compression] =
         sys.storages.discharge_capacity
 
-    storages["energycapacity", compress = compression] =
+    storages["energycapacity", deflate = compression] =
         sys.storages.energy_capacity
 
-    storages["chargeefficiency", compress = compression] =
+    storages["chargeefficiency", deflate = compression] =
         sys.storages.charge_efficiency
 
-    storages["dischargeefficiency", compress = compression] =
+    storages["dischargeefficiency", deflate = compression] =
         sys.storages.discharge_efficiency
 
-    storages["carryoverefficiency", compress = compression] =
+    storages["carryoverefficiency", deflate = compression] =
          sys.storages.carryover_efficiency
 
-    storages["failureprobability", compress = compression] = sys.storages.λ
+    storages["failureprobability", deflate = compression] = sys.storages.λ
 
-    storages["repairprobability", compress = compression] = sys.storages.μ
+    storages["repairprobability", deflate = compression] = sys.storages.μ
 
     return
 
@@ -170,37 +170,37 @@ function process_generatorstorages!(
     string_table!(generatorstorages, "_core",
                   genstors_core_colnames, genstors_core, strlen)
 
-    generatorstorages["inflow", compress = compression] =
+    generatorstorages["inflow", deflate = compression] =
         sys.generatorstorages.inflow
 
-    generatorstorages["gridwithdrawalcapacity", compress = compression] =
+    generatorstorages["gridwithdrawalcapacity", deflate = compression] =
         sys.generatorstorages.gridwithdrawal_capacity
 
-    generatorstorages["gridinjectioncapacity", compress = compression] =
+    generatorstorages["gridinjectioncapacity", deflate = compression] =
         sys.generatorstorages.gridinjection_capacity
 
-    generatorstorages["chargecapacity", compress = compression] =
+    generatorstorages["chargecapacity", deflate = compression] =
         sys.generatorstorages.charge_capacity
 
-    generatorstorages["dischargecapacity", compress = compression] =
+    generatorstorages["dischargecapacity", deflate = compression] =
         sys.generatorstorages.discharge_capacity
 
-    generatorstorages["energycapacity", compress = compression] =
+    generatorstorages["energycapacity", deflate = compression] =
         sys.generatorstorages.energy_capacity
 
-    generatorstorages["chargeefficiency", compress = compression] =
+    generatorstorages["chargeefficiency", deflate = compression] =
         sys.generatorstorages.charge_efficiency
 
-    generatorstorages["dischargeefficiency", compress = compression] =
+    generatorstorages["dischargeefficiency", deflate = compression] =
         sys.generatorstorages.discharge_efficiency
 
-    generatorstorages["carryoverefficiency", compress = compression] =
+    generatorstorages["carryoverefficiency", deflate = compression] =
         sys.generatorstorages.carryover_efficiency
 
-    generatorstorages["failureprobability", compress = compression] =
+    generatorstorages["failureprobability", deflate = compression] =
         sys.generatorstorages.λ
 
-    generatorstorages["repairprobability", compress = compression] =
+    generatorstorages["repairprobability", deflate = compression] =
         sys.generatorstorages.μ
 
     return
@@ -226,15 +226,15 @@ function process_lines_interfaces!(
 
     string_table!(lines, "_core", lines_core_colnames, lines_core, strlen)
 
-    lines["forwardcapacity", compress = compression] =
+    lines["forwardcapacity", deflate = compression] =
         sys.lines.forward_capacity
 
-    lines["backwardcapacity", compress = compression] =
+    lines["backwardcapacity", deflate = compression] =
         sys.lines.backward_capacity
 
-    lines["failureprobability", compress = compression] = sys.lines.λ
+    lines["failureprobability", deflate = compression] = sys.lines.λ
 
-    lines["repairprobability", compress = compression] = sys.lines.μ
+    lines["repairprobability", deflate = compression] = sys.lines.μ
 
 
     interfaces = create_group(f, "interfaces")
@@ -248,10 +248,10 @@ function process_lines_interfaces!(
         getindex.(Ref(sys.regions.names), sys.interfaces.regions_to)
     string_table!(interfaces, "_core", ints_core_colnames, ints_core, strlen)
 
-    interfaces["forwardcapacity", compress = compression] =
+    interfaces["forwardcapacity", deflate = compression] =
         sys.interfaces.limit_forward
 
-    interfaces["backwardcapacity", compress = compression] =
+    interfaces["backwardcapacity", deflate = compression] =
         sys.interfaces.limit_backward
 
     return
