@@ -146,6 +146,60 @@ Base.:(==)(x::T, y::T) where {T <: Storages} =
     x.λ == y.λ &&
     x.μ == y.μ
 
+Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} =
+    S(s.names[idxs], s.categories[idxs],s.charge_capacity[idxs,:],
+      s.discharge_capacity[idxs, :],s.energy_capacity[idxs, :],
+      s.charge_efficiency[idxs, :], s.discharge_efficiency[idxs, :], 
+      s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :])
+
+function Base.vcat(stors::S...) where {N, L, T, P, E, S <: Storages{N,L,T,P,E}}
+
+    n_stors = sum(length(s) for s in stors)
+
+    names = Vector{String}(undef, n_stors)
+    categories = Vector{String}(undef, n_stors)
+
+    charge_capacity = Matrix{Int}(undef, n_stors, N)
+    discharge_capacity = Matrix{Int}(undef, n_stors, N)
+    energy_capacity = Matrix{Int}(undef, n_stors, N) 
+
+    charge_efficiency = Matrix{Float64}(undef, n_stors, N)
+    discharge_efficiency = Matrix{Float64}(undef, n_stors, N)
+    carryover_efficiency = Matrix{Float64}(undef, n_stors, N)
+
+    λ = Matrix{Float64}(undef, n_stors, N)
+    μ = Matrix{Float64}(undef, n_stors, N)
+
+    last_idx = 0
+
+    for s in stors
+
+        n = length(s)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = s.names
+        categories[rows] = s.categories
+
+        charge_capacity[rows, :] = s.charge_capacity
+        discharge_capacity[rows, :] = s.discharge_capacity
+        energy_capacity[rows, :] = s.energy_capacity
+
+        charge_efficiency[rows, :] = s.charge_efficiency
+        discharge_efficiency[rows, :] = s.discharge_efficiency
+        carryover_efficiency[rows, :] = s.carryover_efficiency
+
+        λ[rows, :] = s.λ
+        μ[rows, :] = s.μ
+
+        last_idx += n
+
+    end
+
+    return Storages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
+                               carryover_efficiency, λ, μ)
+
+end
+
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -236,6 +290,70 @@ Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
     x.λ == y.λ &&
     x.μ == y.μ
 
+Base.getindex(g_s::G_S, idxs::AbstractVector{Int}) where {G_S <: GeneratorStorages} =
+    G_S(g_s.names[idxs], g_s.categories[idxs], g_s.charge_capacity[idxs,:],
+        g_s.discharge_capacity[idxs, :], g_s.energy_capacity[idxs, :],
+        g_s.charge_efficiency[idxs, :], g_s.discharge_efficiency[idxs, :], 
+        g_s.carryover_efficiency[idxs, :],g_s.inflow[idxs, :],
+        g_s.gridwithdrawal_capacity[idxs, :],g_s.gridinjection_capacity[idxs, :],
+        g_s.λ[idxs, :], g_s.μ[idxs, :])
+
+function Base.vcat(gen_stors::G_S...) where {N, L, T, P, E, G_S <: GeneratorStorages{N,L,T,P,E}}
+
+    n_gen_stors = sum(length(g_s) for g_s in gen_stors)
+
+    names = Vector{String}(undef, n_gen_stors)
+    categories = Vector{String}(undef, n_gen_stors)
+
+    charge_capacity = Matrix{Int}(undef, n_gen_stors, N)
+    discharge_capacity = Matrix{Int}(undef, n_gen_stors, N)
+    energy_capacity = Matrix{Int}(undef, n_gen_stors, N) 
+
+    charge_efficiency = Matrix{Float64}(undef, n_gen_stors, N)
+    discharge_efficiency = Matrix{Float64}(undef, n_gen_stors, N)
+    carryover_efficiency = Matrix{Float64}(undef, n_gen_stors, N)
+
+    inflow = Matrix{Int}(undef, n_gen_stors, N)
+    gridwithdrawal_capacity = Matrix{Int}(undef, n_gen_stors, N)
+    gridinjection_capacity = Matrix{Int}(undef, n_gen_stors, N)
+
+    λ = Matrix{Float64}(undef, n_gen_stors, N)
+    μ = Matrix{Float64}(undef, n_gen_stors, N)
+
+    last_idx = 0
+
+    for g_s in gen_stors
+
+        n = length(g_s)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = g_s.names
+        categories[rows] = g_s.categories
+
+        charge_capacity[rows, :] = g_s.charge_capacity
+        discharge_capacity[rows, :] = g_s.discharge_capacity
+        energy_capacity[rows, :] = g_s.energy_capacity
+
+        charge_efficiency[rows, :] = g_s.charge_efficiency
+        discharge_efficiency[rows, :] = g_s.discharge_efficiency
+        carryover_efficiency[rows, :] = g_s.carryover_efficiency
+
+        inflow[rows, :] = g_s.inflow
+        gridwithdrawal_capacity[rows, :] = g_s.gridwithdrawal_capacity
+        gridinjection_capacity[rows, :] = g_s.gridinjection_capacity
+
+        λ[rows, :] = g_s.λ
+        μ[rows, :] = g_s.μ
+
+        last_idx += n
+
+    end
+
+    return GeneratorStorages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
+                               carryover_efficiency,inflow, gridwithdrawal_capacity, gridinjection_capacity, λ, μ)
+
+end
+
 struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -280,3 +398,44 @@ Base.:(==)(x::T, y::T) where {T <: Lines} =
     x.backward_capacity == y.backward_capacity &&
     x.λ == y.λ &&
     x.μ == y.μ
+
+Base.getindex(lines::LINE, idxs::AbstractVector{Int}) where {LINE <: Lines} =
+    LINE(lines.names[idxs], lines.categories[idxs],lines.forward_capacity[idxs,:],
+      lines.backward_capacity[idxs, :],lines.λ[idxs, :], lines.μ[idxs, :])
+
+function Base.vcat(lines::LINE...) where {N, L, T, P, LINE <: Lines{N,L,T,P}}
+
+    n_lines = sum(length(line) for line in lines)
+
+    names = Vector{String}(undef, n_lines)
+    categories = Vector{String}(undef, n_lines)
+
+    forward_capacity = Matrix{Int}(undef, n_lines, N)
+    backward_capacity = Matrix{Int}(undef, n_lines, N)
+    
+    λ = Matrix{Float64}(undef,n_lines, N)
+    μ = Matrix{Float64}(undef,n_lines, N)
+
+    last_idx = 0
+
+    for line in lines
+
+        n = length(line)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = line.names
+        categories[rows] = line.categories
+
+        forward_capacity[rows, :] = line.forward_capacity
+        backward_capacity[rows, :] = line.backward_capacity
+
+        λ[rows, :] = line.λ
+        μ[rows, :] = line.μ
+
+        last_idx += n
+
+    end
+
+    return Lines{N,L,T,P}(names, categories, forward_capacity, backward_capacity, λ, μ)
+
+end
