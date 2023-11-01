@@ -33,6 +33,11 @@ function assess(
     @spawn makeseeds(sampleseeds, method.nsamples)
 
     if method.threaded
+
+        if (threads == 1)
+            @warn "It looks like you haven't configured JULIA_NUM_THREADS before you started the julia repl. \n If you want to use multi-threading, stop the execution and start your julia repl using : \n julia --project --threads auto"
+        end
+        
         for _ in 1:threads
             @spawn assess(system, method, sampleseeds, results, resultspecs...)
         end
