@@ -45,7 +45,7 @@ Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
     G(g.names[idxs], g.categories[idxs],
       g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
 
-function Base.vcat(gs::G...) where {N, L, T, P, G <: Generators{N,L,T,P}}
+function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
 
     n_gens = sum(length(g) for g in gs)
 
@@ -152,7 +152,7 @@ Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} =
       s.charge_efficiency[idxs, :], s.discharge_efficiency[idxs, :], 
       s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :])
 
-function Base.vcat(stors::S...) where {N, L, T, P, E, S <: Storages{N,L,T,P,E}}
+function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
     n_stors = sum(length(s) for s in stors)
 
@@ -290,15 +290,15 @@ Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
     x.λ == y.λ &&
     x.μ == y.μ
 
-Base.getindex(g_s::G_S, idxs::AbstractVector{Int}) where {G_S <: GeneratorStorages} =
-    G_S(g_s.names[idxs], g_s.categories[idxs], g_s.charge_capacity[idxs,:],
-        g_s.discharge_capacity[idxs, :], g_s.energy_capacity[idxs, :],
-        g_s.charge_efficiency[idxs, :], g_s.discharge_efficiency[idxs, :], 
-        g_s.carryover_efficiency[idxs, :],g_s.inflow[idxs, :],
-        g_s.gridwithdrawal_capacity[idxs, :],g_s.gridinjection_capacity[idxs, :],
-        g_s.λ[idxs, :], g_s.μ[idxs, :])
+Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} =
+    G(g_s.names[idxs], g_s.categories[idxs], g_s.charge_capacity[idxs,:],
+      g_s.discharge_capacity[idxs, :], g_s.energy_capacity[idxs, :],
+      g_s.charge_efficiency[idxs, :], g_s.discharge_efficiency[idxs, :], 
+      g_s.carryover_efficiency[idxs, :],g_s.inflow[idxs, :],
+      g_s.gridwithdrawal_capacity[idxs, :],g_s.gridinjection_capacity[idxs, :],
+      g_s.λ[idxs, :], g_s.μ[idxs, :])
 
-function Base.vcat(gen_stors::G_S...) where {N, L, T, P, E, G_S <: GeneratorStorages{N,L,T,P,E}}
+function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P, E}
 
     n_gen_stors = sum(length(g_s) for g_s in gen_stors)
 
@@ -399,11 +399,11 @@ Base.:(==)(x::T, y::T) where {T <: Lines} =
     x.λ == y.λ &&
     x.μ == y.μ
 
-Base.getindex(lines::LINE, idxs::AbstractVector{Int}) where {LINE <: Lines} =
-    LINE(lines.names[idxs], lines.categories[idxs],lines.forward_capacity[idxs,:],
+Base.getindex(lines::L, idxs::AbstractVector{Int}) where {L <: Lines} =
+    L(lines.names[idxs], lines.categories[idxs],lines.forward_capacity[idxs,:],
       lines.backward_capacity[idxs, :],lines.λ[idxs, :], lines.μ[idxs, :])
 
-function Base.vcat(lines::LINE...) where {N, L, T, P, LINE <: Lines{N,L,T,P}}
+function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
 
     n_lines = sum(length(line) for line in lines)
 
