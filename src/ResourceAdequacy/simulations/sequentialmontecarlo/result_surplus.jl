@@ -133,9 +133,11 @@ function record!(
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
+    edges = problem.fp.edges
+
     for (r, e) in enumerate(problem.region_unused_edges)
 
-        regionsurplus = problem.fp.edges[e].flow
+        regionsurplus = edges[e].flow
 
         for s in system.region_stor_idxs[r]
             se_idx = problem.storage_dischargeunused_edges[s]
