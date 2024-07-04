@@ -59,11 +59,11 @@ end
 
 # No time zone constructor
 function SystemModel(
-    regions, interfaces,
-    generators, region_gen_idxs,
-    storages, region_stor_idxs,
-    generatorstorages, region_genstor_idxs,
-    lines, interface_line_idxs,
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+    lines, interface_line_idxs::Vector{UnitRange{Int}},
     timestamps::StepRange{DateTime,T}
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
