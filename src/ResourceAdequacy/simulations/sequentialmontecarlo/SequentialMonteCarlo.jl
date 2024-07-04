@@ -64,7 +64,7 @@ function assess(
     sampleseeds::Channel{Int},
     results::Channel{<:Tuple{Vararg{ResultAccumulator{SequentialMonteCarlo}}}},
     resultspecs::ResultSpec...
-) where {R<:ResultSpec, N}
+) where N
 
     dispatchproblem = DispatchProblem(system)
     systemstate = SystemState(system)

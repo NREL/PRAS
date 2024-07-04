@@ -13,9 +13,6 @@ withinrange(x::ReliabilityMetric, y::Real, n::Real) =
 withinrange(x::Tuple{<:Real, <:Real}, y::Real, nsamples::Int, n::Real) =
     isapprox(first(x), y, atol=n*last(x)/sqrt(nsamples))
 
-Base.isapprox(x::DiscreteNonParametric, y::DiscreteNonParametric) =
-    isapprox(support(x), support(y)) && isapprox(probs(x), probs(y))
-
 Base.isapprox(x::T, y::T) where {T <: Tuple} = all(isapprox.(x, y))
 
 Base.isapprox(x::T, y::T) where {T <: ReliabilityMetric} =
