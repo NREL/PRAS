@@ -28,3 +28,6 @@ function makeidxlist(collectionidxs::Vector{Int}, n_collections::Int)
     return idxlist
 
 end
+
+isnonnegative(x::Real) = x >= 0
+isfractional(x::Real) = 0 <= x <= 1
