@@ -76,9 +76,9 @@ function systemmodel_0_5(f::File)
 
         generators = Generators{N,L,T,P}(
             gen_names[region_order], gen_categories[region_order],
-            Int.(read(f["generators/capacity"]))[region_order, :],
-            read(f["generators/failureprobability"])[region_order, :],
-            read(f["generators/repairprobability"])[region_order, :]
+            load_matrix(f["generators/capacity"], region_order, Int),
+            load_matrix(f["generators/failureprobability"], region_order, Float64),
+            load_matrix(f["generators/repairprobability"], region_order, Float64)
         )
 
         region_gen_idxs = makeidxlist(gen_regions[region_order], n_regions)
@@ -104,14 +104,14 @@ function systemmodel_0_5(f::File)
 
         storages = Storages{N,L,T,P,E}(
             stor_names[region_order], stor_categories[region_order],
-            Int.(read(f["storages/chargecapacity"]))[region_order, :],
-            Int.(read(f["storages/dischargecapacity"]))[region_order, :],
-            Int.(read(f["storages/energycapacity"]))[region_order, :],
-            read(f["storages/chargeefficiency"])[region_order, :],
-            read(f["storages/dischargeefficiency"])[region_order, :],
-            read(f["storages/carryoverefficiency"])[region_order, :],
-            read(f["storages/failureprobability"])[region_order, :],
-            read(f["storages/repairprobability"])[region_order, :]
+            load_matrix(f["storages/chargecapacity"], region_order, Int),
+            load_matrix(f["storages/dischargecapacity"], region_order, Int),
+            load_matrix(f["storages/energycapacity"], region_order, Int),
+            load_matrix(f["storages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["storages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["storages/failureprobability"], region_order, Float64),
+            load_matrix(f["storages/repairprobability"], region_order, Float64)
         )
 
         region_stor_idxs = makeidxlist(stor_regions[region_order], n_regions)
@@ -140,17 +140,18 @@ function systemmodel_0_5(f::File)
 
         generatorstorages = GeneratorStorages{N,L,T,P,E}(
             genstor_names[region_order], genstor_categories[region_order],
-            Int.(read(f["generatorstorages/chargecapacity"]))[region_order, :],
-            Int.(read(f["generatorstorages/dischargecapacity"]))[region_order, :],
-            Int.(read(f["generatorstorages/energycapacity"]))[region_order, :],
-            read(f["generatorstorages/chargeefficiency"])[region_order, :],
-            read(f["generatorstorages/dischargeefficiency"])[region_order, :],
-            read(f["generatorstorages/carryoverefficiency"])[region_order, :],
-            Int.(read(f["generatorstorages/inflow"]))[region_order, :],
-            Int.(read(f["generatorstorages/gridwithdrawalcapacity"]))[region_order, :],
-            Int.(read(f["generatorstorages/gridinjectioncapacity"]))[region_order, :],
-            read(f["generatorstorages/failureprobability"])[region_order, :],
-            read(f["generatorstorages/repairprobability"])[region_order, :])
+            load_matrix(f["generatorstorages/chargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/dischargecapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/energycapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/chargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/dischargeefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["generatorstorages/inflow"], region_order, Int),
+            load_matrix(f["generatorstorages/gridwithdrawalcapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/gridinjectioncapacity"], region_order, Int),
+            load_matrix(f["generatorstorages/failureprobability"], region_order, Float64),
+            load_matrix(f["generatorstorages/repairprobability"], region_order, Float64)
+        )
 
         region_genstor_idxs = makeidxlist(genstor_regions[region_order], n_regions)
 
@@ -235,8 +236,9 @@ function systemmodel_0_5(f::File)
             line_names[interface_order], line_categories[interface_order],
             line_forwardcapacity[interface_order, :],
             line_backwardcapacity[interface_order, :],
-            read(f["lines/failureprobability"])[interface_order, :],
-            read(f["lines/repairprobability"])[interface_order, :])
+            load_matrix(f["lines/failureprobability"], interface_order, Float64),
+            load_matrix(f["lines/repairprobability"], interface_order, Float64)
+        )
 
         interface_line_idxs = makeidxlist(line_interfaces[interface_order], n_interfaces)
 

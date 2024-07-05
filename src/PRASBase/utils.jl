@@ -31,3 +31,26 @@ end
 
 isnonnegative(x::Real) = x >= 0
 isfractional(x::Real) = 0 <= x <= 1
+
+function load_matrix(data::HDF5.Dataset, roworder::Vector{Int}, T::DataType)
+
+    result = read(data)
+
+    if roworder != 1:size(result, 1)
+        @warn("HDF5 data is ordered differently from in-memory requirements. " *
+              "Data will be reordered, but this may temporarily " *
+              "consume large amounts of memory.")
+        # TODO: More memory-efficient approaches are possible
+        result = result[roworder, :]
+    end
+
+    if eltype(result) != T
+        @warn("HDF5 data is typed differently from in-memory requirements. " *
+              "Data conversion will be attempted, but this may temporarily " *
+              "consume large amounts of memory.")
+        result = T.(result)
+    end
+
+    return result
+
+end
