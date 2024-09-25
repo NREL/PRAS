@@ -247,7 +247,7 @@
 
     @testset "RTS" begin
 
-        sys = SystemModel(dirname(@__FILE__) * "/../../PRASBase/rts.pras")
+        sys = PRAS.rts_gmlc()
 
         assess(sys, SequentialMonteCarlo(samples=100),
                GeneratorAvailability(), LineAvailability(),

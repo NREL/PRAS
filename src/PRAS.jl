@@ -8,4 +8,6 @@ include("PRASBase/PRASBase.jl")
 include("ResourceAdequacy/ResourceAdequacy.jl")
 include("CapacityCredit/CapacityCredit.jl")
 
+import .PRASBase: rts_gmlc,toymodel
+
 end
