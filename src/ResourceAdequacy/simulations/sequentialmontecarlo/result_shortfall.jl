@@ -159,15 +159,21 @@ function finalize(
         mean_std(acc.unservedload_regionperiod)
 
     nsamples = first(acc.unservedload_total.stats).n
+
     p2e = conversionfactor(L,T,P,E)
+    ue_regionperiod_mean .*= p2e
+    ue_total_std *= p2e
+    ue_region_std .*= p2e
+    ue_period_std .*= p2e
+    ue_regionperiod_std .*= p2e
 
     return ShortfallResult{N,L,T,E}(
         nsamples, system.regions.names, system.timestamps,
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,
-        p2e*ue_regionperiod_mean, p2e*ue_total_std,
-        p2e*ue_region_std, p2e*ue_period_std, p2e*ue_regionperiod_std)
+        ue_regionperiod_mean, ue_total_std,
+        ue_region_std, ue_period_std, ue_regionperiod_std)
 
 end
 

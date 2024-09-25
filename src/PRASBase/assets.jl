@@ -21,12 +21,12 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert allunique(names)
 
         @assert size(capacity) == (n_gens, N)
-        @assert all(capacity .>= 0) # Why not just use unsigned integers?
+        @assert all(isnonnegative, capacity) # Why not just use unsigned integers?
 
         @assert size(λ) == (n_gens, N)
         @assert size(μ) == (n_gens, N)
-        @assert all(0 .<= λ .<= 1)
-        @assert all(0 .<= μ .<= 1)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
 
         new{N,L,T,P}(string.(names), string.(categories), capacity, λ, μ)
 
@@ -109,21 +109,21 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert size(chargecapacity) == (n_stors, N)
         @assert size(dischargecapacity) == (n_stors, N)
         @assert size(energycapacity) == (n_stors, N)
-        @assert all(chargecapacity .>= 0)
-        @assert all(dischargecapacity .>= 0)
-        @assert all(energycapacity .>= 0)
+        @assert all(isnonnegative, chargecapacity)
+        @assert all(isnonnegative, dischargecapacity)
+        @assert all(isnonnegative, energycapacity)
 
         @assert size(chargeefficiency) == (n_stors, N)
         @assert size(dischargeefficiency) == (n_stors, N)
         @assert size(carryoverefficiency) == (n_stors, N)
-        @assert all(0 .< chargeefficiency .<= 1)
-        @assert all(0 .< dischargeefficiency .<= 1)
-        @assert all(0 .< carryoverefficiency .<= 1)
+        @assert all(isfractional, chargeefficiency)
+        @assert all(isfractional, dischargeefficiency)
+        @assert all(isfractional, carryoverefficiency)
 
         @assert size(λ) == (n_stors, N)
         @assert size(μ) == (n_stors, N)
-        @assert all(0 .<= λ .<= 1)
-        @assert all(0 .<= μ .<= 1)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
 
         new{N,L,T,P,E}(string.(names), string.(categories),
                        chargecapacity, dischargecapacity, energycapacity,
@@ -239,30 +239,30 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert size(discharge_capacity) == (n_stors, N)
         @assert size(energy_capacity) == (n_stors, N)
 
-        @assert all(charge_capacity .>= 0)
-        @assert all(discharge_capacity .>= 0)
-        @assert all(energy_capacity .>= 0)
+        @assert all(isnonnegative, charge_capacity)
+        @assert all(isnonnegative, discharge_capacity)
+        @assert all(isnonnegative, energy_capacity)
 
         @assert size(charge_efficiency) == (n_stors, N)
         @assert size(discharge_efficiency) == (n_stors, N)
         @assert size(carryover_efficiency) == (n_stors, N)
 
-        @assert all(0 .< charge_efficiency .<= 1)
-        @assert all(0 .< discharge_efficiency .<= 1)
-        @assert all(0 .< carryover_efficiency .<= 1)
+        @assert all(isfractional, charge_efficiency)
+        @assert all(isfractional, discharge_efficiency)
+        @assert all(isfractional, carryover_efficiency)
 
         @assert size(inflow) == (n_stors, N)
         @assert size(gridwithdrawal_capacity) == (n_stors, N)
         @assert size(gridinjection_capacity) == (n_stors, N)
 
-        @assert all(inflow .>= 0)
-        @assert all(gridwithdrawal_capacity .>= 0)
-        @assert all(gridinjection_capacity .>= 0)
+        @assert all(isnonnegative, inflow)
+        @assert all(isnonnegative, gridwithdrawal_capacity)
+        @assert all(isnonnegative, gridinjection_capacity)
 
         @assert size(λ) == (n_stors, N)
         @assert size(μ) == (n_stors, N)
-        @assert all(0 .<= λ .<= 1)
-        @assert all(0 .<= μ .<= 1)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
 
         new{N,L,T,P,E}(
             string.(names), string.(categories),
@@ -377,13 +377,13 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
         @assert size(forward_capacity) == (n_lines, N)
         @assert size(backward_capacity) == (n_lines, N)
-        @assert all(forward_capacity .>= 0)
-        @assert all(backward_capacity .>= 0)
+        @assert all(isnonnegative, forward_capacity)
+        @assert all(isnonnegative, backward_capacity)
 
         @assert size(λ) == (n_lines, N)
         @assert size(μ) == (n_lines, N)
-        @assert all(0 .<= λ .<= 1)
-        @assert all(0 .<= μ .<= 1)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
 
         new{N,L,T,P}(string.(names), string.(categories), forward_capacity, backward_capacity, λ, μ)
 
