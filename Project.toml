@@ -18,6 +18,16 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
+[weakdeps]
+PowerSystems = "bcd98974-b02a-5e2f-9ee0-a103f5c450dd"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+InteractiveUtils = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
+CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
+JSON = "682c06a0-de6a-54ab-a142-c8b1cf79cde6"
+
+[extensions]
+PSY2PRAS = ["PowerSystems","DataFrames","InteractiveUtils","CSV","JSON"]
+
 [compat]
 HDF5 = "0.16,0.17"
 julia = "1.6"
