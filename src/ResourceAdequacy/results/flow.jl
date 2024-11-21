@@ -1,3 +1,13 @@
+"""
+    Flow
+
+Flow metric represents the flow between interfaces at timestamps
+in a FlowResult with a (interfaces, timestamps) matrix API.
+
+Separate samples are averaged together into mean and std values.
+
+See [`FlowSamples`](@ref) for all flow samples.
+"""
 struct Flow <: ResultSpec end
 abstract type AbstractFlowResult{N,L,T} <: Result{N,L,T} end
 
@@ -44,7 +54,15 @@ function getindex(x::FlowResult, i::Pair{<:AbstractString,<:AbstractString}, t::
 end
 
 # Full flow data
+"""
+    FlowSamples
 
+Flow samples represent the flow between interfaces at timestamps, which has
+not been averaged across different samples. This presents a
+3D matrix API (interfaces, timestamps, samples).
+
+See [`Flow`](@ref) for sample-averaged flow data.
+"""
 struct FlowSamples <: ResultSpec end
 
 struct FlowSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractFlowResult{N,L,T}
