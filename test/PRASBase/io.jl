@@ -12,5 +12,4 @@
     savemodel(rts, path * "/rts2.pras")
     rts2 = SystemModel(path * "/rts2.pras")
     @test rts == rts2
-
 end

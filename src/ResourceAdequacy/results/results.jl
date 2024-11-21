@@ -9,23 +9,21 @@ include("availability.jl")
 include("energy.jl")
 
 function resultchannel(
-    method::SimulationSpec, results::T, threads::Int
-) where T <: Tuple{Vararg{ResultSpec}}
-
+    method::SimulationSpec,
+    results::T,
+    threads::Int,
+) where {T <: Tuple{Vararg{ResultSpec}}}
     types = accumulatortype.(method, results)
     return Channel{Tuple{types...}}(threads)
-
 end
 
-merge!(xs::T, ys::T) where T <: Tuple{Vararg{ResultAccumulator}} =
-    foreach(merge!, xs, ys)
+merge!(xs::T, ys::T) where {T <: Tuple{Vararg{ResultAccumulator}}} = foreach(merge!, xs, ys)
 
 function finalize(
     results::Channel{<:Tuple{Vararg{ResultAccumulator}}},
-    system::SystemModel{N,L,T,P,E},
-    threads::Int
-) where {N,L,T,P,E}
-
+    system::SystemModel{N, L, T, P, E},
+    threads::Int,
+) where {N, L, T, P, E}
     total_result = take!(results)
 
     for _ in 2:threads
@@ -35,5 +33,4 @@ function finalize(
     close(results)
 
     return finalize.(total_result, system)
-
 end

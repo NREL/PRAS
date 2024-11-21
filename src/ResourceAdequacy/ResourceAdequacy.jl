@@ -16,32 +16,45 @@ import Random123: Philox4x
 import StatsBase: mean, std, stderror
 import TimeZones: ZonedDateTime, @tz_str
 
-export
-
-    assess,
+export assess,
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE,
-    val, stderror,
+    ReliabilityMetric,
+    LOLE,
+    EUE,
+    val,
+    stderror,
 
     # Simulation specifications
-    Convolution, SequentialMonteCarlo,
+    Convolution,
+    SequentialMonteCarlo,
 
     # Result specifications
-    Shortfall, ShortfallSamples, Surplus, SurplusSamples,
-    Flow, FlowSamples, Utilization, UtilizationSamples,
-    StorageEnergy, StorageEnergySamples,
-    GeneratorStorageEnergy, GeneratorStorageEnergySamples,
-    GeneratorAvailability, StorageAvailability,
-    GeneratorStorageAvailability, LineAvailability,
+    Shortfall,
+    ShortfallSamples,
+    Surplus,
+    SurplusSamples,
+    Flow,
+    FlowSamples,
+    Utilization,
+    UtilizationSamples,
+    StorageEnergy,
+    StorageEnergySamples,
+    GeneratorStorageEnergy,
+    GeneratorStorageEnergySamples,
+    GeneratorAvailability,
+    StorageAvailability,
+    GeneratorStorageAvailability,
+    LineAvailability,
 
     # Convenience re-exports
-    ZonedDateTime, @tz_str
+    ZonedDateTime,
+    @tz_str
 
 abstract type ReliabilityMetric end
 abstract type SimulationSpec end
 abstract type ResultSpec end
-abstract type ResultAccumulator{S<:SimulationSpec,R<:ResultSpec} end
+abstract type ResultAccumulator{S <: SimulationSpec, R <: ResultSpec} end
 abstract type Result{
     N, # Number of timesteps simulated
     L, # Length of each simulation timestep
@@ -49,8 +62,9 @@ abstract type Result{
 } end
 
 MeanVariance = Series{
-    Number, Tuple{Mean{Float64, EqualWeight},
-                  Variance{Float64, Float64, EqualWeight}}}
+    Number,
+    Tuple{Mean{Float64, EqualWeight}, Variance{Float64, Float64, EqualWeight}},
+}
 
 include("metrics.jl")
 include("results/results.jl")

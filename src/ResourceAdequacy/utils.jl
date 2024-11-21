@@ -6,7 +6,6 @@ function mean_std(x::MeanVariance)
 end
 
 function mean_std(x::AbstractArray{<:MeanVariance})
-
     means = similar(x, Float64)
     vars = similar(means)
 
@@ -17,7 +16,6 @@ function mean_std(x::AbstractArray{<:MeanVariance})
     end
 
     return means, vars
-
 end
 
 function findfirstunique_directional(a::AbstractVector{<:Pair}, i::Pair)
@@ -31,7 +29,7 @@ function findfirstunique_directional(a::AbstractVector{<:Pair}, i::Pair)
     return i_idx, reverse
 end
 
-function findfirstunique(a::AbstractVector{T}, i::T) where T
+function findfirstunique(a::AbstractVector{T}, i::T) where {T}
     i_idx = findfirst(isequal(i), a)
     i_idx === nothing && throw(BoundsError(a))
     return i_idx

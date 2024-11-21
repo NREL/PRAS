@@ -17,9 +17,7 @@ conversionfactor(::Type{Hour}, ::Type{Hour}) = 1
 conversionfactor(::Type{Hour}, ::Type{Day}) = 1 / 24
 conversionfactor(::Type{Day}, ::Type{Hour}) = 24
 
-timeunits = Dict(
-    unitsymbol(T) => T
-    for T in [Minute, Hour, Day, Year])
+timeunits = Dict(unitsymbol(T) => T for T in [Minute, Hour, Day, Year])
 
 # Define power units
 
@@ -49,9 +47,7 @@ conversionfactor(::Type{GW}, ::Type{MW}) = 1000
 conversionfactor(::Type{MW}, ::Type{TW}) = 1 / 1_000_000
 conversionfactor(::Type{TW}, ::Type{MW}) = 1_000_000
 
-powerunits = Dict(
-    unitsymbol(T) => T
-    for T in [kW, MW, GW, TW])
+powerunits = Dict(unitsymbol(T) => T for T in [kW, MW, GW, TW])
 
 # Define energy units
 
@@ -72,12 +68,9 @@ subunits(::Type{MWh}) = (MW, Hour)
 subunits(::Type{GWh}) = (GW, Hour)
 subunits(::Type{TWh}) = (TW, Hour)
 
-energyunits = Dict(
-    unitsymbol(T) => T
-    for T in [kWh, MWh, GWh, TWh])
+energyunits = Dict(unitsymbol(T) => T for T in [kWh, MWh, GWh, TWh])
 
 function conversionfactor(F::Type{<:EnergyUnit}, T::Type{<:EnergyUnit})
-
     from_power, from_time = subunits(F)
     to_power, to_time = subunits(T)
 
@@ -85,11 +78,14 @@ function conversionfactor(F::Type{<:EnergyUnit}, T::Type{<:EnergyUnit})
     timeconversion = conversionfactor(from_time, to_time)
 
     return powerconversion * timeconversion
-
 end
 
 function conversionfactor(
-    L::Int, T::Type{<:Period}, P::Type{<:PowerUnit}, E::Type{<:EnergyUnit})
+    L::Int,
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+    E::Type{<:EnergyUnit},
+)
     to_power, to_time = subunits(E)
     powerconversion = conversionfactor(P, to_power)
     timeconversion = conversionfactor(T, to_time)
@@ -97,7 +93,11 @@ function conversionfactor(
 end
 
 function conversionfactor(
-    L::Int, T::Type{<:Period}, E::Type{<:EnergyUnit}, P::Type{<:PowerUnit})
+    L::Int,
+    T::Type{<:Period},
+    E::Type{<:EnergyUnit},
+    P::Type{<:PowerUnit},
+)
     from_power, from_time = subunits(E)
     powerconversion = conversionfactor(from_power, P)
     timeconversion = conversionfactor(from_time, T)
@@ -105,12 +105,17 @@ function conversionfactor(
 end
 
 powertoenergy(
-    p::Real, P::Type{<:PowerUnit},
-    L::Real, T::Type{<:Period},
-    E::Type{<:EnergyUnit}) = p*conversionfactor(L, T, P, E)
+    p::Real,
+    P::Type{<:PowerUnit},
+    L::Real,
+    T::Type{<:Period},
+    E::Type{<:EnergyUnit},
+) = p * conversionfactor(L, T, P, E)
 
 energytopower(
-    e::Real, E::Type{<:EnergyUnit},
-    L::Real, T::Type{<:Period},
-    P::Type{<:PowerUnit}) = e*conversionfactor(L, T, E, P)
-
+    e::Real,
+    E::Type{<:EnergyUnit},
+    L::Real,
+    T::Type{<:Period},
+    P::Type{<:PowerUnit},
+) = e * conversionfactor(L, T, E, P)

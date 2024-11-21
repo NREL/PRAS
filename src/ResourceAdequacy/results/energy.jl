@@ -1,15 +1,12 @@
-abstract type AbstractEnergyResult{N,L,T} <: Result{N,L,T} end
+abstract type AbstractEnergyResult{N, L, T} <: Result{N, L, T} end
 
 # Colon indexing
 
-getindex(x::AbstractEnergyResult, ::Colon) =
-    getindex.(x, x.timestamps)
+getindex(x::AbstractEnergyResult, ::Colon) = getindex.(x, x.timestamps)
 
-getindex(x::AbstractEnergyResult, ::Colon, t::ZonedDateTime) =
-    getindex.(x, names(x), t)
+getindex(x::AbstractEnergyResult, ::Colon, t::ZonedDateTime) = getindex.(x, names(x), t)
 
-getindex(x::AbstractEnergyResult, name::String, ::Colon) =
-    getindex.(x, name, x.timestamps)
+getindex(x::AbstractEnergyResult, name::String, ::Colon) = getindex.(x, name, x.timestamps)
 
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
@@ -18,17 +15,16 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 
 struct StorageEnergy <: ResultSpec end
 
-struct StorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
-
-    nsamples::Union{Int,Nothing}
+struct StorageEnergyResult{N, L, T <: Period, E <: EnergyUnit} <:
+       AbstractEnergyResult{N, L, T}
+    nsamples::Union{Int, Nothing}
     storages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
     energy_mean::Matrix{Float64}
 
     energy_period_std::Vector{Float64}
     energy_regionperiod_std::Matrix{Float64}
-
 end
 
 names(x::StorageEnergyResult) = x.storages
@@ -48,17 +44,16 @@ end
 
 struct GeneratorStorageEnergy <: ResultSpec end
 
-struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
-
-    nsamples::Union{Int,Nothing}
+struct GeneratorStorageEnergyResult{N, L, T <: Period, E <: EnergyUnit} <:
+       AbstractEnergyResult{N, L, T}
+    nsamples::Union{Int, Nothing}
     generatorstorages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
     energy_mean::Matrix{Float64}
 
     energy_period_std::Vector{Float64}
     energy_regionperiod_std::Matrix{Float64}
-
 end
 
 names(x::GeneratorStorageEnergyResult) = x.generatorstorages
@@ -78,13 +73,12 @@ end
 
 struct StorageEnergySamples <: ResultSpec end
 
-struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
-
+struct StorageEnergySamplesResult{N, L, T <: Period, E <: EnergyUnit} <:
+       AbstractEnergyResult{N, L, T}
     storages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    energy::Array{Int,3}
-
+    energy::Array{Int, 3}
 end
 
 names(x::StorageEnergySamplesResult) = x.storages
@@ -104,13 +98,12 @@ end
 
 struct GeneratorStorageEnergySamples <: ResultSpec end
 
-struct GeneratorStorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
-
+struct GeneratorStorageEnergySamplesResult{N, L, T <: Period, E <: EnergyUnit} <:
+       AbstractEnergyResult{N, L, T}
     generatorstorages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    energy::Array{Int,3}
-
+    energy::Array{Int, 3}
 end
 
 names(x::GeneratorStorageEnergySamplesResult) = x.generatorstorages
@@ -120,7 +113,11 @@ function getindex(x::GeneratorStorageEnergySamplesResult, t::ZonedDateTime)
     return vec(sum(view(x.energy, :, i_t, :), dims=1))
 end
 
-function getindex(x::GeneratorStorageEnergySamplesResult, gs::AbstractString, t::ZonedDateTime)
+function getindex(
+    x::GeneratorStorageEnergySamplesResult,
+    gs::AbstractString,
+    t::ZonedDateTime,
+)
     i_gs = findfirstunique(x.generatorstorages, gs)
     i_t = findfirstunique(x.timestamps, t)
     return vec(x.energy[i_gs, i_t, :])

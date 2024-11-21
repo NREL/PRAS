@@ -1,5 +1,4 @@
 @testset "Utils" begin
-
     @testset "Convolution" begin
 
         # x = rand(10000)
@@ -11,7 +10,6 @@
     end
 
     @testset "Distribution Assessment" begin
-
         distr = DiscreteNonParametric([-2, -1, 0, 1, 2], fill(0.2, 5))
         lolp, eul = assess(distr)
         es = ResourceAdequacy.surplus(distr)
@@ -27,7 +25,5 @@
         @test isapprox(lolp, 0.0)
         @test isapprox(eul, 0.0)
         @test isapprox(es, 3)
-
     end
-
 end

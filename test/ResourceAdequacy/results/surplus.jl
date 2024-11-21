@@ -1,12 +1,16 @@
 @testset "SurplusResult" begin
-
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.SurplusResult{N,1,Hour,MW}(
-        DD.nsamples, DD.resourcenames, DD.periods,
-        DD.d1_resourceperiod, DD.d2_period, DD.d2_resourceperiod)
+    result = ResourceAdequacy.SurplusResult{N, 1, Hour, MW}(
+        DD.nsamples,
+        DD.resourcenames,
+        DD.periods,
+        DD.d1_resourceperiod,
+        DD.d2_period,
+        DD.d2_resourceperiod,
+    )
 
     # Period-specific
 
@@ -16,22 +20,23 @@
     # Region + period-specific
 
     @test result[r, t] ≈
-              (DD.d1_resourceperiod[r_idx, t_idx], DD.d2_resourceperiod[r_idx, t_idx])
+          (DD.d1_resourceperiod[r_idx, t_idx], DD.d2_resourceperiod[r_idx, t_idx])
 
     @test_throws BoundsError result[r, t_bad]
     @test_throws BoundsError result[r_bad, t]
     @test_throws BoundsError result[r_bad, t_bad]
-
 end
 
 @testset "SurplusSamplesResult" begin
-
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.SurplusSamplesResult{N,1,Hour,MW}(
-        DD.resourcenames, DD.periods, DD.d)
+    result = ResourceAdequacy.SurplusSamplesResult{N, 1, Hour, MW}(
+        DD.resourcenames,
+        DD.periods,
+        DD.d,
+    )
 
     # Period-specific
 
@@ -46,5 +51,4 @@ end
     @test_throws BoundsError result[r, t_bad]
     @test_throws BoundsError result[r_bad, t]
     @test_throws BoundsError result[r_bad, t_bad]
-
 end

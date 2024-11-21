@@ -1,12 +1,16 @@
 @testset "FlowResult" begin
-
     N = DD.nperiods
     i, i_idx, i_bad = DD.testinterface, DD.testinterface_idx, DD.notaninterface
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.FlowResult{N,1,Hour,MW}(
-        DD.nsamples, DD.interfacenames, DD.periods,
-        DD.d1_resourceperiod, DD.d2_resource, DD.d2_resourceperiod)
+    result = ResourceAdequacy.FlowResult{N, 1, Hour, MW}(
+        DD.nsamples,
+        DD.interfacenames,
+        DD.periods,
+        DD.d1_resourceperiod,
+        DD.d2_resource,
+        DD.d2_resourceperiod,
+    )
 
     # Interface-specific
 
@@ -16,22 +20,23 @@
     # Interface + period-specific
 
     @test result[i, t] ≈
-              (DD.d1_resourceperiod[i_idx, t_idx], DD.d2_resourceperiod[i_idx, t_idx])
+          (DD.d1_resourceperiod[i_idx, t_idx], DD.d2_resourceperiod[i_idx, t_idx])
 
     @test_throws BoundsError result[i, t_bad]
     @test_throws BoundsError result[i_bad, t]
     @test_throws BoundsError result[i_bad, t_bad]
-
 end
 
 @testset "FlowSamplesResult" begin
-
     N = DD.nperiods
     i, i_idx, i_bad = DD.testinterface, DD.testinterface_idx, DD.notaninterface
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.FlowSamplesResult{N,1,Hour,MW}(
-        DD.interfacenames, DD.periods, DD.d)
+    result = ResourceAdequacy.FlowSamplesResult{N, 1, Hour, MW}(
+        DD.interfacenames,
+        DD.periods,
+        DD.d,
+    )
 
     # Interface-specific
 
@@ -46,5 +51,4 @@ end
     @test_throws BoundsError result[i, t_bad]
     @test_throws BoundsError result[i_bad, t]
     @test_throws BoundsError result[i_bad, t_bad]
-
 end
