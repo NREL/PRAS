@@ -1,5 +1,4 @@
 struct SystemState
-
     gens_available::Vector{Bool}
     gens_nexttransition::Vector{Int}
 
@@ -15,10 +14,9 @@ struct SystemState
     lines_nexttransition::Vector{Int}
 
     function SystemState(system::SystemModel)
-
         ngens = length(system.generators)
         gens_available = Vector{Bool}(undef, ngens)
-        gens_nexttransition= Vector{Int}(undef, ngens)
+        gens_nexttransition = Vector{Int}(undef, ngens)
 
         nstors = length(system.storages)
         stors_available = Vector{Bool}(undef, nstors)
@@ -35,11 +33,16 @@ struct SystemState
         lines_nexttransition = Vector{Int}(undef, nlines)
 
         return new(
-            gens_available, gens_nexttransition,
-            stors_available, stors_nexttransition, stors_energy,
-            genstors_available, genstors_nexttransition, genstors_energy,
-            lines_available, lines_nexttransition)
-
+            gens_available,
+            gens_nexttransition,
+            stors_available,
+            stors_nexttransition,
+            stors_energy,
+            genstors_available,
+            genstors_nexttransition,
+            genstors_energy,
+            lines_available,
+            lines_nexttransition,
+        )
     end
-
 end

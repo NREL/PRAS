@@ -1,16 +1,26 @@
 @testset "ShortfallResult" begin
-
-    
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.ShortfallResult{N,1,Hour,MWh}(
-        DD.nsamples, DD.resourcenames, DD.periods,
-        DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
-        DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
+    result = ResourceAdequacy.ShortfallResult{N, 1, Hour, MWh}(
+        DD.nsamples,
+        DD.resourcenames,
+        DD.periods,
+        DD.d1,
+        DD.d2,
+        DD.d1_resource,
+        DD.d2_resource,
+        DD.d1_period,
+        DD.d2_period,
+        DD.d1_resourceperiod,
+        DD.d2_resourceperiod,
         DD.d3_resourceperiod,
-        DD.d4, DD.d4_resource, DD.d4_period, DD.d4_resourceperiod)
+        DD.d4,
+        DD.d4_resource,
+        DD.d4_period,
+        DD.d4_resourceperiod,
+    )
 
     # Overall
 
@@ -26,7 +36,7 @@
 
     # Region-specific
 
-    @test result[r] ≈ (sum(DD.d3_resourceperiod[r_idx,:]), DD.d4_resource[r_idx])
+    @test result[r] ≈ (sum(DD.d3_resourceperiod[r_idx, :]), DD.d4_resource[r_idx])
 
     region_lole = LOLE(result, r)
     @test val(region_lole) ≈ DD.d1_resource[r_idx]
@@ -59,12 +69,12 @@
     # Region + period-specific
 
     @test result[r, t] ≈
-              (DD.d3_resourceperiod[r_idx, t_idx], DD.d4_resourceperiod[r_idx, t_idx])
+          (DD.d3_resourceperiod[r_idx, t_idx], DD.d4_resourceperiod[r_idx, t_idx])
 
     regionperiod_lole = LOLE(result, r, t)
     @test val(regionperiod_lole) ≈ DD.d1_resourceperiod[r_idx, t_idx]
     @test stderror(regionperiod_lole) ≈
-        DD.d2_resourceperiod[r_idx, t_idx] / sqrt(DD.nsamples)
+          DD.d2_resourceperiod[r_idx, t_idx] / sqrt(DD.nsamples)
 
     regionperiod_eue = EUE(result, r, t)
     @test val(regionperiod_eue) ≈ first(result[r, t])
@@ -81,18 +91,18 @@
     @test_throws BoundsError EUE(result, r, t_bad)
     @test_throws BoundsError EUE(result, r_bad, t)
     @test_throws BoundsError EUE(result, r_bad, t_bad)
-
 end
 
-
 @testset "ShortfallSamplesResult" begin
-
     N = DD.nperiods
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = ResourceAdequacy.ShortfallSamplesResult{N,1,Hour,MW,MWh}(
-        DD.resourcenames, DD.periods, DD.d)
+    result = ResourceAdequacy.ShortfallSamplesResult{N, 1, Hour, MW, MWh}(
+        DD.resourcenames,
+        DD.periods,
+        DD.d,
+    )
 
     # Overall
 
@@ -150,10 +160,9 @@ end
     @test result[r, t] ≈ vec(DD.d[r_idx, t_idx, :])
 
     regionperiod_lole = LOLE(result, r, t)
-    regionperiod_eventperiods = result[r, t] .>  0
+    regionperiod_eventperiods = result[r, t] .> 0
     @test val(regionperiod_lole) ≈ mean(regionperiod_eventperiods)
-    @test stderror(regionperiod_lole) ≈
-        std(regionperiod_eventperiods) / sqrt(DD.nsamples)
+    @test stderror(regionperiod_lole) ≈ std(regionperiod_eventperiods) / sqrt(DD.nsamples)
 
     regionperiod_eue = EUE(result, r, t)
     @test val(regionperiod_eue) ≈ mean(result[r, t])
@@ -170,5 +179,4 @@ end
     @test_throws BoundsError EUE(result, r, t_bad)
     @test_throws BoundsError EUE(result, r_bad, t)
     @test_throws BoundsError EUE(result, r_bad, t_bad)
-
 end

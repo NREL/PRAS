@@ -1,5 +1,4 @@
 @testset "Units and Conversions" begin
-
     @test powertoenergy(10, MW, 2, Hour, MWh) == 20
     @test powertoenergy(10, MW, 30, Minute, MWh) == 5
 
@@ -17,5 +16,4 @@
     @test unitsymbol(Hour) == "h"
     @test unitsymbol(Day) == "d"
     @test unitsymbol(Year) == "y"
-
 end

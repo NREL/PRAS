@@ -1,21 +1,17 @@
 include("conv.jl")
 
 struct Convolution <: SimulationSpec
-
     verbose::Bool
     threaded::Bool
 
-    Convolution(;verbose::Bool=false, threaded::Bool=true) =
-        new(verbose, threaded)
-
+    Convolution(; verbose::Bool=false, threaded::Bool=true) = new(verbose, threaded)
 end
 
 function assess(
     system::SystemModel{N},
     method::Convolution,
-    resultspecs::ResultSpec...
+    resultspecs::ResultSpec...,
 ) where {N}
-
     nregions = length(system.regions)
     nstors = length(system.storages)
     ngenstors = length(system.generatorstorages)
@@ -31,18 +27,19 @@ function assess(
         nstors > 0 && push!(resources, "$nstors Storage")
         ngenstors > 0 && push!(resources, "$ngenstors GeneratorStorage")
         @warn "$method is a non-sequential simulation method. " *
-              "The system's " * join(resources, " and ") * " resources " *
+              "The system's " *
+              join(resources, " and ") *
+              " resources " *
               "will be ignored in this assessment."
     end
 
     threads = nthreads()
-    periods = Channel{Int}(2*threads)
+    periods = Channel{Int}(2 * threads)
     results = resultchannel(method, resultspecs, threads)
 
     @spawn makeperiods(periods, N)
 
     if method.threaded
-        
         if (threads == 1)
             @warn "It looks like you haven't configured JULIA_NUM_THREADS before you started the julia repl. \n If you want to use multi-threading, stop the execution and start your julia repl using : \n julia --project --threads auto"
         end
@@ -55,7 +52,6 @@ function assess(
     end
 
     return finalize(results, system, method.threaded ? threads : 1)
-
 end
 
 function makeperiods(periods::Channel{Int}, N::Int)
@@ -66,23 +62,20 @@ function makeperiods(periods::Channel{Int}, N::Int)
 end
 
 function assess(
-    system::SystemModel{N,L,T,P,E}, method::Convolution,
+    system::SystemModel{N, L, T, P, E},
+    method::Convolution,
     periods::Channel{Int},
     results::Channel{<:Tuple{Vararg{ResultAccumulator{Convolution}}}},
-    resultspecs::ResultSpec...
-) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
-
+    resultspecs::ResultSpec...,
+) where {N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     accs = accumulator.(system, method, resultspecs)
 
     for t in periods
-
         distr = CapacityDistribution(system, t)
         foreach(acc -> record!(acc, t, distr), accs)
-
     end
 
     put!(results, accs)
-
 end
 
 include("result_shortfall.jl")

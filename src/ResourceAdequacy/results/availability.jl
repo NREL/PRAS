@@ -1,4 +1,4 @@
-abstract type AbstractAvailabilityResult{N,L,T} <: Result{N,L,T} end
+abstract type AbstractAvailabilityResult{N, L, T} <: Result{N, L, T} end
 
 # Colon indexing
 
@@ -15,13 +15,11 @@ getindex(x::AbstractAvailabilityResult, ::Colon, ::Colon) =
 
 struct GeneratorAvailability <: ResultSpec end
 
-struct GeneratorAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
-
+struct GeneratorAvailabilityResult{N, L, T <: Period} <: AbstractAvailabilityResult{N, L, T}
     generators::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    available::Array{Bool,3}
-
+    available::Array{Bool, 3}
 end
 
 names(x::GeneratorAvailabilityResult) = x.generators
@@ -36,13 +34,11 @@ end
 
 struct StorageAvailability <: ResultSpec end
 
-struct StorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
-
+struct StorageAvailabilityResult{N, L, T <: Period} <: AbstractAvailabilityResult{N, L, T}
     storages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    available::Array{Bool,3}
-
+    available::Array{Bool, 3}
 end
 
 names(x::StorageAvailabilityResult) = x.storages
@@ -57,18 +53,21 @@ end
 
 struct GeneratorStorageAvailability <: ResultSpec end
 
-struct GeneratorStorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
-
+struct GeneratorStorageAvailabilityResult{N, L, T <: Period} <:
+       AbstractAvailabilityResult{N, L, T}
     generatorstorages::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    available::Array{Bool,3}
-
+    available::Array{Bool, 3}
 end
 
 names(x::GeneratorStorageAvailabilityResult) = x.generatorstorages
 
-function getindex(x::GeneratorStorageAvailabilityResult, gs::AbstractString, t::ZonedDateTime)
+function getindex(
+    x::GeneratorStorageAvailabilityResult,
+    gs::AbstractString,
+    t::ZonedDateTime,
+)
     i_gs = findfirstunique(x.generatorstorages, gs)
     i_t = findfirstunique(x.timestamps, t)
     return vec(x.available[i_gs, i_t, :])
@@ -78,13 +77,11 @@ end
 
 struct LineAvailability <: ResultSpec end
 
-struct LineAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
-
+struct LineAvailabilityResult{N, L, T <: Period} <: AbstractAvailabilityResult{N, L, T}
     lines::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    available::Array{Bool,3}
-
+    available::Array{Bool, 3}
 end
 
 names(x::LineAvailabilityResult) = x.lines

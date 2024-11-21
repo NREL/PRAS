@@ -1,13 +1,11 @@
 struct Surplus <: ResultSpec end
-abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end
+abstract type AbstractSurplusResult{N, L, T} <: Result{N, L, T} end
 
 # Colon indexing
 
-getindex(x::AbstractSurplusResult, ::Colon) =
-    getindex.(x, x.timestamps)
+getindex(x::AbstractSurplusResult, ::Colon) = getindex.(x, x.timestamps)
 
-getindex(x::AbstractSurplusResult, ::Colon, t::ZonedDateTime) =
-    getindex.(x, x.regions, t)
+getindex(x::AbstractSurplusResult, ::Colon, t::ZonedDateTime) = getindex.(x, x.regions, t)
 
 getindex(x::AbstractSurplusResult, r::AbstractString, ::Colon) =
     getindex.(x, r, x.timestamps)
@@ -17,17 +15,15 @@ getindex(x::AbstractSurplusResult, ::Colon, ::Colon) =
 
 # Sample-averaged surplus data
 
-struct SurplusResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
-
-    nsamples::Union{Int,Nothing}
+struct SurplusResult{N, L, T <: Period, P <: PowerUnit} <: AbstractSurplusResult{N, L, T}
+    nsamples::Union{Int, Nothing}
     regions::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
     surplus_mean::Matrix{Float64}
 
     surplus_period_std::Vector{Float64}
     surplus_regionperiod_std::Matrix{Float64}
-
 end
 
 function getindex(x::SurplusResult, t::ZonedDateTime)
@@ -45,13 +41,12 @@ end
 
 struct SurplusSamples <: ResultSpec end
 
-struct SurplusSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}
-
+struct SurplusSamplesResult{N, L, T <: Period, P <: PowerUnit} <:
+       AbstractSurplusResult{N, L, T}
     regions::Vector{String}
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime, T}
 
-    surplus::Array{Int,3}
-
+    surplus::Array{Int, 3}
 end
 
 function getindex(x::SurplusSamplesResult, t::ZonedDateTime)

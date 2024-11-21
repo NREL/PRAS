@@ -1,8 +1,7 @@
-abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
+abstract type AbstractAssets{N, L, T <: Period, P <: PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
-struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
-
+struct Generators{N, L, T <: Period, P <: PowerUnit} <: AbstractAssets{N, L, T, P}
     names::Vector{String}
     categories::Vector{String}
 
@@ -11,11 +10,13 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
-    function Generators{N,L,T,P}(
-        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-        capacity::Matrix{Int}, λ::Matrix{Float64}, μ::Matrix{Float64}
-    ) where {N,L,T,P}
-
+    function Generators{N, L, T, P}(
+        names::Vector{<:AbstractString},
+        categories::Vector{<:AbstractString},
+        capacity::Matrix{Int},
+        λ::Matrix{Float64},
+        μ::Matrix{Float64},
+    ) where {N, L, T, P}
         n_gens = length(names)
         @assert length(categories) == n_gens
         @assert allunique(names)
@@ -28,10 +29,8 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(string.(names), string.(categories), capacity, λ, μ)
-
+        new{N, L, T, P}(string.(names), string.(categories), capacity, λ, μ)
     end
-
 end
 
 Base.:(==)(x::T, y::T) where {T <: Generators} =
@@ -42,11 +41,9 @@ Base.:(==)(x::T, y::T) where {T <: Generators} =
     x.μ == y.μ
 
 Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
-    G(g.names[idxs], g.categories[idxs],
-      g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
+    G(g.names[idxs], g.categories[idxs], g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
 
-function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
-
+function Base.vcat(gs::Generators{N, L, T, P}...) where {N, L, T, P}
     n_gens = sum(length(g) for g in gs)
 
     names = Vector{String}(undef, n_gens)
@@ -60,7 +57,6 @@ function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
     last_idx = 0
 
     for g in gs
-
         n = length(g)
         rows = last_idx .+ (1:n)
 
@@ -71,15 +67,13 @@ function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
         μ[rows, :] = g.μ
 
         last_idx += n
-
     end
 
-    return Generators{N,L,T,P}(names, categories, capacity, λ, μ)
-
+    return Generators{N, L, T, P}(names, categories, capacity, λ, μ)
 end
 
-struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
-
+struct Storages{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit} <:
+       AbstractAssets{N, L, T, P}
     names::Vector{String}
     categories::Vector{String}
 
@@ -94,14 +88,18 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
-    function Storages{N,L,T,P,E}(
-        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-        chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
-        energycapacity::Matrix{Int}, chargeefficiency::Matrix{Float64},
-        dischargeefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
-        λ::Matrix{Float64}, μ::Matrix{Float64}
-    ) where {N,L,T,P,E}
-
+    function Storages{N, L, T, P, E}(
+        names::Vector{<:AbstractString},
+        categories::Vector{<:AbstractString},
+        chargecapacity::Matrix{Int},
+        dischargecapacity::Matrix{Int},
+        energycapacity::Matrix{Int},
+        chargeefficiency::Matrix{Float64},
+        dischargeefficiency::Matrix{Float64},
+        carryoverefficiency::Matrix{Float64},
+        λ::Matrix{Float64},
+        μ::Matrix{Float64},
+    ) where {N, L, T, P, E}
         n_stors = length(names)
         @assert length(categories) == n_stors
         @assert allunique(names)
@@ -125,13 +123,19 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(string.(names), string.(categories),
-                       chargecapacity, dischargecapacity, energycapacity,
-                       chargeefficiency, dischargeefficiency, carryoverefficiency,
-                       λ, μ)
-
+        new{N, L, T, P, E}(
+            string.(names),
+            string.(categories),
+            chargecapacity,
+            dischargecapacity,
+            energycapacity,
+            chargeefficiency,
+            dischargeefficiency,
+            carryoverefficiency,
+            λ,
+            μ,
+        )
     end
-
 end
 
 Base.:(==)(x::T, y::T) where {T <: Storages} =
@@ -146,14 +150,20 @@ Base.:(==)(x::T, y::T) where {T <: Storages} =
     x.λ == y.λ &&
     x.μ == y.μ
 
-Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} =
-    S(s.names[idxs], s.categories[idxs],s.charge_capacity[idxs,:],
-      s.discharge_capacity[idxs, :],s.energy_capacity[idxs, :],
-      s.charge_efficiency[idxs, :], s.discharge_efficiency[idxs, :], 
-      s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :])
+Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} = S(
+    s.names[idxs],
+    s.categories[idxs],
+    s.charge_capacity[idxs, :],
+    s.discharge_capacity[idxs, :],
+    s.energy_capacity[idxs, :],
+    s.charge_efficiency[idxs, :],
+    s.discharge_efficiency[idxs, :],
+    s.carryover_efficiency[idxs, :],
+    s.λ[idxs, :],
+    s.μ[idxs, :],
+)
 
-function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
-
+function Base.vcat(stors::Storages{N, L, T, P, E}...) where {N, L, T, P, E}
     n_stors = sum(length(s) for s in stors)
 
     names = Vector{String}(undef, n_stors)
@@ -161,7 +171,7 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
     charge_capacity = Matrix{Int}(undef, n_stors, N)
     discharge_capacity = Matrix{Int}(undef, n_stors, N)
-    energy_capacity = Matrix{Int}(undef, n_stors, N) 
+    energy_capacity = Matrix{Int}(undef, n_stors, N)
 
     charge_efficiency = Matrix{Float64}(undef, n_stors, N)
     discharge_efficiency = Matrix{Float64}(undef, n_stors, N)
@@ -173,7 +183,6 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
     last_idx = 0
 
     for s in stors
-
         n = length(s)
         rows = last_idx .+ (1:n)
 
@@ -192,16 +201,24 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
         μ[rows, :] = s.μ
 
         last_idx += n
-
     end
 
-    return Storages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
-                               carryover_efficiency, λ, μ)
-
+    return Storages{N, L, T, P, E}(
+        names,
+        categories,
+        charge_capacity,
+        discharge_capacity,
+        energy_capacity,
+        charge_efficiency,
+        discharge_efficiency,
+        carryover_efficiency,
+        λ,
+        μ,
+    )
 end
 
-struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
-
+struct GeneratorStorages{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit} <:
+       AbstractAssets{N, L, T, P}
     names::Vector{String}
     categories::Vector{String}
 
@@ -220,17 +237,21 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
-    function GeneratorStorages{N,L,T,P,E}(
-        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-        charge_capacity::Matrix{Int}, discharge_capacity::Matrix{Int},
+    function GeneratorStorages{N, L, T, P, E}(
+        names::Vector{<:AbstractString},
+        categories::Vector{<:AbstractString},
+        charge_capacity::Matrix{Int},
+        discharge_capacity::Matrix{Int},
         energy_capacity::Matrix{Int},
-        charge_efficiency::Matrix{Float64}, discharge_efficiency::Matrix{Float64},
+        charge_efficiency::Matrix{Float64},
+        discharge_efficiency::Matrix{Float64},
         carryover_efficiency::Matrix{Float64},
         inflow::Matrix{Int},
-        gridwithdrawal_capacity::Matrix{Int}, gridinjection_capacity::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64}
-    ) where {N,L,T,P,E}
-
+        gridwithdrawal_capacity::Matrix{Int},
+        gridinjection_capacity::Matrix{Int},
+        λ::Matrix{Float64},
+        μ::Matrix{Float64},
+    ) where {N, L, T, P, E}
         n_stors = length(names)
         @assert length(categories) == n_stors
         @assert allunique(names)
@@ -264,15 +285,22 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P,E}(
-            string.(names), string.(categories),
-            charge_capacity, discharge_capacity, energy_capacity,
-            charge_efficiency, discharge_efficiency, carryover_efficiency,
-            inflow, gridwithdrawal_capacity, gridinjection_capacity,
-            λ, μ)
-
+        new{N, L, T, P, E}(
+            string.(names),
+            string.(categories),
+            charge_capacity,
+            discharge_capacity,
+            energy_capacity,
+            charge_efficiency,
+            discharge_efficiency,
+            carryover_efficiency,
+            inflow,
+            gridwithdrawal_capacity,
+            gridinjection_capacity,
+            λ,
+            μ,
+        )
     end
-
 end
 
 Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
@@ -290,16 +318,23 @@ Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
     x.λ == y.λ &&
     x.μ == y.μ
 
-Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} =
-    G(g_s.names[idxs], g_s.categories[idxs], g_s.charge_capacity[idxs,:],
-      g_s.discharge_capacity[idxs, :], g_s.energy_capacity[idxs, :],
-      g_s.charge_efficiency[idxs, :], g_s.discharge_efficiency[idxs, :], 
-      g_s.carryover_efficiency[idxs, :],g_s.inflow[idxs, :],
-      g_s.gridwithdrawal_capacity[idxs, :],g_s.gridinjection_capacity[idxs, :],
-      g_s.λ[idxs, :], g_s.μ[idxs, :])
+Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} = G(
+    g_s.names[idxs],
+    g_s.categories[idxs],
+    g_s.charge_capacity[idxs, :],
+    g_s.discharge_capacity[idxs, :],
+    g_s.energy_capacity[idxs, :],
+    g_s.charge_efficiency[idxs, :],
+    g_s.discharge_efficiency[idxs, :],
+    g_s.carryover_efficiency[idxs, :],
+    g_s.inflow[idxs, :],
+    g_s.gridwithdrawal_capacity[idxs, :],
+    g_s.gridinjection_capacity[idxs, :],
+    g_s.λ[idxs, :],
+    g_s.μ[idxs, :],
+)
 
-function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P, E}
-
+function Base.vcat(gen_stors::GeneratorStorages{N, L, T, P, E}...) where {N, L, T, P, E}
     n_gen_stors = sum(length(g_s) for g_s in gen_stors)
 
     names = Vector{String}(undef, n_gen_stors)
@@ -307,7 +342,7 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
     charge_capacity = Matrix{Int}(undef, n_gen_stors, N)
     discharge_capacity = Matrix{Int}(undef, n_gen_stors, N)
-    energy_capacity = Matrix{Int}(undef, n_gen_stors, N) 
+    energy_capacity = Matrix{Int}(undef, n_gen_stors, N)
 
     charge_efficiency = Matrix{Float64}(undef, n_gen_stors, N)
     discharge_efficiency = Matrix{Float64}(undef, n_gen_stors, N)
@@ -323,7 +358,6 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
     last_idx = 0
 
     for g_s in gen_stors
-
         n = length(g_s)
         rows = last_idx .+ (1:n)
 
@@ -346,16 +380,26 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
         μ[rows, :] = g_s.μ
 
         last_idx += n
-
     end
 
-    return GeneratorStorages{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
-                               carryover_efficiency,inflow, gridwithdrawal_capacity, gridinjection_capacity, λ, μ)
-
+    return GeneratorStorages{N, L, T, P, E}(
+        names,
+        categories,
+        charge_capacity,
+        discharge_capacity,
+        energy_capacity,
+        charge_efficiency,
+        discharge_efficiency,
+        carryover_efficiency,
+        inflow,
+        gridwithdrawal_capacity,
+        gridinjection_capacity,
+        λ,
+        μ,
+    )
 end
 
-struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
-
+struct Lines{N, L, T <: Period, P <: PowerUnit} <: AbstractAssets{N, L, T, P}
     names::Vector{String}
     categories::Vector{String}
 
@@ -365,12 +409,14 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
-    function Lines{N,L,T,P}(
-        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-        forward_capacity::Matrix{Int}, backward_capacity::Matrix{Int},
-        λ::Matrix{Float64}, μ::Matrix{Float64}
-    ) where {N,L,T,P}
-
+    function Lines{N, L, T, P}(
+        names::Vector{<:AbstractString},
+        categories::Vector{<:AbstractString},
+        forward_capacity::Matrix{Int},
+        backward_capacity::Matrix{Int},
+        λ::Matrix{Float64},
+        μ::Matrix{Float64},
+    ) where {N, L, T, P}
         n_lines = length(names)
         @assert length(categories) == n_lines
         @assert allunique(names)
@@ -385,10 +431,15 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
         @assert all(0 .<= λ .<= 1)
         @assert all(0 .<= μ .<= 1)
 
-        new{N,L,T,P}(string.(names), string.(categories), forward_capacity, backward_capacity, λ, μ)
-
+        new{N, L, T, P}(
+            string.(names),
+            string.(categories),
+            forward_capacity,
+            backward_capacity,
+            λ,
+            μ,
+        )
     end
-
 end
 
 Base.:(==)(x::T, y::T) where {T <: Lines} =
@@ -399,12 +450,16 @@ Base.:(==)(x::T, y::T) where {T <: Lines} =
     x.λ == y.λ &&
     x.μ == y.μ
 
-Base.getindex(lines::L, idxs::AbstractVector{Int}) where {L <: Lines} =
-    L(lines.names[idxs], lines.categories[idxs],lines.forward_capacity[idxs,:],
-      lines.backward_capacity[idxs, :],lines.λ[idxs, :], lines.μ[idxs, :])
+Base.getindex(lines::L, idxs::AbstractVector{Int}) where {L <: Lines} = L(
+    lines.names[idxs],
+    lines.categories[idxs],
+    lines.forward_capacity[idxs, :],
+    lines.backward_capacity[idxs, :],
+    lines.λ[idxs, :],
+    lines.μ[idxs, :],
+)
 
-function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
-
+function Base.vcat(lines::Lines{N, L, T, P}...) where {N, L, T, P}
     n_lines = sum(length(line) for line in lines)
 
     names = Vector{String}(undef, n_lines)
@@ -412,14 +467,13 @@ function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
 
     forward_capacity = Matrix{Int}(undef, n_lines, N)
     backward_capacity = Matrix{Int}(undef, n_lines, N)
-    
-    λ = Matrix{Float64}(undef,n_lines, N)
-    μ = Matrix{Float64}(undef,n_lines, N)
+
+    λ = Matrix{Float64}(undef, n_lines, N)
+    μ = Matrix{Float64}(undef, n_lines, N)
 
     last_idx = 0
 
     for line in lines
-
         n = length(line)
         rows = last_idx .+ (1:n)
 
@@ -433,9 +487,7 @@ function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
         μ[rows, :] = line.μ
 
         last_idx += n
-
     end
 
-    return Lines{N,L,T,P}(names, categories, forward_capacity, backward_capacity, λ, μ)
-
+    return Lines{N, L, T, P}(names, categories, forward_capacity, backward_capacity, λ, μ)
 end
