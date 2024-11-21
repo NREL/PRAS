@@ -11,8 +11,14 @@ getindex(x::AbstractAvailabilityResult, name::String, ::Colon) =
 getindex(x::AbstractAvailabilityResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
-# Full Generator availability data
+"""
+    GeneratorAvailability
 
+Generator availability represents the availability of generators at timestamps
+in a GeneratorAvailabilityResult with a (generators, timestamps, samples) matrix API.
+
+No averaging occurs.
+"""
 struct GeneratorAvailability <: ResultSpec end
 
 struct GeneratorAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
@@ -32,8 +38,14 @@ function getindex(x::GeneratorAvailabilityResult, g::AbstractString, t::ZonedDat
     return vec(x.available[i_g, i_t, :])
 end
 
-# Full Storage availability data
+"""
+    StorageAvailability
 
+Storage availability represents the availability of storage resources at timestamps
+in a StorageAvailabilityResult with a (storages, timestamps, samples) matrix API.
+
+No averaging occurs.
+"""
 struct StorageAvailability <: ResultSpec end
 
 struct StorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
@@ -53,8 +65,14 @@ function getindex(x::StorageAvailabilityResult, s::AbstractString, t::ZonedDateT
     return vec(x.available[i_s, i_t, :])
 end
 
-# Full GeneratorStorage availability data
+"""
+    GeneratorStorageAvailability
 
+Generator storage availability represents the availability of generatorstorage resources at timestamps
+in a GeneratorStorageAvailabilityResult with a (generatorstorages, timestamps, samples) matrix API.
+
+No averaging occurs
+"""
 struct GeneratorStorageAvailability <: ResultSpec end
 
 struct GeneratorStorageAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
@@ -74,8 +92,14 @@ function getindex(x::GeneratorStorageAvailabilityResult, gs::AbstractString, t::
     return vec(x.available[i_gs, i_t, :])
 end
 
-# Full Line availability data
+"""
+    LineAvailability
 
+Line availability represents the availability of lines at timestamps
+in a LineAvailabilityResult with a (lines, timestamps, samples) matrix API.
+
+No averaging occurs.
+"""
 struct LineAvailability <: ResultSpec end
 
 struct LineAvailabilityResult{N,L,T<:Period} <: AbstractAvailabilityResult{N,L,T}
