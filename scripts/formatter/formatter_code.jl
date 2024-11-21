@@ -3,7 +3,7 @@ Pkg.activate(@__DIR__)
 Pkg.instantiate()
 using JuliaFormatter
 
-main_paths = [".", "./docs/src"]
+main_paths = ["."]  #, "./docs/src"] (until we use Documenter.jl)
 for main_path in main_paths
     format(
         main_path;
@@ -19,7 +19,7 @@ for main_path in main_paths
 end
 
 # Documentation Formatter
-main_paths = ["./docs/src"]
+main_paths = []  # "./docs/src"]
 for main_path in main_paths
     for folder in readdir(main_path)
         @show folder_path = joinpath(main_path, folder)
