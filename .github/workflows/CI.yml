@@ -15,14 +15,20 @@ jobs:
       fail-fast: false
       matrix:
         version:
-          - "1.6"  # Min supported
-          - "1"    # Latest Release
+          - "lts"  # Latest LTS release, min supported
+          - "1"    # Latest release
         os:
           - ubuntu-latest
           - macOS-latest
           - windows-latest
         arch:
           - x64
+          - aarch64
+        exclude:
+          - os: windows-latest
+            arch: aarch64
+          - os: ubuntu-latest
+            arch: aarch64
     steps:
       - uses: actions/checkout@v4
       - uses: julia-actions/setup-julia@v2
