@@ -5,7 +5,6 @@ version = "0.6.4"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
-Decimals = "abce61dc-4473-55a0-ba07-351d65e31d42"
 Distributions = "31c24e10-a181-5473-b8eb-7969acd0382f"
 HDF5 = "f67ccb44-e63f-5c2f-98bd-6dc0ccc4ba2f"
 MinCostFlows = "62286e6e-1779-56f1-888a-1c0056788ce0"

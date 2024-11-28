@@ -45,14 +45,15 @@ function stringprecision(x::MeanEstimate)
     else
 
         stderr_round = round(x.standarderror, sigdigits=1)
+        digits = -floor(Int, log(10, stderr_round))
 
-        digits = floor(Int, log(10, stderr_round))
-
-        rounded = round(x.estimate, digits=-digits)
-        reduced = round(Int, rounded / 10. ^ digits)
-        v_rounded = string(Decimal(Int(x.estimate < 0), abs(reduced), digits))
-
-        s_rounded = string(decimal(stderr_round))
+        if digits > 0
+            v_rounded = @sprintf "%0.*f" digits x.estimate
+            s_rounded = @sprintf "%0.*f" digits x.standarderror
+        else
+            v_rounded = @sprintf "%0.0f" round(x.estimate, digits=digits)
+            s_rounded = @sprintf "%0.0f" round(x.standarderror, digits=digits)
+        end
 
     end
 

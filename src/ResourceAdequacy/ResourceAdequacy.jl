@@ -6,7 +6,6 @@ using ..PRASBase
 import Base: -, broadcastable, getindex, merge!
 import Base.Threads: nthreads, @spawn
 import Dates: DateTime, Period
-import Decimals: Decimal, decimal
 import Distributions: DiscreteNonParametric, probs, support
 import OnlineStatsBase: EqualWeight, fit!, Mean, value, Variance
 import OnlineStats: Series
