@@ -1,3 +1,13 @@
+"""
+    Utilization
+
+Utilization metric represents how much an interface between regions is used
+across timestamps in a UtilizationResult with a (interfaces, timestamps) matrix API.
+
+Separate samples are averaged together into mean and std values.
+
+See [`UtilizationSamples`](@ref) for all utilization samples.
+"""
 struct Utilization <: ResultSpec end
 abstract type AbstractUtilizationResult{N,L,T} <: Result{N,L,T} end
 
@@ -41,8 +51,15 @@ function getindex(x::UtilizationResult, i::Pair{<:AbstractString,<:AbstractStrin
     return x.utilization_mean[i_i, i_t], x.utilization_interfaceperiod_std[i_i, i_t]
 end
 
-# Full utilization data
+"""
+    UtilizationSamples
 
+Utilization samples represent the utilization between interfaces at timestamps, which has
+not been averaged across different samples. This presents a
+3D matrix API (interfaces, timestamps, samples).
+
+See [`Utilization`](@ref) for averaged utilization samples.
+"""
 struct UtilizationSamples <: ResultSpec end
 
 struct UtilizationSamplesResult{N,L,T<:Period} <: AbstractUtilizationResult{N,L,T}

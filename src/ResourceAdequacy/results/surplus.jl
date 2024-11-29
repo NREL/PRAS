@@ -1,3 +1,13 @@
+"""
+    Surplus
+
+Surplus metric represents extra generation at regions and timestamps
+in a SurplusResults with a (regions, timestamps) matrix API.
+
+Separate samples are averaged together into mean and std values.
+
+See [`SurplusSamples`](@ref) for all surplus samples.
+"""
 struct Surplus <: ResultSpec end
 abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end
 
@@ -42,7 +52,14 @@ function getindex(x::SurplusResult, r::AbstractString, t::ZonedDateTime)
 end
 
 # Full surplus data 
+"""
+    SurplusSamples
 
+Surplus samples represent extra generation at regions and timestamps
+in a SurplusSamplesResult with a (regions, timestamps, samples) matrix API.
+
+See [`Surplus`](@ref) for sample-averaged surplus data.
+"""
 struct SurplusSamples <: ResultSpec end
 
 struct SurplusSamplesResult{N,L,T<:Period,P<:PowerUnit} <: AbstractSurplusResult{N,L,T}

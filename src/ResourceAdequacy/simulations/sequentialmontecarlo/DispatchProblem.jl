@@ -1,5 +1,4 @@
 """
-
     DispatchProblem(sys::SystemModel)
 
 Create a min-cost flow problem for the multi-region max power delivery problem
@@ -68,7 +67,6 @@ Edges are ordered as:
  14. GenerationStorage charge from inflow (GeneratorStorage order)
  15. GenerationStorage charge unused (GeneratorStorage order)
  16. GenerationStorage inflow unused (GeneratorStorage order)
-
 """
 struct DispatchProblem
 

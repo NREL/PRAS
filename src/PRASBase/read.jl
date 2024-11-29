@@ -1,9 +1,3 @@
-"""
-
-    SystemModel(filename::String)
-
-Load a `SystemModel` from an appropriately-formatted HDF5 file on disk.
-"""
 function SystemModel(inputfile::String)
 
     system = h5open(inputfile, "r") do f::File

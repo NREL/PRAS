@@ -16,6 +16,19 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 
 # Sample-averaged Storage state-of-charge data
 
+"""
+    StorageEnergy
+
+Storage energy represents the state-of-charge of storage
+resources at timestamps in a StorageEnergyResult with a (storages, timestamps)
+matrix API.
+
+Separate samples are averaged together into mean and std values.
+
+See [`StorageEnergySamples`](@ref) for all storage energy samples.
+
+See [`GeneratorStorageEnergy`](@ref) for generator storage energy.
+"""
 struct StorageEnergy <: ResultSpec end
 
 struct StorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
@@ -45,7 +58,19 @@ function getindex(x::StorageEnergyResult, s::AbstractString, t::ZonedDateTime)
 end
 
 # Sample-averaged GeneratorStorage state-of-charge data
+"""
+    GeneratorStorageEnergy
 
+Generator storage energy represents state-of-charge of generatorstorage
+resources at timestamps in a StorageEnergyResult with a (generatorstorages, timestamps)
+matrix API.
+
+Separate samples are averaged together into mean and std values.
+
+See [`GeneratorStorageEnergySamples`](@ref) for all generator storage energy samples.
+
+See [`StorageEnergy`](@ref) for storage energy.
+"""
 struct GeneratorStorageEnergy <: ResultSpec end
 
 struct GeneratorStorageEnergyResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
@@ -74,8 +99,15 @@ function getindex(x::GeneratorStorageEnergyResult, gs::AbstractString, t::ZonedD
     return x.energy_mean[i_gs, i_t], x.energy_regionperiod_std[i_gs, i_t]
 end
 
-# Full Storage state-of-charge data
+"""
+    StorageEnergySamples
 
+Storage energy samples represent the state-of-charge of storage
+resources at timestamps, which has not been averaged across different samples.
+This presents a 3D matrix API (storages, timestamps, samples).
+
+See [`StorageEnergy`](@ref) for sample-averaged storage energy.
+"""
 struct StorageEnergySamples <: ResultSpec end
 
 struct StorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
@@ -100,8 +132,15 @@ function getindex(x::StorageEnergySamplesResult, s::AbstractString, t::ZonedDate
     return vec(x.energy[i_s, i_t, :])
 end
 
-# Full GeneratorStorage state-of-charge data
+"""
+    GeneratorStorageEnergySamples
 
+Generator storage energy samples represent the state-of-charge of generatorstorage
+resources at timestamps, which has not been averaged across different samples.
+This presents a 3D matrix API (generatorstorages, timestamps, samples).
+
+See [`GeneratorStorageEnergy`](@ref) for sample-averaged generator storage energy.
+"""
 struct GeneratorStorageEnergySamples <: ResultSpec end
 
 struct GeneratorStorageEnergySamplesResult{N,L,T<:Period,E<:EnergyUnit} <: AbstractEnergyResult{N,L,T}
