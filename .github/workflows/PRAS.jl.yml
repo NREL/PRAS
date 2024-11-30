@@ -1,10 +1,10 @@
-name: CI
+name: PRAS.jl tests
 # Run on master, tags, or any pull request
 on:
   schedule:
     - cron: '0 2 * * *'  # Daily at 2 AM UTC (8 PM CST)
   push:
-    branches: [master]
+    branches: [main]
     tags: ["*"]
   pull_request:
 jobs:
@@ -46,18 +46,29 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-test-
             ${{ runner.os }}-${{ matrix.arch }}-
             ${{ runner.os }}-
-      - run: julia -e 'import Pkg;
-                       Pkg.Registry.add("General");
-                       Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/NREL/JuliaRegistry.git"))'
+      - run: julia --project=PRAS -e 'import Pkg;
+          Pkg.Registry.add("General");
+          Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/NREL/JuliaRegistry.git"));
+          Pkg.develop([
+            (path="PRASCore",),
+            (path="PRASFiles",),
+            (path="PRASCapacityCredits",)
+          ])'
         shell: bash
       - uses: julia-actions/julia-buildpkg@latest
+        with:
+          project: PRAS
       - run: |
           git config --global user.name Tester
           git config --global user.email te@st.er
       - uses: julia-actions/julia-runtest@latest
+        with:
+          project: PRAS
         env:
             JULIA_NUM_THREADS: 2
       - uses: julia-actions/julia-processcoverage@v1
+        with:
+          directories: PRAS/src
       - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
