@@ -1,10 +1,26 @@
 """
     GeneratorAvailability
 
-Generator availability represents the availability of generators at timestamps
-in a GeneratorAvailabilityResult with a (generators, timestamps, samples) matrix API.
+The `GeneratorAvailability` result specification reports the sample-level
+discrete availability of `Generators`, producing a `GeneratorAvailabilityResult`.
 
-No averaging occurs.
+A `GeneratorAvailabilityResult` can be indexed by generator name and
+timestamp to retrieve a vector of sample-level availability states for
+the unit in the given timestep. States are provided as a boolean with
+`true` indicating that the unit is available and `false` indicating that
+it's unavailable.
+
+Example:
+
+```julia
+genavail, =
+    assess(sys, SequentialMonteCarlo(samples=10), GeneratorAvailability())
+
+samples = genavail["MyGenerator123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+
+@assert samples isa Vector{Bool}
+@assert length(samples) == 10
+```
 """
 struct GeneratorAvailability <: ResultSpec end
 

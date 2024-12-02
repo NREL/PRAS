@@ -1,11 +1,26 @@
 """
     StorageEnergySamples
 
-Storage energy samples represent the state-of-charge of storage
-resources at timestamps, which has not been averaged across different samples.
-This presents a 3D matrix API (storages, timestamps, samples).
+The `StorageEnergySamples` result specification reports the sample-level state
+of charge of `Storages`, producing a `StorageEnergySamplesResult`.
 
-See [`StorageEnergy`](@ref) for sample-averaged storage energy.
+A `StorageEnergySamplesResult` can be indexed by storage device name and
+a timestamp to retrieve a vector of sample-level charge states for
+the device in the given timestep.
+
+Example:
+
+```julia
+storenergy, =
+    assess(sys, SequentialMonteCarlo(samples=10), StorageEnergySamples())
+
+samples = storenergy["MyStorage123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+
+@assert samples isa Vector{Float64}
+@assert length(samples) == 10
+```
+
+See [`StorageEnergy`](@ref) for estimated average storage state of charge.
 """
 struct StorageEnergySamples <: ResultSpec end
 

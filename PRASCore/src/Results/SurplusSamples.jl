@@ -1,10 +1,26 @@
 """
     SurplusSamples
 
-Surplus samples represent extra generation at regions and timestamps
-in a SurplusSamplesResult with a (regions, timestamps, samples) matrix API.
+The `SurplusSamples` result specification reports sample-level unused
+generation and storage discharge capability of `Regions`, producing a
+`SurplusSamplesResult`.
 
-See [`Surplus`](@ref) for sample-averaged surplus data.
+A `SurplusSamplesResult` can be indexed by region name and timestamp to retrieve
+a vector of sample-level surplus values in that region and timestep.
+
+Example:
+
+```julia
+surplus, =
+    assess(sys, SequentialMonteCarlo(samples=10), SurplusSamples())
+
+samples = surplus["Region A", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+
+@assert samples isa Vector{Float64}
+@assert length(samples) == 10
+```
+
+See [`Surplus`](@ref) for estimated average surplus values.
 """
 struct SurplusSamples <: ResultSpec end
 

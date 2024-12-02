@@ -1,15 +1,27 @@
 """
     GeneratorStorageEnergy
 
-Generator storage energy represents state-of-charge of generatorstorage
-resources at timestamps in a StorageEnergyResult with a (generatorstorages, timestamps)
-matrix API.
+The `GeneratorStorageEnergy` result specification reports the average state of
+charge of `GeneratorStorages`, producing a `GeneratorStorageEnergyResult`.
 
-Separate samples are averaged together into mean and std values.
+A `GeneratorStorageEnergyResult` can be indexed by generator-storage device
+name and a timestamp to retrieve a tuple of sample mean and standard deviation,
+estimating the average energy level for the given generator-storage device in
+that timestep.
 
-See [`GeneratorStorageEnergySamples`](@ref) for all generator storage energy samples.
+Example:
 
-See [`StorageEnergy`](@ref) for storage energy.
+```julia
+genstorenergy, =
+    assess(sys, SequentialMonteCarlo(samples=1000), GeneratorStorageEnergy())
+
+soc_mean, soc_std =
+    genstorenergy["MyGeneratorStorage123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+```
+See [`GeneratorStorageEnergySamples`](@ref) for sample-level generator-storage
+states of charge.
+
+See [`StorageEnergy`](@ref) for average storage states of charge.
 """
 struct GeneratorStorageEnergy <: ResultSpec end
 

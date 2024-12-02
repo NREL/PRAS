@@ -1,11 +1,28 @@
 """
     GeneratorStorageEnergySamples
 
-Generator storage energy samples represent the state-of-charge of generatorstorage
-resources at timestamps, which has not been averaged across different samples.
-This presents a 3D matrix API (generatorstorages, timestamps, samples).
+The `GeneratorStorageEnergySamples` result specification reports the
+sample-level state of charge of `GeneratorStorages`, producing a
+`GeneratorStorageEnergySamplesResult`.
 
-See [`GeneratorStorageEnergy`](@ref) for sample-averaged generator storage energy.
+A `GeneratorStorageEnergySamplesResult` can be indexed by generator-storage
+device name and a timestamp to retrieve a vector of sample-level charge states
+for the device in the given timestep.
+
+Example:
+
+```julia
+genstorenergy, =
+    assess(sys, SequentialMonteCarlo(samples=10), GeneratorStorageEnergySamples())
+
+samples = genstorenergy["MyGeneratorStorage123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+
+@assert samples isa Vector{Float64}
+@assert length(samples) == 10
+```
+
+See [`GeneratorStorageEnergy`](@ref) for estimated average generator-storage
+state of charge.
 """
 struct GeneratorStorageEnergySamples <: ResultSpec end
 

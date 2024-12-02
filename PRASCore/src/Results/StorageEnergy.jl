@@ -1,15 +1,27 @@
 """
     StorageEnergy
 
-Storage energy represents the state-of-charge of storage
-resources at timestamps in a StorageEnergyResult with a (storages, timestamps)
-matrix API.
+The `StorageEnergy` result specification reports the average state of charge
+of `Storages`, producing a `StorageEnergyResult`.
 
-Separate samples are averaged together into mean and std values.
+A `StorageEnergyResult` can be indexed by storage device name and a timestamp to
+retrieve a tuple of sample mean and standard deviation, estimating the average
+energy level for the given storage device in that timestep.
 
-See [`StorageEnergySamples`](@ref) for all storage energy samples.
+Example:
 
-See [`GeneratorStorageEnergy`](@ref) for generator storage energy.
+```julia
+storenergy, =
+    assess(sys, SequentialMonteCarlo(samples=1000), StorageEnergy())
+
+soc_mean, soc_std =
+    storenergy["MyStorage123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
+```
+
+See [`StorageEnergySamples`](@ref) for sample-level storage states of charge.
+
+See [`GeneratorStorageEnergy`](@ref) for average generator-storage states
+of charge.
 """
 struct StorageEnergy <: ResultSpec end
 

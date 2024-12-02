@@ -1,12 +1,43 @@
 """
     Shortfall
 
-Shortfall metric represents lost load at regions and timesteps
-in ShortfallResult with a (regions, timestamps) matrix API.
+The `Shortfall` result specification reports expectation-based resource
+adequacy risk metrics such as EUE and LOLE, producing a `ShortfallResult`.
 
-Separate samples are averaged together into mean and std values.
+A `ShortfallResult` can be directly indexed by a region name and a timestamp to retrieve a tuple of sample mean and standard deviation, estimating
+ the average unserved energy in that region and timestep. However, in most
+cases it's simpler to use [`EUE`](@ref) and [`LOLE`](@ref) constructors to
+directly retrieve standard risk metrics.
 
-See [`ShortfallSamples`](@ref) for all shortfall samples.
+Example:
+
+```julia
+shortfall, =
+    assess(sys, SequentialMonteCarlo(samples=1000), Shortfall())
+
+period = ZonedDateTime(2020, 1, 1, 0, tz"UTC")
+
+# Unserved energy mean and standard deviation
+sf_mean, sf_std = shortfall["Region A", period]
+
+# System-wide risk metrics
+eue = EUE(shortfall)
+lole = LOLE(shortfall)
+
+# Regional risk metrics
+regional_eue = EUE(shortfall, "Region A")
+regional_lole = LOLE(shortfall, "Region A")
+
+# Period-specific risk metrics
+period_eue = EUE(shortfall, period)
+period_lolp = LOLE(shortfall, period)
+
+# Region- and period-specific risk metrics
+period_eue = EUE(shortfall, "Region A", period)
+period_lolp = LOLE(shortfall, "Region A", period)
+```
+
+See [`ShortfallSamples`](@ref) for recording sample-level shortfall results.
 """
 struct Shortfall <: ResultSpec end
 
@@ -86,11 +117,6 @@ end
 
 accumulatortype(::Shortfall) = ShortfallAccumulator
 
-"""
-    ShortfallResult
-
-Matrix-like data structure for storing shortfall means
-"""
 struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
        AbstractShortfallResult{N, L, T}
     nsamples::Union{Int, Nothing}

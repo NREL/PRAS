@@ -1,15 +1,8 @@
 """
     SystemModel
 
-SystemModel is the primary data structure for Probabilistic Resource Adequacy Studies (PRAS).
-
-You can also load a `SystemModel` from an appropriately-formatted HDF5 file on disk.
-
-# Examples
-
-```julia
-pras = SystemModel("path/to/pras.pras")
-```
+A `SystemModel` contains a representation of a power system to be studied
+with PRAS.
 """
 struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     regions::Regions{N, P}
