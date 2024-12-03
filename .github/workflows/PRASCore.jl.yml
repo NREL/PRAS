@@ -49,7 +49,6 @@ jobs:
       - uses: julia-actions/julia-buildpkg@latest
         with:
           project: PRASCore
-          localregistry: https://github.com/NREL/JuliaRegistry.git
       - run: |
           git config --global user.name Tester
           git config --global user.email te@st.er

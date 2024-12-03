@@ -47,8 +47,6 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-
             ${{ runner.os }}-
       - run: julia --project=PRAS -e 'import Pkg;
-          Pkg.Registry.add("General");
-          Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/NREL/JuliaRegistry.git"));
           Pkg.develop([
             (path="PRASCore",),
             (path="PRASFiles",),

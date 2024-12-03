@@ -46,10 +46,7 @@ jobs:
             ${{ runner.os }}-${{ matrix.arch }}-test-
             ${{ runner.os }}-${{ matrix.arch }}-
             ${{ runner.os }}-
-      - run: julia --project=PRASFiles -e 'import Pkg;
-          Pkg.Registry.add("General");
-          Pkg.Registry.add(Pkg.RegistrySpec(url="https://github.com/NREL/JuliaRegistry.git"));
-          Pkg.develop(path="PRASCore")'
+      - run: julia --project=PRASFiles -e 'import Pkg; Pkg.develop(path="PRASCore")'
         shell: bash
       - uses: julia-actions/julia-buildpkg@latest
         with:
