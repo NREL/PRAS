@@ -152,13 +152,3 @@ function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::In
     return true
 
 end
-
-function rts_gmlc()
-    path = dirname(@__FILE__)
-    return SystemModel(path * "/rts.pras")
-end
-
-function toymodel()
-    path = dirname(@__FILE__)
-    return SystemModel(path * "/toymodel.pras")
-end
