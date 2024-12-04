@@ -20,7 +20,9 @@ samples = surplus["Region A", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
 @assert length(samples) == 10
 ```
 
-See [`Surplus`](@ref) for estimated average surplus values.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`Surplus`](@ref) for estimated average surplus values
+when sample-level granularity isn't required.
 """
 struct SurplusSamples <: ResultSpec end
 

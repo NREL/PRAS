@@ -37,7 +37,9 @@ samples2 =
 @assert samples == samples2
 ```
 
-See [`Utilization`](@ref) for sample-averaged utilization results.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`Utilization`](@ref) for sample-averaged utilization
+results when sample-level granularity isn't required.
 """
 struct UtilizationSamples <: ResultSpec end
 

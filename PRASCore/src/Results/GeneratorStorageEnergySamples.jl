@@ -21,8 +21,9 @@ samples = genstorenergy["MyGeneratorStorage123", ZonedDateTime(2020, 1, 1, 0, tz
 @assert length(samples) == 10
 ```
 
-See [`GeneratorStorageEnergy`](@ref) for estimated average generator-storage
-state of charge.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`GeneratorStorageEnergy`](@ref) for estimated average
+generator-storage state of charge when sample-level granularity isn't required.
 """
 struct GeneratorStorageEnergySamples <: ResultSpec end
 

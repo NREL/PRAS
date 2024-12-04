@@ -38,8 +38,8 @@ period_eue = EUE(shortfall, "Region A", period)
 period_lolp = LOLE(shortfall, "Region A", period)
 ```
 
-See [`Shortfall`](@ref) for average shortfall outcomes, which require much
-less memory to store.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`Shortfall`](@ref) for average shortfall outcomes when sample-level granularity isn't required.
 """
 struct ShortfallSamples <: ResultSpec end
 

@@ -27,7 +27,9 @@ samples2 = flows["Region B" => "Region A", ZonedDateTime(2020, 1, 1, 0, tz"UTC")
 @assert samples == -samples2
 ```
 
-See [`Flow`](@ref) for estimated average flow results.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`Flow`](@ref) for estimated average flow results
+when sample-level granularity isn't required.
 """
 struct FlowSamples <: ResultSpec end
 

@@ -20,7 +20,9 @@ samples = storenergy["MyStorage123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
 @assert length(samples) == 10
 ```
 
-See [`StorageEnergy`](@ref) for estimated average storage state of charge.
+Note that this result specification requires large amounts of memory for
+larger sample sizes. See [`StorageEnergy`](@ref) for estimated average storage
+state of charge when sample-level granularity isn't required.
 """
 struct StorageEnergySamples <: ResultSpec end
 
