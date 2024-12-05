@@ -9,12 +9,12 @@ using Test
         # TODO: Verify systems accurately depicted?
         path = dirname(@__FILE__)
 
-        toy = toymodel()
+        toy = PRASFiles.toymodel()
         savemodel(toy, path * "/toymodel2.pras")
         toy2 = SystemModel(path * "/toymodel2.pras")
         @test toy == toy2
 
-        rts = rts_gmlc()
+        rts = PRASFiles.rts_gmlc()
         savemodel(rts, path * "/rts2.pras")
         rts2 = SystemModel(path * "/rts2.pras")
         @test rts == rts2
@@ -23,7 +23,7 @@ using Test
 
     @testset "Run RTS-GMLC" begin
 
-        assess(rts_gmlc(), SequentialMonteCarlo(samples=100), Shortfall())
+        assess(PRASFiles.rts_gmlc(), SequentialMonteCarlo(samples=100), Shortfall())
 
     end
 

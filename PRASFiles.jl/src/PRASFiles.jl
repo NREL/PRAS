@@ -13,7 +13,7 @@ import HDF5: HDF5, attributes, File, Group, Dataset, Datatype, dataspace,
 import HDF5.API: h5t_create, h5t_copy, h5t_insert, h5t_set_size,
                  H5T_COMPOUND, h5d_write, H5S_ALL, H5P_DEFAULT
 
-export savemodel, toymodel, rts_gmlc
+export savemodel
 
 include("read.jl")
 include("write.jl")
