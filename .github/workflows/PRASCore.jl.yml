@@ -48,18 +48,18 @@ jobs:
             ${{ runner.os }}-
       - uses: julia-actions/julia-buildpkg@latest
         with:
-          project: PRASCore
+          project: PRASCore.jl
       - run: |
           git config --global user.name Tester
           git config --global user.email te@st.er
       - uses: julia-actions/julia-runtest@latest
         with:
-          project: PRASCore
+          project: PRASCore.jl
         env:
             JULIA_NUM_THREADS: 2
       - uses: julia-actions/julia-processcoverage@v1
         with:
-          directories: PRASCore/src
+          directories: PRASCore.jl/src
       - uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
