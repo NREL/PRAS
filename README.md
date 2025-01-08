@@ -35,6 +35,8 @@ This will automatically install the PRAS Julia module and all of its
 related dependencies. At this point you can hit Backspace to switch back to the
 main `julia>` prompt.
 
+# Basic usage
+
 With PRAS installed, you can load it into Julia as follows:
 
 ```Julia
@@ -44,6 +46,18 @@ using PRAS
 This will make the core PRAS functions (most importantly, the `SystemModel`
 and `assess` functions) available for use in your Julia script or
 interactive REPL session.
+
+The following snippet shows expected unserved energy (EUE) assessment for the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system, which is packaged with PRAS. 
+
+```Julia
+rts_gmlc_sys = PRAS.rts_gmlc();
+shortfall, = assess(rts_gmlc_sys,
+                    SequentialMonteCarlo(samples=10,seed=1),
+                    Shortfall()
+                    );
+println("Total system $(EUE(shortfall))")
+# Total system EUE = 0.00000 MWh/8784h
+```
 
 The [Getting Started](docs/getting-started.md) document provides more information
 on using PRAS.
