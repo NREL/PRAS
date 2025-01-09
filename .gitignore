@@ -5,3 +5,6 @@ Manifest.toml
 *.DS_Store
 *.pras
 *.json
+
+docs/build/
+docs/site/
