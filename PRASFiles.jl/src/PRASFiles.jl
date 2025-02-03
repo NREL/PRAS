@@ -15,18 +15,18 @@ import HDF5.API: h5t_create, h5t_copy, h5t_insert, h5t_set_size,
 
 export savemodel
 
-include("read.jl")
-include("write.jl")
-include("utils.jl")
+include("Systems/read.jl")
+include("Systems/write.jl")
+include("Systems/utils.jl")
 
 function toymodel()
     path = dirname(@__FILE__)
-    return SystemModel(path * "/toymodel.pras")
+    return SystemModel(joinpath(path, "Systems","toymodel.pras")) 
 end
 
 function rts_gmlc()
     path = dirname(@__FILE__)
-    return SystemModel(path * "/rts.pras")
+    return SystemModel(joinpath(path, "Systems","rts.pras")) 
 end
 
 end
