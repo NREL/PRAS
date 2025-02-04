@@ -56,8 +56,8 @@ end
 
 struct RegionResult
     name::String
-    eue::EUE_Result
-    lole::LOLE_Result
+    eue::EUEResult
+    lole::LOLEResult
     neue::Float64
     load::Vector{Int64}
     peak_load::Float64
@@ -65,7 +65,7 @@ struct RegionResult
     shortfall_mean::Vector{Float64}
     surplus_mean::Vector{Float64}
     storage_SoC::Vector{Float64}
-    shortfall_ts_idx::Vector{Int64}
+    shortfall_ts_idx::Vector{ZonedDateTime}
 end
 
 function neue(shortfall::ShortfallResult, pras_sys::SystemModel; region::Union{Nothing, String} = nothing)
@@ -85,8 +85,15 @@ struct SystemResult
     num_samples::Int64
     type_params::TypeParams
     timestamps::Vector{ZonedDateTime}
-    eue::EUE_Result
-    lole::LOLE_Result
+    eue::EUEResult
+    lole::LOLEResult
+    neue::Float64
     region_results::Vector{RegionResult}
 end
 
+# Define structtypes for different structs defined above
+StructType(::Type{TypeParams}) = Struct()
+StructType(::Type{EUEResult}) = Struct()
+StructType(::Type{LOLEResult}) = Struct()
+StructType(::Type{RegionResult}) = OrderedStruct()
+StructType(::Type{SystemResult}) = OrderedStruct()
