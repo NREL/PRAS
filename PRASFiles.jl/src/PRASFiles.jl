@@ -6,6 +6,8 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
 
+import PRASCore.Results: EUE, LOLE, ShortfallResult, SurplusResult, StorageEnergyResult, Result
+
 import Dates: @dateformat_str
 import TimeZones: ZonedDateTime
 import HDF5: HDF5, attributes, File, Group, Dataset, Datatype, dataspace,
