@@ -1,3 +1,6 @@
+# Define function to get name of Type{PRAS.PRASCore.Results.Result}
+name(::Type{T}) where {T} = (isempty(T.parameters) ? T : T.name.wrapper)
+
 # PRAS SystemModel Type Parameters
 struct TypeParams
     N::Int64
@@ -65,7 +68,7 @@ struct RegionResult
     shortfall_mean::Vector{Float64}
     surplus_mean::Vector{Float64}
     storage_SoC::Vector{Float64}
-    shortfall_ts_idx::Vector{ZonedDateTime}
+    shortfall_timestamps::Vector{ZonedDateTime}
 end
 
 function neue(shortfall::ShortfallResult, pras_sys::SystemModel; region::Union{Nothing, String} = nothing)

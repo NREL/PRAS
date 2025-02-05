@@ -17,12 +17,16 @@ import HDF5.API: h5t_create, h5t_copy, h5t_insert, h5t_set_size,
 
 import StructTypes: StructType, Struct, OrderedStruct
 import JSON3: pretty
+import Base: typename
 
 export savemodel
+export save_aggregate_results
 
 include("Systems/read.jl")
 include("Systems/write.jl")
 include("Systems/utils.jl")
+include("Results/utils.jl")
+include("Results/write.jl")
 
 function toymodel()
     path = dirname(@__FILE__)

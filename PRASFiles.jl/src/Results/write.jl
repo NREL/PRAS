@@ -1,9 +1,26 @@
 function generate_systemresult(results::R, pras_sys::SystemModel) where {R <: Tuple{Vararg{Result}}}
-
-    shortfall = results[1]
-    surplus = results[2]
-    storageenergy = results[3]
+ 
+    shortfall_idx = findfirst(name.(typeof.(results)) .== ShortfallResult)
+    shortfall = results[shortfall_idx]
     
+    surplus_idx = findfirst(name.(typeof.(results)) .== SurplusResult)
+    surplus = nothing
+    if isnothing(surplus_idx)
+        @warn "SurplusResult not available in the Result tuple. These results are not exported."
+    else
+        surplus = results[surplus_idx]
+    end
+
+    se_idx = findfirst(name.(typeof.(results)) .== StorageEnergyResult)
+    storageenergy = nothing
+    if isnothing(se_idx)
+        if (length(pras_sys.storages.names) > 0)
+            @warn "Storages are present in the SystemModel but StorageEnergyResult not available in the Result tuple.These results are not exported."
+        end
+    else
+        storageenergy = results[se_idx]
+    end
+
     region_results = RegionResult[]
     for (idx,reg_name) in enumerate(pras_sys.regions.names)
         region_gen_cats = unique(pras_sys.generators.categories[pras_sys.region_gen_idxs[idx]])
@@ -23,23 +40,33 @@ function generate_systemresult(results::R, pras_sys::SystemModel) where {R <: Tu
         capacity = Dict(map(=>, keys(installed_cap), sum.(values(installed_cap))))
         peak_load = maximum(pras_sys.regions.load[idx,:])
         shortfall_mean = shortfall.shortfall_mean[idx,:]
-        surplus_mean = surplus.surplus_mean[idx,:]
-        storage_SoC = Float64[]
+        surplus_mean = 
+        if isnothing(surplus)
+            Float64[]
+        else
+            surplus.surplus_mean[idx,:]
+        end
+        
         reg_stor_SoC = Dict()
-        for (i,stor) in enumerate(pras_sys.storages.names[pras_sys.region_stor_idxs[idx]])
-            stor_energy_cap = maximum(pras_sys.storages.energy_capacity[pras_sys.region_stor_idxs[idx]][i,:])
-            if (stor_energy_cap == 0)
-               continue
+        if ~isnothing(storageenergy)
+            for (i,stor) in enumerate(pras_sys.storages.names[pras_sys.region_stor_idxs[idx]])
+                stor_energy_cap = maximum(pras_sys.storages.energy_capacity[pras_sys.region_stor_idxs[idx]][i,:])
+                if (stor_energy_cap == 0)
+                continue
+                end
+                stor_energy = storageenergy[stor, :]
+                push!(reg_stor_SoC,stor =>  getindex.(stor_energy,1)/stor_energy_cap)
             end
-            stor_energy = storageenergy[stor, :]
-            push!(reg_stor_SoC,stor =>  getindex.(stor_energy,1)/stor_energy_cap)
         end
     
-        if ~(isempty(reg_stor_SoC))
-            storage_SoC = sum(values(reg_stor_SoC))
+        storage_SoC = 
+        if (isempty(reg_stor_SoC))
+            Float64[]
+        else
+            sum(values(reg_stor_SoC))
         end
     
-        shortfall_ts_idx = collect(shortfall.timestamps)[findall(shortfall_mean .!= 0.0)]
+        shortfall_timestamps = collect(shortfall.timestamps)[findall(shortfall_mean .!= 0.0)]
         push!(region_results,
         RegionResult(
             reg_name,
@@ -52,7 +79,7 @@ function generate_systemresult(results::R, pras_sys::SystemModel) where {R <: Tu
             shortfall_mean,
             surplus_mean,
             storage_SoC,
-            shortfall_ts_idx,
+            shortfall_timestamps,
         )
         )
 
@@ -65,18 +92,24 @@ function generate_systemresult(results::R, pras_sys::SystemModel) where {R <: Tu
         EUEResult(shortfall),
         LOLEResult(shortfall),
         neue(shortfall, pras_sys),
-        region_results
+        region_results,
     )
 
     return sys_result
 
 end
 
-function export_aggregate_results(
+function save_aggregate_results(
     results::R,
     pras_sys::SystemModel;
     export_location::Union{Nothing, String}=nothing,
 ) where {R <: Tuple{Vararg{Result}}}
+    @info "Only aggregate system and region level results are exported. Sample level results are not exported."
+
+    if ~(ShortfallResult ∈ name.(typeof.(results)))
+        error("ShortfallResult is not available in the Result tuple.")
+    end
+
     if (export_location === nothing)
         export_location = pwd()
     end
