@@ -1,6 +1,7 @@
 using PRASCore
 using PRASFiles
 using Test
+using JSON3
 
 @testset "PRASFiles" begin
 
@@ -25,6 +26,27 @@ using Test
 
         assess(PRASFiles.rts_gmlc(), SequentialMonteCarlo(samples=100), Shortfall())
 
+    end
+
+    @testset "Save Aggregate Results" begin
+        rts_sys = PRASFiles.rts_gmlc()
+        # Make load in all regions in rts_sys 10 times the original load for meaningful results
+        for i in 1:length(rts_sys.regions.names)
+            rts_sys.regions.load[i, :] = 10 * rts_sys.regions.load[i, :]
+        end
+        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall())
+        path = joinpath(dirname(@__FILE__),"PRAS_Results_Export")
+        exp_location = PRASFiles.save_aggregate_results(results, rts_sys, export_location = path)
+        @test isfile(joinpath(exp_location, "pras_results.json"))
+        exp_results = JSON3.read(joinpath(exp_location, "pras_results.json"), PRASFiles.SystemResult)
+        @test exp_results.eue.mean == PRASCore.EUE(results[1]).eue.estimate
+
+        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), Surplus(), StorageEnergy())
+        exp_location = PRASFiles.save_aggregate_results(results, rts_sys, export_location = path)
+        @test isfile(joinpath(exp_location, "pras_results.json"))
+        exp_results = JSON3.read(joinpath(exp_location, "pras_results.json"), PRASFiles.SystemResult)
+        @test all((iszero.(exp_results.region_results[1].surplus_mean)))
+        @test all((iszero.(exp_results.region_results[3].storage_SoC)))
     end
 
 end
