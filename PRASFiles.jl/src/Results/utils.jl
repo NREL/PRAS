@@ -1,11 +1,3 @@
-"""
-    TypeParams(N, L, T, P, E)
-
-# Arguments
-$(TYPEDFIELDS)
-
-Export SystemModel type parameters
-"""
 struct TypeParams
     N::Int64
     L::Int64
@@ -24,14 +16,6 @@ function TypeParams(pras_sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
     )
 end
 
-"""
-    EUEResult(mean, stderror)
-
-# Arguments
-$(TYPEDFIELDS)
-
-Export EUE Result (System/ Regional)
-"""
 struct EUEResult
     mean::Float64
     stderror::Float64
@@ -45,15 +29,6 @@ function EUEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = 
         eue.eue.standarderror,
     )
 end
-
-"""
-    LOLEResult(mean, stderror)
-
-# Arguments
-$(TYPEDFIELDS)
-
-Export LOLE Result (System/ Regional)
-"""
 
 struct LOLEResult
     mean::Float64
@@ -69,16 +44,6 @@ function LOLEResult(shortfall::ShortfallResult; region::Union{Nothing, String} =
     )
 end
 
-"""
-    NEUEResult(mean, stderror)
-
-# Arguments
-$(TYPEDFIELDS)
-
-Export NEUE Result (System/ Regional)
-"""
-
-# NEUE Result
 struct NEUEResult
     mean::Float64
     stderror::Float64
