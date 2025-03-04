@@ -1,7 +1,11 @@
-# Define function to get name of Type{PRAS.PRASCore.Results.Result}
-name(::Type{T}) where {T} = (isempty(T.parameters) ? T : T.name.wrapper)
+"""
+    TypeParams(N, L, T, P, E)
 
-# PRAS SystemModel Type Parameters
+# Arguments
+$(TYPEDFIELDS)
+
+Export SystemModel type parameters
+"""
 struct TypeParams
     N::Int64
     L::Int64
@@ -20,24 +24,36 @@ function TypeParams(pras_sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
     )
 end
 
-# EUE Result
+"""
+    EUEResult(mean, stderror)
+
+# Arguments
+$(TYPEDFIELDS)
+
+Export EUE Result (System/ Regional)
+"""
 struct EUEResult
     mean::Float64
     stderror::Float64
 end
 
 function EUEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing)
-    eue = 
-    if (region === nothing)
-        EUE(shortfall)
-    else
-        EUE(shortfall, region)
-    end
+
+    eue = (region === nothing) ? EUE(shortfall) :  EUE(shortfall, region)
     return EUEResult(
         eue.eue.estimate,
         eue.eue.standarderror,
     )
 end
+
+"""
+    LOLEResult(mean, stderror)
+
+# Arguments
+$(TYPEDFIELDS)
+
+Export LOLE Result (System/ Regional)
+"""
 
 struct LOLEResult
     mean::Float64
@@ -45,43 +61,55 @@ struct LOLEResult
 end
 
 function LOLEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing) 
-    lole = 
-    if (region === nothing)
-        LOLE(shortfall)
-    else
-        LOLE(shortfall, region)
-    end
+
+    lole = (region === nothing) ?  LOLE(shortfall) : LOLE(shortfall, region)
     return LOLEResult(
         lole.lole.estimate,
         lole.lole.standarderror,
     )
 end
 
-struct RegionResult
-    name::String
-    eue::EUEResult
-    lole::LOLEResult
-    neue::Float64
-    load::Vector{Int64}
-    peak_load::Float64
-    capacity::Dict{String,Vector{Int64}}
-    shortfall_mean::Vector{Float64}
-    surplus_mean::Vector{Float64}
-    storage_SoC::Vector{Float64}
-    shortfall_timestamps::Vector{ZonedDateTime}
+"""
+    NEUEResult(mean, stderror)
+
+# Arguments
+$(TYPEDFIELDS)
+
+Export NEUE Result (System/ Regional)
+"""
+
+# NEUE Result
+struct NEUEResult
+    mean::Float64
+    stderror::Float64
 end
 
-function neue(shortfall::ShortfallResult, pras_sys::SystemModel; region::Union{Nothing, String} = nothing)
+function NEUEResult(shortfall::ShortfallResult, pras_sys::SystemModel; region::Union{Nothing, String} = nothing)
     eue_result = EUEResult(shortfall, region = region)
-    eue = eue_result.mean
+    eue_mean = eue_result.mean
+    eue_sd = eue_result.stderror
     load = 
     if (region === nothing)
         sum(pras_sys.regions.load)
     else
         sum(pras_sys.regions.load[findfirst(pras_sys.regions.names .== region),:])
     end
-    
-    return 1e6*(eue/load) #returns in ppm
+    return NEUEResult(
+        1e6*(eue_mean/load),
+        1e6*(eue_sd/load),
+    ) #returns in ppm
+end
+
+struct RegionResult
+    name::String
+    eue::EUEResult
+    lole::LOLEResult
+    neue::NEUEResult
+    load::Vector{Int64}
+    peak_load::Float64
+    capacity::Dict{String,Vector{Int64}}
+    shortfall_mean::Vector{Float64}
+    shortfall_timestamps::Vector{ZonedDateTime}
 end
 
 struct SystemResult
@@ -90,13 +118,14 @@ struct SystemResult
     timestamps::Vector{ZonedDateTime}
     eue::EUEResult
     lole::LOLEResult
-    neue::Float64
+    neue::NEUEResult
     region_results::Vector{RegionResult}
 end
 
 # Define structtypes for different structs defined above
 StructType(::Type{TypeParams}) = Struct()
 StructType(::Type{EUEResult}) = Struct()
+StructType(::Type{NEUEResult}) = Struct()
 StructType(::Type{LOLEResult}) = Struct()
 StructType(::Type{RegionResult}) = OrderedStruct()
 StructType(::Type{SystemResult}) = OrderedStruct()

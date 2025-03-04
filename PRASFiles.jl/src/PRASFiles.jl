@@ -6,7 +6,7 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
 
-import PRASCore.Results: EUE, LOLE, ShortfallResult, SurplusResult, StorageEnergyResult, Result
+import PRASCore.Results: EUE, LOLE, ShortfallResult, Result
 
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime
@@ -19,7 +19,7 @@ import StructTypes: StructType, Struct, OrderedStruct
 import JSON3: pretty
 
 export savemodel
-export save_aggregate_results
+export saveshortfall
 
 include("Systems/read.jl")
 include("Systems/write.jl")
