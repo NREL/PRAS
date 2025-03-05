@@ -24,6 +24,9 @@
     @test val(eue) ≈ first(result[])
     @test stderror(eue) ≈ last(result[]) / sqrt(DD.nsamples)
 
+    neue = NEUE(result)
+    @test val(neue) ≈ (first(result[])/sum(DD.resource_vals))*1e6
+    @test stderror(neue) ≈ ((last(result[]) / sqrt(DD.nsamples))/sum(DD.resource_vals))*1e6
     # Region-specific
 
     @test result[r] ≈ (sum(DD.d3_resourceperiod[r_idx,:]), DD.d4_resource[r_idx])
@@ -36,9 +39,14 @@
     @test val(region_eue) ≈ first(result[r])
     @test stderror(region_eue) ≈ last(result[r]) / sqrt(DD.nsamples)
 
+    region_neue = NEUE(result, r)
+    @test val(region_neue) ≈ (first(result[r])/sum(DD.resource_vals[DD.testresource_idx,:]))*1e6
+    @test stderror(region_neue) ≈ ((last(result[r]) / sqrt(DD.nsamples))/sum(DD.resource_vals[DD.testresource_idx,:]))*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
+    @test_throws BoundsError NEUE(result, r_bad)
 
     # Period-specific
 
@@ -108,6 +116,10 @@ end
     @test val(eue) ≈ mean(result[])
     @test stderror(eue) ≈ std(result[]) / sqrt(DD.nsamples)
 
+    neue = NEUE(result)
+    @test val(neue) ≈ (mean(result[])/sum(DD.resource_vals))*1e6
+    @test stderror(neue) ≈ ((std(result[]) / sqrt(DD.nsamples))/sum(DD.resource_vals))*1e6
+
     # Region-specific
 
     @test length(result[r]) == DD.nsamples
@@ -122,9 +134,14 @@ end
     @test val(region_eue) ≈ mean(result[r])
     @test stderror(region_eue) ≈ std(result[r]) / sqrt(DD.nsamples)
 
+    region_neue = NEUE(result, r)
+    @test val(region_neue) ≈ (mean(result[r])/sum(DD.resource_vals[DD.testresource_idx,:]))*1e6
+    @test stderror(region_neue) ≈ ((std(result[r]) / sqrt(DD.nsamples))/sum(DD.resource_vals[DD.testresource_idx,:]))*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
+    @test_throws BoundsError NEUE(result, r_bad)
 
     # Period-specific
 

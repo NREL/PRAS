@@ -23,10 +23,12 @@ sf_mean, sf_std = shortfall["Region A", period]
 # System-wide risk metrics
 eue = EUE(shortfall)
 lole = LOLE(shortfall)
+neue = NEUE(shorfall)
 
 # Regional risk metrics
 regional_eue = EUE(shortfall, "Region A")
 regional_lole = LOLE(shortfall, "Region A")
+regional_neue = NEUE(shortfall, "Region A")
 
 # Period-specific risk metrics
 period_eue = EUE(shortfall, period)
