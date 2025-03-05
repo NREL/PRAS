@@ -7,11 +7,12 @@ import Printf: @sprintf
 import StatsBase: mean, std, stderror
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
-                  PowerUnit, EnergyUnit, conversionfactor, unitsymbol
+                  PowerUnit, EnergyUnit, conversionfactor,
+                  unitsymbol, Regions
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE,
+    ReliabilityMetric, LOLE, EUE, NEUE,
     val, stderror,
 
     # Result specifications
@@ -68,6 +69,12 @@ EUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
 
 EUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
     EUE.(x, x.regions, permutedims(x.timestamps))
+
+NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    NEUE.(x, r, x.timestamps)
+
+NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    NEUE.(x, x.regions, permutedims(x.timestamps))
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
