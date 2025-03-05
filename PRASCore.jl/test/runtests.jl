@@ -5,7 +5,7 @@ using Test
 using TimeZones
 
 import PRASCore.Results: MeanEstimate, ReliabilityMetric
-import PRASCore.Systems: TestData
+import PRASCore.Systems: TestData, Regions
 
 withinrange(x::ReliabilityMetric, y::Real, n::Real) =
     isapprox(val(x), y, atol=n*stderror(x))

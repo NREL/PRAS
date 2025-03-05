@@ -6,7 +6,7 @@
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
     result = PRASCore.Results.ShortfallResult{N,1,Hour,MWh}(
-        DD.nsamples, DD.resourcenames, DD.periods,
+        DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
         DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
         DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
         DD.d3_resourceperiod,
@@ -92,7 +92,7 @@ end
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh}(
-        DD.resourcenames, DD.periods, DD.d)
+        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
 
     # Overall
 
