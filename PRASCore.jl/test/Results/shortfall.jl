@@ -6,7 +6,7 @@
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
     result = PRASCore.Results.ShortfallResult{N,1,Hour,MWh}(
-        DD.nsamples, DD.resourcenames, DD.periods,
+        DD.nsamples, Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods,
         DD.d1, DD.d2, DD.d1_resource, DD.d2_resource,
         DD.d1_period, DD.d2_period, DD.d1_resourceperiod, DD.d2_resourceperiod,
         DD.d3_resourceperiod,
@@ -24,6 +24,10 @@
     @test val(eue) ≈ first(result[])
     @test stderror(eue) ≈ last(result[]) / sqrt(DD.nsamples)
 
+    neue = NEUE(result)
+    load = sum(DD.resource_vals)
+    @test val(neue) ≈ first(result[]) / load*1e6
+    @test stderror(neue) ≈ last(result[]) / sqrt(DD.nsamples) / load*1e6
     # Region-specific
 
     @test result[r] ≈ (sum(DD.d3_resourceperiod[r_idx,:]), DD.d4_resource[r_idx])
@@ -36,9 +40,15 @@
     @test val(region_eue) ≈ first(result[r])
     @test stderror(region_eue) ≈ last(result[r]) / sqrt(DD.nsamples)
 
+    region_neue = NEUE(result, r)
+    load = sum(DD.resource_vals[r_idx,:])
+    @test val(region_neue) ≈ first(result[r]) / load*1e6
+    @test stderror(region_neue) ≈ last(result[r]) / sqrt(DD.nsamples) / load*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
+    @test_throws BoundsError NEUE(result, r_bad)
 
     # Period-specific
 
@@ -92,7 +102,7 @@ end
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
     result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh}(
-        DD.resourcenames, DD.periods, DD.d)
+        Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
 
     # Overall
 
@@ -108,6 +118,11 @@ end
     @test val(eue) ≈ mean(result[])
     @test stderror(eue) ≈ std(result[]) / sqrt(DD.nsamples)
 
+    neue = NEUE(result)
+    load = sum(DD.resource_vals)
+    @test val(neue) ≈ mean(result[]) / load*1e6
+    @test stderror(neue) ≈ std(result[]) / sqrt(DD.nsamples) / load*1e6
+
     # Region-specific
 
     @test length(result[r]) == DD.nsamples
@@ -122,9 +137,15 @@ end
     @test val(region_eue) ≈ mean(result[r])
     @test stderror(region_eue) ≈ std(result[r]) / sqrt(DD.nsamples)
 
+    region_neue = NEUE(result, r)
+    load = sum(DD.resource_vals[r_idx,:])
+    @test val(region_neue) ≈ mean(result[r]) / load*1e6
+    @test stderror(region_neue) ≈ std(result[r]) / sqrt(DD.nsamples) / load*1e6
+
     @test_throws BoundsError result[r_bad]
     @test_throws BoundsError LOLE(result, r_bad)
     @test_throws BoundsError EUE(result, r_bad)
+    @test_throws BoundsError NEUE(result, r_bad)
 
     # Period-specific
 

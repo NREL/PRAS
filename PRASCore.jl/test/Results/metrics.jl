@@ -60,4 +60,16 @@
 
     end
 
+    @testset "NEUE" begin
+
+        neue = NEUE(MeanEstimate(1.2))
+        @test string(neue) == "NEUE = 1.20000 ppm"
+
+        neue2 = NEUE(MeanEstimate(17.2, 1.3))
+        @test string(neue2) == "NEUE = 17±1 ppm"
+
+        @test_throws DomainError NEUE(MeanEstimate(-1.2))
+
+    end
+
 end

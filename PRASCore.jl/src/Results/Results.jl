@@ -7,11 +7,12 @@ import Printf: @sprintf
 import StatsBase: mean, std, stderror
 
 import ..Systems: SystemModel, ZonedDateTime, Period,
-                  PowerUnit, EnergyUnit, conversionfactor, unitsymbol
+                  PowerUnit, EnergyUnit, conversionfactor,
+                  unitsymbol, Regions
 export
 
     # Metrics
-    ReliabilityMetric, LOLE, EUE,
+    ReliabilityMetric, LOLE, EUE, NEUE,
     val, stderror,
 
     # Result specifications
@@ -51,23 +52,29 @@ getindex(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 
 LOLE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
-    LOLE.(x, x.regions, t)
+    LOLE.(x, x.regions.names, t)
 
 LOLE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
     LOLE.(x, r, x.timestamps)
 
 LOLE(x::AbstractShortfallResult, ::Colon, ::Colon) =
-    LOLE.(x, x.regions, permutedims(x.timestamps))
+    LOLE.(x, x.regions.names, permutedims(x.timestamps))
 
 
 EUE(x::AbstractShortfallResult, ::Colon, t::ZonedDateTime) =
-    EUE.(x, x.regions, t)
+    EUE.(x, x.regions.names, t)
 
 EUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
     EUE.(x, r, x.timestamps)
 
 EUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
-    EUE.(x, x.regions, permutedims(x.timestamps))
+    EUE.(x, x.regions.names, permutedims(x.timestamps))
+
+NEUE(x::AbstractShortfallResult, r::AbstractString, ::Colon) =
+    NEUE.(x, r, x.timestamps)
+
+NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
+    NEUE.(x, x.regions.names, permutedims(x.timestamps))
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")

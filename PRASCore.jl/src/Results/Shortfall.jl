@@ -23,10 +23,12 @@ sf_mean, sf_std = shortfall["Region A", period]
 # System-wide risk metrics
 eue = EUE(shortfall)
 lole = LOLE(shortfall)
+neue = NEUE(shorfall)
 
 # Regional risk metrics
 regional_eue = EUE(shortfall, "Region A")
 regional_lole = LOLE(shortfall, "Region A")
+regional_neue = NEUE(shortfall, "Region A")
 
 # Period-specific risk metrics
 period_eue = EUE(shortfall, period)
@@ -120,7 +122,7 @@ accumulatortype(::Shortfall) = ShortfallAccumulator
 struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
        AbstractShortfallResult{N, L, T}
     nsamples::Union{Int, Nothing}
-    regions::Vector{String}
+    regions::Regions
     timestamps::StepRange{ZonedDateTime,T}
 
     eventperiod_mean::Float64
@@ -145,7 +147,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
 
     function ShortfallResult{N,L,T,E}(
         nsamples::Union{Int,Nothing},
-        regions::Vector{String},
+        regions::Regions,
         timestamps::StepRange{ZonedDateTime,T},
         eventperiod_mean::Float64,
         eventperiod_std::Float64,
@@ -169,7 +171,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
         length(timestamps) == N ||
             error("The provided timestamp range does not match the simulation length")
 
-        nregions = length(regions)
+        nregions = length(regions.names)
 
         length(eventperiod_region_mean) == nregions &&
         length(eventperiod_region_std) == nregions &&
@@ -200,7 +202,7 @@ function getindex(x::ShortfallResult)
 end
 
 function getindex(x::ShortfallResult, r::AbstractString)
-    i_r = findfirstunique(x.regions, r)
+    i_r = findfirstunique(x.regions.names, r)
     return sum(view(x.shortfall_mean, i_r, :)), x.shortfall_region_std[i_r]
 end
 
@@ -210,7 +212,7 @@ function getindex(x::ShortfallResult, t::ZonedDateTime)
 end
 
 function getindex(x::ShortfallResult, r::AbstractString, t::ZonedDateTime)
-    i_r = findfirstunique(x.regions, r)
+    i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return x.shortfall_mean[i_r, i_t], x.shortfall_regionperiod_std[i_r, i_t]
 end
@@ -222,7 +224,7 @@ LOLE(x::ShortfallResult{N,L,T}) where {N,L,T} =
                              x.nsamples))
 
 function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString) where {N,L,T}
-    i_r = findfirstunique(x.regions, r)
+    i_r = findfirstunique(x.regions.names, r)
     return LOLE{N,L,T}(MeanEstimate(x.eventperiod_region_mean[i_r],
                                     x.eventperiod_region_std[i_r],
                                     x.nsamples))
@@ -236,7 +238,7 @@ function LOLE(x::ShortfallResult{N,L,T}, t::ZonedDateTime) where {N,L,T}
 end
 
 function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString, t::ZonedDateTime) where {N,L,T}
-    i_r = findfirstunique(x.regions, r)
+    i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return LOLE{1,L,T}(MeanEstimate(x.eventperiod_regionperiod_mean[i_r, i_t],
                                     x.eventperiod_regionperiod_std[i_r, i_t],
@@ -255,6 +257,15 @@ EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
 
 EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
+
+function NEUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E}
+    return NEUE(div(MeanEstimate(x[]..., x.nsamples),(sum(x.regions.load)/1e6)))
+end
+
+function NEUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E}
+    i_r = findfirstunique(x.regions.names, r)
+    return NEUE(div(MeanEstimate(x[r]..., x.nsamples),(sum(x.regions.load[i_r,:])/1e6)))
+end
 
 function finalize(
     acc::ShortfallAccumulator,
@@ -283,7 +294,7 @@ function finalize(
     ue_regionperiod_std .*= p2e
 
     return ShortfallResult{N,L,T,E}(
-        nsamples, system.regions.names, system.timestamps,
+        nsamples, system.regions, system.timestamps,
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
         ep_regionperiod_mean, ep_regionperiod_std,

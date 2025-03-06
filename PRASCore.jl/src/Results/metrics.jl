@@ -32,6 +32,9 @@ Base.isapprox(x::MeanEstimate, y::MeanEstimate) =
         isapprox(x.estimate, y.estimate) &&
         isapprox(x.standarderror, y.standarderror)
 
+Base.div(x::MeanEstimate, y::Float64) = 
+    MeanEstimate(x.estimate/y, x.standarderror/y)
+
 function Base.show(io::IO, x::MeanEstimate)
     v, s = stringprecision(x)
     print(io, v, x.standarderror > 0 ? "±"*s : "")
@@ -129,5 +132,35 @@ function Base.show(io::IO, x::EUE{N,L,T,E}) where {N,L,T,E}
 
     print(io, "EUE = ", x.eue, " ",
           unitsymbol(E), "/", N*L == 1 ? "" : N*L, unitsymbol(T))
+
+end
+
+"""
+    NEUE
+
+`NEUE` reports normalized expected unserved energy over a regional extent.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct NEUE <: ReliabilityMetric
+
+    neue::MeanEstimate
+
+    function NEUE(neue::MeanEstimate)
+        val(neue) >= 0 || throw(DomainError(
+            "$val is not a valid unserved energy expectation"))
+        new(neue)
+    end
+
+end
+
+val(x::NEUE) = val(x.neue)
+stderror(x::NEUE) = stderror(x.neue)
+
+function Base.show(io::IO, x::NEUE)
+
+    print(io, "NEUE = ", x.neue, " ppm")
 
 end
