@@ -40,7 +40,12 @@ using JSON3
         exp_location = PRASFiles.saveshortfall(shortfall, rts_sys, path);
         @test isfile(joinpath(exp_location, "pras_results.json"))
         exp_results = JSON3.read(joinpath(exp_location, "pras_results.json"), PRASFiles.SystemResult)
+        @test exp_results.lole.mean == PRASCore.LOLE(shortfall).lole.estimate
         @test exp_results.eue.mean == PRASCore.EUE(shortfall).eue.estimate
+        @test exp_results.neue.mean == PRASCore.NEUE(shortfall).neue.estimate
+        @test exp_results.region_results[1].lole.mean == PRASCore.LOLE(shortfall, exp_results.region_results[1].name).lole.estimate
+        @test exp_results.region_results[1].eue.mean == PRASCore.EUE(shortfall, exp_results.region_results[1].name).eue.estimate
+        @test exp_results.region_results[1].neue.mean == PRASCore.NEUE(shortfall, exp_results.region_results[1].name).neue.estimate
     end
 
 end

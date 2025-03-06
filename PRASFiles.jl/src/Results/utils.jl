@@ -49,20 +49,13 @@ struct NEUEResult
     stderror::Float64
 end
 
-function NEUEResult(shortfall::ShortfallResult, pras_sys::SystemModel; region::Union{Nothing, String} = nothing)
-    eue_result = EUEResult(shortfall, region = region)
-    eue_mean = eue_result.mean
-    eue_sd = eue_result.stderror
-    load = 
-    if (region === nothing)
-        sum(pras_sys.regions.load)
-    else
-        sum(pras_sys.regions.load[findfirst(pras_sys.regions.names .== region),:])
-    end
+function NEUEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing)
+
+    neue = (region === nothing) ? NEUE(shortfall) :  NEUE(shortfall, region)
     return NEUEResult(
-        1e6*(eue_mean/load),
-        1e6*(eue_sd/load),
-    ) #returns in ppm
+        neue.neue.estimate,
+        neue.neue.standarderror,
+    )
 end
 
 struct RegionResult

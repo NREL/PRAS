@@ -6,7 +6,7 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
 
-import PRASCore.Results: EUE, LOLE, ShortfallResult, Result
+import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, Result
 
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime

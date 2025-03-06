@@ -40,7 +40,7 @@ function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel
             reg_name,
             EUEResult(shortfall, region = reg_name),
             LOLEResult(shortfall, region = reg_name),
-            NEUEResult(shortfall, pras_sys, region = reg_name),
+            NEUEResult(shortfall, region = reg_name),
             pras_sys.regions.load[idx,:],
             peak_load,
             capacity,
@@ -57,7 +57,7 @@ function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel
         collect(shortfall.timestamps),
         EUEResult(shortfall),
         LOLEResult(shortfall),
-        NEUEResult(shortfall, pras_sys),
+        NEUEResult(shortfall),
         region_results,
     )
 
