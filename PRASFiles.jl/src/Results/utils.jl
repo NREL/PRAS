@@ -21,7 +21,7 @@ struct EUEResult
     stderror::Float64
 end
 
-function EUEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing)
+function EUEResult(shortfall::AbstractShortfallResult; region::Union{Nothing, String} = nothing)
 
     eue = (region === nothing) ? EUE(shortfall) :  EUE(shortfall, region)
     return EUEResult(
@@ -35,7 +35,7 @@ struct LOLEResult
     stderror::Float64
 end
 
-function LOLEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing) 
+function LOLEResult(shortfall::AbstractShortfallResult; region::Union{Nothing, String} = nothing) 
 
     lole = (region === nothing) ?  LOLE(shortfall) : LOLE(shortfall, region)
     return LOLEResult(
@@ -49,7 +49,7 @@ struct NEUEResult
     stderror::Float64
 end
 
-function NEUEResult(shortfall::ShortfallResult; region::Union{Nothing, String} = nothing)
+function NEUEResult(shortfall::AbstractShortfallResult; region::Union{Nothing, String} = nothing)
 
     neue = (region === nothing) ? NEUE(shortfall) :  NEUE(shortfall, region)
     return NEUEResult(
@@ -78,6 +78,22 @@ struct SystemResult
     lole::LOLEResult
     neue::NEUEResult
     region_results::Vector{RegionResult}
+end
+
+function get_shortfall_mean(shortfall::ShortfallResult)
+    return shortfall.shortfall_mean
+end
+
+function get_shortfall_mean(shortfall::ShortfallSamplesResult)
+    return mean(shortfall.shortfall, dims = 3)
+end
+
+function get_nsamples(shortfall::ShortfallResult)
+    return shortfall.nsamples
+end
+
+function get_nsamples(shortfall::ShortfallSamplesResult)
+    return size(shortfall.shortfall,3)
 end
 
 # Define structtypes for different structs defined above

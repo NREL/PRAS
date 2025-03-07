@@ -1,20 +1,7 @@
-"""
-    generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel)
-
-Generate PRASFiles.jl SystemResult from PRASCore.jl ShortfallResult  
-
-# Arguments
-
-    - `shortfall::ShortfallResult`: ShortfallResult 
-    - `pras_sys::SystemModel`: PRAS SystemModel
-
-# Returns
-
-  - SystemResult.
-"""
-function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel)
+function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::SystemModel)
     
     region_results = RegionResult[]
+    shortfall_mean = get_shortfall_mean(shortfall)
     for (idx,reg_name) in enumerate(pras_sys.regions.names)
         region_gen_cats = unique(pras_sys.generators.categories[pras_sys.region_gen_idxs[idx]])
         region_stor_cats = unique(pras_sys.storages.categories[pras_sys.region_stor_idxs[idx]])
@@ -32,8 +19,8 @@ function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel
 
         capacity = Dict(map(=>, keys(installed_cap), sum.(values(installed_cap))))
         peak_load = maximum(pras_sys.regions.load[idx,:])
-        shortfall_mean = shortfall.shortfall_mean[idx,:]
-        shortfall_timestamps = collect(shortfall.timestamps)[findall(shortfall_mean .!= 0.0)]
+        reg_shortfall_mean = shortfall_mean[idx,:]
+        shortfall_timestamps = collect(shortfall.timestamps)[findall(reg_shortfall_mean .!= 0.0)]
 
         push!(region_results,
         RegionResult(
@@ -44,7 +31,7 @@ function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel
             pras_sys.regions.load[idx,:],
             peak_load,
             capacity,
-            shortfall_mean,
+            reg_shortfall_mean,
             shortfall_timestamps,
         )
         )
@@ -52,7 +39,7 @@ function generate_systemresult(shortfall::ShortfallResult, pras_sys::SystemModel
     end
 
     sys_result = SystemResult(
-        shortfall.nsamples,
+        get_nsamples(shortfall),
         TypeParams(pras_sys),
         collect(shortfall.timestamps),
         EUEResult(shortfall),
@@ -67,25 +54,25 @@ end
 
 """
     saveshortfall(
-        shortfall::ShortfallResult,
+        shortfall::AbstractShortfallResult,
         pras_sys::SystemModel,
         outfile::String,
     )
 
-Save ShortfallResult in JSON format. Only aggregate system and region level results are exported. Sample level results are not exported..
+Save ShortfallResult or ShortfallSample Result in JSON format. Only aggregate system and region level results are exported. Sample level results are not exported..
 
 # Arguments
 
-    - `shortfall::ShortfallResult`: ShortfallResult 
+    - `shortfall::AbstractShortfallResult`: ShortfallResult (or) ShortfallSamplesResult
     - `pras_sys::SystemModel`: PRAS SystemModel
     - `outfile::String`: Location to save the ShortfallResult
 
 # Returns
 
-  - ShortfallResult saved in a JSON format.
+  - Location where ShortfallResult (or) ShortfallSamplesResult is exported in JSON format.
 """
 function saveshortfall(
-    shortfall::ShortfallResult,
+    shortfall::AbstractShortfallResult,
     pras_sys::SystemModel,
     outfile::String,
 )

@@ -6,8 +6,8 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
 
-import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, Result
-
+import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
+import StatsBase: mean
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime
 import HDF5: HDF5, attributes, File, Group, Dataset, Datatype, dataspace,

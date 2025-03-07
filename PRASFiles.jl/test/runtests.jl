@@ -34,18 +34,37 @@ using JSON3
         for i in 1:length(rts_sys.regions.names)
             rts_sys.regions.load[i, :] = 10 * rts_sys.regions.load[i, :]
         end
-        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall());
+        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), ShortfallSamples());
         shortfall = results[1];
         path = joinpath(dirname(@__FILE__),"PRAS_Results_Export");
-        exp_location = PRASFiles.saveshortfall(shortfall, rts_sys, path);
-        @test isfile(joinpath(exp_location, "pras_results.json"))
-        exp_results = JSON3.read(joinpath(exp_location, "pras_results.json"), PRASFiles.SystemResult)
-        @test exp_results.lole.mean == PRASCore.LOLE(shortfall).lole.estimate
-        @test exp_results.eue.mean == PRASCore.EUE(shortfall).eue.estimate
-        @test exp_results.neue.mean == PRASCore.NEUE(shortfall).neue.estimate
-        @test exp_results.region_results[1].lole.mean == PRASCore.LOLE(shortfall, exp_results.region_results[1].name).lole.estimate
-        @test exp_results.region_results[1].eue.mean == PRASCore.EUE(shortfall, exp_results.region_results[1].name).eue.estimate
-        @test exp_results.region_results[1].neue.mean == PRASCore.NEUE(shortfall, exp_results.region_results[1].name).neue.estimate
+        exp_location_1 = PRASFiles.saveshortfall(shortfall, rts_sys, path);
+        @test isfile(joinpath(exp_location_1, "pras_results.json"))
+        exp_results_1 = JSON3.read(joinpath(exp_location_1, "pras_results.json"), PRASFiles.SystemResult)
+        @test exp_results_1.lole.mean == PRASCore.LOLE(shortfall).lole.estimate
+        @test exp_results_1.eue.mean == PRASCore.EUE(shortfall).eue.estimate
+        @test exp_results_1.neue.mean == PRASCore.NEUE(shortfall).neue.estimate
+        @test exp_results_1.region_results[1].lole.mean == PRASCore.LOLE(shortfall, exp_results_1.region_results[1].name).lole.estimate
+        @test exp_results_1.region_results[1].eue.mean == PRASCore.EUE(shortfall, exp_results_1.region_results[1].name).eue.estimate
+        @test exp_results_1.region_results[1].neue.mean == PRASCore.NEUE(shortfall, exp_results_1.region_results[1].name).neue.estimate
+
+        shortfall_samples = results[2];
+        exp_location_2 = PRASFiles.saveshortfall(shortfall_samples, rts_sys, path);
+        @test isfile(joinpath(exp_location_2, "pras_results.json"))
+        exp_results_2 = JSON3.read(joinpath(exp_location_2, "pras_results.json"), PRASFiles.SystemResult)
+        @test exp_results_2.lole.mean == PRASCore.LOLE(shortfall_samples).lole.estimate
+        @test exp_results_2.eue.mean == PRASCore.EUE(shortfall_samples).eue.estimate
+        @test exp_results_2.neue.mean == PRASCore.NEUE(shortfall_samples).neue.estimate
+        @test exp_results_2.region_results[1].lole.mean == PRASCore.LOLE(shortfall_samples, exp_results_2.region_results[1].name).lole.estimate
+        @test exp_results_2.region_results[1].eue.mean == PRASCore.EUE(shortfall_samples, exp_results_2.region_results[1].name).eue.estimate
+        @test exp_results_2.region_results[1].neue.mean == PRASCore.NEUE(shortfall_samples, exp_results_2.region_results[1].name).neue.estimate
+
+        @test exp_results_1.lole.mean ≈ exp_results_2.lole.mean
+        @test exp_results_1.eue.mean ≈ exp_results_2.eue.mean
+        @test exp_results_1.neue.mean ≈ exp_results_2.neue.mean
+        @test exp_results_1.region_results[1].lole.mean ≈ exp_results_2.region_results[1].lole.mean
+        @test exp_results_1.region_results[1].eue.mean ≈ exp_results_2.region_results[1].eue.mean
+        @test exp_results_1.region_results[1].neue.mean ≈ exp_results_2.region_results[1].neue.mean
+
     end
 
 end
