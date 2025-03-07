@@ -34,7 +34,7 @@ using JSON3
         for i in 1:length(rts_sys.regions.names)
             rts_sys.regions.load[i, :] = 10 * rts_sys.regions.load[i, :]
         end
-        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), ShortfallSamples());
+        results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), ShortfallSamples(), Surplus());
         shortfall = results[1];
         path = joinpath(dirname(@__FILE__),"PRAS_Results_Export");
         exp_location_1 = PRASFiles.saveshortfall(shortfall, rts_sys, path);
@@ -65,6 +65,8 @@ using JSON3
         @test exp_results_1.region_results[1].eue.mean ≈ exp_results_2.region_results[1].eue.mean
         @test exp_results_1.region_results[1].neue.mean ≈ exp_results_2.region_results[1].neue.mean
 
+        surplus = results[3]
+        @test_throws "saveshortfall is not implemented for" PRASFiles.saveshortfall(surplus, rts_sys, path)
     end
 
 end
