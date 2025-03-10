@@ -1,7 +1,7 @@
 name = "PRASFiles"
 uuid = "a2806276-6d43-4ef5-91c0-491704cd7cf1"
 authors = ["Gord Stephen <Gord.Stephen@nrel.gov>", "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>"]
-version = "0.7.0"
+version = "0.7.1"
 
 [deps]
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
@@ -16,7 +16,7 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 Dates = "1"
 HDF5 = "0.16,0.17"
 JSON3 = "1.14"
-PRASCore = "0.7"
+PRASCore = "0.7.1"
 StatsBase = "0.34"
 StructTypes = "1.11"
 TimeZones = "1"
