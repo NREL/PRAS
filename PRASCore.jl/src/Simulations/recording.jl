@@ -117,6 +117,11 @@ function record!(
 
         end
 
+        for dr in system.region_dr_idxs[r]
+            dr_idx = problem.demandresponse_chargeunused_edges[dr]
+            regionsurplus += edges[dr_idx].flow
+        end
+
         fit!(acc.surplus_regionperiod[r,t], regionsurplus)
         totalsurplus += regionsurplus
 
@@ -160,6 +165,11 @@ function record!(
 
             regionsurplus += min(grid_limit, total_unused)
 
+        end
+
+        for dr in system.region_dr_idxs[r]
+            dr_idx = problem.demandresponse_chargeunused_edges[dr]
+            regionsurplus += edges[dr_idx].flow
         end
 
         acc.surplus[r, t, sampleid] = regionsurplus
@@ -326,6 +336,23 @@ end
 
 reset!(acc::Results.GenStorAvailabilityAccumulator, sampleid::Int) = nothing
 
+# DemandrResponseAvailability
+
+function record!(
+    acc::Results.DRAvailabilityAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.available[:, t, sampleid] .= state.drs_available
+    return
+
+end
+
+reset!(acc::Results.DRAvailabilityAccumulator, sampleid::Int) = nothing
+
+
 # LineAvailability
 
 function record!(
@@ -398,6 +425,37 @@ end
 
 reset!(acc::Results.GenStorageEnergyAccumulator, sampleid::Int) = nothing
 
+
+# DemandResponseEnergy
+
+function record!(
+    acc::Results.DemandResponseEnergyAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalenergy = 0
+    ndemandresponses = length(system.demandresponses)
+
+    for s in 1:ndemandresponses
+
+        drenergy = state.drs_energy[s]
+        fit!(acc.energy_demandresponseperiod[s,t], drenergy)
+        totalenergy += drenergy
+
+    end
+
+    fit!(acc.energy_period[t], totalenergy)
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
+
+
+
 # StorageEnergySamples
 
 function record!(
@@ -429,3 +487,20 @@ function record!(
 end
 
 reset!(acc::Results.GenStorageEnergySamplesAccumulator, sampleid::Int) = nothing
+
+
+# DemandResponseEnergySamples
+
+function record!(
+    acc::Results.DemandResponseEnergySamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.energy[:, t, sampleid] .= state.drs_energy
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing

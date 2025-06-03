@@ -26,8 +26,12 @@ emptygenstors1 = GeneratorStorages{4,1,Hour,MW,MWh}(
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
 
+emptydrs1 = DemandResponses{4,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
+    (empty_int(4) for _ in 1:3)...,
+    (empty_float(4) for _ in 1:5)...)
+
 singlenode_a = SystemModel(
-    gens1, emptystors1, emptygenstors1,
+    gens1, emptystors1, emptygenstors1,emptydrs1,
     ZonedDateTime(2010,1,1,0,tz):Hour(1):ZonedDateTime(2010,1,1,3,tz),
     [25, 28, 27, 24])
 
@@ -53,8 +57,12 @@ emptygenstors1_5min = GeneratorStorages{4,5,Minute,MW,MWh}(
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:3)...,
     (empty_int(4) for _ in 1:3)..., (empty_float(4) for _ in 1:2)...)
 
+emptydrs1_5min = DemandResponses{4,5,Minute,MW,MWh}((empty_str for _ in 1:2)...,
+    (empty_int(4) for _ in 1:3)...,
+    (empty_float(4) for _ in 1:5)...)
+
 singlenode_a_5min = SystemModel(
-    gens1_5min, emptystors1_5min, emptygenstors1_5min,
+    gens1_5min, emptystors1_5min, emptygenstors1_5min,emptydrs1_5min,
     ZonedDateTime(2010,1,1,0,0,tz):Minute(5):ZonedDateTime(2010,1,1,0,15,tz),
     [25, 28, 27, 24])
 
@@ -80,6 +88,10 @@ emptygenstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:3)...,
     (empty_int(6) for _ in 1:3)..., (empty_float(6) for _ in 1:2)...)
 
+emptydrs2 = DemandResponses{6,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
+    (empty_int(6) for _ in 1:3)...,
+    (empty_float(6) for _ in 1:5)...)
+
 genstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     ["Genstor1", "Genstor2"], ["Genstorage", "Genstorage"],
     fill(0, 2, 6), fill(0, 2, 6), fill(4, 2, 6),
@@ -88,7 +100,7 @@ genstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     fill(0.0, 2, 6), fill(1.0, 2, 6))
 
 singlenode_b = SystemModel(
-    gens2, emptystors2, emptygenstors2,
+    gens2, emptystors2, emptygenstors2,emptydrs2,
     ZonedDateTime(2015,6,1,0,tz):Hour(1):ZonedDateTime(2015,6,1,5,tz),
     [28,29,30,31,32,33])
 
@@ -108,7 +120,7 @@ stors2 = Storages{6,1,Hour,MW,MWh}(
     fill(0.0, 2, 6), fill(1.0, 2, 6))
 
 singlenode_stor = SystemModel(
-    gens2, stors2, genstors2,
+    gens2, stors2, genstors2,emptydrs2,
     ZonedDateTime(2015,6,1,0,tz):Hour(1):ZonedDateTime(2015,6,1,5,tz),
     [28,29,30,31,32,33])
 
@@ -141,7 +153,8 @@ lines = Lines{4,1,Hour,MW}(
 threenode =
     SystemModel(
         regions, interfaces, generators, [1:2, 3:5, 6:8],
-       emptystors1, fill(1:0, 3), emptygenstors1, fill(1:0, 3),
+        emptystors1, fill(1:0, 3), emptygenstors1, fill(1:0, 3),
+        emptydrs1, fill(1:0, 3),
         lines, [1:1, 2:2, 3:3],
         ZonedDateTime(2018,10,30,0,tz):Hour(1):ZonedDateTime(2018,10,30,3,tz))
 
@@ -173,6 +186,10 @@ emptygenstors = GeneratorStorages{1,1,Hour,MW,MWh}(
     (zeros(Int, 0, 1) for _ in 1:3)..., (zeros(Float64, 0, 1) for _ in 1:3)...,
     (zeros(Int, 0, 1) for _ in 1:3)..., (zeros(Float64, 0, 1) for _ in 1:2)...)
 
+emptydrs= DemandResponses{1,1,Hour,MW,MWh}((String[] for _ in 1:2)...,
+    (zeros(Int, 0, 1) for _ in 1:3)...,
+    (zeros(Float64, 0, 1) for _ in 1:5)...)
+
 interfaces = Interfaces{1,MW}([1], [2], fill(8, 1, 1), fill(8, 1, 1))
 
 lines = Lines{1,1,Hour,MW}(
@@ -182,7 +199,7 @@ lines = Lines{1,1,Hour,MW}(
 
 zdt = ZonedDateTime(2020,1,1,0, tz)
 test1 = SystemModel(regions, interfaces,
-    gens, [1:1, 2:2], emptystors, fill(1:0, 2), emptygenstors, fill(1:0, 2),
+    gens, [1:1, 2:2], emptystors, fill(1:0, 2), emptygenstors, fill(1:0, 2),emptydrs, fill(1:0, 2),
     lines, [1:1], zdt:Hour(1):zdt
 )
 
@@ -216,7 +233,12 @@ emptygenstors = GeneratorStorages{2,1,Hour,MW,MWh}(
     (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:3)...,
     (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:2)...)
 
-test2 = SystemModel(gen, stor, emptygenstors, timestamps, [8, 9])
+emptydrs2 = DemandResponses{2,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
+    (empty_int(2) for _ in 1:3)...,
+    (empty_float(2) for _ in 1:5)...)
+
+
+test2 = SystemModel(gen, stor, emptygenstors,emptydrs2, timestamps, [8, 9])
 
 test2_lole = 0.2
 test2_lolps = [0.1, 0.1]
@@ -244,6 +266,7 @@ line = Lines{2,1,Hour,MW}(
 test3 = SystemModel(regions, interfaces,
                     gen, [1:1, 2:1], stor, [1:0, 1:1],
                     emptygenstors, fill(1:0, 2),
+                    emptydrs2, fill(1:0, 2),
                     line, [1:1], timestamps)
 
 test3_lole = 0.320951
@@ -266,5 +289,41 @@ test3_util = 0.7440337
 test3_util_t = [0.8614, 0.626674]
 
 test3_eenergy = [6.561, 7.682202]
+
+
+# Test System 4 (Gen + Stor + DR, 1 Region)
+
+timestamps = ZonedDateTime(2020,1,1,0, tz):Hour(1):ZonedDateTime(2020,1,1,1, tz)
+
+gen = Generators{2,1,Hour,MW}(
+    ["Gen 1"], ["Generators"],
+    fill(10, 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+stor = Storages{2,1,Hour,MW,MWh}(
+    ["Stor 1"], ["Storages"],
+    fill(10, 1, 2), fill(10, 1, 2), fill(10, 1, 2),
+    fill(1., 1, 2), fill(1., 1, 2), fill(1., 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+emptygenstors = GeneratorStorages{2,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:3)...,
+    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:2)...)
+
+dr = DemandResponses{2,1,Hour,MW,MWh}(
+    ["DR 1"], ["DemandResponses"],
+    fill(10, 1, 2), fill(10, 1, 2), fill(10, 1, 2),
+    fill(1., 1, 2), fill(1., 1, 2), fill(1., 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+
+test4= SystemModel(gen, stor, emptygenstors,dr, timestamps, [8, 9])
+
+test4_lole = 0.2
+test4_lolps = [0.1, 0.1]
+
+test4_eue = 1.5542
+test4_eues = [0.8, 0.7542]
+
+test4_esurplus = [0.18, 1.4022]
+
+test4_eenergy = [1.62, 2.2842]
 
 end

@@ -20,8 +20,10 @@ export
     Flow, FlowSamples, Utilization, UtilizationSamples,
     StorageEnergy, StorageEnergySamples,
     GeneratorStorageEnergy, GeneratorStorageEnergySamples,
+    DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
-    GeneratorStorageAvailability, LineAvailability
+    GeneratorStorageAvailability,DemandResponseAvailability,
+    LineAvailability
 
 include("utils.jl")
 include("metrics.jl")
@@ -144,6 +146,7 @@ getindex(x::AbstractAvailabilityResult, ::Colon, ::Colon) =
 include("GeneratorAvailability.jl")
 include("StorageAvailability.jl")
 include("GeneratorStorageAvailability.jl")
+include("DemandResponseAvailability.jl")
 include("LineAvailability.jl")
 
 abstract type AbstractEnergyResult{N,L,T} <: Result{N,L,T} end
@@ -162,8 +165,10 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
+include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
+include("DemandResponseEnergySamples.jl")
 
 function resultchannel(
     results::T, threads::Int

@@ -56,6 +56,9 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     generatorstorages::GeneratorStorages{N,L,T,P,E}
     region_genstor_idxs::Vector{UnitRange{Int}}
 
+    demandresponses::DemandResponses{N,L,T,P,E}
+    region_dr_idxs::Vector{UnitRange{Int}}
+
     lines::Lines{N,L,T,P}
     interface_line_idxs::Vector{UnitRange{Int}}
 
@@ -69,6 +72,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
         generatorstorages::GeneratorStorages{N,L,T,P,E},
         region_genstor_idxs::Vector{UnitRange{Int}},
+        demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
         timestamps::StepRange{ZonedDateTime,T},
         attrs::Dict{String, String}=Dict{String, String}()
@@ -78,6 +82,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         n_gens = length(generators)
         n_stors = length(storages)
         n_genstors = length(generatorstorages)
+        n_drs = length(demandresponses)
 
         n_interfaces = length(interfaces)
         n_lines = length(lines)
@@ -85,6 +90,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         @assert consistent_idxs(region_gen_idxs, n_gens, n_regions)
         @assert consistent_idxs(region_stor_idxs, n_stors, n_regions)
         @assert consistent_idxs(region_genstor_idxs, n_genstors, n_regions)
+        @assert consistent_idxs(region_dr_idxs, n_drs, n_regions)
         @assert consistent_idxs(interface_line_idxs, n_lines, n_interfaces)
 
         @assert all(
@@ -97,7 +103,9 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         new{N,L,T,P,E}(
             regions, interfaces,
             generators, region_gen_idxs, storages, region_stor_idxs,
-            generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
+            generatorstorages, region_genstor_idxs, 
+            demandresponses, region_dr_idxs,
+            lines, interface_line_idxs,
             timestamps, attrs)
 
     end
@@ -110,6 +118,7 @@ function SystemModel(
     generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
     storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
     generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+    demandresponses::Storages{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
     lines, interface_line_idxs::Vector{UnitRange{Int}},
     timestamps::StepRange{DateTime,T},
     attrs::Dict{String, String}=Dict{String, String}()
@@ -129,6 +138,7 @@ function SystemModel(
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
+        demandresponses, region_dr_idxs,
         lines, interface_line_idxs,
         timestamps_tz,attrs)
 
@@ -139,6 +149,7 @@ function SystemModel(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
+    demandresponses::DemandResponses{N,L,T,P,E},
     timestamps::StepRange{<:AbstractDateTime,T},
     load::Vector{Int},
     attrs::Dict{String, String}=Dict{String, String}()
@@ -152,6 +163,7 @@ function SystemModel(
         generators, [1:length(generators)],
         storages, [1:length(storages)],
         generatorstorages, [1:length(generatorstorages)],
+        demandresponses, [1:length(demandresponses)],
         Lines{N,L,T,P}(
             String[], String[],
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
@@ -169,6 +181,7 @@ Base.:(==)(x::T, y::T) where {T <: SystemModel} =
     x.region_stor_idxs == y.region_stor_idxs &&
     x.generatorstorages == y.generatorstorages &&
     x.region_genstor_idxs == y.region_genstor_idxs &&
+    x.demandresponses == y.demandresponses &&
     x.lines == y.lines &&
     x.interface_line_idxs == y.interface_line_idxs &&
     x.timestamps == y.timestamps &&

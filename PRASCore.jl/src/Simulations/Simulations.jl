@@ -176,11 +176,16 @@ function initialize!(
             system.generatorstorages, N)
 
         initialize_availability!(
+            rng, state.drs_available, state.drs_nexttransition,
+            system.demandresponses, N)
+
+        initialize_availability!(
             rng, state.lines_available, state.lines_nexttransition,
             system.lines, N)
 
         fill!(state.stors_energy, 0)
         fill!(state.genstors_energy, 0)
+        fill!(state.drs_energy, 0)
 
         return
 
@@ -205,11 +210,16 @@ function advance!(
         system.generatorstorages, t, N)
 
     update_availability!(
+        rng, state.drs_available, state.drs_nexttransition,
+        system.demandresponses, t, N)
+
+    update_availability!(
         rng, state.lines_available, state.lines_nexttransition,
         system.lines, t, N)
 
     update_energy!(state.stors_energy, system.storages, t)
     update_energy!(state.genstors_energy, system.generatorstorages, t)
+    update_energy!(state.drs_energy, system.demandresponses, t)
 
     update_problem!(dispatchproblem, state, system, t)
 

@@ -47,7 +47,9 @@ Nodes in the problem are ordered as:
  5. GenerationStorage discharge capacity (GeneratorStorage order)
  6. GenerationStorage grid injection (GeneratorStorage order)
  7. GenerationStorage charge capacity (GeneratorStorage order)
- 8. Slack node
+ 8. DemandResponse discharge capacity (DemandResponse order)
+ 9. DemandResponse charge capacity (DemandResponse order)
+ 10. Slack node
 
 Edges are ordered as:
 
@@ -67,6 +69,10 @@ Edges are ordered as:
  14. GenerationStorage charge from inflow (GeneratorStorage order)
  15. GenerationStorage charge unused (GeneratorStorage order)
  16. GenerationStorage inflow unused (GeneratorStorage order)
+ 17. DemandResponse discharge to grid (DemandResponse order)
+ 18. DemandResponse discharge unused (DemandResponse order)
+ 19. DemandResponse charge from grid (DemandResponse order)
+ 20. DemandResponse charge unused (DemandResponse order)
 """
 struct DispatchProblem
 
@@ -80,6 +86,8 @@ struct DispatchProblem
     genstorage_discharge_nodes::UnitRange{Int}
     genstorage_togrid_nodes::UnitRange{Int}
     genstorage_charge_nodes::UnitRange{Int}
+    demandresponse_discharge_nodes::UnitRange{Int}
+    demandresponse_charge_nodes::UnitRange{Int}
     slack_node::Int
 
     # Edge labels
@@ -99,9 +107,18 @@ struct DispatchProblem
     genstorage_inflowcharge_edges::UnitRange{Int}
     genstorage_chargeunused_edges::UnitRange{Int}
     genstorage_inflowunused_edges::UnitRange{Int}
+    demandresponse_discharge_edges::UnitRange{Int}
+    demandresponse_dischargeunused_edges::UnitRange{Int}
+    demandresponse_charge_edges::UnitRange{Int}
+    demandresponse_chargeunused_edges::UnitRange{Int}
 
+    #stor/genstor costs
     min_chargecost::Int
     max_dischargecost::Int
+
+    #dr costs
+    min_chargecost_dr::Int
+    max_dischargecost_dr::Int
 
     function DispatchProblem(
         sys::SystemModel; unlimited::Int=999_999_999)
@@ -110,14 +127,23 @@ struct DispatchProblem
         nifaces = length(sys.interfaces)
         nstors = length(sys.storages)
         ngenstors = length(sys.generatorstorages)
+        ndrs = length(sys.demandresponses)
 
+        #for storage/genstor
         maxchargetime, maxdischargetime = maxtimetocharge_discharge(sys)
         min_chargecost = - maxchargetime - 1
         max_dischargecost = - min_chargecost + maxdischargetime + 1
         shortagepenalty = 10 * (nifaces + max_dischargecost)
 
+        #for demandresponse
+        maxchargetime_dr, maxdischargetime_dr = maxtimetocharge_discharge_dr(sys)
+        min_chargecost_dr = - maxchargetime_dr - 1
+        max_dischargecost_dr = - min_chargecost_dr + maxdischargetime_dr + 1
+
+
         stor_regions = assetgrouplist(sys.region_stor_idxs)
         genstor_regions = assetgrouplist(sys.region_genstor_idxs)
+        dr_regions = assetgrouplist(sys.region_dr_idxs)
 
         region_nodes = 1:nregions
         stor_discharge_nodes = indices_after(region_nodes, nstors)
@@ -126,7 +152,9 @@ struct DispatchProblem
         genstor_discharge_nodes = indices_after(genstor_inflow_nodes, ngenstors)
         genstor_togrid_nodes = indices_after(genstor_discharge_nodes, ngenstors)
         genstor_charge_nodes = indices_after(genstor_togrid_nodes, ngenstors)
-        slack_node = nnodes = last(genstor_charge_nodes) + 1
+        dr_charge_nodes = indices_after(genstor_charge_nodes, ndrs)
+        dr_discharge_nodes = indices_after(dr_charge_nodes, ndrs)        
+        slack_node = nnodes = last(dr_discharge_nodes) + 1
 
         region_unservedenergy = 1:nregions
         region_unusedcapacity = indices_after(region_unservedenergy, nregions)
@@ -144,7 +172,11 @@ struct DispatchProblem
         genstor_inflowcharge = indices_after(genstor_gridcharge, ngenstors)
         genstor_chargeunused = indices_after(genstor_inflowcharge, ngenstors)
         genstor_inflowunused = indices_after(genstor_chargeunused, ngenstors)
-        nedges = last(genstor_inflowunused)
+        dr_chargeused = indices_after(genstor_inflowunused, ndrs)
+        dr_chargeunused = indices_after(dr_chargeused, ndrs) 
+        dr_dischargeused = indices_after(dr_chargeunused, ndrs)
+        dr_dischargeunused = indices_after(dr_dischargeused, ndrs)       
+        nedges = last(dr_dischargeunused)
 
         nodesfrom = Vector{Int}(undef, nedges)
         nodesto = Vector{Int}(undef, nedges)
@@ -196,8 +228,14 @@ struct DispatchProblem
         initedges(genstor_gridcharge, genstor_regions, genstor_charge_nodes)
         initedges(genstor_inflowcharge, genstor_inflow_nodes, genstor_charge_nodes)
         initedges(genstor_chargeunused, slack_node, genstor_charge_nodes)
-
         initedges(genstor_inflowunused, genstor_inflow_nodes, slack_node)
+
+        # Demand Response charging / discharging
+        initedges(dr_dischargeused, dr_discharge_nodes, dr_regions)
+        initedges(dr_dischargeunused, dr_discharge_nodes, slack_node)
+        initedges(dr_chargeused, dr_regions, dr_charge_nodes)
+        initedges(dr_chargeunused, slack_node, dr_charge_nodes)
+
 
         return new(
 
@@ -205,7 +243,8 @@ struct DispatchProblem
 
             region_nodes, stor_discharge_nodes, stor_charge_nodes,
             genstor_inflow_nodes, genstor_discharge_nodes,
-            genstor_togrid_nodes, genstor_charge_nodes, slack_node,
+            genstor_togrid_nodes, genstor_charge_nodes,
+            dr_charge_nodes,dr_discharge_nodes, slack_node,
 
             region_unservedenergy, region_unusedcapacity,
             iface_forward, iface_reverse,
@@ -214,7 +253,11 @@ struct DispatchProblem
             genstor_dischargegrid, genstor_dischargeunused, genstor_inflowgrid,
             genstor_totalgrid,
             genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
-            genstor_inflowunused, min_chargecost, max_dischargecost
+            genstor_inflowunused, 
+            dr_chargeused, dr_chargeunused, dr_dischargeused,
+            dr_dischargeunused,
+            min_chargecost, max_dischargecost,
+            min_chargecost_dr, max_dischargecost_dr
         )
 
     end
@@ -380,6 +423,58 @@ function update_problem!(
 
     end
 
+
+
+    # Update Demand Response charge/discharge limits and priorities
+    for (i, (charge_node, charge_edge, discharge_node, discharge_edge)) in
+        enumerate(zip(
+        problem.demandresponse_charge_nodes, problem.demandresponse_charge_edges,
+        problem.demandresponse_discharge_nodes, problem.demandresponse_discharge_edges))
+
+        dr_online = state.drs_available[i]
+        dr_energy = state.drs_energy[i]
+        maxenergy = system.demandresponses.energy_capacity[i, t]
+
+        # Update discharging
+
+        maxdischarge = dr_online * system.demandresponses.discharge_capacity[i, t]
+        dischargeefficiency = system.demandresponses.discharge_efficiency[i, t]
+        energydischargeable = dr_energy * dischargeefficiency
+
+        if iszero(maxdischarge)
+            timetodischarge = N + 1
+        else
+            timetodischarge = round(Int, energydischargeable / maxdischarge)
+        end
+
+        discharge_capacity =
+            min(maxdischarge, floor(Int, energytopower(
+                energydischargeable, E, L, T, P)))
+        updateinjection!(
+            fp.nodes[discharge_node], slack_node, -discharge_capacity)
+
+        # Largest time-to-discharge = highest priority (discharge first)
+        dischargecost = problem.max_dischargecost_dr - timetodischarge # Positive cost
+        updateflowcost!(fp.edges[discharge_edge], dischargecost)
+
+        # Update charging
+
+        maxcharge = dr_online * system.demandresponses.charge_capacity[i, t]
+        chargeefficiency = system.demandresponses.charge_efficiency[i, t]
+        energychargeable = (maxenergy - dr_energy) / chargeefficiency
+
+        charge_capacity =
+            min(maxcharge, floor(Int, energytopower(
+                energychargeable, E, L, T, P)))
+        updateinjection!(
+            fp.nodes[charge_node], slack_node, charge_capacity)
+
+        # Smallest time-to-discharge = highest priority (charge first)
+        chargecost = problem.min_chargecost_dr + timetodischarge # Negative cost
+        updateflowcost!(fp.edges[charge_edge], chargecost)
+
+    end
+
 end
 
 function update_state!(
@@ -390,6 +485,9 @@ function update_state!(
     edges = problem.fp.edges
     p2e = conversionfactor(L, T, P, E)
 
+    # Storage Update
+
+    #discharging
     for (i, e) in enumerate(problem.storage_discharge_edges)
         energy = state.stors_energy[i]
         energy_drop = ceil(Int, edges[e].flow * p2e /
@@ -397,12 +495,16 @@ function update_state!(
         state.stors_energy[i] = max(0, energy - energy_drop)
 
     end
-
+    
+    #charging
     for (i, e) in enumerate(problem.storage_charge_edges)
         state.stors_energy[i] +=
             ceil(Int, edges[e].flow * p2e * system.storages.charge_efficiency[i, t])
     end
 
+    # GeneratorStorage Update
+
+    #discharging
     for (i, e) in enumerate(problem.genstorage_dischargegrid_edges)
         energy = state.genstors_energy[i]
         energy_drop = ceil(Int, edges[e].flow * p2e /
@@ -410,11 +512,27 @@ function update_state!(
         state.genstors_energy[i] = max(0, energy - energy_drop)
     end
 
+    #charging
     for (i, (e1, e2)) in enumerate(zip(problem.genstorage_gridcharge_edges,
                                        problem.genstorage_inflowcharge_edges))
         totalcharge = (edges[e1].flow + edges[e2].flow) * p2e
         state.genstors_energy[i] +=
             ceil(Int, totalcharge * system.generatorstorages.charge_efficiency[i, t])
+    end
+
+    #Demand Response Update
+    #charging (negative of the flows)
+    for (i, e) in enumerate(problem.demandresponse_charge_edges)
+        state.drs_energy[i] +=
+            ceil(Int, edges[e].flow * p2e * system.demandresponses.charge_efficiency[i, t])
+    end
+
+
+    #discharging
+    for (i, e) in enumerate(problem.demandresponse_discharge_edges)
+        energy = state.drs_energy[i]
+        energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.discharge_efficiency[i, t])
+        state.drs_energy[i] = max(0, energy - energy_drop)
     end
 
 end

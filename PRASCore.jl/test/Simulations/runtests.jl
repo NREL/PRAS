@@ -48,9 +48,9 @@
 
     assess(TestData.threenode, smallsample,
            GeneratorAvailability(), LineAvailability(),
-           StorageAvailability(), GeneratorStorageAvailability(),
-           StorageEnergy(), GeneratorStorageEnergy(),
-           StorageEnergySamples(), GeneratorStorageEnergySamples())
+           StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
+           StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
+           StorageEnergySamples(), GeneratorStorageEnergySamples(),DemandResponseEnergySamples())
 
     @testset "Shortfall Results" begin
 
@@ -408,6 +408,7 @@
         @test all(withinrange.(getindex.(energy, stor, dts), # fails?
                                TestData.test3_eenergy,
                                simspec.nsamples, nstderr_tol))
+
 
     end
 
