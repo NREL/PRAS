@@ -11,7 +11,7 @@ export
 
     # System assets
     Regions, Interfaces,
-    AbstractAssets, Generators, Storages, GeneratorStorages, Lines,
+    AbstractAssets, Generators, Storages, GeneratorStorages,DemandResponses, Lines,
 
     # Units
     Period, Minute, Hour, Day, Year,

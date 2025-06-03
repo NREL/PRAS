@@ -177,6 +177,38 @@ function maxtimetocharge_discharge(system::SystemModel)
 
 end
 
+function maxtimetocharge_discharge_dr(system::SystemModel)
+
+    if length(system.demandresponses) > 0
+        if any(iszero, system.demandresponses.charge_capacity)
+            dr_charge_max = length(system.timestamps) + 1
+        else
+            dr_charge_durations =
+                system.demandresponses.energy_capacity ./ system.demandresponses.charge_capacity
+                dr_charge_max = ceil(Int, maximum(dr_charge_durations))
+        end
+
+        if any(iszero, system.demandresponses.discharge_capacity)
+            dr_discharge_max = length(system.timestamps) + 1
+        else
+            dr_discharge_durations =
+                system.demandresponses.energy_capacity ./ system.demandresponses.discharge_capacity
+            dr_discharge_max = ceil(Int, maximum(dr_discharge_durations))
+        end
+
+    else
+        dr_charge_max = 0
+        dr_discharge_max = 0
+
+    end
+
+    return (dr_charge_max,dr_discharge_max)
+
+end
+
+
+
+
 function utilization(f::MinCostFlows.Edge, b::MinCostFlows.Edge)
 
     flow_forward = f.flow
