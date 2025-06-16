@@ -47,8 +47,8 @@ Nodes in the problem are ordered as:
  5. GenerationStorage discharge capacity (GeneratorStorage order)
  6. GenerationStorage grid injection (GeneratorStorage order)
  7. GenerationStorage charge capacity (GeneratorStorage order)
- 8. DemandResponse discharge capacity (DemandResponse order)
- 9. DemandResponse charge capacity (DemandResponse order)
+ 8. DemandResponse payback capacity (DemandResponse order)
+ 9. DemandResponse banking capacity (DemandResponse order)
  10. Slack node
 
 Edges are ordered as:
@@ -69,10 +69,10 @@ Edges are ordered as:
  14. GenerationStorage charge from inflow (GeneratorStorage order)
  15. GenerationStorage charge unused (GeneratorStorage order)
  16. GenerationStorage inflow unused (GeneratorStorage order)
- 17. DemandResponse discharge to grid (DemandResponse order)
- 18. DemandResponse discharge unused (DemandResponse order)
- 19. DemandResponse charge from grid (DemandResponse order)
- 20. DemandResponse charge unused (DemandResponse order)
+ 17. DemandResponse payback to grid (DemandResponse order)
+ 18. DemandResponse payback unused (DemandResponse order)
+ 19. DemandResponse banking from grid (DemandResponse order)
+ 20. DemandResponse banking unused (DemandResponse order)
 """
 struct DispatchProblem
 
@@ -86,8 +86,8 @@ struct DispatchProblem
     genstorage_discharge_nodes::UnitRange{Int}
     genstorage_togrid_nodes::UnitRange{Int}
     genstorage_charge_nodes::UnitRange{Int}
-    demandresponse_discharge_nodes::UnitRange{Int}
-    demandresponse_charge_nodes::UnitRange{Int}
+    demandresponse_payback_nodes::UnitRange{Int}
+    demandresponse_bank_nodes::UnitRange{Int}
     slack_node::Int
 
     # Edge labels
@@ -107,18 +107,18 @@ struct DispatchProblem
     genstorage_inflowcharge_edges::UnitRange{Int}
     genstorage_chargeunused_edges::UnitRange{Int}
     genstorage_inflowunused_edges::UnitRange{Int}
-    demandresponse_discharge_edges::UnitRange{Int}
-    demandresponse_dischargeunused_edges::UnitRange{Int}
-    demandresponse_charge_edges::UnitRange{Int}
-    demandresponse_chargeunused_edges::UnitRange{Int}
+    demandresponse_payback_edges::UnitRange{Int}
+    demandresponse_paybackunused_edges::UnitRange{Int}
+    demandresponse_bank_edges::UnitRange{Int}
+    demandresponse_bankunused_edges::UnitRange{Int}
 
     #stor/genstor costs
     min_chargecost::Int
     max_dischargecost::Int
 
     #dr costs
-    min_chargecost_dr::Int
-    max_dischargecost_dr::Int
+    min_bankcost_dr::Int
+    max_paybackcost_dr::Int
 
     function DispatchProblem(
         sys::SystemModel; unlimited::Int=999_999_999)
@@ -136,9 +136,9 @@ struct DispatchProblem
         shortagepenalty = 10 * (nifaces + max_dischargecost)
 
         #for demandresponse
-        maxchargetime_dr, maxdischargetime_dr = maxtimetocharge_discharge_dr(sys)
-        min_chargecost_dr = - maxchargetime_dr - 1
-        max_dischargecost_dr = - min_chargecost_dr + maxdischargetime_dr + 1
+        maxbanktime_dr, maxpaybacktime_dr = maxtimetobank_payback_dr(sys)
+        min_bankcost_dr = - maxbanktime_dr - 1
+        max_paybackcost_dr = - min_bankcost_dr + maxpaybacktime_dr + 1
 
 
         stor_regions = assetgrouplist(sys.region_stor_idxs)
@@ -152,9 +152,9 @@ struct DispatchProblem
         genstor_discharge_nodes = indices_after(genstor_inflow_nodes, ngenstors)
         genstor_togrid_nodes = indices_after(genstor_discharge_nodes, ngenstors)
         genstor_charge_nodes = indices_after(genstor_togrid_nodes, ngenstors)
-        dr_charge_nodes = indices_after(genstor_charge_nodes, ndrs)
-        dr_discharge_nodes = indices_after(dr_charge_nodes, ndrs)        
-        slack_node = nnodes = last(dr_discharge_nodes) + 1
+        dr_bank_nodes = indices_after(genstor_charge_nodes, ndrs)
+        dr_payback_nodes = indices_after(dr_bank_nodes, ndrs)        
+        slack_node = nnodes = last(dr_payback_nodes) + 1
 
         region_unservedenergy = 1:nregions
         region_unusedcapacity = indices_after(region_unservedenergy, nregions)
@@ -172,11 +172,11 @@ struct DispatchProblem
         genstor_inflowcharge = indices_after(genstor_gridcharge, ngenstors)
         genstor_chargeunused = indices_after(genstor_inflowcharge, ngenstors)
         genstor_inflowunused = indices_after(genstor_chargeunused, ngenstors)
-        dr_chargeused = indices_after(genstor_inflowunused, ndrs)
-        dr_chargeunused = indices_after(dr_chargeused, ndrs) 
-        dr_dischargeused = indices_after(dr_chargeunused, ndrs)
-        dr_dischargeunused = indices_after(dr_dischargeused, ndrs)       
-        nedges = last(dr_dischargeunused)
+        dr_bankused = indices_after(genstor_inflowunused, ndrs)
+        dr_bankunused = indices_after(dr_bankused, ndrs) 
+        dr_paybackused = indices_after(dr_bankunused, ndrs)
+        dr_paybackunused = indices_after(dr_paybackused, ndrs)       
+        nedges = last(dr_paybackunused)
 
         nodesfrom = Vector{Int}(undef, nedges)
         nodesto = Vector{Int}(undef, nedges)
@@ -230,11 +230,11 @@ struct DispatchProblem
         initedges(genstor_chargeunused, slack_node, genstor_charge_nodes)
         initedges(genstor_inflowunused, genstor_inflow_nodes, slack_node)
 
-        # Demand Response charging / discharging
-        initedges(dr_dischargeused, dr_discharge_nodes, dr_regions)
-        initedges(dr_dischargeunused, dr_discharge_nodes, slack_node)
-        initedges(dr_chargeused, dr_regions, dr_charge_nodes)
-        initedges(dr_chargeunused, slack_node, dr_charge_nodes)
+        # Demand Response banking / payback
+        initedges(dr_paybackused, dr_payback_nodes, dr_regions)
+        initedges(dr_paybackunused, dr_payback_nodes, slack_node)
+        initedges(dr_bankused, dr_regions, dr_bank_nodes)
+        initedges(dr_bankunused, slack_node, dr_bank_nodes)
 
 
         return new(
@@ -244,7 +244,7 @@ struct DispatchProblem
             region_nodes, stor_discharge_nodes, stor_charge_nodes,
             genstor_inflow_nodes, genstor_discharge_nodes,
             genstor_togrid_nodes, genstor_charge_nodes,
-            dr_charge_nodes,dr_discharge_nodes, slack_node,
+            dr_bank_nodes,dr_payback_nodes, slack_node,
 
             region_unservedenergy, region_unusedcapacity,
             iface_forward, iface_reverse,
@@ -254,10 +254,10 @@ struct DispatchProblem
             genstor_totalgrid,
             genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
             genstor_inflowunused, 
-            dr_chargeused, dr_chargeunused, dr_dischargeused,
-            dr_dischargeunused,
+            dr_bankused, dr_paybackunused, dr_paybackused,
+            dr_paybackunused,
             min_chargecost, max_dischargecost,
-            min_chargecost_dr, max_dischargecost_dr
+            min_bankcost_dr, max_paybackcost_dr
         )
 
     end
@@ -318,7 +318,6 @@ function update_problem!(
         maxenergy = system.storages.energy_capacity[i, t]
 
         # Update discharging
-
         maxdischarge = stor_online * system.storages.discharge_capacity[i, t]
         dischargeefficiency = system.storages.discharge_efficiency[i, t]
         energydischargeable = stor_energy * dischargeefficiency
@@ -426,52 +425,61 @@ function update_problem!(
 
 
     # Update Demand Response charge/discharge limits and priorities
-    for (i, (charge_node, charge_edge, discharge_node, discharge_edge)) in
+    for (i, (bank_node, bank_edge, payback_node, payback_edge)) in
         enumerate(zip(
-        problem.demandresponse_charge_nodes, problem.demandresponse_charge_edges,
-        problem.demandresponse_discharge_nodes, problem.demandresponse_discharge_edges))
+        problem.demandresponse_bank_nodes, problem.demandresponse_bank_edges,
+        problem.demandresponse_payback_nodes, problem.demandresponse_payback_edges))
+
+        #first check if demand response is past allowalable payback window
+        if state.drs_paybackcounter[i] == -2
+            #if payback window is over, set injection
+            updateinjection!(
+            fp.nodes[payback_node], slack_node, -state.drs_energy[i])
+            continue # No banking possible in same step of load being dropped
+        end
+
 
         dr_online = state.drs_available[i]
         dr_energy = state.drs_energy[i]
         maxenergy = system.demandresponses.energy_capacity[i, t]
 
-        # Update discharging
+        # Update energy payback
 
-        maxdischarge = dr_online * system.demandresponses.discharge_capacity[i, t]
-        dischargeefficiency = system.demandresponses.discharge_efficiency[i, t]
-        energydischargeable = dr_energy * dischargeefficiency
+        maxpayback = dr_online * system.demandresponses.payback_capacity[i, t]
+        paybackefficiency = system.demandresponses.payback_efficiency[i, t]
+        energy_payback_allowed = dr_energy * paybackefficiency
 
-        if iszero(maxdischarge)
-            timetodischarge = N + 1
+        if iszero(maxpayback)
+            timetopayback = N + 1
         else
-            timetodischarge = round(Int, energydischargeable / maxdischarge)
+            timetopayback = round(Int, energy_payback_allowed / maxpayback)
         end
 
-        discharge_capacity =
-            min(maxdischarge, floor(Int, energytopower(
-                energydischargeable, E, L, T, P)))
+        payback_capacity =
+            min(maxpayback, floor(Int, energytopower(
+                energy_payback_allowed, E, L, T, P)))
         updateinjection!(
-            fp.nodes[discharge_node], slack_node, -discharge_capacity)
+            fp.nodes[payback_node], slack_node, -payback_capacity)
 
         # Largest time-to-discharge = highest priority (discharge first)
-        dischargecost = problem.max_dischargecost_dr - timetodischarge # Positive cost
-        updateflowcost!(fp.edges[discharge_edge], dischargecost)
+        paybackcost = problem.max_paybackcost_dr - timetopayback # Positive cost
+        updateflowcost!(fp.edges[payback_edge], paybackcost)
 
         # Update charging
 
-        maxcharge = dr_online * system.demandresponses.charge_capacity[i, t]
-        chargeefficiency = system.demandresponses.charge_efficiency[i, t]
-        energychargeable = (maxenergy - dr_energy) / chargeefficiency
+        maxbank = dr_online * system.demandresponses.bank_capacity[i, t]
+        bankefficiency = system.demandresponses.bank_efficiency[i, t]
+        energybankable = (maxenergy - dr_energy) / bankefficiency
 
-        charge_capacity =
-            min(maxcharge, floor(Int, energytopower(
-                energychargeable, E, L, T, P)))
+        bank_capacity =
+            min(maxbank, floor(Int, energytopower(
+                energybankable, E, L, T, P)))
         updateinjection!(
-            fp.nodes[charge_node], slack_node, charge_capacity)
+            fp.nodes[bank_node], slack_node, bank_capacity)
 
         # Smallest time-to-discharge = highest priority (charge first)
-        chargecost = problem.min_chargecost_dr + timetodischarge # Negative cost
-        updateflowcost!(fp.edges[charge_edge], chargecost)
+        bankcost = problem.min_bankcost_dr + timetopayback # Negative cost
+        updateflowcost!(fp.edges[bank_edge], bankcost)
 
     end
 
@@ -521,19 +529,73 @@ function update_state!(
     end
 
     #Demand Response Update
-    #charging (negative of the flows)
-    for (i, e) in enumerate(problem.demandresponse_charge_edges)
+    #banking (negative of the flows)
+    for (i, e) in enumerate(problem.demandresponse_bank_edges)
+        #first check if demand response is past allowalable payback window
+        if state.drs_paybackcounter[i] == -2
+            #set back to start of new payback window, count dropped load, and set energy to zero
+            state.drs_paybackcounter[i] = -1
+            state.drs_energy[i] = 0
+            continue # No banking possible in same step of load being dropped
+        end
         state.drs_energy[i] +=
-            ceil(Int, edges[e].flow * p2e * system.demandresponses.charge_efficiency[i, t])
+            ceil(Int, edges[e].flow * p2e * system.demandresponses.bank_efficiency[i, t])
     end
 
-
-    #discharging
-    for (i, e) in enumerate(problem.demandresponse_discharge_edges)
+    #paybacking
+    for (i, e) in enumerate(problem.demandresponse_payback_edges)
         energy = state.drs_energy[i]
-        energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.discharge_efficiency[i, t])
+        energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.payback_efficiency[i, t])
         state.drs_energy[i] = max(0, energy - energy_drop)
     end
+
+
+    #=penalty for shortage less than dropping load, higher than everything else- 
+
+        simple bool on tracking for when we need to count the window back (don't really care what happens in between)
+        
+        ill reach out to him about
+        
+        Ignacio-mid day flexible window devices
+        
+        
+        rename charging/discharging
+
+
+    load_shift:
+
+    load_banking
+
+    load_curtailment
+
+
+    no need to add DR in surplus calculations
+
+
+    add it backburner
+
+    Single system
+
+    DR object, generators no transmission
+
+
+    penalty for shortage less than dropping load, higher than everything else- 
+
+    simple bool on tracking for when we need to count the window back (don't really care what happens in between)
+
+    ill reach out to him about
+
+    Ignacio-mid day flexible window devices
+
+    load_banking
+    load_reduction
+
+    load_payback
+        
+        
+    =#
+
+
 
 end
 

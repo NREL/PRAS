@@ -492,22 +492,25 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
     names::Vector{String}
     categories::Vector{String}
 
-    charge_capacity::Matrix{Int} # power
-    discharge_capacity::Matrix{Int} # power
+    bank_capacity::Matrix{Int} # power
+    payback_capacity::Matrix{Int} # power
     energy_capacity::Matrix{Int} # energy
 
-    charge_efficiency::Matrix{Float64}
-    discharge_efficiency::Matrix{Float64}
+    bank_efficiency::Matrix{Float64}
+    payback_efficiency::Matrix{Float64}
     carryover_efficiency::Matrix{Float64}
+
+    allowable_payback_period::Matrix{Int}
 
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
     function DemandResponses{N,L,T,P,E}(
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-        chargecapacity::Matrix{Int}, dischargecapacity::Matrix{Int},
-        energycapacity::Matrix{Int}, chargeefficiency::Matrix{Float64},
-        dischargeefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
+        bankcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
+        energycapacity::Matrix{Int}, bankefficiency::Matrix{Float64},
+        paybackefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
+        allowablepaybackperiod::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P,E}
 
@@ -515,19 +518,24 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert length(categories) == n_drs
         @assert allunique(names)
 
-        @assert size(chargecapacity) == (n_drs, N)
-        @assert size(dischargecapacity) == (n_drs, N)
+        
+        @assert size(bankcapacity) == (n_drs, N)
+        @assert size(paybackcapacity) == (n_drs, N)
         @assert size(energycapacity) == (n_drs, N)
-        @assert all(isnonnegative, chargecapacity)
-        @assert all(isnonnegative, dischargecapacity)
+        @assert all(isnonnegative, bankcapacity)
+        @assert all(isnonnegative, paybackcapacity)
         @assert all(isnonnegative, energycapacity)
 
-        @assert size(chargeefficiency) == (n_drs, N)
-        @assert size(dischargeefficiency) == (n_drs, N)
+        @assert size(bankefficiency) == (n_drs, N)
+        @assert size(paybackefficiency) == (n_drs, N)
         @assert size(carryoverefficiency) == (n_drs, N)
-        @assert all(isfractional, chargeefficiency)
-        @assert all(isfractional, dischargeefficiency)
+        @assert all(isfractional, bankefficiency)
+        @assert all(isfractional, paybackefficiency)
         @assert all(isfractional, carryoverefficiency)
+
+        @assert size(allowablepaybackperiod) == (n_drs, N)
+        @assert all(isnonnegative, allowablepaybackperiod)
+
 
         @assert size(λ) == (n_drs, N)
         @assert size(μ) == (n_drs, N)
@@ -535,8 +543,9 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert all(isfractional, μ)
 
         new{N,L,T,P,E}(string.(names), string.(categories),
-                       chargecapacity, dischargecapacity, energycapacity,
-                       chargeefficiency, dischargeefficiency, carryoverefficiency,
+                       bankcapacity, paybackcapacity, energycapacity,
+                       bankefficiency, paybackefficiency, carryoverefficiency,
+                       allowablepaybackperiod,
                        λ, μ)
 
     end
@@ -546,20 +555,21 @@ end
 Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
     x.names == y.names &&
     x.categories == y.categories &&
-    x.charge_capacity == y.charge_capacity &&
-    x.discharge_capacity == y.discharge_capacity &&
+    x.bank_capacity == y.bank_capacity &&
+    x.payback_capacity == y.payback_capacity &&
     x.energy_capacity == y.energy_capacity &&
-    x.charge_efficiency == y.charge_efficiency &&
-    x.discharge_efficiency == y.discharge_efficiency &&
+    x.bank_efficiency == y.bank_efficiency &&
+    x.payback_efficiency == y.payback_efficiency &&
     x.carryover_efficiency == y.carryover_efficiency &&
+    x.allowable_payback_period == y.allowable_payback_period &&
     x.λ == y.λ &&
     x.μ == y.μ
 
 Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
-    DR(dr.names[idxs], dr.categories[idxs],dr.charge_capacity[idxs,:],
-      dr.discharge_capacity[idxs, :],dr.energy_capacity[idxs, :],
-      dr.charge_efficiency[idxs, :], dr.discharge_efficiency[idxs, :], 
-      dr.carryover_efficiency[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :])
+    DR(dr.names[idxs], dr.categories[idxs],dr.bank_capacity[idxs,:],
+      dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
+      dr.bank_efficiency[idxs, :], dr.payback_efficiency[idxs, :], 
+      dr.carryover_efficiency[idxs, :],dr.allowable_payback_period,dr.λ[idxs, :], dr.μ[idxs, :])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -568,13 +578,16 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
     names = Vector{String}(undef, n_drs)
     categories = Vector{String}(undef, n_drs)
 
-    charge_capacity = Matrix{Int}(undef, n_drs, N)
-    discharge_capacity = Matrix{Int}(undef, n_drs, N)
+    bank_capacity = Matrix{Int}(undef, n_drs, N)
+    payback_capacity = Matrix{Int}(undef, n_drs, N)
     energy_capacity = Matrix{Int}(undef, n_drs, N) 
 
-    charge_efficiency = Matrix{Float64}(undef, n_drs, N)
-    discharge_efficiency = Matrix{Float64}(undef, n_drs, N)
+    bank_efficiency = Matrix{Float64}(undef, n_drs, N)
+    payback_efficiency = Matrix{Float64}(undef, n_drs, N)
     carryover_efficiency = Matrix{Float64}(undef, n_drs, N)
+
+    allowable_payback_period = Matrix{Float64}(undef, n_drs, N)
+
 
     λ = Matrix{Float64}(undef, n_drs, N)
     μ = Matrix{Float64}(undef, n_drs, N)
@@ -589,13 +602,15 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
         names[rows] = dr.names
         categories[rows] = dr.categories
 
-        charge_capacity[rows, :] = dr.charge_capacity
-        discharge_capacity[rows, :] = dr.discharge_capacity
+        bank_capacity[rows, :] = dr.bank_capacity
+        payback_capacity[rows, :] = dr.payback_capacity
         energy_capacity[rows, :] = dr.energy_capacity
 
-        charge_efficiency[rows, :] = dr.charge_efficiency
-        discharge_efficiency[rows, :] = dr.discharge_efficiency
+        bank_efficiency[rows, :] = dr.bank_efficiency
+        payback_efficiency[rows, :] = dr.payback_efficiency
         carryover_efficiency[rows, :] = dr.carryover_efficiency
+
+        allowable_payback_period[rows, :] = dr.allowable_payback_period
 
         λ[rows, :] = dr.λ
         μ[rows, :] = dr.μ
@@ -604,8 +619,8 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
     end
 
-    return DemandResponses{N,L,T,P,E}(names, categories, charge_capacity, discharge_capacity, energy_capacity, charge_efficiency, discharge_efficiency, 
-                               carryover_efficiency, λ, μ)
+    return DemandResponses{N,L,T,P,E}(names, categories, bank_capacity, payback_capacity, energy_capacity, bank_efficiency, payback_efficiency, 
+                               carryover_efficiency,allowable_payback_period, λ, μ)
 
 end
 

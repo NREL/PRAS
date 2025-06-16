@@ -186,7 +186,7 @@ function initialize!(
         fill!(state.stors_energy, 0)
         fill!(state.genstors_energy, 0)
         fill!(state.drs_energy, 0)
-
+        fill!(state.drs_paybackcounter, 0)
         return
 
 end
@@ -221,7 +221,11 @@ function advance!(
     update_energy!(state.genstors_energy, system.generatorstorages, t)
     update_energy!(state.drs_energy, system.demandresponses, t)
 
+    update_paybackcounter!(state.drs_paybackcounter,state.drs_energy, system.demandresponses)
+
+
     update_problem!(dispatchproblem, state, system, t)
+
 
 end
 
