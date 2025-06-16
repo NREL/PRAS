@@ -118,7 +118,7 @@ function record!(
         end
 
         for dr in system.region_dr_idxs[r]
-            dr_idx = problem.demandresponse_chargeunused_edges[dr]
+            dr_idx = problem.demandresponse_bankunused_edges[dr]
             regionsurplus += edges[dr_idx].flow
         end
 
@@ -168,7 +168,7 @@ function record!(
         end
 
         for dr in system.region_dr_idxs[r]
-            dr_idx = problem.demandresponse_chargeunused_edges[dr]
+            dr_idx = problem.demandresponse_bankunused_edges[dr]
             regionsurplus += edges[dr_idx].flow
         end
 
@@ -336,7 +336,7 @@ end
 
 reset!(acc::Results.GenStorAvailabilityAccumulator, sampleid::Int) = nothing
 
-# DemandrResponseAvailability
+# DemandResponseAvailability
 
 function record!(
     acc::Results.DRAvailabilityAccumulator,

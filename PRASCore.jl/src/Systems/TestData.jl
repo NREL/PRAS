@@ -28,7 +28,9 @@ emptygenstors1 = GeneratorStorages{4,1,Hour,MW,MWh}(
 
 emptydrs1 = DemandResponses{4,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
     (empty_int(4) for _ in 1:3)...,
-    (empty_float(4) for _ in 1:5)...)
+    (empty_float(4) for _ in 1:3)...,
+    (empty_int(4) for _ in 1:1)...,
+    (empty_float(4) for _ in 1:2)...)
 
 singlenode_a = SystemModel(
     gens1, emptystors1, emptygenstors1,emptydrs1,
@@ -59,7 +61,9 @@ emptygenstors1_5min = GeneratorStorages{4,5,Minute,MW,MWh}(
 
 emptydrs1_5min = DemandResponses{4,5,Minute,MW,MWh}((empty_str for _ in 1:2)...,
     (empty_int(4) for _ in 1:3)...,
-    (empty_float(4) for _ in 1:5)...)
+    (empty_float(4) for _ in 1:3)...,
+    (empty_int(4) for _ in 1:1)...,
+    (empty_float(4) for _ in 1:2)...)
 
 singlenode_a_5min = SystemModel(
     gens1_5min, emptystors1_5min, emptygenstors1_5min,emptydrs1_5min,
@@ -90,7 +94,9 @@ emptygenstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
 
 emptydrs2 = DemandResponses{6,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
     (empty_int(6) for _ in 1:3)...,
-    (empty_float(6) for _ in 1:5)...)
+    (empty_float(6) for _ in 1:3)...,
+    (empty_int(6) for _ in 1:1)...,
+    (empty_float(6) for _ in 1:2)...)
 
 genstors2 = GeneratorStorages{6,1,Hour,MW,MWh}(
     ["Genstor1", "Genstor2"], ["Genstorage", "Genstorage"],
@@ -188,7 +194,9 @@ emptygenstors = GeneratorStorages{1,1,Hour,MW,MWh}(
 
 emptydrs= DemandResponses{1,1,Hour,MW,MWh}((String[] for _ in 1:2)...,
     (zeros(Int, 0, 1) for _ in 1:3)...,
-    (zeros(Float64, 0, 1) for _ in 1:5)...)
+    (zeros(Float64, 0, 1) for _ in 1:3)...,
+    (zeros(Int, 0, 1) for _ in 1:1)...,
+    (zeros(Float64, 0, 1) for _ in 1:2)...)
 
 interfaces = Interfaces{1,MW}([1], [2], fill(8, 1, 1), fill(8, 1, 1))
 
@@ -235,7 +243,9 @@ emptygenstors = GeneratorStorages{2,1,Hour,MW,MWh}(
 
 emptydrs2 = DemandResponses{2,1,Hour,MW,MWh}((empty_str for _ in 1:2)...,
     (empty_int(2) for _ in 1:3)...,
-    (empty_float(2) for _ in 1:5)...)
+    (empty_float(2) for _ in 1:3)...,
+    (empty_int(2) for _ in 1:1)...,
+    (empty_float(2) for _ in 1:2)...)
 
 
 test2 = SystemModel(gen, stor, emptygenstors,emptydrs2, timestamps, [8, 9])
@@ -291,30 +301,34 @@ test3_util_t = [0.8614, 0.626674]
 test3_eenergy = [6.561, 7.682202]
 
 
-# Test System 4 (Gen + Stor + DR, 1 Region)
+# Test System 4 (Gen + DR, 1 Region)
 
-timestamps = ZonedDateTime(2020,1,1,0, tz):Hour(1):ZonedDateTime(2020,1,1,1, tz)
+timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,2,0, tz)
 
-gen = Generators{2,1,Hour,MW}(
+gen = Generators{24,1,Hour,MW}(
     ["Gen 1"], ["Generators"],
-    fill(10, 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+    fill(10, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
 
-stor = Storages{2,1,Hour,MW,MWh}(
-    ["Stor 1"], ["Storages"],
-    fill(10, 1, 2), fill(10, 1, 2), fill(10, 1, 2),
-    fill(1., 1, 2), fill(1., 1, 2), fill(1., 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
-
-emptygenstors = GeneratorStorages{2,1,Hour,MW,MWh}(
+emptystors = Storages{24,1,Hour,MW,MWh}(
     (String[] for _ in 1:2)...,
-    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:3)...,
-    (zeros(Int, 0, 2) for _ in 1:3)..., (zeros(Float64, 0, 2) for _ in 1:2)...)
+    (zeros(Int, 0, 24) for _ in 1:3)...,
+    (zeros(Float64, 0, 24) for _ in 1:5)...)
+    
+emptygenstors = GeneratorStorages{24,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 24) for _ in 1:3)..., (zeros(Float64, 0, 24) for _ in 1:3)...,
+    (zeros(Int, 0, 24) for _ in 1:3)..., (zeros(Float64, 0, 24) for _ in 1:2)...)
 
-dr = DemandResponses{2,1,Hour,MW,MWh}(
+dr = DemandResponses{24,1,Hour,MW,MWh}(
     ["DR 1"], ["DemandResponses"],
-    fill(10, 1, 2), fill(10, 1, 2), fill(10, 1, 2),
-    fill(1., 1, 2), fill(1., 1, 2), fill(1., 1, 2), fill(0.1, 1, 2), fill(0.9, 1, 2))
+    fill(10, 1, 24), fill(10, 1, 24), fill(10, 1, 24),
+    fill(1., 1, 24), fill(1., 1, 24), fill(1., 1, 24),fill(1, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
 
-test4= SystemModel(gen, stor, emptygenstors,dr, timestamps, [8, 9])
+
+full_day_load_profile = [45,43,42,42,42,44,47,50,52,54,56,58,60,61,63,64,64,63,61,58,55,52,49,46]
+
+
+test4= SystemModel(gen, emptystors, emptygenstors,dr, timestamps, full_day_load_profile)
 
 test4_lole = 0.2
 test4_lolps = [0.1, 0.1]

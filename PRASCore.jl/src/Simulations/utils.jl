@@ -120,6 +120,36 @@ function update_energy!(
 
 end
 
+function update_paybackcounter!(
+    payback_counter::Vector{Int},
+    drs_energy::Vector{Int},
+    drs::AbstractAssets
+)
+
+    for i in 1:length(payback_counter)
+        #if energy is zero or negative, set counter to -1
+        if drs_energy[i] <= 0
+            if payback_counter[i] > 0
+                #if no energy banked and counter is positive, reset it to -1
+                payback_counter[i] = -1
+            end
+        elseif payback_counter[i] == -1
+            #if energy is banked and counter is -1, set it to payback window-start of counting
+            payback_counter[i] =  drs.allowable_payback_period[i]
+        elseif payback_counter[i] > 0
+            #if counter is positive, decrement by one
+            payback_counter[i] -= 1
+        elseif payback_counter[i] == 0
+            #if counter is zero, set to -2 (to trigger count load in update_problem!)
+            payback_counter[i] = -2
+        end
+
+
+    end
+
+end
+
+
 function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.storages) > 0
@@ -177,32 +207,32 @@ function maxtimetocharge_discharge(system::SystemModel)
 
 end
 
-function maxtimetocharge_discharge_dr(system::SystemModel)
+function maxtimetobank_payback_dr(system::SystemModel)
 
     if length(system.demandresponses) > 0
-        if any(iszero, system.demandresponses.charge_capacity)
-            dr_charge_max = length(system.timestamps) + 1
+        if any(iszero, system.demandresponses.bank_capacity)
+            dr_bank_max = length(system.timestamps) + 1
         else
-            dr_charge_durations =
-                system.demandresponses.energy_capacity ./ system.demandresponses.charge_capacity
-                dr_charge_max = ceil(Int, maximum(dr_charge_durations))
+            dr_bank_durations =
+                system.demandresponses.energy_capacity ./ system.demandresponses.bank_capacity
+                dr_bank_max = ceil(Int, maximum(dr_bank_durations))
         end
 
-        if any(iszero, system.demandresponses.discharge_capacity)
-            dr_discharge_max = length(system.timestamps) + 1
+        if any(iszero, system.demandresponses.payback_capacity)
+            dr_payback_max = length(system.timestamps) + 1
         else
-            dr_discharge_durations =
-                system.demandresponses.energy_capacity ./ system.demandresponses.discharge_capacity
-            dr_discharge_max = ceil(Int, maximum(dr_discharge_durations))
+            dr_payback_durations =
+                system.demandresponses.energy_capacity ./ system.demandresponses.payback_capacity
+                dr_payback_max = ceil(Int, maximum(dr_payback_durations))
         end
 
     else
-        dr_charge_max = 0
-        dr_discharge_max = 0
+        dr_bank_max = 0
+        dr_payback_max = 0
 
     end
 
-    return (dr_charge_max,dr_discharge_max)
+    return (dr_bank_max,dr_payback_max)
 
 end
 
