@@ -307,7 +307,7 @@ timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,2,0, tz)
 
 gen = Generators{24,1,Hour,MW}(
     ["Gen 1"], ["Generators"],
-    fill(10, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
+    fill(57, 1, 24), fill(0.00001, 1, 24), fill(0.9999, 1, 24))
 
 emptystors = Storages{24,1,Hour,MW,MWh}(
     (String[] for _ in 1:2)...,
@@ -320,9 +320,9 @@ emptygenstors = GeneratorStorages{24,1,Hour,MW,MWh}(
     (zeros(Int, 0, 24) for _ in 1:3)..., (zeros(Float64, 0, 24) for _ in 1:2)...)
 
 dr = DemandResponses{24,1,Hour,MW,MWh}(
-    ["DR 1"], ["DemandResponses"],
+    ["DR1"], ["DemandResponses"],
     fill(10, 1, 24), fill(10, 1, 24), fill(10, 1, 24),
-    fill(1., 1, 24), fill(1., 1, 24), fill(1., 1, 24),fill(1, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
+    fill(1., 1, 24), fill(1., 1, 24), fill(1., 1, 24),fill(6, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
 
 
 full_day_load_profile = [45,43,42,42,42,44,47,50,52,54,56,58,60,61,63,64,64,63,61,58,55,52,49,46]

@@ -117,8 +117,8 @@ struct DispatchProblem
     max_dischargecost::Int
 
     #dr costs
-    min_bankcost_dr::Int
-    max_paybackcost_dr::Int
+    max_bankcost_dr::Int
+    min_paybackcost_dr::Int
 
     function DispatchProblem(
         sys::SystemModel; unlimited::Int=999_999_999)
@@ -133,12 +133,14 @@ struct DispatchProblem
         maxchargetime, maxdischargetime = maxtimetocharge_discharge(sys)
         min_chargecost = - maxchargetime - 1
         max_dischargecost = - min_chargecost + maxdischargetime + 1
-        shortagepenalty = 10 * (nifaces + max_dischargecost)
 
-        #for demandresponse
+        #for demandresponse-inverse of storage as we want to payback first and bank last (so payback costs are negative, and banking costs are positive)
         maxbanktime_dr, maxpaybacktime_dr = maxtimetobank_payback_dr(sys)
-        min_bankcost_dr = - maxbanktime_dr - 1
-        max_paybackcost_dr = - min_bankcost_dr + maxpaybacktime_dr + 1
+        min_paybackcost_dr = - maxpaybacktime_dr - 1 + min_chargecost
+        max_bankcost_dr = - min_paybackcost_dr + maxbanktime_dr + 1 + max_dischargecost
+
+        #for unserved energy
+        shortagepenalty = 10 * (nifaces + max_bankcost_dr)
 
 
         stor_regions = assetgrouplist(sys.region_stor_idxs)
@@ -257,7 +259,7 @@ struct DispatchProblem
             dr_bankused, dr_paybackunused, dr_paybackused,
             dr_paybackunused,
             min_chargecost, max_dischargecost,
-            min_bankcost_dr, max_paybackcost_dr
+            max_bankcost_dr, min_paybackcost_dr
         )
 
     end
@@ -461,8 +463,8 @@ function update_problem!(
         updateinjection!(
             fp.nodes[payback_node], slack_node, -payback_capacity)
 
-        # Largest time-to-discharge = highest priority (discharge first)
-        paybackcost = problem.max_paybackcost_dr - timetopayback # Positive cost
+        # Largest time-to-payback = highest priority (payback first)
+        paybackcost = problem.min_paybackcost_dr - timetopayback # Negative cost
         updateflowcost!(fp.edges[payback_edge], paybackcost)
 
         # Update charging
@@ -477,8 +479,8 @@ function update_problem!(
         updateinjection!(
             fp.nodes[bank_node], slack_node, bank_capacity)
 
-        # Smallest time-to-discharge = highest priority (charge first)
-        bankcost = problem.min_bankcost_dr + timetopayback # Negative cost
+        # Smallest time-to-payback = highest priority (bank first)
+        bankcost = problem.max_bankcost_dr + timetopayback # Positive cost
         updateflowcost!(fp.edges[bank_edge], bankcost)
 
     end
