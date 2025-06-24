@@ -177,7 +177,8 @@ function SystemModel(
     storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
     generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
     lines, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{DateTime,T},
+    attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     @warn "No time zone data provided - defaulting to UTC. To specify a " *
@@ -200,7 +201,7 @@ function SystemModel(
             Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
             Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
         lines, interface_line_idxs,
-        timestamps_tz)
+        timestamps_tz,attrs)
 
 end
 
