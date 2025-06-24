@@ -294,6 +294,33 @@ function readversion(f::File)
 end
 
 """
+Reads additional user defined metadata from the file containing the PRAS system.
+"""
+function read_addl_attrs(inputfile::String)
+
+    h5open(inputfile, "r") do f::File
+
+        metadata = attributes(f)
+
+        reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
+                    "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
+        
+        addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
+        
+        if !isempty(addl_attrs_keys)            
+            println("User-defined attribute(s) found in the file:")
+            for key in addl_attrs_keys
+                println("  $key: $(read(metadata[key]))")
+            end
+
+            return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
+        else
+            println("No user-defined attributes found in the file.")
+        end
+    end
+end
+
+"""
 Attempts to extract a vector of elements from an HDF5 compound datatype,
 corresponding to `field`.
 """
