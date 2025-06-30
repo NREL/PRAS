@@ -287,7 +287,6 @@ function update_problem!(
             ) - system.regions.load[r, t]
 
         updateinjection!(region_node, slack_node, region_netgenavailable)
-
     end
 
     # Update bidirectional interface limits (from lines)
@@ -432,15 +431,6 @@ function update_problem!(
         problem.demandresponse_bank_nodes, problem.demandresponse_bank_edges,
         problem.demandresponse_payback_nodes, problem.demandresponse_payback_edges))
 
-        #first check if demand response is past allowalable payback window
-        if state.drs_paybackcounter[i] == -2
-            #if payback window is over, set injection
-            updateinjection!(
-            fp.nodes[payback_node], slack_node, -state.drs_energy[i])
-            continue # No banking possible in same step of load being dropped
-        end
-
-
         dr_online = state.drs_available[i]
         dr_energy = state.drs_energy[i]
         maxenergy = system.demandresponses.energy_capacity[i, t]
@@ -457,9 +447,10 @@ function update_problem!(
             timetopayback = round(Int, energy_payback_allowed / maxpayback)
         end
 
-        payback_capacity =
-            min(maxpayback, floor(Int, energytopower(
-                energy_payback_allowed, E, L, T, P)))
+        payback_capacity =  min(
+            maxpayback, floor(Int, energytopower(
+            energy_payback_allowed, E, L, T, P))
+            )
         updateinjection!(
             fp.nodes[payback_node], slack_node, -payback_capacity)
 
@@ -472,10 +463,10 @@ function update_problem!(
         maxbank = dr_online * system.demandresponses.bank_capacity[i, t]
         bankefficiency = system.demandresponses.bank_efficiency[i, t]
         energybankable = (maxenergy - dr_energy) / bankefficiency
-
-        bank_capacity =
-            min(maxbank, floor(Int, energytopower(
-                energybankable, E, L, T, P)))
+        bank_capacity =  min(
+            maxbank, floor(Int, energytopower(
+            energybankable, E, L, T, P))
+            )
         updateinjection!(
             fp.nodes[bank_node], slack_node, bank_capacity)
 
@@ -533,12 +524,11 @@ function update_state!(
     #Demand Response Update
     #banking (negative of the flows)
     for (i, e) in enumerate(problem.demandresponse_bank_edges)
-        #first check if demand response is past allowalable payback window
-        if state.drs_paybackcounter[i] == -2
-            #set back to start of new payback window, count dropped load, and set energy to zero
-            state.drs_paybackcounter[i] = -1
+        if state.drs_paybackcounter[i] == 0
+            #if payback window is over, count the unserved energy in drs_unservedenergy state and reset energy
+            state.drs_unservedenergy[i] = state.drs_energy[i]
             state.drs_energy[i] = 0
-            continue # No banking possible in same step of load being dropped
+            continue
         end
         state.drs_energy[i] +=
             ceil(Int, edges[e].flow * p2e * system.demandresponses.bank_efficiency[i, t])
@@ -546,56 +536,16 @@ function update_state!(
 
     #paybacking
     for (i, e) in enumerate(problem.demandresponse_payback_edges)
+        if state.drs_paybackcounter[i] == 0
+            #if payback window is over, skip the payback
+            continue
+        end
         energy = state.drs_energy[i]
         energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.payback_efficiency[i, t])
         state.drs_energy[i] = max(0, energy - energy_drop)
     end
 
 
-    #=penalty for shortage less than dropping load, higher than everything else- 
-
-        simple bool on tracking for when we need to count the window back (don't really care what happens in between)
-        
-        ill reach out to him about
-        
-        Ignacio-mid day flexible window devices
-        
-        
-        rename charging/discharging
-
-
-    load_shift:
-
-    load_banking
-
-    load_curtailment
-
-
-    no need to add DR in surplus calculations
-
-
-    add it backburner
-
-    Single system
-
-    DR object, generators no transmission
-
-
-    penalty for shortage less than dropping load, higher than everything else- 
-
-    simple bool on tracking for when we need to count the window back (don't really care what happens in between)
-
-    ill reach out to him about
-
-    Ignacio-mid day flexible window devices
-
-    load_banking
-    load_reduction
-
-    load_payback
-        
-        
-    =#
 
 
 

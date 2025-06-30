@@ -12,13 +12,21 @@ function record!(
 
     edges = problem.fp.edges
 
-    for r in problem.region_unserved_edges
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
 
+        #count region shortfall and include dr shortfall
         regionshortfall = edges[r].flow
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_paybackcounter[i] == 0 ? state.drs_unservedenergy[i] :  0 
+        end
+        regionshortfall += dr_shortfall
         isregionshortfall = regionshortfall > 0
+
 
         fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
         fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
+        fit!(acc.unserveddrload_regionperiod[r,t], dr_shortfall)
 
         if isregionshortfall
 
@@ -27,9 +35,9 @@ function record!(
 
             acc.periodsdropped_region_currentsim[r] += 1
             acc.unservedload_region_currentsim[r] += regionshortfall
+            acc.unserveddrload_region_currentsim[r] += dr_shortfall
 
         end
-
     end
 
     if isshortfall
@@ -53,6 +61,8 @@ function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
     for r in eachindex(acc.periodsdropped_region)
         fit!(acc.periodsdropped_region[r], acc.periodsdropped_region_currentsim[r])
         fit!(acc.unservedload_region[r], acc.unservedload_region_currentsim[r])
+        fit!(acc.unserveddrload_region[r], acc.unserveddrload_region_currentsim[r])
+
     end
 
     # Reset for new simulation
@@ -60,6 +70,7 @@ function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
     fill!(acc.periodsdropped_region_currentsim, 0)
     acc.unservedload_total_currentsim = 0
     fill!(acc.unservedload_region_currentsim, 0)
+    fill!(acc.unserveddrload_region_currentsim, 0)
 
     return
 
@@ -117,11 +128,11 @@ function record!(
 
         end
 
-        for dr in system.region_dr_idxs[r]
+        #=for dr in system.region_dr_idxs[r]
             dr_idx = problem.demandresponse_bankunused_edges[dr]
             regionsurplus += edges[dr_idx].flow
         end
-
+        =#
         fit!(acc.surplus_regionperiod[r,t], regionsurplus)
         totalsurplus += regionsurplus
 
@@ -167,11 +178,11 @@ function record!(
 
         end
 
-        for dr in system.region_dr_idxs[r]
+        #=for dr in system.region_dr_idxs[r]
             dr_idx = problem.demandresponse_bankunused_edges[dr]
             regionsurplus += edges[dr_idx].flow
         end
-
+        =#
         acc.surplus[r, t, sampleid] = regionsurplus
 
     end
