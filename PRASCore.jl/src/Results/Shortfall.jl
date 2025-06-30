@@ -58,12 +58,15 @@ mutable struct ShortfallAccumulator <: ResultAccumulator{Shortfall}
     # Cross-simulation UE mean/variances
     unservedload_total::MeanVariance
     unservedload_region::Vector{MeanVariance}
+    unserveddrload_region::Vector{MeanVariance}
     unservedload_period::Vector{MeanVariance}
     unservedload_regionperiod::Matrix{MeanVariance}
+    unserveddrload_regionperiod::Matrix{MeanVariance}
 
     # Running UE totals for current simulation
     unservedload_total_currentsim::Int
     unservedload_region_currentsim::Vector{Int}
+    unserveddrload_region_currentsim::Vector{Int}
 
 end
 
@@ -83,19 +86,22 @@ function accumulator(
 
     unservedload_total = meanvariance()
     unservedload_region = [meanvariance() for _ in 1:nregions]
+    unserveddrload_region = [meanvariance() for _ in 1:nregions]
     unservedload_period = [meanvariance() for _ in 1:N]
     unservedload_regionperiod = [meanvariance() for _ in 1:nregions, _ in 1:N]
+    unserveddrload_regionperiod = [meanvariance() for _ in 1:nregions, _ in 1:N]
 
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
+    unserveddrload_region_currentsim = zeros(Int, nregions)
 
     return ShortfallAccumulator(
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_regionperiod,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
-        unservedload_total, unservedload_region,
-        unservedload_period, unservedload_regionperiod,
-        unservedload_total_currentsim, unservedload_region_currentsim)
+        unservedload_total, unservedload_region,unserveddrload_region,
+        unservedload_period, unservedload_regionperiod,unserveddrload_regionperiod,
+        unservedload_total_currentsim, unservedload_region_currentsim,unserveddrload_region_currentsim)
 
 end
 
@@ -110,8 +116,10 @@ function merge!(
 
     merge!(x.unservedload_total, y.unservedload_total)
     foreach(merge!, x.unservedload_region, y.unservedload_region)
+    foreach(merge!, x.unserveddrload_region, y.unserveddrload_region)
     foreach(merge!, x.unservedload_period, y.unservedload_period)
     foreach(merge!, x.unservedload_regionperiod, y.unservedload_regionperiod)
+    foreach(merge!, x.unserveddrload_regionperiod, y.unserveddrload_regionperiod)
 
     return
 
