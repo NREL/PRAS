@@ -127,21 +127,18 @@ function update_paybackcounter!(
 )
 
     for i in 1:length(payback_counter)
-        #if energy is zero or negative, set counter to -1
+        #if energy is zero or negative, set counter to -1 (to trigger dropped load in update_problem!)
         if drs_energy[i] <= 0
-            if payback_counter[i] > 0
+            if payback_counter[i] >= 0
                 #if no energy banked and counter is positive, reset it to -1
                 payback_counter[i] = -1
             end
         elseif payback_counter[i] == -1
             #if energy is banked and counter is -1, set it to payback window-start of counting
-            payback_counter[i] =  drs.allowable_payback_period[i]
-        elseif payback_counter[i] > 0
+            payback_counter[i] =  drs.allowable_payback_period[i]-1
+        elseif payback_counter[i] >= 0
             #if counter is positive, decrement by one
             payback_counter[i] -= 1
-        elseif payback_counter[i] == 0
-            #if counter is zero, set to -2 (to trigger count load in update_problem!)
-            payback_counter[i] = -2
         end
 
 
