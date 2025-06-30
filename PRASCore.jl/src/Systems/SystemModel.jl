@@ -118,7 +118,7 @@ function SystemModel(
     generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
     storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
     generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
-    demandresponses::Storages{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
+    demandresponses::DemandResponses{N,L,T,P,E}, region_dr_idxs::Vector{UnitRange{Int}},
     lines, interface_line_idxs::Vector{UnitRange{Int}},
     timestamps::StepRange{DateTime,T},
     attrs::Dict{String, String}=Dict{String, String}()
