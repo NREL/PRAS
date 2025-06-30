@@ -186,6 +186,7 @@ function initialize!(
         fill!(state.stors_energy, 0)
         fill!(state.genstors_energy, 0)
         fill!(state.drs_energy, 0)
+        fill!(state.drs_unservedenergy, 0)
         fill!(state.drs_paybackcounter, -1)
         return
 
