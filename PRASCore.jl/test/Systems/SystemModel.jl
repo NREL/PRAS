@@ -21,7 +21,7 @@
         ["S1", "S2"], ["HVAC", "Industrial"],
         rand(1:10, 2, 10), rand(1:10, 2, 10), rand(1:10, 2, 10),
         fill(0.9, 2, 10), fill(1.0, 2, 10), fill(0.99, 2, 10),
-        fill(0.1, 2, 10), fill(0.5, 2, 10))
+        fill(4, 2, 10),fill(0.1, 2, 10), fill(0.5, 2, 10))
 
     tz = tz"UTC"
     timestamps = ZonedDateTime(2020, 1, 1, 0, tz):Hour(1):ZonedDateTime(2020,1,1,9, tz)
