@@ -569,7 +569,7 @@ Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
     DR(dr.names[idxs], dr.categories[idxs],dr.bank_capacity[idxs,:],
       dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
       dr.bank_efficiency[idxs, :], dr.payback_efficiency[idxs, :], 
-      dr.carryover_efficiency[idxs, :],dr.allowable_payback_period,dr.λ[idxs, :], dr.μ[idxs, :])
+      dr.carryover_efficiency[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
