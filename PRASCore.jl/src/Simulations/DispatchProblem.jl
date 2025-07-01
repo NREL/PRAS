@@ -134,10 +134,10 @@ struct DispatchProblem
         min_chargecost = - maxchargetime - 1
         max_dischargecost = - min_chargecost + maxdischargetime + 1
 
-        #for demandresponse-inverse of storage as we want to payback first and bank last (so payback costs are negative, and banking costs are positive)
-        maxbanktime_dr, maxpaybacktime_dr = maxtimetobank_payback_dr(sys)
-        min_paybackcost_dr = - maxpaybacktime_dr - 1 + min_chargecost
-        max_bankcost_dr = - min_paybackcost_dr + maxbanktime_dr + 1 + max_dischargecost
+        #for demand response-we want to bank energy in devices with the longest payback window, and payback energy from devices with the smallest payback window
+        minpaybacktime_dr, maxpaybacktime_dr = minmax_payback_window_dr(sys)
+        min_paybackcost_dr = - maxpaybacktime_dr - 1 + min_chargecost #add min_chargecost to always have DR devices be paybacked first
+        max_bankcost_dr = - min_paybackcost_dr + minpaybacktime_dr + 1 + max_dischargecost #add max_dischargecost to always have DR devices be banked last
 
         #for unserved energy
         shortagepenalty = 10 * (nifaces + max_bankcost_dr)
@@ -442,9 +442,9 @@ function update_problem!(
         energy_payback_allowed = dr_energy * paybackefficiency
 
         if iszero(maxpayback)
-            timetopayback = N + 1
+            allowablepayback = N + 1
         else
-            timetopayback = round(Int, energy_payback_allowed / maxpayback)
+            allowablepayback = system.demandresponses.allowable_payback_period[i]
         end
 
         payback_capacity =  min(
@@ -454,12 +454,11 @@ function update_problem!(
         updateinjection!(
             fp.nodes[payback_node], slack_node, -payback_capacity)
 
-        # Largest time-to-payback = highest priority (payback first)
-        paybackcost = problem.min_paybackcost_dr - timetopayback # Negative cost
+        # smallest allowable payback window = highest priority (payback first)
+        paybackcost = problem.min_paybackcost_dr + allowablepayback # Negative cost
         updateflowcost!(fp.edges[payback_edge], paybackcost)
 
-        # Update charging
-
+        # Update banking
         maxbank = dr_online * system.demandresponses.bank_capacity[i, t]
         bankefficiency = system.demandresponses.bank_efficiency[i, t]
         energybankable = (maxenergy - dr_energy) / bankefficiency
@@ -470,8 +469,8 @@ function update_problem!(
         updateinjection!(
             fp.nodes[bank_node], slack_node, bank_capacity)
 
-        # Smallest time-to-payback = highest priority (bank first)
-        bankcost = problem.max_bankcost_dr + timetopayback # Positive cost
+        # Longest allowable payback window = highest priority (bank first)
+        bankcost = problem.max_bankcost_dr - allowablepayback # Positive cost
         updateflowcost!(fp.edges[bank_edge], bankcost)
 
     end

@@ -127,7 +127,7 @@ function update_paybackcounter!(
 )
 
     for i in 1:length(payback_counter)
-        #if energy is zero or negative, set counter to -1 (to trigger dropped load in update_problem!)
+        #if energy is zero or negative, set counter to -1 (to start counting new)
         if drs_energy[i] <= 0
             if payback_counter[i] >= 0
                 #if no energy banked and counter is positive, reset it to -1
@@ -204,32 +204,27 @@ function maxtimetocharge_discharge(system::SystemModel)
 
 end
 
-function maxtimetobank_payback_dr(system::SystemModel)
+function minmax_payback_window_dr(system::SystemModel)
 
     if length(system.demandresponses) > 0
-        if any(iszero, system.demandresponses.bank_capacity)
-            dr_bank_max = length(system.timestamps) + 1
+        if any(iszero, system.demandresponses.allowable_payback_period)
+            maxpaybacktime_dr = length(system.timestamps) + 1
         else
-            dr_bank_durations =
-                system.demandresponses.energy_capacity ./ system.demandresponses.bank_capacity
-                dr_bank_max = ceil(Int, maximum(dr_bank_durations))
+            maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
         end
 
         if any(iszero, system.demandresponses.payback_capacity)
-            dr_payback_max = length(system.timestamps) + 1
+            minpaybacktime_dr = length(system.timestamps) + 1
         else
-            dr_payback_durations =
-                system.demandresponses.energy_capacity ./ system.demandresponses.payback_capacity
-                dr_payback_max = ceil(Int, maximum(dr_payback_durations))
+            minpaybacktime_dr = minimum(system.demandresponses.allowable_payback_period)
         end
 
     else
-        dr_bank_max = 0
-        dr_payback_max = 0
-
+        minpaybacktime_dr = 0
+        maxpaybacktime_dr = 0
     end
 
-    return (dr_bank_max,dr_payback_max)
+    return (minpaybacktime_dr, maxpaybacktime_dr)
 
 end
 
