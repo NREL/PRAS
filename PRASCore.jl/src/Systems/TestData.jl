@@ -301,43 +301,93 @@ test3_util_t = [0.8614, 0.626674]
 test3_eenergy = [6.561, 7.682202]
 
 
-# Test System 4 (Gen + DR, 1 Region)
+# Test System 4 (Gen + DR, 1 Region for 6 hours)
 
-timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,2,0, tz)
+timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,1,6, tz)
 
-gen = Generators{24,1,Hour,MW}(
+gen = Generators{6,1,Hour,MW}(
     ["Gen 1"], ["Generators"],
-    fill(57, 1, 24), fill(0.00001, 1, 24), fill(0.9999, 1, 24))
+    fill(57, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
-emptystors = Storages{24,1,Hour,MW,MWh}(
+emptystors = Storages{6,1,Hour,MW,MWh}(
     (String[] for _ in 1:2)...,
-    (zeros(Int, 0, 24) for _ in 1:3)...,
-    (zeros(Float64, 0, 24) for _ in 1:5)...)
-    
-emptygenstors = GeneratorStorages{24,1,Hour,MW,MWh}(
-    (String[] for _ in 1:2)...,
-    (zeros(Int, 0, 24) for _ in 1:3)..., (zeros(Float64, 0, 24) for _ in 1:3)...,
-    (zeros(Int, 0, 24) for _ in 1:3)..., (zeros(Float64, 0, 24) for _ in 1:2)...)
+    (zeros(Int, 0, 6) for _ in 1:3)...,
+    (zeros(Float64, 0, 6) for _ in 1:5)...)
 
-dr = DemandResponses{24,1,Hour,MW,MWh}(
+emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 6) for _ in 1:3)..., (zeros(Float64, 0, 6) for _ in 1:3)...,
+    (zeros(Int, 0, 6) for _ in 1:3)..., (zeros(Float64, 0, 6) for _ in 1:2)...)
+
+dr = DemandResponses{6,1,Hour,MW,MWh}(
     ["DR1"], ["DemandResponses"],
-    fill(10, 1, 24), fill(10, 1, 24), fill(10, 1, 24),
-    fill(1., 1, 24), fill(1., 1, 24), fill(1., 1, 24),fill(6, 1, 24), fill(0.1, 1, 24), fill(0.9, 1, 24))
+    fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
+    fill(1., 1, 6), fill(1., 1, 6), fill(1., 1, 6),fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
 
-full_day_load_profile = [45,43,42,42,42,44,47,50,52,54,56,58,60,61,63,64,64,63,61,58,55,52,49,46]
+full_day_load_profile = [56,58,60,61,59,53]
 
 
-test4= SystemModel(gen, emptystors, emptygenstors,dr, timestamps, full_day_load_profile)
+test4 = SystemModel(gen, emptystors, emptygenstors,dr, timestamps, full_day_load_profile)
 
-test4_lole = 0.2
-test4_lolps = [0.1, 0.1]
+test4_lole = 1.99
+test4_lolps = [0.0998, 0.2629, 0.33, 0.8603, 0.2638, 0.1733]
 
-test4_eue = 1.5542
-test4_eues = [0.8, 0.7542]
+test4_eue = 40.75
+test4_eues = [4.69, 5.15, 6.94, 12.99, 6.03, 4.94]
 
-test4_esurplus = [0.18, 1.4022]
+test4_esurplus = [0.9,0,0,0,0,1.98]
 
-test4_eenergy = [1.62, 2.2842]
+test4_eenergy = [0.8986299999999925,
+                2.4561559999999782,
+                4.254399000000163,
+                0.997662000000021,
+                2.6729959999999235,
+                1.388832000000018]
 
-end
+
+# Test System 5 (Gen + DR + Stor, 1 Region for 6 hours)
+
+timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,1,6, tz)
+
+gen = Generators{6,1,Hour,MW}(
+    ["Gen 1"], ["Generators"],
+    fill(57, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
+
+stor = Storages{6,1,Hour,MW,MWh}(
+    ["Stor 1"], ["Storages"],
+    fill(5, 1, 6), fill(5, 1, 6), fill(5, 1, 6),
+    fill(1., 1, 6), fill(1., 1, 6), fill(1., 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
+
+emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
+    (String[] for _ in 1:2)...,
+    (zeros(Int, 0, 6) for _ in 1:3)..., (zeros(Float64, 0, 6) for _ in 1:3)...,
+    (zeros(Int, 0, 6) for _ in 1:3)..., (zeros(Float64, 0, 6) for _ in 1:2)...)
+
+dr = DemandResponses{6,1,Hour,MW,MWh}(
+    ["DR1"], ["DemandResponses"],
+    fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
+    fill(1., 1, 6), fill(1., 1, 6), fill(1., 1, 6),fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
+
+
+full_day_load_profile = [56,58,60,61,59,53]
+
+
+test5 = SystemModel(gen, stor, emptygenstors,dr, timestamps, full_day_load_profile)
+
+test5_lole = 1.969
+test5_lolps = [0.0998, 0.1974, 0.3301, 0.4261, 0.6986, 0.2173]
+
+test5_eue = 41.18
+test5_eues = [4.69, 5.01, 6.88, 8.33, 11.23, 5.05]
+
+test5_esurplus = [0.0901899999999984,0,0,0,0,0.27480199999998633]
+
+test5_eenergy = [0.8993600000000469,
+                1.8662289999999468,
+                3.6625479999998864,
+                5.055734000000438,
+                1.5473829999999773,
+                0.9368359999999988]
+
+end 
