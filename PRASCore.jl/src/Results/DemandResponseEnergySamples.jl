@@ -2,10 +2,10 @@
     DemandResponseEnergySamples
 
 The `DemandResponseEnergySamples` result specification reports the sample-level state
-of charge of `DemandResponses`, producing a `DemandResponseEnergySamplesResult`.
+of banked energy of `DemandResponses`, producing a `DemandResponseEnergySamplesResult`.
 
 A `DemandResponseEnergySamplesResult` can be indexed by demand response device name and
-a timestamp to retrieve a vector of sample-level charge states for
+a timestamp to retrieve a vector of sample-level banked energy states for
 the device in the given timestep.
 
 Example:
@@ -22,7 +22,7 @@ samples = demandresponseenergy["MyDemandResponse123", ZonedDateTime(2020, 1, 1, 
 
 Note that this result specification requires large amounts of memory for
 larger sample sizes. See [`DemandResponseEnergy`](@ref) for estimated average demand response
-state of charge when sample-level granularity isn't required.
+banked energy when sample-level granularity isn't required.
 """
 struct DemandResponseEnergySamples <: ResultSpec end
 

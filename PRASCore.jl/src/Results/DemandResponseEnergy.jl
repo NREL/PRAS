@@ -1,12 +1,12 @@
 """
     DemandResponseEnergy
 
-The `DemandResponseEnergy` result specification reports the average state of charge
+The `DemandResponseEnergy` result specification reports the average energy banked
 of `DemandResponses`, producing a `DemandResponseEnergyResult`.
 
 A `DemandResponseEnergyResult` can be indexed by demand response device name and a timestamp to
 retrieve a tuple of sample mean and standard deviation, estimating the average
-energy level for the given demand response device in that timestep.
+energy banked level for the given demand response device in that timestep.
 
 Example:
 
@@ -18,10 +18,9 @@ soc_mean, soc_std =
     drenergy["MyDemandResponse123", ZonedDateTime(2020, 1, 1, 0, tz"UTC")]
 ```
 
-See [`DemandResponseEnergySamples`](@ref) for sample-level demand response states of charge.
+See [`DemandResponseEnergySamples`](@ref) for sample-level demand response states of banked energy.
 
-See [`GeneratorStorageEnergy`](@ref) for average generator-storage states
-of charge.
+See [`DemandResponseEnergy`](@ref) for average demand-response banked energy.
 """
 struct DemandResponseEnergy <: ResultSpec end
 
