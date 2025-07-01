@@ -523,25 +523,21 @@ function update_state!(
     #Demand Response Update
     #banking (negative of the flows)
     for (i, e) in enumerate(problem.demandresponse_bank_edges)
-        if state.drs_paybackcounter[i] == 0
-            #if payback window is over, count the unserved energy in drs_unservedenergy state and reset energy
-            state.drs_unservedenergy[i] = state.drs_energy[i]
-            state.drs_energy[i] = 0
-            continue
-        end
         state.drs_energy[i] +=
             ceil(Int, edges[e].flow * p2e * system.demandresponses.bank_efficiency[i, t])
     end
 
     #paybacking
     for (i, e) in enumerate(problem.demandresponse_payback_edges)
-        if state.drs_paybackcounter[i] == 0
-            #if payback window is over, skip the payback
-            continue
-        end
         energy = state.drs_energy[i]
         energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.payback_efficiency[i, t])
         state.drs_energy[i] = max(0, energy - energy_drop)
+
+        if state.drs_paybackcounter[i] == 0
+            #if payback window is over, count the unserved energy in drs_unservedenergy state and reset energy
+            state.drs_unservedenergy[i] = state.drs_energy[i]
+            state.drs_energy[i] = 0
+        end
     end
 
 
