@@ -1,7 +1,7 @@
 """
     DemandResponse
 
-The `DemandResposneAvailability` result specification reports the sample-level
+The `DemandResponseAvailability` result specification reports the sample-level
 discrete availability of `DemandResponses`, producing a `DemandResponseAvailabilityResult`.
 
 A `DemandResponseAvailabilityResult` can be indexed by demand response device name and
@@ -34,7 +34,7 @@ function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::DemandResponseAvailability
 ) where {N}
 
-    ndrs = length(sys.storages)
+    ndrs = length(sys.demandresponses)
     available = zeros(Bool, ndrs, N, nsamples)
 
     return DRAvailabilityAccumulator(available)

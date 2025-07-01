@@ -4,14 +4,17 @@
 Create a min-cost flow problem for the multi-region max power delivery problem
 with generation and storage discharging in decreasing order of priority, and
 storage charging with excess capacity. Storage and GeneratorStorage devices
-within a region are represented individually on the network.
+within a region are represented individually on the network. Demand Response
+devices will bank energy in devices with the longest payback window first,
+and vice versa for payback energy.
 
 This involves injections/withdrawals at one node (regional capacity
 surplus/shortfall) for each modelled region, as well as two/three nodes
 associated with each Storage/GeneratorStorage device, and a supplementary
 "slack" node in the network that can absorb undispatched power or pass
 unserved energy or unused charging capability through to satisfy
-power balance constraints.
+power balance constraints. Demand Response devices are represented
+in a structurally similar manner as storage charging and discharging.
 
 Flows from the generation nodes are free, while flows to charging and
 from discharging nodes are costed or rewarded according to the
@@ -22,6 +25,9 @@ resource adequacy over economic arbitrage). This is based on the storage
 dispatch strategy of Evans, Tindemans, and Angeli, as outlined in "Minimizing
 Unserved Energy Using Heterogenous Storage Units" (IEEE Transactions on Power
 Systems, 2019).
+
+Demand Response devices are utilized only after discharging all storage/genstor
+and paid back before storage/genstor charging.
 
 Flows to the charging node have an attenuated negative cost (reward),
 incentivizing immediate storage charging if generation and transmission
