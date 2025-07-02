@@ -450,7 +450,7 @@ function update_problem!(
         if iszero(maxpayback)
             allowablepayback = N + 1
         else
-            allowablepayback = system.demandresponses.allowable_payback_period[i,t]
+            allowablepayback = state.drs_paybackcounter[i]
         end
 
         payback_capacity =  min(
