@@ -5,7 +5,7 @@ import PRASCore.Simulations: assess, SequentialMonteCarlo
 import PRASCore.Results: ReliabilityMetric, Result, Shortfall, stderror, val
 
 import Base: minimum, maximum, extrema
-import Distributions: ccdf, Normal
+import Distributions: ccdf, cdf, Normal
 
 export EFC, ELCC
 

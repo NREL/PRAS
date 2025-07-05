@@ -18,6 +18,34 @@ function pvalue(lower::T, upper::T) where {T<:ReliabilityMetric}
 
 end
 
+function prob_greater(x1::T, x2::T) where T <: ReliabilityMetric
+
+    m1 = val(x1)
+    s1 = stderror(x1)
+
+    m2 = val(x2)
+    s2 = stderror(x2)
+
+    z = (m1 - m2) / sqrt(s1^2 + s2^2)
+
+    return cdf(Normal(), z)
+
+end
+
+function prob_same(x1::T, x2::T) where T <: ReliabilityMetric
+
+    m1 = val(x1)
+    s1 = stderror(x1)
+
+    m2 = val(x2)
+    s2 = stderror(x2)
+
+    z = (m2 - m1) / sqrt(s1^2 + s2^2)
+
+    return 2 * cdf(Normal(), -abs(z))
+
+end
+
 function allocate_regions(
     region_names::Vector{String},
     regionname_shares::Vector{Tuple{String,Float64}}

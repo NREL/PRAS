@@ -37,85 +37,103 @@ function assess(sys_baseline::S, sys_augmented::S,
     regionnames != sys_augmented.regions.names &&
         error("Systems provided do not have matching regions")
 
-    # Add firm capacity generators to the relevant regions
-    efc_gens, sys_variable, sys_target =
-        add_firmcapacity(sys_baseline, sys_augmented, params.regions)
+    params.capacity_max > params.capacity_gap ||
+        error("The max capacity addition ($(params.capacity_max)) must be " *
+              "larger than the desired capacity gap ($(params.capacity_gap))")
 
-    target_metric = M(first(assess(sys_target, simulationspec, Shortfall())))
+    sys_variable, efc_gens = add_firmcapacity(sys_baseline, params.regions)
 
-    capacities = Int[]
-    metrics = typeof(target_metric)[]
+    target_risk = M(first(assess(sys_augmented, simulationspec, Shortfall())))
 
-    lower_bound = 0
-    lower_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
-    push!(capacities, lower_bound)
-    push!(metrics, lower_bound_metric)
+    efcs = Int[]
+    risks = typeof(target_risk)[]
 
-    upper_bound = params.capacity_max
-    update_firmcapacity!(sys_variable, efc_gens, upper_bound)
-    upper_bound_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
-    push!(capacities, upper_bound)
-    push!(metrics, upper_bound_metric)
+    min_efc = 0
+    upper_risk = M(first(assess(sys_variable, simulationspec, Shortfall())))
+    push!(efcs, min_efc)
+    push!(risks, upper_risk)
+
+    prob_greater(target_risk, upper_risk) < params.p_value ||
+        error("The baseline system risk ($(upper_risk)) is not statistically " *
+              "distinguishable from the augmented system risk ($(target_risk))")
+
+    max_efc = params.capacity_max
+    update_firmcapacity!(sys_variable, efc_gens, max_efc)
+    lower_risk = M(first(assess(sys_variable, simulationspec, Shortfall())))
+    push!(efcs, max_efc)
+    push!(risks, lower_risk)
+
+    prob_greater(lower_risk, target_risk) < params.p_value ||
+        error("The baseline system risk with the max capacity addition applied " *
+              "($(lower_risk)) is not statistically distinguishable from the " *
+              "augmented system risk ($(target_risk))")
+
+    params.verbose && println(
+        "\n$(min_efc) $powerunit\t< EFC <\t$(max_efc) $powerunit\n",
+        "$(upper_risk)\t> $(target_risk) >\t$(lower_risk)")
+
+    capacity_gap = max_efc - min_efc
 
     while true
 
-        params.verbose && println(
-            "\n$(lower_bound) $powerunit\t< EFC <\t$(upper_bound) $powerunit\n",
-            "$(lower_bound_metric)\t> $(target_metric) >\t$(upper_bound_metric)")
+        # Evaluate metric at midpoint
 
-        midpoint = div(lower_bound + upper_bound, 2)
-        capacity_gap = upper_bound - lower_bound
+        mid_efc = div(min_efc + max_efc, 2)
+        update_firmcapacity!(sys_variable, efc_gens, mid_efc)
+        mid_risk = M(first(assess(sys_variable, simulationspec, Shortfall())))
+        push!(efcs, mid_efc)
+        push!(risks, mid_risk)
 
-        # Stopping conditions
-
-        ## Return the bounds if they are within solution tolerance of each other
-        if capacity_gap <= params.capacity_gap
-            params.verbose && @info "Capacity bound gap within tolerance, stopping bisection."
-            break
-        end
-
-        # If the null hypothesis lower_bound_metric !>= upper_bound_metric
+        # If the null hypothesis mid_risk == target_risk
         # cannot be rejected, terminate and return the loose bounds
-        pval = pvalue(upper_bound_metric, lower_bound_metric)
-        if pval >= params.p_value
-            @warn "Gap between upper and lower bound risk metrics is not " *
-                  "statistically significant (p_value=$pval), stopping bisection. " *
+
+        if prob_same(mid_risk, target_risk) >= params.p_value
+            @warn "Risk at the midpoint between upper and lower EFC bounds is not " *
+                  "statistically distinguishable from the augmented system risk, " *
+                  "stopping bisection. " *
                   "The gap between capacity bounds is $(capacity_gap) $powerunit, " *
                   "while the target stopping gap was $(params.capacity_gap) $powerunit."
             break
         end
 
-        # Evaluate metric at midpoint
-        update_firmcapacity!(sys_variable, efc_gens, midpoint)
-        midpoint_metric = M(first(assess(sys_variable, simulationspec, Shortfall())))
-        push!(capacities, midpoint)
-        push!(metrics, midpoint_metric)
-
         # Tighten capacity bounds
-        if val(midpoint_metric) > val(target_metric)
-            lower_bound = midpoint
-            lower_bound_metric = midpoint_metric
-        else # midpoint_metric <= target_metric
-            upper_bound = midpoint
-            upper_bound_metric = midpoint_metric
+
+        if val(mid_risk) > val(target_risk)
+            min_efc = mid_efc
+            upper_risk = mid_risk
+        else
+            max_efc = mid_efc
+            lower_risk = mid_risk
+        end
+
+        capacity_gap = max_efc - min_efc
+
+        params.verbose && println(
+            "\n$(min_efc) $powerunit\t< EFC <\t$(max_efc) $powerunit\n",
+            "$(upper_risk)\t> $(target_risk) >\t$(lower_risk)")
+
+        # Return the bounds if they are within solution tolerance of each other
+
+        if capacity_gap <= params.capacity_gap
+            params.verbose && @info "Capacity bound gap within tolerance, stopping bisection."
+            break
         end
 
     end
 
-    return CapacityCreditResult{typeof(params), typeof(target_metric), P}(
-        target_metric, lower_bound, upper_bound, capacities, metrics)
+    return CapacityCreditResult{typeof(params), typeof(target_risk), P}(
+        target_risk, min_efc, max_efc, efcs, risks)
 
 end
 
 function add_firmcapacity(
-    s1::SystemModel{N,L,T,P,E}, s2::SystemModel{N,L,T,P,E},
-    region_shares::Vector{Tuple{String,Float64}}
+    sys::SystemModel{N,L,T,P,E}, region_shares::Vector{Tuple{String,Float64}}
 ) where {N,L,T,P,E}
 
-    n_regions = length(s1.regions.names)
+    n_regions = length(sys.regions.names)
     n_region_allocs = length(region_shares)
 
-    region_allocations = allocate_regions(s1.regions.names, region_shares)
+    region_allocations = allocate_regions(sys.regions.names, region_shares)
     efc_gens = similar(region_allocations)
 
     new_gen(i::Int) = Generators{N,L,T,P}(
@@ -123,59 +141,44 @@ function add_firmcapacity(
         zeros(Int, 1, N), zeros(1, N), ones(1, N))
 
     variable_gens = Generators{N,L,T,P}[]
-    variable_region_gen_idxs = similar(s1.region_gen_idxs)
-
-    target_gens = similar(variable_gens)
-    target_region_gen_idxs = similar(s2.region_gen_idxs)
+    variable_region_gen_idxs = similar(sys.region_gen_idxs)
 
     ra_idx = 0
 
     for r in 1:n_regions
 
-        s1_range = s1.region_gen_idxs[r]
-        s2_range = s2.region_gen_idxs[r]
+        gen_idxs = sys.region_gen_idxs[r]
 
         if (ra_idx < n_region_allocs) && (r == first(region_allocations[ra_idx+1]))
 
             ra_idx += 1
 
-            variable_region_gen_idxs[r] = incr_range(s1_range, ra_idx-1, ra_idx)
-            target_region_gen_idxs[r] = incr_range(s2_range, ra_idx-1, ra_idx)
+            variable_region_gen_idxs[r] = incr_range(gen_idxs, ra_idx-1, ra_idx)
 
             gen = new_gen(ra_idx)
             push!(variable_gens, gen)
-            push!(target_gens, gen)
             efc_gens[ra_idx] = (
-                 first(s1_range) + ra_idx - 1,
+                 first(gen_idxs) + ra_idx - 1,
                  last(region_allocations[ra_idx]))
 
         else
 
-            variable_region_gen_idxs[r] = incr_range(s1_range, ra_idx)
-            target_region_gen_idxs[r] = incr_range(s2_range, ra_idx)
+            variable_region_gen_idxs[r] = incr_range(gen_idxs, ra_idx)
 
         end
 
-        push!(variable_gens, s1.generators[s1_range])
-        push!(target_gens, s2.generators[s2_range])
+        push!(variable_gens, sys.generators[gen_idxs])
 
     end
 
     sys_variable = SystemModel(
-        s1.regions, s1.interfaces,
+        sys.regions, sys.interfaces,
         vcat(variable_gens...), variable_region_gen_idxs,
-        s1.storages, s1.region_stor_idxs,
-        s1.generatorstorages, s1.region_genstor_idxs,
-        s1.lines, s1.interface_line_idxs, s1.timestamps)
+        sys.storages, sys.region_stor_idxs,
+        sys.generatorstorages, sys.region_genstor_idxs,
+        sys.lines, sys.interface_line_idxs, sys.timestamps)
 
-    sys_target = SystemModel(
-        s2.regions, s2.interfaces,
-        vcat(target_gens...), target_region_gen_idxs,
-        s2.storages, s2.region_stor_idxs,
-        s2.generatorstorages, s2.region_genstor_idxs,
-        s2.lines, s2.interface_line_idxs, s2.timestamps)
-
-    return efc_gens, sys_variable, sys_target
+    return sys_variable, efc_gens
 
 end
 
