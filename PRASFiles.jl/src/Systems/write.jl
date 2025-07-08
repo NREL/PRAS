@@ -68,7 +68,7 @@ function process_metadata!(
     attrs["energy_unit"] = unitsymbol(E)
 
     attrs["start_timestamp"] = string(sys.timestamps.start);
-    attrs["pras_dataversion"] = PRASFILE_VERSION
+    attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
     if !isnothing(user_attributes)
         for (key, value) in user_attributes

@@ -1,10 +1,9 @@
 module PRASFiles
 
-const PRASFILE_VERSION = "v0.7.0"
-
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
-                         timeunits, powerunits, energyunits, unitsymbol
+                         timeunits, powerunits, energyunits, unitsymbol,
+                         get_sys_attrs
 
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
 import StatsBase: mean

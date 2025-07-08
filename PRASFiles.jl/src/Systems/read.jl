@@ -262,13 +262,15 @@ function systemmodel_0_5(f::File)
 
     end
 
+    user_attributes = read_addl_attrs(f)
+
     return SystemModel(
         regions, interfaces,
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
         lines, interface_line_idxs,
-        timestamps)
+        timestamps,attrs=user_attributes)
 
 end
 
@@ -299,25 +301,41 @@ Reads additional user defined metadata from the file containing the PRAS system.
 function read_addl_attrs(inputfile::String)
 
     h5open(inputfile, "r") do f::File
+        user_attributes = read_addl_attrs(f)
 
-        metadata = attributes(f)
-
-        reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
-                    "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
-        
-        addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
-        
-        if !isempty(addl_attrs_keys)            
-            println("User-defined attribute(s) found in the file:")
-            for key in addl_attrs_keys
-                println("  $key: $(read(metadata[key]))")
-            end
-
-            return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
-        else
+        if isnothing(user_attributes)
             println("No user-defined attributes found in the file.")
+        else    
+            println("User-defined attribute(s) found in the file:")
+            for key in keys(user_attributes)
+                println("  $key: $(user_attributes[key])")
+            end
+            return user_attributes
         end
+
     end
+
+end
+
+"""
+Reads additional user defined metadata from the file containing the PRAS system,
+Input here is filehandle.
+"""
+function read_addl_attrs(f::File)
+
+    metadata = attributes(f)
+
+    reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
+                "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
+    
+    addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
+    
+    if !isempty(addl_attrs_keys)            
+        return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
+    else
+        return nothing
+    end
+
 end
 
 """

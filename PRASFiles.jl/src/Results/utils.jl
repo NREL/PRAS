@@ -73,6 +73,7 @@ end
 struct SystemResult
     num_samples::Int64
     type_params::TypeParams
+    sys_attributes::Dict{String, String}
     timestamps::Vector{ZonedDateTime}
     eue::EUEResult
     lole::LOLEResult
