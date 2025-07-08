@@ -30,6 +30,10 @@ using JSON3
         @test_throws "Attribute 'about' already exists in the system" savemodel(rts_userattrs,path * "/rts_userattrs.pras",
                                                                                 user_attributes=user_attrs)
 
+        savemodel(rts_userattrs, path * "/rts_userattrs2.pras")
+        rts_userattrs2 = SystemModel(path * "/rts_userattrs2.pras")
+        @test rts_userattrs == rts_userattrs2
+
 
     end
 
