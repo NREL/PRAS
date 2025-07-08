@@ -20,11 +20,16 @@ using JSON3
         rts2 = SystemModel(path * "/rts2.pras")
         @test rts == rts2
 
-        savemodel(rts,path * "rts_userattrs.pras",
+        savemodel(rts,path * "/rts_userattrs.pras",
             user_attributes=Dict("about"=>"this is a representation of the RTS GMLC system"))
             
         user_attrs = PRASFiles.read_addl_attrs(path * "rts_userattrs.pras") 
         @test user_attrs == Dict("about"=>"this is a representation of the RTS GMLC system")
+
+        rts_userattrs = SystemModel(path * "/rts_userattrs.pras")
+        @test_throws "Attribute 'about' already exists in the system" savemodel(rts_userattrs,path * "/rts_userattrs.pras",
+                                                                                user_attributes=user_attrs)
+
 
     end
 
