@@ -66,6 +66,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
     attrs::Dict{String, String}
 
+    #base system constructor-demand response devices
     function SystemModel{}(
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
         generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
@@ -110,9 +111,34 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
     end
 
+    #base system constructor- no demand response devices
+    function SystemModel{}(
+        regions::Regions{N,P}, interfaces::Interfaces{N,P},
+        generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+        storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+        generatorstorages::GeneratorStorages{N,L,T,P,E},
+        region_genstor_idxs::Vector{UnitRange{Int}},
+        lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+        timestamps::StepRange{ZonedDateTime,T}
+    ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+    return SystemModel(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        DemandResponses{N,L,T,P,E}(
+            String[], String[],
+            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
+            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
+        lines, interface_line_idxs,
+        timestamps)
+    end
+
 end
 
-# No time zone constructor
+# No time zone constructor - demand responses included
 function SystemModel(
     regions::Regions{N,P}, interfaces::Interfaces{N,P},
     generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
@@ -144,7 +170,41 @@ function SystemModel(
 
 end
 
-# Single-node constructor
+# No time zone constructor - demand responses not included
+function SystemModel(
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
+    lines, interface_line_idxs::Vector{UnitRange{Int}},
+    timestamps::StepRange{DateTime,T}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+    @warn "No time zone data provided - defaulting to UTC. To specify a " *
+          "time zone for the system timestamps, provide a range of " *
+          "`ZonedDateTime` instead of `DateTime`."
+
+    utc = tz"UTC"
+    time_start = ZonedDateTime(first(timestamps), utc)
+    time_end = ZonedDateTime(last(timestamps), utc)
+    timestamps_tz = time_start:step(timestamps):time_end
+
+    return SystemModel(
+        regions, interfaces,
+        generators, region_gen_idxs,
+        storages, region_stor_idxs,
+        generatorstorages, region_genstor_idxs,
+        DemandResponses{N,L,T,P,E}(
+            String[], String[],
+            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
+            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
+        lines, interface_line_idxs,
+        timestamps_tz)
+
+end
+
+# Single-node constructor - demand responses not included
 function SystemModel(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
@@ -171,6 +231,35 @@ function SystemModel(
         UnitRange{Int}[], timestamps, attrs)
 
 end
+
+# Single-node constructor - demand responses not included
+function SystemModel(
+    generators::Generators{N,L,T,P},
+    storages::Storages{N,L,T,P,E},
+    generatorstorages::GeneratorStorages{N,L,T,P,E},
+    timestamps::StepRange{<:AbstractDateTime,T},
+    load::Vector{Int}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+    return SystemModel(
+        Regions{N,P}(["Region"], reshape(load, 1, :)),
+        Interfaces{N,P}(
+            Int[], Int[],
+            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N)),
+        generators, [1:length(generators)],
+        storages, [1:length(storages)],
+        generatorstorages, [1:length(generatorstorages)],
+        DemandResponses{N,L,T,P,E}(
+            String[], String[],
+            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
+            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), [1:0],
+        Lines{N,L,T,P}(
+            String[], String[],
+            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
+            Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
+        UnitRange{Int}[], timestamps, attrs)
+end
+
 
 Base.:(==)(x::T, y::T) where {T <: SystemModel} =
     x.regions == y.regions &&
