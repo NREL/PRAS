@@ -169,7 +169,7 @@ function Base.show(io::IO, sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:
     time_unit = unitsymbol_long(T)
     print(io, "SystemModel($(length(sys.regions)) regions, $(length(sys.interfaces)) interfaces, ",
           "$(length(sys.generators)) generators, $(length(sys.storages)) storages, ",
-          "$(length(sys.generatorstorages)) generator-storages, $(length(sys.interfaces)) interfaces, ",
+          "$(length(sys.generatorstorages)) generator-storages,",
           "$(N) $(time_unit)s)")
 end
 
