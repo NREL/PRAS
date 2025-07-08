@@ -76,6 +76,12 @@ function process_metadata!(
         end
     end
 
+    if !isnothing(user_attributes)
+        for (key, value) in user_attributes
+            attrs[key] = value
+        end
+    end
+
     return
 
 end
