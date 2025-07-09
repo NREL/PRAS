@@ -16,7 +16,9 @@ export
     val, stderror,
 
     # Result specifications
-    Shortfall, ShortfallSamples, Surplus, SurplusSamples,
+    Shortfall, ShortfallSamples,
+    DemandResponseShortfall, DemandResponseShortfallSamples,
+    Surplus, SurplusSamples,
     Flow, FlowSamples, Utilization, UtilizationSamples,
     StorageEnergy, StorageEnergySamples,
     GeneratorStorageEnergy, GeneratorStorageEnergySamples,
@@ -80,6 +82,9 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
+include("DemandResponseShortfall.jl")
+include("DemandResponseShortfallSamples.jl")
+
 
 abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end
 
