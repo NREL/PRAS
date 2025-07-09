@@ -1,10 +1,10 @@
 """
-    Shortfall
+    DemandResponseShortfall
 
-The `Shortfall` result specification reports expectation-based resource
-adequacy risk metrics such as EUE and LOLE, producing a `ShortfallResult`.
+The `DemandResponseShortfall` result specification reports expectation-based resource
+adequacy risk metrics such as EUE and LOLE associated with DemandResponse devices only, producing a `DemandResponseShortfallResult`.
 
-A `ShortfallResult` can be directly indexed by a region name and a timestamp to retrieve a tuple of sample mean and standard deviation, estimating
+A `DemandResponseShortfallResult` can be directly indexed by a region name and a timestamp to retrieve a tuple of sample mean and standard deviation, estimating
  the average unserved energy in that region and timestep. However, in most
 cases it's simpler to use [`EUE`](@ref) and [`LOLE`](@ref) constructors to
 directly retrieve standard risk metrics.
@@ -12,38 +12,38 @@ directly retrieve standard risk metrics.
 Example:
 
 ```julia
-shortfall, =
-    assess(sys, SequentialMonteCarlo(samples=1000), Shortfall())
+DemandResponseShortfall, =
+    assess(sys, SequentialMonteCarlo(samples=1000), DemandResponseShortfall())
 
 period = ZonedDateTime(2020, 1, 1, 0, tz"UTC")
 
 # Unserved energy mean and standard deviation
-sf_mean, sf_std = shortfall["Region A", period]
+sf_mean, sf_std = DemandResponseShortfall["Region A", period]
 
 # System-wide risk metrics
-eue = EUE(shortfall)
-lole = LOLE(shortfall)
+eue = EUE(DemandResponseShortfall)
+lole = LOLE(DemandResponseShortfall)
 neue = NEUE(shorfall)
 
 # Regional risk metrics
-regional_eue = EUE(shortfall, "Region A")
-regional_lole = LOLE(shortfall, "Region A")
-regional_neue = NEUE(shortfall, "Region A")
+regional_eue = EUE(DemandResponseShortfall, "Region A")
+regional_lole = LOLE(DemandResponseShortfall, "Region A")
+regional_neue = NEUE(DemandResponseShortfall, "Region A")
 
 # Period-specific risk metrics
-period_eue = EUE(shortfall, period)
-period_lolp = LOLE(shortfall, period)
+period_eue = EUE(DemandResponseShortfall, period)
+period_lolp = LOLE(DemandResponseShortfall, period)
 
 # Region- and period-specific risk metrics
-period_eue = EUE(shortfall, "Region A", period)
-period_lolp = LOLE(shortfall, "Region A", period)
+period_eue = EUE(DemandResponseShortfall, "Region A", period)
+period_lolp = LOLE(DemandResponseShortfall, "Region A", period)
 ```
 
-See [`ShortfallSamples`](@ref) for recording sample-level shortfall results.
+See [`DemandResponseShortfallSamples`](@ref) for recording sample-level DemandResponseShortfall results.
 """
-struct Shortfall <: ResultSpec end
+struct DemandResponseShortfall <: ResultSpec end
 
-mutable struct ShortfallAccumulator <: ResultAccumulator{Shortfall}
+mutable struct DemandResponseShortfallAccumulator <: ResultAccumulator{DemandResponseShortfall}
 
     # Cross-simulation LOL period count mean/variances
     periodsdropped_total::MeanVariance
@@ -68,7 +68,7 @@ mutable struct ShortfallAccumulator <: ResultAccumulator{Shortfall}
 end
 
 function accumulator(
-    sys::SystemModel{N}, nsamples::Int, ::Shortfall
+    sys::SystemModel{N}, nsamples::Int, ::DemandResponseShortfall
 ) where {N}
 
     nregions = length(sys.regions)
@@ -89,7 +89,7 @@ function accumulator(
     unservedload_total_currentsim = 0
     unservedload_region_currentsim = zeros(Int, nregions)
 
-    return ShortfallAccumulator(
+    return DemandResponseShortfallAccumulator(
         periodsdropped_total, periodsdropped_region,
         periodsdropped_period, periodsdropped_regionperiod,
         periodsdropped_total_currentsim, periodsdropped_region_currentsim,
@@ -100,7 +100,7 @@ function accumulator(
 end
 
 function merge!(
-    x::ShortfallAccumulator, y::ShortfallAccumulator
+    x::DemandResponseShortfallAccumulator, y::DemandResponseShortfallAccumulator
 )
 
     merge!(x.periodsdropped_total, y.periodsdropped_total)
@@ -117,9 +117,9 @@ function merge!(
 
 end
 
-accumulatortype(::Shortfall) = ShortfallAccumulator
+accumulatortype(::DemandResponseShortfall) = DemandResponseShortfallAccumulator
 
-struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
+struct DemandResponseShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
        AbstractShortfallResult{N, L, T}
     nsamples::Union{Int, Nothing}
     regions::Regions
@@ -145,7 +145,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
     shortfall_period_std::Vector{Float64}
     shortfall_regionperiod_std::Matrix{Float64}
 
-    function ShortfallResult{N,L,T,E}(
+    function DemandResponseShortfallResult{N,L,T,E}(
         nsamples::Union{Int,Nothing},
         regions::Regions,
         timestamps::StepRange{ZonedDateTime,T},
@@ -197,47 +197,47 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit} <:
 
 end
 
-function getindex(x::ShortfallResult)
+function getindex(x::DemandResponseShortfallResult)
     return sum(x.shortfall_mean), x.shortfall_std
 end
 
-function getindex(x::ShortfallResult, r::AbstractString)
+function getindex(x::DemandResponseShortfallResult, r::AbstractString)
     i_r = findfirstunique(x.regions.names, r)
     return sum(view(x.shortfall_mean, i_r, :)), x.shortfall_region_std[i_r]
 end
 
-function getindex(x::ShortfallResult, t::ZonedDateTime)
+function getindex(x::DemandResponseShortfallResult, t::ZonedDateTime)
     i_t = findfirstunique(x.timestamps, t)
     return sum(view(x.shortfall_mean, :, i_t)), x.shortfall_period_std[i_t]
 end
 
-function getindex(x::ShortfallResult, r::AbstractString, t::ZonedDateTime)
+function getindex(x::DemandResponseShortfallResult, r::AbstractString, t::ZonedDateTime)
     i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return x.shortfall_mean[i_r, i_t], x.shortfall_regionperiod_std[i_r, i_t]
 end
 
 
-LOLE(x::ShortfallResult{N,L,T}) where {N,L,T} =
+LOLE(x::DemandResponseShortfallResult{N,L,T}) where {N,L,T} =
     LOLE{N,L,T}(MeanEstimate(x.eventperiod_mean,
                              x.eventperiod_std,
                              x.nsamples))
 
-function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString) where {N,L,T}
+function LOLE(x::DemandResponseShortfallResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
     return LOLE{N,L,T}(MeanEstimate(x.eventperiod_region_mean[i_r],
                                     x.eventperiod_region_std[i_r],
                                     x.nsamples))
 end
 
-function LOLE(x::ShortfallResult{N,L,T}, t::ZonedDateTime) where {N,L,T}
+function LOLE(x::DemandResponseShortfallResult{N,L,T}, t::ZonedDateTime) where {N,L,T}
     i_t = findfirstunique(x.timestamps, t)
     return LOLE{1,L,T}(MeanEstimate(x.eventperiod_period_mean[i_t],
                                     x.eventperiod_period_std[i_t],
                                     x.nsamples))
 end
 
-function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString, t::ZonedDateTime) where {N,L,T}
+function LOLE(x::DemandResponseShortfallResult{N,L,T}, r::AbstractString, t::ZonedDateTime) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return LOLE{1,L,T}(MeanEstimate(x.eventperiod_regionperiod_mean[i_r, i_t],
@@ -246,29 +246,29 @@ function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString, t::ZonedDateTime) wh
 end
 
 
-EUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E} =
+EUE(x::DemandResponseShortfallResult{N,L,T,E}) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E} =
+EUE(x::DemandResponseShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[r]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::DemandResponseShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[t]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
+EUE(x::DemandResponseShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
 
-function NEUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E}
+function NEUE(x::DemandResponseShortfallResult{N,L,T,E}) where {N,L,T,E}
     return NEUE(div(MeanEstimate(x[]..., x.nsamples),(sum(x.regions.load)/1e6)))
 end
 
-function NEUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E}
+function NEUE(x::DemandResponseShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E}
     i_r = findfirstunique(x.regions.names, r)
     return NEUE(div(MeanEstimate(x[r]..., x.nsamples),(sum(x.regions.load[i_r,:])/1e6)))
 end
 
 function finalize(
-    acc::ShortfallAccumulator,
+    acc::DemandResponseShortfallAccumulator,
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
 
@@ -293,7 +293,7 @@ function finalize(
     ue_period_std .*= p2e
     ue_regionperiod_std .*= p2e
 
-    return ShortfallResult{N,L,T,E}(
+    return DemandResponseShortfallResult{N,L,T,E}(
         nsamples, system.regions, system.timestamps,
         ep_total_mean, ep_total_std, ep_region_mean, ep_region_std,
         ep_period_mean, ep_period_std,
