@@ -531,7 +531,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert size(carryoverefficiency) == (n_drs, N)
         @assert all(isfractional, bankefficiency)
         @assert all(isfractional, paybackefficiency)
-        @assert all(isfractional, carryoverefficiency)
+        @assert all(isnonnegative, carryoverefficiency)
 
         @assert size(allowablepaybackperiod) == (n_drs, N)
         @assert all(isnonnegative, allowablepaybackperiod)
