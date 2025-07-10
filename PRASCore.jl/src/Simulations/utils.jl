@@ -131,11 +131,11 @@ function update_paybackcounter!(
         #if energy is zero or negative, set counter to -1 (to start counting new)
         if drs_energy[i] <= 0
             if payback_counter[i] >= 0
-                #if no energy banked and counter is positive, reset it to -1
+                #if no energy borrowed and counter is positive, reset it to -1
                 payback_counter[i] = -1
             end
         elseif payback_counter[i] == -1
-            #if energy is banked and counter is -1, set it to payback window-start of counting
+            #if energy is borrowed and counter is -1, set it to payback window-start of counting
             payback_counter[i] =  drs.allowable_payback_period[i,t]-1
         elseif payback_counter[i] >= 0
             #if counter is positive, decrement by one
