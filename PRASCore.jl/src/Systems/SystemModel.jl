@@ -22,7 +22,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
     timestamps::StepRange{ZonedDateTime,T}
 
-    attrs::Union{Dict{String, String},Nothing}
+    attrs::Union{Dict{String, String}}
 
     function SystemModel{}(
         regions::Regions{N,P}, interfaces::Interfaces{N,P},
@@ -31,8 +31,8 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
         generatorstorages::GeneratorStorages{N,L,T,P,E},
         region_genstor_idxs::Vector{UnitRange{Int}},
         lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::StepRange{ZonedDateTime,T};
-        attrs::Union{Dict{String, String},Nothing}=nothing
+        timestamps::StepRange{ZonedDateTime,T},
+        attrs::Union{Dict{String, String}}
     ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
         n_regions = length(regions)
@@ -90,7 +90,7 @@ function SystemModel(
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
         lines, interface_line_idxs,
-        timestamps_tz)
+        timestamps_tz,Dict{String,String}())
 
 end
 
@@ -115,7 +115,30 @@ function SystemModel(
             String[], String[],
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
             Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
-        UnitRange{Int}[], timestamps)
+        UnitRange{Int}[], timestamps, Dict{String,String}())
+
+end
+
+function SystemModel{}(
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E},
+    region_genstor_idxs::Vector{UnitRange{Int}},
+    lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+    timestamps::StepRange{ZonedDateTime,T},
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+    
+    SystemModel(
+        regions::Regions{N,P}, interfaces::Interfaces{N,P},
+        generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+        storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+        generatorstorages::GeneratorStorages{N,L,T,P,E},
+        region_genstor_idxs::Vector{UnitRange{Int}},
+        lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+        timestamps::StepRange{ZonedDateTime,T},
+        Dict{String, String}()
+    ) 
 
 end
 
@@ -156,37 +179,29 @@ function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::In
 
 end
 
-function get_sys_attrs(sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
-    if sys.attrs === nothing
-        return Dict{String, String}()
-    else
-        return sys.attrs
-    end
-end
+get_attrs(sys::SystemModel) = sys.attrs
 
 function Base.show(io::IO, sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
-    _, power_unit, energy_unit = unitsymbol(sys)
     time_unit = unitsymbol_long(T)
     print(io, "SystemModel($(length(sys.regions)) regions, $(length(sys.interfaces)) interfaces, ",
           "$(length(sys.generators)) generators, $(length(sys.storages)) storages, ",
-          "$(length(sys.generatorstorages)) generator-storages, $(length(sys.interfaces)) interfaces, ",
+          "$(length(sys.generatorstorages)) generatorstorages, $(length(sys.interfaces)) interfaces, ",
           "$(N) $(time_unit)s)")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
-    _, power_unit, energy_unit = unitsymbol(sys)
     time_unit = unitsymbol_long(T)
     println(io, "\nPRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
     println(io, "Region names: $(join(sys.regions.names, ", "))")
     println(io, "Assets: ")
-    println(io, "  Generators: $(length(sys.generators)) ")
-    println(io, "  Storage devices: $(length(sys.storages))")
-    println(io, "  Generator-storage hybrids: $(length(sys.generatorstorages))")
+    println(io, "  Generators: $(length(sys.generators)) units")
+    println(io, "  Storage devices: $(length(sys.storages)) units")
+    println(io, "  GeneratorStorage devices: $(length(sys.generatorstorages)) units")
     println(io, "  Lines: $(length(sys.lines))")
     println(io, "\nNumber of time periods in system timeseries data: $(N) $(time_unit)s")
     
     # Format attributes as key-value pairs
-    sys_attributes = get_sys_attrs(sys)
+    sys_attributes = get_attrs(sys)
     if !isempty(sys_attributes)
         println(io, "\nAttributes:")
         for (key, value) in sys_attributes
@@ -226,19 +241,12 @@ function Base.getindex(sys::SystemModel, region::Union{String,Int})
     end
     
     region_name = sys.regions.names[region_idx]
-    time_unit, power_unit, energy_unit = unitsymbol(sys)
+    _, power_unit, _ = unitsymbol(sys)
     
-    # Get generators in this region
+    # Get unit ranges
     gen_range = sys.region_gen_idxs[region_idx]
-    region_gens = sys.generators.names[gen_range]
-    
-    # Get storage devices in this region
     stor_range = sys.region_stor_idxs[region_idx]
-    region_stors = sys.storages.names[stor_range]
-    
-    # Get generator-storage hybrids in this region
     genstor_range = sys.region_genstor_idxs[region_idx]
-    region_genstors = sys.generatorstorages.names[genstor_range]
     
     # Get peak load for this region
     peak_load = maximum(sys.regions.load[region_idx, :])
@@ -248,16 +256,16 @@ function Base.getindex(sys::SystemModel, region::Union{String,Int})
         region_name,
         region_idx,
         (
-            names = region_gens,
-            count = length(region_gens),
+            indices = gen_range,
+            count = length(gen_range),
         ),
         (
-            names = region_stors,
-            count = length(region_stors),
+            indices = stor_range,
+            count = length(stor_range),
         ),
         (
-            names = region_genstors,
-            count = length(region_genstors),
+            indices = genstor_range,
+            count = length(genstor_range),
         ),
         peak_load,
         power_unit,
@@ -267,7 +275,53 @@ end
 function Base.show(io::IO, info::RegionInfo)
     println(io, "Region: $(info.name) (index - $(info.index))")
     println(io, "  Peak load: $(info.peak_load) $(info.power_unit)")
-    println(io, "  Generators: $(info.generators.count) units")
-    println(io, "  Storages: $(info.storages.count) units")
-    print(io, "  Generator-storage hybrids: $(info.generatorstorages.count) units")
+    println(io, "  Generators: $(info.generators.count) units [indices - $(info.generators.indices)]")
+    println(io, "  Storage devices: $(info.storages.count) units [indices - $(info.storages.indices)]")
+    print(io, "  GeneratorStorage devices: $(info.generatorstorages.count) units [indices - $(info.generatorstorages.indices)]")
+end
+
+
+"""
+Access device information from a SystemModel by asset type and region name or index
+"""
+function Base.getindex(sys::SystemModel, assetType::Type{T}, region::Union{String,Int}) where {T}
+    region_idx = if isa(region, String)
+        findfirst(==(region), sys.regions.names)
+    else
+        region
+    end
+    
+    if region_idx === nothing || region_idx < 1 || region_idx > length(sys.regions)
+        if isa(region, String)
+            throw(KeyError("Region '$(region)' not found in system model"))
+        else
+            throw(BoundsError(sys.regions, region))
+        end
+    end
+    
+    region_name = sys.regions.names[region_idx]
+    
+    # Dispatch based on asset type
+    return _get_asset_by_type(sys, assetType, region_idx, region_name)
+end
+
+# Handle different asset types
+function _get_asset_by_type(sys::SystemModel, ::Type{Generators}, region_idx::Int, region_name::String)
+    gen_range = sys.region_gen_idxs[region_idx]
+    return sys.generators[gen_range]
+end
+
+function _get_asset_by_type(sys::SystemModel, ::Type{Storages}, region_idx::Int, region_name::String)
+    stor_range = sys.region_stor_idxs[region_idx]
+    return sys.storages[stor_range]
+end
+
+function _get_asset_by_type(sys::SystemModel, ::Type{GeneratorStorages}, region_idx::Int, region_name::String)
+    genstor_range = sys.region_genstor_idxs[region_idx]
+    return sys.generatorstorages[genstor_range]
+end
+
+# Fallback for unsupported types
+function _get_asset_by_type(sys::SystemModel, ::Type{T}, region_idx::Int, region_name::String) where {T}
+    error("Asset type $T is not supported. Supported types are: Generators, Storages, GeneratorStorages, Lines")
 end

@@ -71,7 +71,7 @@ function process_metadata!(
     attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
     # Existing system attributes
-    sys_attributes = get_sys_attrs(sys)
+    sys_attributes = get_attrs(sys)
     if !isempty(sys_attributes)
         for (key, value) in sys_attributes
             attrs[key] = value

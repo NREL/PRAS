@@ -270,7 +270,7 @@ function systemmodel_0_5(f::File)
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
         lines, interface_line_idxs,
-        timestamps,attrs=user_attributes)
+        timestamps,user_attributes)
 
 end
 
@@ -333,7 +333,7 @@ function read_addl_attrs(f::File)
     if !isempty(addl_attrs_keys)            
         return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
     else
-        return nothing
+        return Dict{String, String}() 
     end
 
 

@@ -3,7 +3,7 @@ module PRASFiles
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol,
-                         get_sys_attrs
+                         get_attrs
 
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
 import StatsBase: mean

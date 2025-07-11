@@ -27,7 +27,7 @@ using JSON3
         @test user_attrs == Dict("about"=>"this is a representation of the RTS GMLC system")
 
         rts_userattrs = SystemModel(path * "/rts_userattrs.pras")
-        @test_throws "Attribute 'about' already exists in the system" savemodel(rts_userattrs,path * "/rts_userattrs.pras",
+        @test_throws "Attribute 'about' already exists in the system" savemodel(rts_userattrs,path * "/rts_userattrs2.pras",
                                                                                 user_attributes=user_attrs)
 
         savemodel(rts_userattrs, path * "/rts_userattrs2.pras")
