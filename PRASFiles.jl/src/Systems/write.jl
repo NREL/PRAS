@@ -68,10 +68,24 @@ function process_metadata!(
     attrs["energy_unit"] = unitsymbol(E)
 
     attrs["start_timestamp"] = string(sys.timestamps.start);
-    attrs["pras_dataversion"] = PRASFILE_VERSION
+    attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
+    # Existing system attributes
+    sys_attributes = get_attrs(sys)
+    if !isempty(sys_attributes)
+        for (key, value) in sys_attributes
+            attrs[key] = value
+        end
+    end
+
+    # Additional user attributes if provided
     if !isnothing(user_attributes)
         for (key, value) in user_attributes
+            if key in keys(sys_attributes)
+                error("Attribute '$key' already exists in the system. Rename it or 
+                change the corresponding value in system.")
+                return
+            end
             attrs[key] = value
         end
     end
