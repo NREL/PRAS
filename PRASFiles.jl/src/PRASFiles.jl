@@ -3,7 +3,7 @@ module PRASFiles
 const PRASFILE_VERSION = "v0.7.0"
 
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
-                         Generators, Storages, GeneratorStorages, Lines,
+                         Generators, Storages, GeneratorStorages, DemandResponses, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
 
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
