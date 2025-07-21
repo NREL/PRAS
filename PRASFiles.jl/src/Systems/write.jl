@@ -70,10 +70,8 @@ function process_metadata!(
 
     # Existing system attributes
     sys_attributes = sys.attrs
-    if !isempty(sys_attributes)
-        for (key, value) in sys_attributes
-            attrs[key] = value
-        end
+    for (key, value) in sys_attributes
+        attrs[key] = value
     end
 
     return

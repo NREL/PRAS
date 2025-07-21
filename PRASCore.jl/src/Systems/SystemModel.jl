@@ -169,12 +169,17 @@ function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) wher
     time_unit = unitsymbol_long(T)
     println(io, "\nPRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
     println(io, "Region names: $(join(sys.regions.names, ", "))")
-    println(io, "Assets: ")
+    println(io, "\nAssets: ")
     println(io, "  Generators: $(length(sys.generators)) units")
     println(io, "  Storage devices: $(length(sys.storages)) units")
     println(io, "  GeneratorStorage devices: $(length(sys.generatorstorages)) units")
     println(io, "  Lines: $(length(sys.lines))")
-    println(io, "\nNumber of time periods in system timeseries data: $(N) $(time_unit)s")
+    println(io, "\nTime series:")
+    println(io, "  Start time: $(first(sys.timestamps))")
+    println(io, "  Resolution: $L $time_unit")
+    println(io, "  Number of time steps: $(N)")
+    println(io, "  End time: $(last(sys.timestamps))")
+    println(io, "  Time zone: $(TimeZone(first(sys.timestamps)))")
     
     # Format attributes as key-value pairs
     sys_attributes = sys.attrs
@@ -259,46 +264,48 @@ function Base.show(io::IO, info::RegionInfo)
 end
 
 """
-Access device information from a SystemModel by asset type and region name or index
+Access device information from a SystemModel by asset type and region index
 """
-function Base.getindex(sys::SystemModel, assetType::Type{T}, region::Union{String,Int}) where {T}
-    region_idx = if isa(region, String)
-        findfirst(==(region), sys.regions.names)
-    else
-        region
+function Base.getindex(sys::SystemModel, region_idx::Int, assetType::Type{T}) where {T}
+
+    if region_idx > length(sys.regions)
+            throw(BoundsError(sys.regions, region_idx))
     end
-    
-    if region_idx === nothing || region_idx < 1 || region_idx > length(sys.regions)
-        if isa(region, String)
-            throw(KeyError("Region '$(region)' not found in system model"))
-        else
-            throw(BoundsError(sys.regions, region))
-        end
-    end
-    
-    region_name = sys.regions.names[region_idx]
-    
+        
     # Dispatch based on asset type
-    return _get_asset_by_type(sys, assetType, region_idx)
+    return _get_asset_by_type(sys, region_idx, assetType)
+end
+
+"""
+Access device information from a SystemModel by asset type and region name (String)
+"""
+function Base.getindex(sys::SystemModel, region::String, assetType::Type{T}) where {T}
+    region_idx = findfirst(==(region), sys.regions.names)
+    
+    if region_idx === nothing
+        throw(KeyError("Region '$(region)' does not exist in the system"))
+    end
+
+    return sys[region_idx, assetType]
 end
 
 # Handle different asset types
-function _get_asset_by_type(sys::SystemModel, ::Type{Generators}, region_idx::Int)
+function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{Generators})
     gen_range = sys.region_gen_idxs[region_idx]
     return sys.generators[gen_range]
 end
 
-function _get_asset_by_type(sys::SystemModel, ::Type{Storages}, region_idx::Int)
+function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{Storages})
     stor_range = sys.region_stor_idxs[region_idx]
     return sys.storages[stor_range]
 end
 
-function _get_asset_by_type(sys::SystemModel, ::Type{GeneratorStorages}, region_idx::Int)
+function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{GeneratorStorages})
     genstor_range = sys.region_genstor_idxs[region_idx]
     return sys.generatorstorages[genstor_range]
 end
 
 # Fallback for unsupported types
-function _get_asset_by_type(sys::SystemModel, ::Type{T}, region_idx::Int) where {T}
+function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{T}) where {T}
     error("Asset type $T is not supported. Supported types are: Generators, Storages, GeneratorStorages")
 end
