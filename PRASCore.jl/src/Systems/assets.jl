@@ -46,14 +46,26 @@ Base.getindex(g::G, idxs::AbstractVector{Int}) where {G <: Generators} =
       g.capacity[idxs, :], g.λ[idxs, :], g.μ[idxs, :])
 
 function Base.show(io::IO, g::Generators)
-    println(io, "$(length(g.names)) generators with unique categories: $(join(unique(g.categories), ", "))")
-    println(io, "\nItems:")
-    println(io, "  names: $(typeof(g.names))")
-    println(io, "  categories: $(typeof(g.categories))")
-    println(io, "  capacity: $(typeof(g.capacity)), size: $(size(g.capacity))")
-    println(io, "  λ: $(typeof(g.λ)), size: $(size(g.λ))")
-    println(io, "  μ: $(typeof(g.μ)), size: $(size(g.μ))")
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in g.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
     
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_seperator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
+    # Printing logic
+    if isempty(g.names)
+        println(io, "No generators in region")
+    else
+        println(io, "$(length(g.names)) generators:")
+        println(io, column_names)
+        println(io, header_seperator)
+        println(io, "  $(join(category_strings, "\n  "))")
+    end
 end
 
 function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
@@ -164,18 +176,26 @@ Base.getindex(s::S, idxs::AbstractVector{Int}) where {S <: Storages} =
       s.carryover_efficiency[idxs, :],s.λ[idxs, :], s.μ[idxs, :])
 
 function Base.show(io::IO, s::Storages)
-    println(io, "$(length(s.names)) storage devices with unique categories: $(join(unique(s.categories), ", "))")
-    println(io, "\nItems:")
-    println(io, "  names: $(typeof(s.names))")
-    println(io, "  categories: $(typeof(s.categories))")
-    println(io, "  charge_capacity: $(typeof(s.charge_capacity)), size: $(size(s.charge_capacity))")
-    println(io, "  discharge_capacity: $(typeof(s.discharge_capacity)), size: $(size(s.discharge_capacity))")
-    println(io, "  energy_capacity: $(typeof(s.energy_capacity)), size: $(size(s.energy_capacity))")
-    println(io, "  charge_efficiency: $(typeof(s.charge_efficiency)), size: $(size(s.charge_efficiency))")
-    println(io, "  discharge_efficiency: $(typeof(s.discharge_efficiency)), size: $(size(s.discharge_efficiency))")
-    println(io, "  carryover_efficiency: $(typeof(s.carryover_efficiency)), size: $(size(s.carryover_efficiency))")
-    println(io, "  λ: $(typeof(s.λ)), size: $(size(s.λ))")
-    println(io, "  μ: $(typeof(s.μ)), size: $(size(s.μ))")
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in s.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
+    
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_seperator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
+    # Printing logic
+    if isempty(s.names)
+        println(io, "No generators in region")
+    else
+        println(io, "$(length(s.names)) storage devices:")
+        println(io, column_names)
+        println(io, header_seperator)
+        println(io, "  $(join(category_strings, "\n  "))")
+    end
 end
 
 function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
@@ -325,21 +345,26 @@ Base.getindex(g_s::G, idxs::AbstractVector{Int}) where {G <: GeneratorStorages} 
       g_s.λ[idxs, :], g_s.μ[idxs, :])
 
 function Base.show(io::IO, gs::GeneratorStorages)
-    println(io, "$(length(gs.names)) generator-storage devices with unique categories: $(join(unique(gs.categories), ", "))")
-    println(io, "\nItems:")
-    println(io, "  names: $(typeof(gs.names))")
-    println(io, "  categories: $(typeof(gs.categories))")
-    println(io, "  charge_capacity: $(typeof(gs.charge_capacity)), size: $(size(gs.charge_capacity))")
-    println(io, "  discharge_capacity: $(typeof(gs.discharge_capacity)), size: $(size(gs.discharge_capacity))")
-    println(io, "  energy_capacity: $(typeof(gs.energy_capacity)), size: $(size(gs.energy_capacity))")
-    println(io, "  charge_efficiency: $(typeof(gs.charge_efficiency)), size: $(size(gs.charge_efficiency))")
-    println(io, "  discharge_efficiency: $(typeof(gs.discharge_efficiency)), size: $(size(gs.discharge_efficiency))")
-    println(io, "  carryover_efficiency: $(typeof(gs.carryover_efficiency)), size: $(size(gs.carryover_efficiency))")
-    println(io, "  inflow: $(typeof(gs.inflow)), size: $(size(gs.inflow))")
-    println(io, "  gridwithdrawal_capacity: $(typeof(gs.gridwithdrawal_capacity)), size: $(size(gs.gridwithdrawal_capacity))")
-    println(io, "  gridinjection_capacity: $(typeof(gs.gridinjection_capacity)), size: $(size(gs.gridinjection_capacity))")
-    println(io, "  λ: $(typeof(gs.λ)), size: $(size(gs.λ))")
-    println(io, "  μ: $(typeof(gs.μ)), size: $(size(gs.μ))")
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in gs.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
+    
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_seperator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
+    # Printing logic
+    if isempty(gs.names)
+        println(io, "No generatorsstorages in region")
+    else    
+        println(io, "$(length(gs.names)) generator-storage devices:")
+        println(io, column_names)
+        println(io, header_seperator)
+        println(io, "  $(join(category_strings, "\n  "))")
+    end
 end
 
 function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P, E}
@@ -485,12 +510,15 @@ function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
 end
 
 function Base.show(io::IO, l::Lines)
-    println(io, "$(length(l.names)) lines with unique categories: $(join(unique(l.categories), ", "))")
-    println(io, "\nItems:")
-    println(io, "  names: $(typeof(l.names))")
-    println(io, "  categories: $(typeof(l.categories))")
-    println(io, "  forward_capacity: $(typeof(l.forward_capacity)), size: $(size(l.forward_capacity))")
-    println(io, "  backward_capacity: $(typeof(l.backward_capacity)), size: $(size(l.backward_capacity))")
-    println(io, "  λ: $(typeof(l.λ)), size: $(size(l.λ))")
-    println(io, "  μ: $(typeof(l.μ)), size: $(size(l.μ))")
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in l.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
+    
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_seperator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
 end

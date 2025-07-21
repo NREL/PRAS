@@ -14,8 +14,7 @@ function savemodel(
     h5open(outfile, "w") do f::File
 
         verbose && @info "Processing metadata for .pras file ..."
-        process_metadata!(f, sys;
-                          user_attributes=user_attributes)
+        process_metadata!(f, sys)
 
         verbose && @info "Processing Regions for .pras file ..."
         process_regions!(f, sys, string_length, compression_level)
@@ -56,8 +55,7 @@ function savemodel(
 end
 
 function process_metadata!(
-    f::File, sys::SystemModel{N,L,T,P,E};
-    user_attributes::Union{Dict{String, String},Nothing}=nothing) where {N,L,T,P,E}
+    f::File, sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
 
     attrs = attributes(f)
     
@@ -71,21 +69,9 @@ function process_metadata!(
     attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
     # Existing system attributes
-    sys_attributes = get_attrs(sys)
+    sys_attributes = sys.attrs
     if !isempty(sys_attributes)
         for (key, value) in sys_attributes
-            attrs[key] = value
-        end
-    end
-
-    # Additional user attributes if provided
-    if !isnothing(user_attributes)
-        for (key, value) in user_attributes
-            if key in keys(sys_attributes)
-                error("Attribute '$key' already exists in the system. Rename it or 
-                change the corresponding value in system.")
-                return
-            end
             attrs[key] = value
         end
     end

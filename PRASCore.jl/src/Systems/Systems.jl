@@ -6,6 +6,7 @@ import Dates: @dateformat_str, AbstractDateTime, DateTime,
               Period, Minute, Hour, Day, Year
 
 import TimeZones: ZonedDateTime, @tz_str
+import Printf: @sprintf
 
 export
 

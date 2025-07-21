@@ -41,7 +41,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
     sys_result = SystemResult(
         get_nsamples(shortfall),
         TypeParams(pras_sys),
-        get_attrs(pras_sys),
+        pras_sys.attrs,
         collect(shortfall.timestamps),
         EUEResult(shortfall),
         LOLEResult(shortfall),

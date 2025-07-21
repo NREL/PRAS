@@ -37,7 +37,7 @@ The HDF5 file must define seven
 [attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
 on the
 [root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup). 
-There can also be additional attributes decribing the system, including data descriptors used 
+There can also be additional attributes describing the system, including data descriptors used 
 in creating the system.
 
 These attributes are mandatory:

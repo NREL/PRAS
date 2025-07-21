@@ -20,6 +20,8 @@ function SystemModel(inputfile::String)
         # Determine the appropriate version of the importer to use
         return if (0,5,0) <= version < (0,8,0)
             systemmodel_0_5(f)
+        elseif (0,8,0) <= version < (0,9,0)
+            systemmodel_0_8(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
         end
@@ -30,9 +32,13 @@ function SystemModel(inputfile::String)
 
 end
 
-
-function systemmodel_0_5(f::File)
-
+"""
+Unexposed function which encapsulates the SystemModel reading logic from PRAS 
+versions 0.5.x to 0.7.x., and is also used in version 0.8.x+ to read the 
+components from the SystemModel which exist in the new format as well.
+"""
+function _systemmodel_core(f::File)
+    
     metadata = attributes(f)
 
     start_timestamp = ZonedDateTime(read(metadata["start_timestamp"]),
@@ -262,7 +268,36 @@ function systemmodel_0_5(f::File)
 
     end
 
-    user_attributes = read_addl_attrs(f)
+    return (regions, interfaces,
+            generators, region_gen_idxs,
+            storages, region_stor_idxs,
+            generatorstorages, region_genstor_idxs,
+            lines, interface_line_idxs,
+            timestamps)
+end
+
+"""
+Read a SystemModel from a PRAS file in version 0.5.x - 0.7.x format.
+"""
+function systemmodel_0_5(f::File)
+
+    return SystemModel(_systemmodel_core(f)...)
+
+end
+
+"""
+Read a SystemModel from a PRAS file in version 0.8.x format.
+"""
+function systemmodel_0_8(f::File)
+    
+    regions, interfaces,
+    generators, region_gen_idxs,
+    storages, region_stor_idxs,
+    generatorstorages, region_genstor_idxs,
+    lines, interface_line_idxs,
+    timestamps = _systemmodel_core(f)
+
+    attrs = read_addl_attrs(f)
 
     return SystemModel(
         regions, interfaces,
@@ -270,8 +305,8 @@ function systemmodel_0_5(f::File)
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
         lines, interface_line_idxs,
-        timestamps,user_attributes)
-
+        timestamps, attrs)
+    
 end
 
 """
@@ -301,16 +336,16 @@ Reads additional user defined metadata from the file containing the PRAS system.
 function read_addl_attrs(inputfile::String)
 
     h5open(inputfile, "r") do f::File
-        user_attributes = read_addl_attrs(f)
+        sys_attributes = read_addl_attrs(f)
 
-        if isnothing(user_attributes)
-            println("No user-defined attributes found in the file.")
+        if isempty(sys_attributes)
+            println("No system attributes found in the file.")
         else    
-            println("User-defined attribute(s) found in the file:")
-            for key in keys(user_attributes)
-                println("  $key: $(user_attributes[key])")
+            println("System attribute(s) found in the file:")
+            for key in keys(sys_attributes)
+                println("  $key: $(sys_attributes[key])")
             end
-            return user_attributes
+            return sys_attributes
         end
 
     end
@@ -330,12 +365,7 @@ function read_addl_attrs(f::File)
     
     addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
     
-    if !isempty(addl_attrs_keys)            
-        return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
-    else
-        return Dict{String, String}() 
-    end
-
+    return Dict{String,String}(key => read(metadata[key]) for key in addl_attrs_keys)
 
 end
 
