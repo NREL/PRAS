@@ -297,7 +297,7 @@ function systemmodel_0_8(f::File)
     lines, interface_line_idxs,
     timestamps = _systemmodel_core(f)
 
-    attrs = read_addl_attrs(f)
+    attrs = read_attrs(f)
 
     return SystemModel(
         regions, interfaces,
@@ -331,12 +331,12 @@ function readversion(f::File)
 end
 
 """
-Reads additional user defined metadata from the file containing the PRAS system.
+Reads user defined metadata from the file containing the PRAS system.
 """
-function read_addl_attrs(inputfile::String)
+function read_attrs(inputfile::String)
 
     h5open(inputfile, "r") do f::File
-        sys_attributes = read_addl_attrs(f)
+        sys_attributes = read_attrs(f)
 
         if isempty(sys_attributes)
             println("No system attributes found in the file.")
@@ -345,9 +345,8 @@ function read_addl_attrs(inputfile::String)
             for key in keys(sys_attributes)
                 println("  $key: $(sys_attributes[key])")
             end
-            return sys_attributes
         end
-
+        return 
     end
 
 end
@@ -356,7 +355,7 @@ end
 Reads additional user defined metadata from the file containing the PRAS system,
 Input here is filehandle.
 """
-function read_addl_attrs(f::File)
+function read_attrs(f::File)
 
     metadata = attributes(f)
 

@@ -72,7 +72,8 @@ function SystemModel(
     storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
     generatorstorages::GeneratorStorages{N,L,T,P,E}, region_genstor_idxs::Vector{UnitRange{Int}},
     lines, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::StepRange{DateTime,T}
+    timestamps::StepRange{DateTime,T},
+    attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     @warn "No time zone data provided - defaulting to UTC. To specify a " *
@@ -90,7 +91,7 @@ function SystemModel(
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
         lines, interface_line_idxs,
-        timestamps_tz,Dict{String,String}())
+        timestamps_tz,attrs)
 
 end
 
@@ -100,7 +101,8 @@ function SystemModel(
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     timestamps::StepRange{<:AbstractDateTime,T},
-    load::Vector{Int}
+    load::Vector{Int},
+    attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     return SystemModel(
@@ -115,7 +117,7 @@ function SystemModel(
             String[], String[],
             Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
             Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
-        UnitRange{Int}[], timestamps, Dict{String,String}())
+        UnitRange{Int}[], timestamps, attrs)
 
 end
 

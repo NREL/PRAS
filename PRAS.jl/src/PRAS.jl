@@ -6,6 +6,6 @@ using Reexport
 @reexport using PRASFiles
 @reexport using PRASCapacityCredits
 
-import PRASFiles: toymodel, rts_gmlc, read_addl_attrs
+import PRASFiles: toymodel, rts_gmlc
 
 end

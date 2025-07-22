@@ -2,7 +2,7 @@ module PRASFiles
 
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
-                         timeunits, powerunits, energyunits, unitsymbol                         
+                         timeunits, powerunits, energyunits, unitsymbol             
 
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
 import StatsBase: mean
@@ -18,6 +18,7 @@ import JSON3: pretty
 
 export savemodel
 export saveshortfall
+export read_attrs
 
 include("Systems/read.jl")
 include("Systems/write.jl")
