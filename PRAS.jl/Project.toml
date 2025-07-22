@@ -5,7 +5,7 @@ authors = [
     "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>",
     "Hari Sundar <Hari.Sundar@nrel.gov>"
 ]
-version = "0.7.1"
+version = "0.8.0"
 
 [deps]
 PRASCapacityCredits = "2e1a2ed5-e89d-4cd3-bc86-c0e88a73d3a3"
@@ -15,8 +15,8 @@ Reexport = "189a3867-3050-52da-a836-e630ba90ab69"
 
 [compat]
 PRASCapacityCredits = "0.7"
-PRASCore = "0.7.1"
-PRASFiles = "0.7.1"
+PRASCore = "0.8.0"
+PRASFiles = "0.8.0"
 Reexport = "1"
 julia = "1.10"
 

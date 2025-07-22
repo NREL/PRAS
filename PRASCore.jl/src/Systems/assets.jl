@@ -1,6 +1,38 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
+function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
+
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in asset_collection.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
+    
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_separator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
+    type_outputstring_map = Dict(
+        Generators => "generators",
+        Storages => "storage devices",
+        GeneratorStorages => "generator-storage devices",
+    )
+
+    asset_type = typeof(asset_collection)
+    
+    # Get the appropriate output string based on asset type
+    output_string = get(type_outputstring_map, asset_type.name.wrapper, "assets")
+    
+    # Printing logic
+    println(io, "$(length(asset_collection.names)) $(output_string):")
+    println(io, column_names)
+    println(io, header_separator)
+    println(io, "  $(join(category_strings, "\n  "))")
+    
+end
+
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -439,3 +471,4 @@ function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
     return Lines{N,L,T,P}(names, categories, forward_capacity, backward_capacity, λ, μ)
 
 end
+

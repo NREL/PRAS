@@ -9,7 +9,7 @@ PRASCore = "c5c32b99-e7c3-4530-a685-6f76e19f7fe2"
 
 [compat]
 Distributions = "0.25"
-PRASCore = "0.7"
+PRASCore = "0.7 - 0.8"
 julia = "1.10"
 
 [extras]
