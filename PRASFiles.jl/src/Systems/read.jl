@@ -58,7 +58,6 @@ function _systemmodel_core(f::File)
     has_generators = haskey(f, "generators")
     has_storages = haskey(f, "storages")
     has_generatorstorages = haskey(f, "generatorstorages")
-    has_demandresponses = haskey(f, "demandresponses")
     has_interfaces = haskey(f, "interfaces")
     has_lines = haskey(f, "lines")
 
@@ -182,42 +181,6 @@ function _systemmodel_core(f::File)
 
     end
 
-    if has_demandresponses
-
-        dr_core = read(f["demandresponses/_core"])
-        dr_names, dr_categories, dr_regionnames = readvector.(
-            Ref(dr_core), [:name, :category, :region])
-
-        dr_regions = getindex.(Ref(regionlookup), dr_regionnames)
-        region_order = sortperm(dr_regions)
-
-        demandresponses = DemandResponses{N,L,T,P,E}(
-            dr_names[region_order], dr_categories[region_order],
-            load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
-            load_matrix(f["demandresponses/paybackcapacity"], region_order, Int),
-            load_matrix(f["demandresponses/energycapacity"], region_order, Int),
-            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
-            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
-            load_matrix(f["demandresponses/carryoverefficiency"], region_order, Float64),
-            load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
-            load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
-            load_matrix(f["demandresponses/repairprobability"], region_order, Float64)
-        )
-
-        region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
-
-    else
-        demandresponses = DemandResponses{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N))
-
-        region_dr_idxs = fill(1:0, n_regions)
-
-    end
-
-
     if has_interfaces
 
         interfaces_core = read(f["interfaces/_core"])
@@ -326,6 +289,8 @@ end
 Read a SystemModel from a PRAS file in version 0.8.x format.
 """
 function systemmodel_0_8(f::File)
+
+    has_demandresponses = haskey(f, "demandresponses")
     
     regions, interfaces,
     generators, region_gen_idxs,
@@ -333,6 +298,41 @@ function systemmodel_0_8(f::File)
     generatorstorages, region_genstor_idxs,
     lines, interface_line_idxs,
     timestamps = _systemmodel_core(f)
+
+    if has_demandresponses
+
+        dr_core = read(f["demandresponses/_core"])
+        dr_names, dr_categories, dr_regionnames = readvector.(
+            Ref(dr_core), [:name, :category, :region])
+
+        dr_regions = getindex.(Ref(regionlookup), dr_regionnames)
+        region_order = sortperm(dr_regions)
+
+        demandresponses = DemandResponses{N,L,T,P,E}(
+            dr_names[region_order], dr_categories[region_order],
+            load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/paybackcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/energycapacity"], region_order, Int),
+            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
+            load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
+            load_matrix(f["demandresponses/repairprobability"], region_order, Float64)
+        )
+
+        region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
+
+    else
+        demandresponses = DemandResponses{N,L,T,P,E}(
+            String[], String[], 
+            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N))
+
+        region_dr_idxs = fill(1:0, n_regions)
+
+    end
 
     attrs = read_attrs(f)
 
