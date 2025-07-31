@@ -5,17 +5,15 @@ Export a PRAS SystemModel `sys` as a .pras file, saved to `outfile`
 """
 function savemodel(
     sys::SystemModel, outfile::String;
-    string_length::Int=64, compression_level::Int=1, verbose::Bool=false,
-    user_attributes::Union{Dict{String, String},Nothing}=nothing)  
-
+    string_length::Int=64, compression_level::Int=1, verbose::Bool=false)  
+  
     verbose &&
         @info "The PRAS system being exported is of type $(typeof(sys))"
 
     h5open(outfile, "w") do f::File
 
         verbose && @info "Processing metadata for .pras file ..."
-        process_metadata!(f, sys;
-                          user_attributes=user_attributes)
+        process_metadata!(f, sys)
 
         verbose && @info "Processing Regions for .pras file ..."
         process_regions!(f, sys, string_length, compression_level)
@@ -41,6 +39,14 @@ function savemodel(
             process_generatorstorages!(f, sys, string_length, compression_level)
         end
 
+        verbose && @info "$(length(sys.demandresponses)) DemandResponses " *
+                         "found in the SystemModel."
+
+        if length(sys.demandresponses) > 0
+            verbose && @info "Processing DemandResponses for .pras file ..."
+            process_demandresponses!(f, sys, string_length, compression_level)
+        end
+
         if length(sys.regions) > 1
             verbose && @info "Processing Lines and Interfaces for .pras file ..."
             process_lines_interfaces!(f, sys, string_length, compression_level)
@@ -56,8 +62,7 @@ function savemodel(
 end
 
 function process_metadata!(
-    f::File, sys::SystemModel{N,L,T,P,E};
-    user_attributes::Union{Dict{String, String},Nothing}=nothing) where {N,L,T,P,E}
+    f::File, sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
 
     attrs = attributes(f)
     
@@ -68,14 +73,14 @@ function process_metadata!(
     attrs["energy_unit"] = unitsymbol(E)
 
     attrs["start_timestamp"] = string(sys.timestamps.start);
-    attrs["pras_dataversion"] = PRASFILE_VERSION
+    attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
-    if !isnothing(user_attributes)
-        for (key, value) in user_attributes
-            attrs[key] = value
-        end
+    # Existing system attributes
+    sys_attributes = sys.attrs
+    for (key, value) in sys_attributes
+        attrs[key] = value
     end
-
+    
     return
 
 end
@@ -215,6 +220,51 @@ function process_generatorstorages!(
     return
 
 end
+
+function process_demandresponses!(
+    f::File, sys::SystemModel, strlen::Int, compression::Int)
+    
+    demandresponses = create_group(f, "demandresponses")
+
+    drs_core = Matrix{String}(undef, length(sys.demandresponses), 3)
+    drs_core_colnames = ["name", "category", "region"]
+
+    drs_core[:, 1] = sys.demandresponses.names
+    drs_core[:, 2] = sys.demandresponses.categories
+    drs_core[:, 3] = regionnames(
+        length(sys.demandresponses), sys.regions.names, sys.region_dr_idxs)
+
+    string_table!(demandresponses, "_core", drs_core_colnames, drs_core, strlen)
+
+    demandresponses["borrowcapacity", deflate = compression] =
+        sys.demandresponses.borrow_capacity
+
+    demandresponses["paybackcapacity", deflate = compression] =
+        sys.demandresponses.payback_capacity
+
+    demandresponses["energycapacity", deflate = compression] =
+        sys.demandresponses.energy_capacity
+
+    demandresponses["borrowefficiency", deflate = compression] =
+        sys.demandresponses.borrow_efficiency
+
+    demandresponses["paybackefficiency", deflate = compression] =
+        sys.demandresponses.payback_efficiency
+
+    demandresponses["carryoverefficiency", deflate = compression] =
+         sys.demandresponses.carryover_efficiency
+
+    demandresponses["allowablepaybackperiod", deflate = compression] =
+         sys.demandresponses.allowable_payback_period
+
+    demandresponses["failureprobability", deflate = compression] = sys.demandresponses.λ
+
+    demandresponses["repairprobability", deflate = compression] = sys.demandresponses.μ
+
+    return
+
+end
+
 
 function process_lines_interfaces!(
     f::File, sys::SystemModel, strlen::Int, compression::Int)

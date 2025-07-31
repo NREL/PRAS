@@ -1,6 +1,38 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
+function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
+
+    # Count occurrences of each category
+    category_counts = Dict{String, Int}()
+    for category in asset_collection.categories
+        category_counts[category] = get(category_counts, category, 0) + 1
+    end
+    
+    # Format category counts as strings in a table
+    category_strings = [@sprintf("%-10s | %-10s",category,count) for (category, count) in category_counts]
+    column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
+    header_separator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
+    
+    type_outputstring_map = Dict(
+        Generators => "generators",
+        Storages => "storage devices",
+        GeneratorStorages => "generator-storage devices",
+    )
+
+    asset_type = typeof(asset_collection)
+    
+    # Get the appropriate output string based on asset type
+    output_string = get(type_outputstring_map, asset_type.name.wrapper, "assets")
+    
+    # Printing logic
+    println(io, "$(length(asset_collection.names)) $(output_string):")
+    println(io, column_names)
+    println(io, header_separator)
+    println(io, "  $(join(category_strings, "\n  "))")
+    
+end
+
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -354,6 +386,145 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
 end
 
+struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
+
+    names::Vector{String}
+    categories::Vector{String}
+
+    borrow_capacity::Matrix{Int} # power
+    payback_capacity::Matrix{Int} # power
+    energy_capacity::Matrix{Int} # energy
+
+    borrow_efficiency::Matrix{Float64}
+    payback_efficiency::Matrix{Float64}
+    carryover_efficiency::Matrix{Float64}
+
+    allowable_payback_period::Matrix{Int}
+
+    λ::Matrix{Float64}
+    μ::Matrix{Float64}
+
+    function DemandResponses{N,L,T,P,E}(
+        names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
+        borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
+        energycapacity::Matrix{Int}, borrowefficiency::Matrix{Float64},
+        paybackefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
+        allowablepaybackperiod::Matrix{Int},
+        λ::Matrix{Float64}, μ::Matrix{Float64}
+    ) where {N,L,T,P,E}
+
+        n_drs = length(names)
+        @assert length(categories) == n_drs
+        @assert allunique(names)
+
+        
+        @assert size(borrowcapacity) == (n_drs, N)
+        @assert size(paybackcapacity) == (n_drs, N)
+        @assert size(energycapacity) == (n_drs, N)
+        @assert all(isnonnegative, borrowcapacity)
+        @assert all(isnonnegative, paybackcapacity)
+        @assert all(isnonnegative, energycapacity)
+
+        @assert size(borrowefficiency) == (n_drs, N)
+        @assert size(paybackefficiency) == (n_drs, N)
+        @assert size(carryoverefficiency) == (n_drs, N)
+        @assert all(isfractional, borrowefficiency)
+        @assert all(isfractional, paybackefficiency)
+        @assert all(isnonnegative, carryoverefficiency)
+
+        @assert size(allowablepaybackperiod) == (n_drs, N)
+        @assert all(isnonnegative, allowablepaybackperiod)
+
+
+        @assert size(λ) == (n_drs, N)
+        @assert size(μ) == (n_drs, N)
+        @assert all(isfractional, λ)
+        @assert all(isfractional, μ)
+
+        new{N,L,T,P,E}(string.(names), string.(categories),
+                       borrowcapacity, paybackcapacity, energycapacity,
+                       borrowefficiency, paybackefficiency, carryoverefficiency,
+                       allowablepaybackperiod,
+                       λ, μ)
+
+    end
+
+end
+
+Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
+    x.names == y.names &&
+    x.categories == y.categories &&
+    x.borrow_capacity == y.borrow_capacity &&
+    x.payback_capacity == y.payback_capacity &&
+    x.energy_capacity == y.energy_capacity &&
+    x.borrow_efficiency == y.borrow_efficiency &&
+    x.payback_efficiency == y.payback_efficiency &&
+    x.carryover_efficiency == y.carryover_efficiency &&
+    x.allowable_payback_period == y.allowable_payback_period &&
+    x.λ == y.λ &&
+    x.μ == y.μ
+
+Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
+    DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
+      dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
+      dr.borrow_efficiency[idxs, :], dr.payback_efficiency[idxs, :], 
+      dr.carryover_efficiency[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :])
+
+function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
+
+    n_drs = sum(length(dr) for dr in drs)
+
+    names = Vector{String}(undef, n_drs)
+    categories = Vector{String}(undef, n_drs)
+
+    borrow_capacity = Matrix{Int}(undef, n_drs, N)
+    payback_capacity = Matrix{Int}(undef, n_drs, N)
+    energy_capacity = Matrix{Int}(undef, n_drs, N) 
+
+    borrow_efficiency = Matrix{Float64}(undef, n_drs, N)
+    payback_efficiency = Matrix{Float64}(undef, n_drs, N)
+    carryover_efficiency = Matrix{Float64}(undef, n_drs, N)
+
+    allowable_payback_period = Matrix{Float64}(undef, n_drs, N)
+
+
+    λ = Matrix{Float64}(undef, n_drs, N)
+    μ = Matrix{Float64}(undef, n_drs, N)
+
+    last_idx = 0
+
+    for dr in drs
+
+        n = length(dr)
+        rows = last_idx .+ (1:n)
+
+        names[rows] = dr.names
+        categories[rows] = dr.categories
+
+        borrow_capacity[rows, :] = dr.borrow_capacity
+        payback_capacity[rows, :] = dr.payback_capacity
+        energy_capacity[rows, :] = dr.energy_capacity
+
+        borrow_efficiency[rows, :] = dr.borrow_efficiency
+        payback_efficiency[rows, :] = dr.payback_efficiency
+        carryover_efficiency[rows, :] = dr.carryover_efficiency
+
+        allowable_payback_period[rows, :] = dr.allowable_payback_period
+
+        λ[rows, :] = dr.λ
+        μ[rows, :] = dr.μ
+
+        last_idx += n
+
+    end
+
+    return DemandResponses{N,L,T,P,E}(names, categories, borrow_capacity, payback_capacity, energy_capacity, borrow_efficiency, payback_efficiency, 
+                               carryover_efficiency,allowable_payback_period, λ, μ)
+
+end
+
+
+
 struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -439,3 +610,4 @@ function Base.vcat(lines::Lines{N,L,T,P}...) where {N, L, T, P}
     return Lines{N,L,T,P}(names, categories, forward_capacity, backward_capacity, λ, μ)
 
 end
+

@@ -12,10 +12,17 @@ function record!(
 
     edges = problem.fp.edges
 
-    for r in problem.region_unserved_edges
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
 
+        #count region shortfall and include dr shortfall
         regionshortfall = edges[r].flow
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_paybackcounter[i] == 0 ? state.drs_unservedenergy[i] :  0 
+        end
+        regionshortfall += dr_shortfall
         isregionshortfall = regionshortfall > 0
+
 
         fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
         fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
@@ -29,7 +36,6 @@ function record!(
             acc.unservedload_region_currentsim[r] += regionshortfall
 
         end
-
     end
 
     if isshortfall
@@ -74,8 +80,14 @@ function record!(
     sampleid::Int, t::Int
 ) where {N,L,T,P,E}
 
-    for (r, e) in enumerate(problem.region_unserved_edges)
-        acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow
+    for ((r, e),dr_idxs) in zip(enumerate(problem.region_unserved_edges),system.region_dr_idxs)
+        #getting dr shortfall
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_paybackcounter[i] == 0 ? states.drs_unservedenergy[i] : 0
+        end
+
+        acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow + dr_shortfall
     end
 
     return
@@ -83,6 +95,100 @@ function record!(
 end
 
 reset!(acc::Results.ShortfallSamplesAccumulator, sampleid::Int) = nothing
+
+# DemandResponseShortfall
+
+function record!(
+    acc::Results.DemandResponseShortfallAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalshortfall = 0
+    isshortfall = false
+
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
+
+        #count region shortfall and include dr shortfall
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_paybackcounter[i] == 0 ? state.drs_unservedenergy[i] :  0 
+        end
+        regionshortfall = dr_shortfall
+        isregionshortfall = regionshortfall > 0
+
+
+        fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
+        fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
+
+        if isregionshortfall
+
+            isshortfall = true
+            totalshortfall += regionshortfall
+
+            acc.periodsdropped_region_currentsim[r] += 1
+            acc.unservedload_region_currentsim[r] += regionshortfall
+
+        end
+    end
+
+    if isshortfall
+        acc.periodsdropped_total_currentsim += 1
+        acc.unservedload_total_currentsim += totalshortfall
+    end
+
+    fit!(acc.periodsdropped_period[t], isshortfall)
+    fit!(acc.unservedload_period[t], totalshortfall)
+
+    return
+
+end
+
+function reset!(acc::Results.DemandResponseShortfallAccumulator, sampleid::Int)
+
+    # Store regional / total sums for current simulation
+    fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
+    fit!(acc.unservedload_total, acc.unservedload_total_currentsim)
+
+    for r in eachindex(acc.periodsdropped_region)
+        fit!(acc.periodsdropped_region[r], acc.periodsdropped_region_currentsim[r])
+        fit!(acc.unservedload_region[r], acc.unservedload_region_currentsim[r])
+    end
+
+    # Reset for new simulation
+    acc.periodsdropped_total_currentsim = 0
+    fill!(acc.periodsdropped_region_currentsim, 0)
+    acc.unservedload_total_currentsim = 0
+    fill!(acc.unservedload_region_currentsim, 0)
+    return
+
+end
+
+# DemandResponseShortfallSamples
+function record!(
+    acc::Results.DemandResponseShortfallSamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    for (r,dr_idxs) in enumerate(system.region_dr_idxs)
+        #getting dr shortfall
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += state.drs_paybackcounter[i] == 0 ? states.drs_unservedenergy[i] : 0
+        end
+
+        acc.shortfall[r, t, sampleid] = dr_shortfall
+    end
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseShortfallSamplesAccumulator, sampleid::Int) = nothing
+
 
 # Surplus
 
@@ -116,7 +222,6 @@ function record!(
             regionsurplus += min(grid_limit, total_unused)
 
         end
-
         fit!(acc.surplus_regionperiod[r,t], regionsurplus)
         totalsurplus += regionsurplus
 
@@ -161,7 +266,6 @@ function record!(
             regionsurplus += min(grid_limit, total_unused)
 
         end
-
         acc.surplus[r, t, sampleid] = regionsurplus
 
     end
@@ -326,6 +430,23 @@ end
 
 reset!(acc::Results.GenStorAvailabilityAccumulator, sampleid::Int) = nothing
 
+# DemandResponseAvailability
+
+function record!(
+    acc::Results.DRAvailabilityAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.available[:, t, sampleid] .= state.drs_available
+    return
+
+end
+
+reset!(acc::Results.DRAvailabilityAccumulator, sampleid::Int) = nothing
+
+
 # LineAvailability
 
 function record!(
@@ -398,6 +519,37 @@ end
 
 reset!(acc::Results.GenStorageEnergyAccumulator, sampleid::Int) = nothing
 
+
+# DemandResponseEnergy
+
+function record!(
+    acc::Results.DemandResponseEnergyAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    totalenergy = 0
+    ndemandresponses = length(system.demandresponses)
+
+    for s in 1:ndemandresponses
+
+        drenergy = state.drs_energy[s]
+        fit!(acc.energy_demandresponseperiod[s,t], drenergy)
+        totalenergy += drenergy
+
+    end
+
+    fit!(acc.energy_period[t], totalenergy)
+
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergyAccumulator, sampleid::Int) = nothing
+
+
+
 # StorageEnergySamples
 
 function record!(
@@ -429,3 +581,20 @@ function record!(
 end
 
 reset!(acc::Results.GenStorageEnergySamplesAccumulator, sampleid::Int) = nothing
+
+
+# DemandResponseEnergySamples
+
+function record!(
+    acc::Results.DemandResponseEnergySamplesAccumulator,
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E}
+
+    acc.energy[:, t, sampleid] .= state.drs_energy
+    return
+
+end
+
+reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = nothing

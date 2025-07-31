@@ -120,6 +120,34 @@ function update_energy!(
 
 end
 
+function update_paybackcounter!(
+    payback_counter::Vector{Int},
+    drs_energy::Vector{Int},
+    drs::AbstractAssets,
+    t::Int
+)
+
+    for i in 1:length(payback_counter)
+        #if energy is zero or negative, set counter to -1 (to start counting new)
+        if drs_energy[i] <= 0
+            if payback_counter[i] >= 0
+                #if no energy borrowed and counter is positive, reset it to -1
+                payback_counter[i] = -1
+            end
+        elseif payback_counter[i] == -1
+            #if energy is borrowed and counter is -1, set it to payback window-start of counting
+            payback_counter[i] =  drs.allowable_payback_period[i,t]-1
+        elseif payback_counter[i] >= 0
+            #if counter is positive, decrement by one
+            payback_counter[i] -= 1
+        end
+
+
+    end
+
+end
+
+
 function maxtimetocharge_discharge(system::SystemModel)
 
     if length(system.storages) > 0
@@ -176,6 +204,33 @@ function maxtimetocharge_discharge(system::SystemModel)
             max(stor_discharge_max, genstor_discharge_max))
 
 end
+
+function minmax_payback_window_dr(system::SystemModel)
+
+    if length(system.demandresponses) > 0
+        if any(iszero, system.demandresponses.allowable_payback_period)
+            maxpaybacktime_dr = length(system.timestamps) + 1
+        else
+            maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
+        end
+
+        if any(iszero, system.demandresponses.payback_capacity)
+            minpaybacktime_dr = length(system.timestamps) + 1
+        else
+            minpaybacktime_dr = minimum(system.demandresponses.allowable_payback_period)
+        end
+
+    else
+        minpaybacktime_dr = 0
+        maxpaybacktime_dr = 0
+    end
+
+    return (minpaybacktime_dr, maxpaybacktime_dr)
+
+end
+
+
+
 
 function utilization(f::MinCostFlows.Edge, b::MinCostFlows.Edge)
 
