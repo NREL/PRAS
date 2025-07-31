@@ -13,8 +13,7 @@ function savemodel(
     h5open(outfile, "w") do f::File
 
         verbose && @info "Processing metadata for .pras file ..."
-        process_metadata!(f, sys;
-                          user_attributes=user_attributes)
+        process_metadata!(f, sys)
 
         verbose && @info "Processing Regions for .pras file ..."
         process_regions!(f, sys, string_length, compression_level)
@@ -63,8 +62,7 @@ function savemodel(
 end
 
 function process_metadata!(
-    f::File, sys::SystemModel{N,L,T,P,E};
-    user_attributes::Union{Dict{String, String},Nothing}=nothing) where {N,L,T,P,E}
+    f::File, sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
 
     attrs = attributes(f)
     
@@ -82,13 +80,7 @@ function process_metadata!(
     for (key, value) in sys_attributes
         attrs[key] = value
     end
-
-    if !isnothing(user_attributes)
-        for (key, value) in user_attributes
-            attrs[key] = value
-        end
-    end
-
+    
     return
 
 end

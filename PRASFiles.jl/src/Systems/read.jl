@@ -50,6 +50,8 @@ function _systemmodel_core(f::File)
     P = powerunits[read(metadata["power_unit"])]
     E = energyunits[read(metadata["energy_unit"])]
 
+    type_params = (N,L,T,P,E)
+
     timestep = T(L)
     end_timestamp = start_timestamp + (N-1)*timestep
     timestamps = StepRange(start_timestamp, timestep, end_timestamp)
@@ -273,7 +275,7 @@ function _systemmodel_core(f::File)
             storages, region_stor_idxs,
             generatorstorages, region_genstor_idxs,
             lines, interface_line_idxs,
-            timestamps)
+            timestamps),type_params
 end
 
 """
@@ -281,7 +283,9 @@ Read a SystemModel from a PRAS file in version 0.5.x - 0.7.x format.
 """
 function systemmodel_0_5(f::File)
 
-    return SystemModel(_systemmodel_core(f)...)
+    systemmodel_0_5_objs, _ = _systemmodel_core(f)
+
+    return SystemModel(systemmodel_0_5_objs...)
 
 end
 
@@ -292,14 +296,20 @@ function systemmodel_0_8(f::File)
 
     has_demandresponses = haskey(f, "demandresponses")
     
-    regions, interfaces,
+    (regions, interfaces,
     generators, region_gen_idxs,
     storages, region_stor_idxs,
     generatorstorages, region_genstor_idxs,
     lines, interface_line_idxs,
-    timestamps = _systemmodel_core(f)
+    timestamps), type_params = _systemmodel_core(f)
+
+    N, L, T, P, E = type_params
+
+    n_regions = length(regions)
+    regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
 
     if has_demandresponses
+
 
         dr_core = read(f["demandresponses/_core"])
         dr_names, dr_categories, dr_regionnames = readvector.(
