@@ -111,16 +111,18 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
     end
 
+end
+
     #base system constructor- no demand response devices
-    function SystemModel{}(
-        regions::Regions{N,P}, interfaces::Interfaces{N,P},
-        generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
-        storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
-        generatorstorages::GeneratorStorages{N,L,T,P,E},
-        region_genstor_idxs::Vector{UnitRange{Int}},
-        lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-        timestamps::StepRange{ZonedDateTime,T}
-    ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+function SystemModel{}(
+    regions::Regions{N,P}, interfaces::Interfaces{N,P},
+    generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
+    storages::Storages{N,L,T,P,E}, region_stor_idxs::Vector{UnitRange{Int}},
+    generatorstorages::GeneratorStorages{N,L,T,P,E},
+    region_genstor_idxs::Vector{UnitRange{Int}},
+    lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
+    timestamps::StepRange{ZonedDateTime,T}
+) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     return SystemModel(
         regions, interfaces,
@@ -134,10 +136,8 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
             Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
         lines, interface_line_idxs,
         timestamps)
-    end
-
 end
-
+    
 # No time zone constructor - demand responses included
 function SystemModel(
     regions::Regions{N,P}, interfaces::Interfaces{N,P},
@@ -205,7 +205,7 @@ function SystemModel(
 
 end
 
-# Single-node constructor - demand responses not included
+# Single-node constructor - demand responses included
 function SystemModel(
     generators::Generators{N,L,T,P},
     storages::Storages{N,L,T,P,E},
