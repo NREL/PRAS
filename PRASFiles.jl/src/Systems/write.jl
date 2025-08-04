@@ -5,8 +5,7 @@ Export a PRAS SystemModel `sys` as a .pras file, saved to `outfile`
 """
 function savemodel(
     sys::SystemModel, outfile::String;
-    string_length::Int=64, compression_level::Int=1, verbose::Bool=false,
-    user_attributes::Union{Dict{String, String},Nothing}=nothing)  
+    string_length::Int=64, compression_level::Int=1, verbose::Bool=false)  
 
     verbose &&
         @info "The PRAS system being exported is of type $(typeof(sys))"
