@@ -539,8 +539,8 @@ function update_state!(
         energy_drop = ceil(Int, edges[e].flow * p2e / system.demandresponses.payback_efficiency[i, t])
         state.drs_energy[i] = max(0, energy - energy_drop)
 
-        if state.drs_paybackcounter[i] == 0
-            #if payback window is over, count the unserved energy in drs_unservedenergy state and reset energy
+        if (state.drs_paybackcounter[i] == 0) || (t == N)
+            #if payback window is over or you reach the end of the sim, count the unserved energy in drs_unservedenergy state and reset energy
             state.drs_unservedenergy[i] = state.drs_energy[i]
             state.drs_energy[i] = 0
         end
