@@ -5,8 +5,8 @@ Export a PRAS SystemModel `sys` as a .pras file, saved to `outfile`
 """
 function savemodel(
     sys::SystemModel, outfile::String;
-    string_length::Int=64, compression_level::Int=1, verbose::Bool=false)
-
+    string_length::Int=64, compression_level::Int=1, verbose::Bool=false)  
+  
     verbose &&
         @info "The PRAS system being exported is of type $(typeof(sys))"
 
@@ -73,8 +73,14 @@ function process_metadata!(
     attrs["energy_unit"] = unitsymbol(E)
 
     attrs["start_timestamp"] = string(sys.timestamps.start);
-    attrs["pras_dataversion"] = PRASFILE_VERSION
+    attrs["pras_dataversion"] = "v" * string(pkgversion(PRASFiles));
 
+    # Existing system attributes
+    sys_attributes = sys.attrs
+    for (key, value) in sys_attributes
+        attrs[key] = value
+    end
+    
     return
 
 end

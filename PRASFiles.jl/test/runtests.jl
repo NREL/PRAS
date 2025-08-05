@@ -20,6 +20,13 @@ using JSON3
         rts2 = SystemModel(path * "/rts2.pras")
         @test rts == rts2
 
+        # Test saving of system attributes
+        push!(rts.attrs,"about" => "this is a representation of the RTS GMLC system")
+        savemodel(rts,path * "/rts_userattrs.pras")
+
+        rts_userattrs = SystemModel(path * "/rts_userattrs.pras")
+        @test rts == rts_userattrs
+
     end
 
     @testset "Run RTS-GMLC" begin

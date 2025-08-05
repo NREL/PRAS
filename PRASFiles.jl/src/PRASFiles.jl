@@ -1,11 +1,9 @@
 module PRASFiles
 
-const PRASFILE_VERSION = "v0.7.0"
-
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, DemandResponses, Lines,
                          timeunits, powerunits, energyunits, unitsymbol
-
+                         
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
 import StatsBase: mean
 import Dates: @dateformat_str, format, now
@@ -20,6 +18,7 @@ import JSON3: pretty
 
 export savemodel
 export saveshortfall
+export read_attrs
 
 include("Systems/read.jl")
 include("Systems/write.jl")
