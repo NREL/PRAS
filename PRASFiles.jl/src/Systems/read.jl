@@ -20,6 +20,8 @@ function SystemModel(inputfile::String)
         # Determine the appropriate version of the importer to use
         return if (0,5,0) <= version < (0,8,0)
             systemmodel_0_5(f)
+        elseif (0,8,0) <= version < (0,9,0)
+            systemmodel_0_8(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
         end
@@ -30,9 +32,13 @@ function SystemModel(inputfile::String)
 
 end
 
-
-function systemmodel_0_5(f::File)
-
+"""
+Unexposed function which encapsulates the SystemModel reading logic from PRAS 
+versions 0.5.x to 0.7.x., and is also used in version 0.8.x+ to read the 
+components from the SystemModel which exist in the new format as well.
+"""
+function _systemmodel_core(f::File)
+    
     metadata = attributes(f)
 
     start_timestamp = ZonedDateTime(read(metadata["start_timestamp"]),
@@ -43,6 +49,8 @@ function systemmodel_0_5(f::File)
     T = timeunits[read(metadata["timestep_unit"])]
     P = powerunits[read(metadata["power_unit"])]
     E = energyunits[read(metadata["energy_unit"])]
+
+    type_params = (N,L,T,P,E)
 
     timestep = T(L)
     end_timestamp = start_timestamp + (N-1)*timestep
@@ -262,14 +270,91 @@ function systemmodel_0_5(f::File)
 
     end
 
+    return (regions, interfaces,
+            generators, region_gen_idxs,
+            storages, region_stor_idxs,
+            generatorstorages, region_genstor_idxs,
+            lines, interface_line_idxs,
+            timestamps),type_params
+end
+
+"""
+Read a SystemModel from a PRAS file in version 0.5.x - 0.7.x format.
+"""
+function systemmodel_0_5(f::File)
+
+    systemmodel_0_5_objs, _ = _systemmodel_core(f)
+
+    return SystemModel(systemmodel_0_5_objs...)
+
+end
+
+"""
+Read a SystemModel from a PRAS file in version 0.8.x format.
+"""
+function systemmodel_0_8(f::File)
+
+    has_demandresponses = haskey(f, "demandresponses")
+    
+    (regions, interfaces,
+    generators, region_gen_idxs,
+    storages, region_stor_idxs,
+    generatorstorages, region_genstor_idxs,
+    lines, interface_line_idxs,
+    timestamps), type_params = _systemmodel_core(f)
+
+    N, L, T, P, E = type_params
+
+    n_regions = length(regions)
+    regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
+
+    if has_demandresponses
+
+
+        dr_core = read(f["demandresponses/_core"])
+        dr_names, dr_categories, dr_regionnames = readvector.(
+            Ref(dr_core), [:name, :category, :region])
+
+        dr_regions = getindex.(Ref(regionlookup), dr_regionnames)
+        region_order = sortperm(dr_regions)
+
+        demandresponses = DemandResponses{N,L,T,P,E}(
+            dr_names[region_order], dr_categories[region_order],
+            load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/paybackcapacity"], region_order, Int),
+            load_matrix(f["demandresponses/energycapacity"], region_order, Int),
+            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/carryoverefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
+            load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
+            load_matrix(f["demandresponses/repairprobability"], region_order, Float64)
+        )
+
+        region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
+
+    else
+        demandresponses = DemandResponses{N,L,T,P,E}(
+            String[], String[], 
+            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N))
+
+        region_dr_idxs = fill(1:0, n_regions)
+
+    end
+
+    attrs = read_attrs(f)
+
     return SystemModel(
         regions, interfaces,
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
+        demandresponses, region_dr_idxs,
         lines, interface_line_idxs,
-        timestamps)
-
+        timestamps, attrs)
+    
 end
 
 """
@@ -294,30 +379,41 @@ function readversion(f::File)
 end
 
 """
-Reads additional user defined metadata from the file containing the PRAS system.
+Reads user defined metadata from the file containing the PRAS system.
 """
-function read_addl_attrs(inputfile::String)
+function read_attrs(inputfile::String)
 
     h5open(inputfile, "r") do f::File
+        sys_attributes = read_attrs(f)
+
+        if isempty(sys_attributes)
+            println("No system attributes found in the file.")
+        else    
+            println("System attribute(s) found in the file:")
+            for key in keys(sys_attributes)
+                println("  $key: $(sys_attributes[key])")
+            end
+        end
+        return 
+    end
+
+end
+
+"""
+Reads additional user defined metadata from the file containing the PRAS system,
+Input here is filehandle.
+"""
+function read_attrs(f::File)
 
         metadata = attributes(f)
 
-        reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
-                    "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
-        
-        addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
-        
-        if !isempty(addl_attrs_keys)            
-            println("User-defined attribute(s) found in the file:")
-            for key in addl_attrs_keys
-                println("  $key: $(read(metadata[key]))")
-            end
+    reqd_attrs_keys = ["pras_dataversion", "start_timestamp", "timestep_count",
+                "timestep_length", "timestep_unit", "power_unit", "energy_unit"]
+    
+    addl_attrs_keys = setdiff(keys(metadata), reqd_attrs_keys)
+    
+    return Dict{String,String}(key => read(metadata[key]) for key in addl_attrs_keys)
 
-            return Dict(key => read(metadata[key]) for key in addl_attrs_keys)
-        else
-            println("No user-defined attributes found in the file.")
-        end
-    end
 end
 
 """
