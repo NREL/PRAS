@@ -18,7 +18,7 @@ function record!(
         regionshortfall = edges[r].flow
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += state.drs_paybackcounter[i] == 0 ? state.drs_unservedenergy[i] :  0 
+            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
         end
         regionshortfall += dr_shortfall
         isregionshortfall = regionshortfall > 0
@@ -84,7 +84,7 @@ function record!(
         #getting dr shortfall
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += state.drs_paybackcounter[i] == 0 ? states.drs_unservedenergy[i] : 0
+            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? states.drs_unservedenergy[i] : 0
         end
 
         acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow + dr_shortfall
@@ -113,7 +113,7 @@ function record!(
         #count region shortfall and include dr shortfall
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += state.drs_paybackcounter[i] == 0 ? state.drs_unservedenergy[i] :  0 
+            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
         end
         regionshortfall = dr_shortfall
         isregionshortfall = regionshortfall > 0
@@ -177,7 +177,7 @@ function record!(
         #getting dr shortfall
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += state.drs_paybackcounter[i] == 0 ? states.drs_unservedenergy[i] : 0
+            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? states.drs_unservedenergy[i] : 0
         end
 
         acc.shortfall[r, t, sampleid] = dr_shortfall
