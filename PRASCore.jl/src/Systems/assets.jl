@@ -1,7 +1,8 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
-function Base.show(io::IO, asset_collection::AbstractAssets)
+function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
+
     # Count occurrences of each category
     category_counts = Dict{String, Int}()
     for category in asset_collection.categories
@@ -13,19 +14,10 @@ function Base.show(io::IO, asset_collection::AbstractAssets)
     column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
     header_separator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
     
-    type_outputstring_map = Dict(
-        Generators => "generators",
-        Storages => "storages",
-        GeneratorStorages => "generator-storages",
-    )
-
     asset_type = typeof(asset_collection)
-    
-    # Get the appropriate output string based on asset type
-    output_string = get(type_outputstring_map, asset_type.name.wrapper, "assets")
-    
+
     # Printing logic
-    println(io, "$(length(asset_collection.names)) $(output_string):")
+    println(io, "$(length(asset_collection.names)) $(asset_type.name.wrapper):")
     println(io, column_names)
     println(io, header_separator)
     println(io, "  $(join(category_strings, "\n  "))")
