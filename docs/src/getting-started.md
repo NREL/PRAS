@@ -1,8 +1,6 @@
 # Getting Started with PRAS
 
-For a complete overview of PRAS, see the
-[v0.6 documentation report](https://www.nrel.gov/docs/fy21osti/79698.pdf).
-This page provides a briefer overview to help you start running PRAS quickly.
+Once you have PRAS [installed](./installation.md), this page provides a brief overview to help you start running PRAS quickly.
 
 ## Parallel Processing
 

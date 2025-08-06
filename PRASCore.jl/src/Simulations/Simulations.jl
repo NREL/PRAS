@@ -75,7 +75,7 @@ and return `resultspecs`.
 
   - `system::SystemModel`: PRAS data structure
   - `method::SequentialMonteCarlo`: method for PRAS analysis
-  - `resultspecs::ResultSpec...`: PRAS metric for metrics like [`Shortfall`](@ref) missing generation
+  - `resultspecs::ResultSpec...`: PRAS metric for metrics like [`Shortfall`](@ref PRASCore.Results.Shortfall) missing generation
 
 # Returns
 

@@ -1,7 +1,7 @@
 using Documenter
 using PRASCore
-#using Package2
-#using Package3
+using PRASFiles
+using PRASCapacityCredits
 
 # Generate the unified documentation
 makedocs(
@@ -10,22 +10,26 @@ makedocs(
         prettyurls = get(ENV, "CI", nothing) == "true",
         canonical = "https://nrel.github.io/PRAS/stable"
     ),
-    modules = [PRASCore.Results,PRASCore.Systems],
+    modules = [PRASCore, PRASFiles, PRASCapacityCredits],
     pages = [
         "Home" => "index.md",
+        "Installation" => "installation.md",
+        "Getting Started" => "getting-started.md",
         "PRASCore" => [
             "Overview" => "PRASCore/index.md",
-            #"API Reference" => "PRASCore/api.md"
+            "API Reference" => "PRASCore/api.md"
         ],
-        # "Package2" => [
-        #     "Overview" => "package2/index.md",
-        #     "API Reference" => "package2/api.md"
-        # ],
-        # "Package3" => [
-        #     "Overview" => "package3/index.md",
-        #     "API Reference" => "package3/api.md"
-        # ]
-    ]
+        "PRASFiles" => [
+            "Overview" => "PRASFiles/index.md",
+            "API Reference" => "PRASFiles/api.md"
+        ],
+        "PRASCapacityCredits" => [
+            "Overview" => "PRASCapacityCredits/index.md",
+            "API Reference" => "PRASCapacityCredits/api.md"
+        ]
+    ],
+    checkdocs = :exports,
+    warnonly = true,
 )
 
 deploydocs(
