@@ -173,8 +173,8 @@ function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) wher
     println(io, "Region names: $(join(sys.regions.names, ", "))")
     println(io, "\nAssets: ")
     println(io, "  Generators: $(length(sys.generators)) units")
-    println(io, "  Storage devices: $(length(sys.storages)) units")
-    println(io, "  GeneratorStorage devices: $(length(sys.generatorstorages)) units")
+    println(io, "  Storages: $(length(sys.storages)) units")
+    println(io, "  GeneratorStorages: $(length(sys.generatorstorages)) units")
     println(io, "  Lines: $(length(sys.lines))")
     println(io, "\nTime series:")
     println(io, "  Start time: $(first(sys.timestamps))")
@@ -261,8 +261,8 @@ function Base.show(io::IO, info::RegionInfo)
     println(io, "Region: $(info.name) (index - $(info.index))")
     println(io, "  Peak load: $(info.peak_load) $(info.power_unit)")
     println(io, "  Generators: $(info.generators.count) units [indices - $(info.generators.indices)]")
-    println(io, "  Storage devices: $(info.storages.count) units [indices - $(info.storages.indices)]")
-    print(io, "  GeneratorStorage devices: $(info.generatorstorages.count) units [indices - $(info.generatorstorages.indices)]")
+    println(io, "  Storages: $(info.storages.count) units [indices - $(info.storages.indices)]")
+    print(io, "  GeneratorStorages: $(info.generatorstorages.count) units [indices - $(info.generatorstorages.indices)]")
 end
 
 """

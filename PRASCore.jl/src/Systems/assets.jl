@@ -1,8 +1,7 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
-function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
-
+function Base.show(io::IO, asset_collection::AbstractAssets)
     # Count occurrences of each category
     category_counts = Dict{String, Int}()
     for category in asset_collection.categories
@@ -16,8 +15,8 @@ function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
     
     type_outputstring_map = Dict(
         Generators => "generators",
-        Storages => "storage devices",
-        GeneratorStorages => "generator-storage devices",
+        Storages => "storages",
+        GeneratorStorages => "generator-storages",
     )
 
     asset_type = typeof(asset_collection)
