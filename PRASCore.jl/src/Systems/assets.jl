@@ -1,11 +1,24 @@
 abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
-function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
+function Base.getindex(a::AbstractAssets, reqd_names::AbstractVector{String})
+    length(reqd_names) != length(unique(reqd_names)) && error("Names must be unique.")
+    idxs = findall(a.names .∈ Ref(reqd_names))
+    length(idxs) != length(reqd_names) && error("One or more names not found.")
+    return a[idxs]
+end
+
+function Base.getindex(a::AbstractAssets, name::String)
+    idx = findall(==(name), a.names)
+    isempty(idx) && error("'$name' not found.")
+    return a[idx]
+end
+
+function Base.show(io::IO, a::AbstractAssets)
 
     # Count occurrences of each category
     category_counts = Dict{String, Int}()
-    for category in asset_collection.categories
+    for category in a.categories
         category_counts[category] = get(category_counts, category, 0) + 1
     end
     
@@ -14,10 +27,10 @@ function Base.show(io::IO, asset_collection::T) where {T<:AbstractAssets}
     column_names = @sprintf("  %-10s | %-5s", "Category", "Count")
     header_separator = @sprintf("  %-10s%3s%-5s","-"^10,"-"^5,"-"^5)
     
-    asset_type = typeof(asset_collection)
+    asset_type = typeof(a)
 
     # Printing logic
-    println(io, "$(length(asset_collection.names)) $(asset_type.name.wrapper):")
+    println(io, "$(length(a.names)) $(asset_type.name.wrapper):")
     println(io, column_names)
     println(io, header_separator)
     println(io, "  $(join(category_strings, "\n  "))")
