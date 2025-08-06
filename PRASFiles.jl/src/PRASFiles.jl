@@ -36,4 +36,6 @@ function rts_gmlc()
     return SystemModel(joinpath(path, "Systems","rts.pras")) 
 end
 
+export toymodel,rts_gmlc
+
 end

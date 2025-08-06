@@ -50,7 +50,7 @@ interactive REPL session.
 The following snippet shows expected unserved energy (EUE) assessment for the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system, which is packaged with PRAS. 
 
 ```Julia
-rts_gmlc_sys = PRAS.rts_gmlc();
+rts_gmlc_sys = rts_gmlc();
 shortfall, = assess(rts_gmlc_sys,
                     SequentialMonteCarlo(samples=10,seed=1),
                     Shortfall()
