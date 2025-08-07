@@ -129,6 +129,8 @@
         @test occursin("Generators:", text)
         @test occursin("Storages:", text)
         @test occursin("GeneratorStorages:", text)
+
+        @test_throws "Asset type Lines is not supported. Supported types are: Generators, Storages, GeneratorStorages" multi_region_sys_with_attrs["Region A", Lines]
     end
 end
 
