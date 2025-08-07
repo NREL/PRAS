@@ -13,19 +13,22 @@ makedocs(
     modules = [PRASCore, PRASFiles, PRASCapacityCredits],
     pages = [
         "Home" => "index.md",
-        "Installation" => "installation.md",
-        "Getting Started" => "getting-started.md",
-        "PRASCore" => [
-            "Overview" => "PRASCore/index.md",
-            "API Reference" => "PRASCore/api.md"
+        "Installation instructions" => "installation.md",
+        "Resource adequacy" => "resource-adequacy.md",
+        "Quick start" => "getting-started.md",
+        "System model specification" => "SystemModel_HDF5_spec.md",
+        "PRAS" => [
+            "Introduction" => "PRAS/introduction.md",
+            "Input System Specification" => "PRAS/inputs.md",
+            "Simulation Specifications" => "PRAS/simulations.md",
+            "Result Specifications" => "PRAS/results.md",
+            "Capacity Credit Calculation" => "PRAS/capacity-credit.md",
+            "Extending PRAS" => "PRAS/extending.md",
         ],
-        "PRASFiles" => [
-            "Overview" => "PRASFiles/index.md",
-            "API Reference" => "PRASFiles/api.md"
-        ],
-        "PRASCapacityCredits" => [
-            "Overview" => "PRASCapacityCredits/index.md",
-            "API Reference" => "PRASCapacityCredits/api.md"
+        "API Reference" => [
+            "PRASCore" => "PRASCore/api.md",
+            "PRASFiles" => "PRASFiles/api.md",
+            "PRASCapacityCredits" => "PRASCapacityCredits/api.md"
         ]
     ],
     checkdocs = :exports,
@@ -33,7 +36,7 @@ makedocs(
 )
 
 deploydocs(
-    repo = "github.com/NREL/PRAS",
+    repo = "github.com/NREL/PRAS.git",
     devbranch = "main",
     push_preview = true
 )
