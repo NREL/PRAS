@@ -18,7 +18,7 @@ export
     Period, Minute, Hour, Day, Year,
     PowerUnit, kW, MW, GW, TW,
     EnergyUnit, kWh, MWh, GWh, TWh,
-    unitsymbol, conversionfactor, powertoenergy, energytopower,
+    unitsymbol, unitsymbol_long, conversionfactor, powertoenergy, energytopower,
 
     # Main data structure
     SystemModel,
