@@ -3,7 +3,7 @@ using PRASFiles
 using Test
 using JSON3
 
-@testset "PRASFiles" begin
+@testset verbose=true "PRASFiles" begin
 
     @testset "Roundtrip .pras files to/from disk" begin
 
@@ -26,6 +26,7 @@ using JSON3
 
         rts_userattrs = SystemModel(path * "/rts_userattrs.pras")
         @test rts == rts_userattrs
+        @test PRASFiles.read_attrs(path * "/rts_userattrs.pras") == Dict("about" => "this is a representation of the RTS GMLC system")
 
     end
 

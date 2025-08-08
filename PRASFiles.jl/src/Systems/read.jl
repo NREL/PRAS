@@ -340,15 +340,15 @@ function read_attrs(inputfile::String)
 
         if isempty(sys_attributes)
             println("No system attributes found in the file.")
+            return Dict{String, String}()
         else    
             println("System attribute(s) found in the file:")
             for key in keys(sys_attributes)
                 println("  $key: $(sys_attributes[key])")
             end
+            return sys_attributes
         end
-        return 
     end
-
 end
 
 """

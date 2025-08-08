@@ -4,7 +4,7 @@ using Test
 
 import PRASCore.Systems: TestData
 
-@testset "PRASCapacityCredits" begin
+@testset verbose=true "PRASCapacityCredits" begin
 
     empty_str = String[]
     empty_int(x) = Matrix{Int}(undef, 0, x)

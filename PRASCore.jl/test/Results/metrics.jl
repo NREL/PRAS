@@ -1,4 +1,4 @@
-@testset "Metrics" begin
+@testset verbose = true "Metrics" begin
 
     @testset "MeanEstimate" begin
 

@@ -1,4 +1,4 @@
-@testset "Collections" begin
+@testset verbose = true "Collections" begin
 
     @testset "Regions" begin
 

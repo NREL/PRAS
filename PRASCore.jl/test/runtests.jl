@@ -21,7 +21,7 @@ Base.isapprox(x::T, y::T) where {T <: ReliabilityMetric} =
 Base.isapprox(x::Tuple{Float64,Float64}, y::Vector{<:Real}) =
     isapprox(x[1], mean(y)) && isapprox(x[2], std(y))
 
-@testset "PRAS" begin
+@testset verbose = true "PRAS" begin
     include("dummydata.jl")
     include("Systems/runtests.jl")
     include("Results/runtests.jl")

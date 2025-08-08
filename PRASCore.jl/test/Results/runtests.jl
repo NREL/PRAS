@@ -1,4 +1,4 @@
-@testset "Results" begin
+@testset verbose = true "Results" begin
 
     include("metrics.jl")
     include("shortfall.jl")
