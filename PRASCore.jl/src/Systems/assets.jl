@@ -2,7 +2,7 @@ abstract type AbstractAssets{N,L,T<:Period,P<:PowerUnit} end
 Base.length(a::AbstractAssets) = length(a.names)
 
 function Base.getindex(a::AbstractAssets, reqd_names::AbstractVector{String})
-    length(reqd_names) != length(unique(reqd_names)) && error("Names must be unique.")
+    !allunique(reqd_names) && error("Names must be unique.")
     idxs = findall(a.names .∈ Ref(reqd_names))
     length(idxs) != length(reqd_names) && error("One or more names not found.")
     return a[idxs]
