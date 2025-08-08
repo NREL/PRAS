@@ -1,10 +1,8 @@
 module PRASFiles
 
-const PRASFILE_VERSION = "v0.7.0"
-
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
-                         timeunits, powerunits, energyunits, unitsymbol
+                         timeunits, powerunits, energyunits, unitsymbol             
 
 import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, ShortfallSamplesResult, AbstractShortfallResult, Result
 import StatsBase: mean
@@ -20,6 +18,7 @@ import JSON3: pretty
 
 export savemodel
 export saveshortfall
+export read_attrs
 
 include("Systems/read.jl")
 include("Systems/write.jl")
@@ -36,5 +35,7 @@ function rts_gmlc()
     path = dirname(@__FILE__)
     return SystemModel(joinpath(path, "Systems","rts.pras")) 
 end
+
+export toymodel,rts_gmlc
 
 end

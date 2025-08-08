@@ -36,8 +36,11 @@ to generically as "resource collections".
 The HDF5 file must define seven
 [attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
 on the
-[root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup).
-These attributes are all mandatory:
+[root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup). 
+There can also be additional attributes describing the system, including data descriptors used 
+in creating the system.
+
+These attributes are mandatory:
 
  - `pras_dataversion`, signalling that this file is a representation of a PRAS
    `SystemModel` and providing the version of this specification used to
@@ -51,7 +54,10 @@ These attributes are all mandatory:
  - `power_unit`, providing the units for power-related data
  - `energy_unit`, providing the units for energy-related data
 
-Each of these attributes and their required contents are explained in more
+There can be any number of optional attributes which need to also be defined as 
+key-value pairs and both the key and value are strings of characters.
+
+Each of the required attributes and their contents are explained in more
 detail below.
 
 #### `pras_dataversion`

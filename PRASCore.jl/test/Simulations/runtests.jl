@@ -1,4 +1,4 @@
-@testset "Simulations" begin
+@testset verbose = true "Simulations" begin
 
     @testset "DispatchProblem" begin
 

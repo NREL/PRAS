@@ -6,6 +6,11 @@ unitsymbol(::Type{Hour}) = "h"
 unitsymbol(::Type{Day}) = "d"
 unitsymbol(::Type{Year}) = "y"
 
+unitsymbol_long(::Type{Minute}) = "Minute"
+unitsymbol_long(::Type{Hour}) = "Hour"
+unitsymbol_long(::Type{Day}) = "Day"
+unitsymbol_long(::Type{Year}) = "Year"
+
 conversionfactor(F::Type{<:Period}, T::Type{<:Period}) =
     conversionfactor(F, Hour) * conversionfactor(Hour, T)
 

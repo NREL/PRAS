@@ -18,4 +18,9 @@
     @test unitsymbol(Day) == "d"
     @test unitsymbol(Year) == "y"
 
+    @test unitsymbol_long(Minute) == "Minute"
+    @test unitsymbol_long(Hour) == "Hour"
+    @test unitsymbol_long(Day) == "Day"
+    @test unitsymbol_long(Year) == "Year"
+
 end

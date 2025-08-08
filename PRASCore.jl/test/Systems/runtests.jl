@@ -1,4 +1,4 @@
-@testset "Systems" begin
+@testset verbose = true "Systems" begin
 
     include("units.jl")
     include("assets.jl")
