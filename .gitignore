@@ -4,7 +4,7 @@
 Manifest.toml
 *.DS_Store
 *.pras
-*.json
+PRASFiles.jl/test/PRAS_Results_Export/
 
 docs/build/
 docs/site/

@@ -1,9 +1,7 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
 // README at: https://github.com/JuliaLang/devcontainer-templates/tree/main/src/julia
 {
-	"name": "Julia",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+	"build": { "dockerfile": "Dockerfile" },
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	"features": {
@@ -19,7 +17,9 @@
 			"autoPull": true,
 			"version": "latest"
 		}
-	}
+	},
+
+	"postCreateCommand": "julia --project=PRAS.jl -e 'import Pkg; Pkg.develop([(path=\"PRASCore.jl\",),(path=\"PRASFiles.jl\",),(path=\"PRASCapacityCredits.jl\",)])'",
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
