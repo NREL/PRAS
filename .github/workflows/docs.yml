@@ -26,10 +26,10 @@ jobs:
             using Pkg
             # Develop all packages in workspace
             Pkg.develop([
-            (path="PRASCore.jl",),
-            (path="PRASFiles.jl",),
-            (path="PRASCapacityCredits.jl",)
-            (path="PRAS.jl",)
+                (path="PRASCore.jl",),
+                (path="PRASFiles.jl",),
+                (path="PRASCapacityCredits.jl",),
+                (path="PRAS.jl",)
             ])
             Pkg.instantiate()'
       - name: Build and deploy docs
