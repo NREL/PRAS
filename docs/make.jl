@@ -37,7 +37,7 @@ makedocs(
 
 deploydocs(
     repo = "github.com/NREL/PRAS.git",
-    devbranch = "main",
+    devbranch = "ssh/docgen",
     push_preview = true,
     versions = nothing
 )
