@@ -3,7 +3,7 @@ name: Documentation
 on:
   push:
     branches:
-      - adddocs
+      - ssh/docgen
       - main
     tags: '*'
   pull_request:
