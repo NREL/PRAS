@@ -1,0 +1,36 @@
+name: Documentation
+
+on:
+  push:
+    branches:
+      - adddocs
+      - main
+    tags: '*'
+  pull_request:
+
+jobs:
+  docs:
+    name: Documentation
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1.10'
+      - name: Configure doc environment
+        run: |
+          julia --project=docs/ -e '
+            using Pkg
+            # Develop all packages in workspace
+            for pkg in ["PRAS", "PRASCore", "PRASCapacityCredits", "PRASFiles"]
+              if isdir("$pkg.jl")
+                Pkg.develop(path="$pkg.jl")
+              end
+            end
+            Pkg.instantiate()'
+      - name: Build and deploy docs
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: julia --project=docs/ docs/make.jl deploy=true
