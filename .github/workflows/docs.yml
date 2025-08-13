@@ -18,17 +18,19 @@ jobs:
       - uses: actions/checkout@v3
       - uses: julia-actions/setup-julia@latest
         with:
-          version: '1.10'
+          version: 'latest'
       - name: Configure doc environment
         run: |
           julia --project=docs/ -e '
+            println(pwd());
             using Pkg
             # Develop all packages in workspace
-            for pkg in ["PRAS", "PRASCore", "PRASCapacityCredits", "PRASFiles"]
-              if isdir("$pkg.jl")
-                Pkg.develop(path="$pkg.jl")
-              end
-            end
+            Pkg.develop([
+            (path="PRASCore.jl",),
+            (path="PRASFiles.jl",),
+            (path="PRASCapacityCredits.jl",)
+            (path="PRAS.jl",)
+            ])
             Pkg.instantiate()'
       - name: Build and deploy docs
         env:
