@@ -1,4 +1,4 @@
-# Result Specifications
+# [Result Specifications](@id results)
 
 Different analyses require different kinds of results, and different levels of
 detail within those results. PRAS considers many operational decisions and
@@ -12,7 +12,7 @@ simulating with many samples.
 
 The current version of PRAS includes six built-in result specification
 families, with additional user-defined specifications possible (see 
-[Custom Result Specifications](extending.md#custom-result-specifications)). These families can be classified into regional
+[Custom Result Specifications](@ref customsimspec)). These families can be classified into regional
 results (**Shortfall** and **Surplus**), interface results
 (**Flow** and **Utilization**), and unit results
 (**Availability** and **Energy**).

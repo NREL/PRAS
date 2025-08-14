@@ -1,18 +1,20 @@
-_Note: A useful reference for HDF5 file structure concepts is the
-[HDF5 Glossary](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary).
-This document contains links to glossary entries to explain HDF5 terms when used
-for the first time._
-
 # `SystemModel` HDF5 representation specification
 
 This document specifies a representation of the PRAS `SystemModel` data
-structure in terms of
-[objects](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Object)
-in an HDF5 file. This specification is version-controlled in the same
+structure in terms of objects like 
+[groups](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_g__u_g.html#subsec_group_descr), 
+[datatypes](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_t__u_g.html#sec_datatype), and 
+[datasets](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_d__u_g.html#sec_dataset)
+in an [HDF5 file](https://support.hdfgroup.org/documentation/hdf5/latest/_l_b_file_org.html). This specification is version-controlled in the same
 repository as the `SystemModel` source code: any time the `SystemModel`
 definition is changed, those updates are expected to be reconciled with this
 document as appropriate. The version of this specification should therefore be
 taken as the version of the package containing this file.
+
+_Note: A useful reference for HDF5 file structure concepts is the
+[HDF5 Glossary](https://support.hdfgroup.org/documentation/hdf5/latest/_g_l_s.html).
+This document contains links to documentation entries to explain HDF5 terms when used
+for the first time._
 
 ## Filename extension
 
@@ -34,7 +36,7 @@ to generically as "resource collections".
 ### Root group attributes
 
 The HDF5 file must define seven
-[attributes](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Attribute)
+[attributes](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_d_m__u_g.html#subsubsec_data_model_abstract_attr)
 on the
 [root group](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Rootgroup). 
 There can also be additional attributes describing the system, including data descriptors used 
@@ -139,7 +141,7 @@ take:
 ### Resource / resource collection data
 
 The file may define the following six
-[groups](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Group)
+[groups](https://support.hdfgroup.org/documentation/hdf5/latest/_h5_g__u_g.html)
 as children of the root group. At least two groups are mandatory.
 
 The file must include:
@@ -169,7 +171,7 @@ paragraphs.
 
 Each group contains one `_core` dataset providing static parameters and/or relations
 for the group entities, in the form of a vector / one-dimensional array of
-[compound datatype](https://portal.hdfgroup.org/display/HDF5/HDF5+Glossary#HDF5Glossary-Compounddatatype)
+[compound datatype](https://support.hdfgroup.org/documentation/hdf5/latest/_g_l_s.html)
 instances. These datasets may use HDF5's automatic compression features to
 reduce filesize.
 

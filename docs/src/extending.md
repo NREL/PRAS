@@ -1,4 +1,4 @@
-# Extending PRAS
+# [Extending PRAS](@id extending)
 
 PRAS provides opportunties for users to non-invasively build on its general
 simulation framework by redefining how simulations are executed, augmenting
@@ -12,7 +12,7 @@ structures. Julia's multiple dispatch functionality can then identify and use
 these newly defined capabilities when the `assess` function is invoked
 appropriately.
 
-## Custom Simulation Specifications
+## [Custom Simulation Specifications](@id customsimspec)
 
 Custom simulation specifications allow for redefining how PRAS models system
 operations. In addition to the data structures and methods listed here,

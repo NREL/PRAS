@@ -1,4 +1,4 @@
-# Capacity Credit Calculation
+# [Capacity Credit Calculation](@id capacitycredit)
 
 Resource adequacy paradigms premised on adding resource capacities together to
 meet a planning reserve margin require the quantification of a "capacity credit" (sometimes called "capacity value")

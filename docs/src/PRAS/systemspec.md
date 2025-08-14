@@ -1,4 +1,5 @@
-# Input System Specification
+# [System Model Specification](@id system_specification)
+
 
 Assessing the resource adequacy of a power system requires a description
 of the various resources available to that system, as well as its requirements
@@ -107,7 +108,12 @@ opposite state according to unit-specific state transition probabilities. Like
 maximum available capacity, these transition probabilities are represented as
 time series, and so may be different during different time periods.
 
-![Relations between power and energy parameters for generator, storage, and generator-storage resources.](../images/resourceparameters.pdf)
+```@raw html
+<figure>
+<img src="../../images/resourceparameters.pdf" alt="Relations between power and energy parameters for generator, storage, and generator-storage resources." style="max-width:2000px;  width:100%;"/>
+<figcaption> Relations between power and energy parameters for generator, storage, and generator-storage resources</figcaption>
+</figure>
+```
 
 ## Storages
 
@@ -173,7 +179,13 @@ A generator-storage in the unavailable state can neither charge nor discharge
 its storage, nor send energy inflow to the grid. Like storage, it does retain
 its state of charge during outages (subject to carryover losses).
 
-![Example applications of the generator-storage resource type](../images/genstorexamples.pdf)
+
+```@raw html
+<figure>
+<img src="../../images/genstorexamples.pdf" alt="Example applications of the generator-storage resource type" style="max-width:2000px;  width:100%;"/>
+<figcaption> Example applications of the generator-storage resource type </figcaption>
+</figure>
+```
 
 ## Interfaces
 
