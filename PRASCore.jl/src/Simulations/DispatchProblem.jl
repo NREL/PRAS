@@ -262,8 +262,8 @@ struct DispatchProblem
             genstor_totalgrid,
             genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
             genstor_inflowunused, 
-            dr_borrowused, dr_paybackunused, dr_paybackused,
-            dr_paybackunused,
+            dr_paybackused,dr_paybackunused,
+            dr_borrowused, dr_borrowunused,
             min_chargecost, max_dischargecost,
             max_borrowcost_dr, min_paybackcost_dr
         )

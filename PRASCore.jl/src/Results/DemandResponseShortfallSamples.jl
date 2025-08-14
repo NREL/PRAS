@@ -33,7 +33,7 @@ regional_neue = NEUE(drshortfall, "Region A")
 
 # Period-specific risk metrics
 period_eue = EUE(drshortfall, period)
-period_lolp = LOLE(shortfall, period)
+period_lolp = LOLE(drshortfall, period)
 
 # Region- and period-specific risk metrics
 period_eue = EUE(drshortfall, "Region A", period)

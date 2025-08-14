@@ -23,7 +23,7 @@ sf_mean, sf_std = DemandResponseShortfall["Region A", period]
 # System-wide risk metrics
 eue = EUE(DemandResponseShortfall)
 lole = LOLE(DemandResponseShortfall)
-neue = NEUE(shorfall)
+neue = NEUE(DemandResponseShortfall)
 
 # Regional risk metrics
 regional_eue = EUE(DemandResponseShortfall, "Region A")
