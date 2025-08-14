@@ -485,7 +485,7 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
     payback_efficiency = Matrix{Float64}(undef, n_drs, N)
     carryover_efficiency = Matrix{Float64}(undef, n_drs, N)
 
-    allowable_payback_period = Matrix{Float64}(undef, n_drs, N)
+    allowable_payback_period = Matrix{Int}(undef, n_drs, N)
 
 
     λ = Matrix{Float64}(undef, n_drs, N)
