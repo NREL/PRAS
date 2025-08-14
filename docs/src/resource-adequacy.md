@@ -1,4 +1,4 @@
-# Resource Adequacy Background
+# [Resource Adequacy Background](@id resourceadequacy)
 
 An electrical power system is considered resource adequate if it has procured
 sufficient resources (including supply, transmission, and responsive demand)
@@ -20,7 +20,7 @@ through to chronological simulations of system dispatch and power flow over
 the full operating horizon.
 
 The resulting outcomes can then be used to calculate industry-standard
-probabilistic risk metrics [NERC Probabilistic Assessment Working Group, 2018](#references):
+[probabilistic risk metrics [1]](#references).
 
 **Expected Unserved Energy (EUE)** is the expected (average) total energy
 shortfall over the study period. It may be expressed in energy units
@@ -51,4 +51,4 @@ resource adequacy assessment.
 
 ## References
 
-NERC Probabilistic Assessment Working Group. (2018). Probabilistic Adequacy and Measures. North American Electric Reliability Corporation.
+1. de Mijolla, G., Bello, M., Danti Lopez, I., Entriken, R., Hytowitz, R., Lannoye, E., Ranola, J.A., Roark, J., Tuohy, A., & Wang, Q. (2022). Resource adequacy for a decarbonized future: A summary of existing and proposed resource adequacy metrics. Tech. Rep. 3002023230, Electric Power Research Institute (EPRI).

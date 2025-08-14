@@ -1,4 +1,4 @@
-# Simulation Specifications
+# [Simulation Specifications](@id simulations)
 
 There are many different simplifying assumptions that can be made when
 simulating power system operations for the purpose of studying resource
@@ -15,7 +15,7 @@ when simulating operations in order to assess the resource adequacy of the
 study system.
 
 The current version of PRAS defines the **Sequential Monte Carlo** specification,
-with additional user-defined specifications possible (see [Custom Simulation Specifications](extending.md#custom-simulation-specifications)). The remainder of this
+with additional user-defined specifications possible (see [Custom Simulation Specifications](@ref customsimspec)). The remainder of this
 section describes the methods and underlying assumptions of each of these
 built-in simulation specifications.
 
@@ -27,7 +27,20 @@ The Sequential Monte Carlo method simulates the chronological evolution of the s
 
 The Sequential Monte Carlo method simulates unit-level outages using a two-state Markov model. In each time period, the availability state of each generator, storage, generator-storage, and line either changes or remains the same, at random, based on the unit's provided state transition probabilities. The capacities from each available generator (or line) in a given time period are then added together to determine the total available generating (transfer) capacity for a region (interface). Storage and generator-storage units are similarly enabled or disabled based on their availability states.
 
-Like with the Non-Sequential Monte Carlo simulation specification, pipe-and-bubble power transfers between regions are possible, subject to interface and line transfer limits, and there is a small penalty applied to transfers in order to prevent loop flows.
+Each set of sampled parameters is used to formulate the "pipe-and-bubble" network flow problem shown below, in which local demand in each region is satisfied (or not) using a combination of local generation, imported power, and unserved energy. Regions with surplus capacity can export that power to their neighbours if transmission limits allow, with a small transfer penalty applied to prevent loop flows. Any demand that cannot be supplied under the randomly drawn generation and transmission limits is considered unserved.
+
+```@raw html
+<figure>
+<img src="../../images/networkflow.pdf" alt="Example three-region network flow problem to be solved
+        by the Non-Sequential Monte Carlo simulation specification. Any
+        load that cannot be served within the sampled generation
+        and transmission constraints goes unserved." style="max-width:2000px;  width:50%;"/>
+<figcaption> Example three-region network flow problem to be solved
+        by the Non-Sequential Monte Carlo simulation specification. Any
+        load that cannot be served within the sampled generation
+        and transmission constraints goes unserved </figcaption>
+</figure>
+```
 
 The Sequential Monte Carlo method is unique in its ability to represent energy-limited resources (storages and generator-storages). These resources are dispatched conservatively so as to approximately minimize unserved energy over the full simulation horizon, charging from the grid whenever surplus generating capacity is available, and discharging only when needed to avoid or mitigate unserved energy. Charging and discharging is coordinated between resources using the time-to-go priority described in [Evans et al. (2019)](#references): resources that would be able to discharge the longest at their maximum rate are discharged first, and resources that would take the longest time to charge at their maximum charge rate are charged first. Cross-charging (discharging one resource in order to charge another) is not permitted.
 
