@@ -142,7 +142,7 @@ struct DispatchProblem
 
         #for demand response-we want to borrow energy in devices with the longest payback window, and payback energy from devices with the smallest payback window
         minpaybacktime_dr, maxpaybacktime_dr = minmax_payback_window_dr(sys)
-        min_paybackcost_dr = - maxpaybacktime_dr - 1 + min_chargecost #add min_chargecost to always have DR devices be paybacked first
+        min_paybackcost_dr = - maxpaybacktime_dr - 2 + min_chargecost #add min_chargecost to always have DR devices be paybacked first
         max_borrowcost_dr = - min_paybackcost_dr + minpaybacktime_dr + 1 + max_dischargecost #add max_dischargecost to always have DR devices be borrowed last
 
         #for unserved energy
