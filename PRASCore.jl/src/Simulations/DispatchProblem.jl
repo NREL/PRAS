@@ -160,9 +160,9 @@ struct DispatchProblem
         genstor_discharge_nodes = indices_after(genstor_inflow_nodes, ngenstors)
         genstor_togrid_nodes = indices_after(genstor_discharge_nodes, ngenstors)
         genstor_charge_nodes = indices_after(genstor_togrid_nodes, ngenstors)
-        dr_borrow_nodes = indices_after(genstor_charge_nodes, ndrs)
-        dr_payback_nodes = indices_after(dr_borrow_nodes, ndrs)        
-        slack_node = nnodes = last(dr_payback_nodes) + 1
+        dr_payback_nodes = indices_after(genstor_charge_nodes, ndrs)        
+        dr_borrow_nodes = indices_after(dr_payback_nodes, ndrs)
+        slack_node = nnodes = last(dr_borrow_nodes) + 1
 
         region_unservedenergy = 1:nregions
         region_unusedcapacity = indices_after(region_unservedenergy, nregions)
@@ -180,11 +180,11 @@ struct DispatchProblem
         genstor_inflowcharge = indices_after(genstor_gridcharge, ngenstors)
         genstor_chargeunused = indices_after(genstor_inflowcharge, ngenstors)
         genstor_inflowunused = indices_after(genstor_chargeunused, ngenstors)
-        dr_borrowused = indices_after(genstor_inflowunused, ndrs)
-        dr_borrowunused = indices_after(dr_borrowused, ndrs) 
-        dr_paybackused = indices_after(dr_borrowunused, ndrs)
+        dr_paybackused = indices_after(genstor_inflowunused, ndrs)
         dr_paybackunused = indices_after(dr_paybackused, ndrs)       
-        nedges = last(dr_paybackunused)
+        dr_borrowused = indices_after(dr_paybackunused, ndrs)
+        dr_borrowunused = indices_after(dr_borrowused, ndrs)   
+        nedges = last(dr_borrowunused)
 
         nodesfrom = Vector{Int}(undef, nedges)
         nodesto = Vector{Int}(undef, nedges)
@@ -239,11 +239,10 @@ struct DispatchProblem
         initedges(genstor_inflowunused, genstor_inflow_nodes, slack_node)
 
         # Demand Response borrowing / payback
-        initedges(dr_paybackused, dr_payback_nodes, dr_regions)
-        initedges(dr_paybackunused, dr_payback_nodes, slack_node)
-        initedges(dr_borrowused, dr_regions, dr_borrow_nodes)
-        initedges(dr_borrowunused, slack_node, dr_borrow_nodes)
-
+        initedges(dr_paybackused, dr_regions, dr_payback_nodes)
+        initedges(dr_paybackunused, slack_node,dr_payback_nodes)
+        initedges(dr_borrowused, dr_borrow_nodes, dr_regions)
+        initedges(dr_borrowunused, dr_borrow_nodes, slack_node)
 
         return new(
 
@@ -252,7 +251,7 @@ struct DispatchProblem
             region_nodes, stor_discharge_nodes, stor_charge_nodes,
             genstor_inflow_nodes, genstor_discharge_nodes,
             genstor_togrid_nodes, genstor_charge_nodes,
-            dr_borrow_nodes,dr_payback_nodes, slack_node,
+            dr_payback_nodes, dr_borrow_nodes, slack_node,
 
             region_unservedenergy, region_unusedcapacity,
             iface_forward, iface_reverse,
@@ -262,7 +261,7 @@ struct DispatchProblem
             genstor_totalgrid,
             genstor_gridcharge, genstor_inflowcharge, genstor_chargeunused,
             genstor_inflowunused, 
-            dr_paybackused,dr_paybackunused,
+            dr_paybackused, dr_paybackunused,
             dr_borrowused, dr_borrowunused,
             min_chargecost, max_dischargecost,
             max_borrowcost_dr, min_paybackcost_dr
