@@ -3,7 +3,8 @@ uuid = "05348d26-1c52-11e9-35e3-9d51842d34b9"
 authors = [
     "Gord Stephen <Gord.Stephen@nrel.gov>",
     "Surya Chandan Dhulipala <SuryaChandan.Dhulipala@nrel.gov>",
-    "Hari Sundar <Hari.Sundar@nrel.gov>"
+    "Hari Sundar <Hari.Sundar@nrel.gov>",
+    "Julian Florez <Julian.Florez@nrel.gov"
 ]
 version = "0.8.0"
 
