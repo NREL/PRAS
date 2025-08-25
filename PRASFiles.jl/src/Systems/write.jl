@@ -251,8 +251,8 @@ function process_demandresponses!(
     demandresponses["paybackefficiency", deflate = compression] =
         sys.demandresponses.payback_efficiency
 
-    demandresponses["carryoverefficiency", deflate = compression] =
-         sys.demandresponses.carryover_efficiency
+    demandresponses["borrowedenergyinterest", deflate = compression] =
+         sys.demandresponses.borrowed_energy_interest
 
     demandresponses["allowablepaybackperiod", deflate = compression] =
          sys.demandresponses.allowable_payback_period

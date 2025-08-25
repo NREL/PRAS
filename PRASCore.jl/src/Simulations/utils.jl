@@ -120,6 +120,28 @@ function update_energy!(
 
 end
 
+function update_dr_energy!(
+    drs_energy::Vector{Int},
+    drs::AbstractAssets,
+    t::Int
+)
+
+    for i in 1:length(drs_energy)
+
+        soc = drs_energy[i]
+        efficiency = drs.borrowed_energy_interest[i,t] + 1.0
+        maxenergy = drs.energy_capacity[i,t]
+
+        # Decay SoC
+        soc = round(Int, soc * efficiency)
+
+        # Shed SoC above current energy limit
+        drs_energy[i] = min(soc, maxenergy)
+
+    end
+
+end
+
 function update_paybackcounter!(
     payback_counter::Vector{Int},
     drs_energy::Vector{Int},
