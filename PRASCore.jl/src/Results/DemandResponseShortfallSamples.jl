@@ -46,127 +46,96 @@ larger sample sizes. See [`DemandResponseShortfall`](@ref) for average shortfall
 struct DemandResponseShortfallSamples <: ResultSpec end
 
 struct DemandResponseShortfallSamplesAccumulator <: ResultAccumulator{DemandResponseShortfallSamples}
-
-    shortfall::Array{Int,3}
-
+    base::ShortfallSamplesAccumulator
 end
 
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::DemandResponseShortfallSamples
 ) where {N}
-
-    nregions = length(sys.regions)
-    shortfall = zeros(Int, nregions, N, nsamples)
-
-    return DemandResponseShortfallSamplesAccumulator(shortfall)
-
+    base_acc = accumulator(sys, nsamples, ShortfallSamples())  # call original accumulator
+    return DemandResponseShortfallSamplesAccumulator(base_acc)
 end
 
 function merge!(
     x::DemandResponseShortfallSamplesAccumulator, y::DemandResponseShortfallSamplesAccumulator
 )
-
-    x.shortfall .+= y.shortfall
-    return
-
+    merge!(x.base, y.base)
 end
 
 accumulatortype(::DemandResponseShortfallSamples) = DemandResponseShortfallSamplesAccumulator
 
 struct DemandResponseShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractShortfallResult{N,L,T}
-
-    regions::Regions{N,P}
-    timestamps::StepRange{ZonedDateTime,T}
-
-    shortfall::Array{Int,3} # r x t x s
-
+    base::ShortfallSamplesResult{N,L,T,P,E}
 end
 
 function getindex(
     x::DemandResponseShortfallSamplesResult{N,L,T,P,E}
 ) where {N,L,T,P,E}
-    p2e = conversionfactor(L, T, P, E)
-    return vec(p2e * sum(x.shortfall, dims=1:2))
+    return getindex(x.base)
 end
 
 function getindex(
     x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, r::AbstractString
 ) where {N,L,T,P,E}
-    i_r = findfirstunique(x.regions.names, r)
-    p2e = conversionfactor(L, T, P, E)
-    return vec(p2e * sum(view(x.shortfall, i_r, :, :), dims=1))
+    return getindex(x.base, r)
 end
 
 function getindex(
     x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, t::ZonedDateTime
 ) where {N,L,T,P,E}
-    i_t = findfirstunique(x.timestamps, t)
-    p2e = conversionfactor(L, T, P, E)
-    return vec(p2e * sum(view(x.shortfall, :, i_t, :), dims=1))
+    return getindex(x.base, t)
 end
 
 function getindex(
     x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, r::AbstractString, t::ZonedDateTime
 ) where {N,L,T,P,E}
-    i_r = findfirstunique(x.regions.names, r)
-    i_t = findfirstunique(x.timestamps, t)
-    p2e = conversionfactor(L, T, P, E)
-    return vec(p2e * x.shortfall[i_r, i_t, :])
+    return getindex(x.base, r, t)
 end
 
 
 function LOLE(x::DemandResponseShortfallSamplesResult{N,L,T}) where {N,L,T}
-    eventperiods = sum(sum(x.shortfall, dims=1) .> 0, dims=2)
-    return LOLE{N,L,T}(MeanEstimate(eventperiods))
+    return LOLE(x.base)
 end
 
 function LOLE(x::DemandResponseShortfallSamplesResult{N,L,T}, r::AbstractString) where {N,L,T}
-    i_r = findfirstunique(x.regions.names, r)
-    eventperiods = sum(view(x.shortfall, i_r, :, :) .> 0, dims=1)
-    return LOLE{N,L,T}(MeanEstimate(eventperiods))
+    return LOLE(x.base, r)
 end
 
 function LOLE(x::DemandResponseShortfallSamplesResult{N,L,T}, t::ZonedDateTime) where {N,L,T}
-    i_t = findfirstunique(x.timestamps, t)
-    eventperiods = sum(view(x.shortfall, :, i_t, :), dims=1) .> 0
-    return LOLE{1,L,T}(MeanEstimate(eventperiods))
+    return LOLE(x.base, t)
 end
 
 function LOLE(x::DemandResponseShortfallSamplesResult{N,L,T}, r::AbstractString, t::ZonedDateTime) where {N,L,T}
-    i_r = findfirstunique(x.regions.names, r)
-    i_t = findfirstunique(x.timestamps, t)
-    eventperiods = view(x.shortfall, i_r, i_t, :) .> 0
-    return LOLE{1,L,T}(MeanEstimate(eventperiods))
+    return LOLE(x.base, r, t)
 end
 
 
 EUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}) where {N,L,T,P,E} =
-    EUE{N,L,T,E}(MeanEstimate(x[]))
+    EUE(x.base)
 
 EUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E} =
-    EUE{N,L,T,E}(MeanEstimate(x[r]))
+    EUE(x.base, r)
 
 EUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, t::ZonedDateTime) where {N,L,T,P,E} =
-    EUE{1,L,T,E}(MeanEstimate(x[t]))
+    EUE(x.base, t)
 
 EUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E} =
-    EUE{1,L,T,E}(MeanEstimate(x[r, t]))
+    EUE(x.base, r, t)
 
 function NEUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}) where {N,L,T,P,E}
-    return NEUE(div(MeanEstimate(x[]),(sum(x.regions.load)/1e6)))
+    return NEUE(x.base)
 end
 
 function NEUE(x::DemandResponseShortfallSamplesResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
-    i_r = findfirstunique(x.regions.names, r)
-    return NEUE(div(MeanEstimate(x[r]),(sum(x.regions.load[i_r,:])/1e6)))
+    return NEUE(x.base, r)
 end
 
 function finalize(
     acc::DemandResponseShortfallSamplesAccumulator,
     system::SystemModel{N,L,T,P,E},
 ) where {N,L,T,P,E}
+    base_result = finalize(acc.base, system)
 
-    return DemandResponseShortfallSamplesResult{N,L,T,P,E}(
-        system.regions, system.timestamps, acc.shortfall)
+    return DemandResponseShortfallSamplesResult(base_result)
 
 end
