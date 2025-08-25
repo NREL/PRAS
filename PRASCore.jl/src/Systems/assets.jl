@@ -498,7 +498,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
 
     borrow_efficiency::Matrix{Float64}
     payback_efficiency::Matrix{Float64}
-    carryover_efficiency::Matrix{Float64}
+    borrowed_energy_interest::Matrix{Float64}
 
     allowable_payback_period::Matrix{Int}
 
@@ -509,7 +509,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
         borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
         energycapacity::Matrix{Int}, borrowefficiency::Matrix{Float64},
-        paybackefficiency::Matrix{Float64}, carryoverefficiency::Matrix{Float64},
+        paybackefficiency::Matrix{Float64}, borrowedenergyinterest::Matrix{Float64},
         allowablepaybackperiod::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64}
     ) where {N,L,T,P,E}
@@ -528,10 +528,10 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
 
         @assert size(borrowefficiency) == (n_drs, N)
         @assert size(paybackefficiency) == (n_drs, N)
-        @assert size(carryoverefficiency) == (n_drs, N)
+        @assert size(borrowedenergyinterest) == (n_drs, N)
         @assert all(isfractional, borrowefficiency)
         @assert all(isfractional, paybackefficiency)
-        @assert all(isnonnegative, carryoverefficiency)
+        @assert all(isfractional, borrowedenergyinterest)
 
         @assert size(allowablepaybackperiod) == (n_drs, N)
         @assert all(isnonnegative, allowablepaybackperiod)
@@ -544,7 +544,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
 
         new{N,L,T,P,E}(string.(names), string.(categories),
                        borrowcapacity, paybackcapacity, energycapacity,
-                       borrowefficiency, paybackefficiency, carryoverefficiency,
+                       borrowefficiency, paybackefficiency, borrowedenergyinterest,
                        allowablepaybackperiod,
                        λ, μ)
 
@@ -560,7 +560,7 @@ Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
     x.energy_capacity == y.energy_capacity &&
     x.borrow_efficiency == y.borrow_efficiency &&
     x.payback_efficiency == y.payback_efficiency &&
-    x.carryover_efficiency == y.carryover_efficiency &&
+    x.borrowed_energy_interest == y.borrowed_energy_interest &&
     x.allowable_payback_period == y.allowable_payback_period &&
     x.λ == y.λ &&
     x.μ == y.μ
@@ -569,7 +569,7 @@ Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
     DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
       dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
       dr.borrow_efficiency[idxs, :], dr.payback_efficiency[idxs, :], 
-      dr.carryover_efficiency[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :])
+      dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -584,7 +584,7 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
     borrow_efficiency = Matrix{Float64}(undef, n_drs, N)
     payback_efficiency = Matrix{Float64}(undef, n_drs, N)
-    carryover_efficiency = Matrix{Float64}(undef, n_drs, N)
+    borrowed_energy_interest = Matrix{Float64}(undef, n_drs, N)
 
     allowable_payback_period = Matrix{Int}(undef, n_drs, N)
 
@@ -608,7 +608,7 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
         borrow_efficiency[rows, :] = dr.borrow_efficiency
         payback_efficiency[rows, :] = dr.payback_efficiency
-        carryover_efficiency[rows, :] = dr.carryover_efficiency
+        borrowed_energy_interest[rows, :] = dr.borrowed_energy_interest
 
         allowable_payback_period[rows, :] = dr.allowable_payback_period
 
@@ -620,7 +620,7 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
     end
 
     return DemandResponses{N,L,T,P,E}(names, categories, borrow_capacity, payback_capacity, energy_capacity, borrow_efficiency, payback_efficiency, 
-                               carryover_efficiency,allowable_payback_period, λ, μ)
+    borrowed_energy_interest,allowable_payback_period, λ, μ)
 
 end
 
