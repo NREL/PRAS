@@ -142,7 +142,7 @@ struct DispatchProblem
 
         #for demand response-we want to borrow energy in devices with the longest payback window, and payback energy from devices with the smallest payback window
         minpaybacktime_dr, maxpaybacktime_dr = minmax_payback_window_dr(sys)
-        min_paybackcost_dr = - maxpaybacktime_dr - 2 + min_chargecost #add min_chargecost to always have DR devices be paybacked first
+        min_paybackcost_dr = (- maxpaybacktime_dr - 50 + min_chargecost) #add min_chargecost to always have DR devices be paybacked first, and -15 for wheeling prevention
         max_borrowcost_dr = - min_paybackcost_dr + minpaybacktime_dr + 1 + max_dischargecost #add max_dischargecost to always have DR devices be borrowed last
 
         #for unserved energy
@@ -460,7 +460,7 @@ function update_problem!(
             fp.nodes[payback_node], slack_node, -payback_capacity)
 
         # smallest allowable payback window = highest priority (payback first)
-        paybackcost = problem.min_paybackcost_dr + allowablepayback # Negative cost
+        paybackcost = problem.min_paybackcost_dr + allowablepayback # Negative cost-mutliply by 10 for wheeling preventation
         updateflowcost!(fp.edges[payback_edge], paybackcost)
 
         # Update borrowing-make sure no borrowing is allowed if allowable payback period is equal to zero
