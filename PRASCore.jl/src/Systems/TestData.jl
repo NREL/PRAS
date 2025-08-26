@@ -294,7 +294,7 @@ emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
 dr = DemandResponses{6,1,Hour,MW,MWh}(
     ["DR1"], ["DemandResponse Category"],
     fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
-    fill(1., 1, 6), fill(1., 1, 6), fill(1., 1, 6),
+    fill(1., 1, 6), fill(1., 1, 6), fill(0.0, 1, 6),
     fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
 
@@ -303,20 +303,17 @@ full_day_load_profile = [56,58,60,61,59,53]
 
 test4 = SystemModel(gen, emptystors, emptygenstors, dr, timestamps, full_day_load_profile)
 
-test4_lole = 1.99
-test4_lolps = [0.0998, 0.2629, 0.33, 0.8603, 0.2638, 0.1733]
+test4_lole = 2.118
+test4_lolps = [0.09979000000000159, 0.26288399999999845, 0.3300120000000098, 0.8603499999999678, 0.26384700000001193, 0.30136599999999447]
 
-test4_eue = 40.75
-test4_eues = [4.69, 5.15, 6.94, 12.99, 6.03, 4.94]
 
-test4_esurplus = [0.9,0,0,0,0,1.98]
+test4_eue = 42.14
+test4_eues = [4.689609999999829, 5.1521070000000115, 6.940174999999926, 12.988998999999957, 6.031562999999943, 6.333204999999944]
 
-test4_eenergy = [0.8986299999999925,
-                2.4561559999999782,
-                4.254399000000163,
-                0.997662000000021,
-                2.6729959999999235,
-                1.388832000000018]
+
+test4_esurplus = [0.9,0,0,0,0,1.9818]
+
+test4_eenergy = [0.89863, 2.45616, 4.2544, 0.997662, 2.673, 0.0]
 
 
 # Test System 5 (Gen + DR + Stor, 1 Region for 6 hours)
@@ -338,9 +335,9 @@ emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
     (zeros(Int, 0, 6) for _ in 1:3)..., (zeros(Float64, 0, 6) for _ in 1:2)...)
 
 dr = DemandResponses{6,1,Hour,MW,MWh}(
-    ["DR1"], ["DemandResponses"],
+    ["DR1"], ["DemandResponse Category"],
     fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
-    fill(1., 1, 6), fill(1., 1, 6), fill(1., 1, 6),
+    fill(1., 1, 6), fill(1., 1, 6), fill(0.0, 1, 6),
     fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
 
@@ -349,19 +346,91 @@ full_day_load_profile = [56,58,60,61,59,53]
 
 test5 = SystemModel(gen, stor, emptygenstors, dr, timestamps, full_day_load_profile)
 
-test5_lole = 1.969
-test5_lolps = [0.0998, 0.1974, 0.3301, 0.4261, 0.6986, 0.2173]
+test5_lole = 2.007
+test5_lolps = [0.09979000000000159, 0.19739399999999457, 0.33007500000000567, 0.4260809999999895, 0.698582999999988, 0.25501299999998867]
 
-test5_eue = 41.18
-test5_eues = [4.69, 5.01, 6.88, 8.33, 11.23, 5.05]
 
-test5_esurplus = [0.0901899999999984,0,0,0,0,0.27480199999998633]
 
-test5_eenergy = [0.8993600000000469,
-                1.8662289999999468,
-                3.6625479999998864,
-                5.055734000000438,
-                1.5473829999999773,
-                0.9368359999999988]
+test5_eue = 42.11
+test5_eues = [4.6888800000001805, 5.013817000000116, 6.877069999999737, 8.325742999999783, 11.226304000000445, 5.983083000000084]
+
+
+test5_esurplus = [0.0901899999999984,0,0,0,0,0.27479499999999374]
+
+test5_eenergy = [0.89936, 1.86623, 3.66255, 5.05573, 1.54738, 0.0]
+
+
+# Multiregion with DR
+
+regions = Regions{6,MW}(["Region 1", "Region 2", "Region 3"],
+                  [19 20 25 26 24 25; 20 21 30 27 23 24; 22 26 27 25 23 24])
+
+generators = Generators{6,1,Hour,MW}(
+    ["Gen1", "VG A", "Gen 2", "Gen 3", "VG B", "Gen 4", "Gen 5", "VG C"],
+    ["Gens", "VG", "Gens", "Gens", "VG", "Gens", "Gens", "VG"],
+    [10 10 10 10 10 10; 4 3 2 3 4 3;               # A
+     10 10 10 10 10 10; 10 10 10 10 10 10; 6 5 3 4 3 2;  # B
+     10 10 15 10 10 10; 20 20 25 20 22 24; 2 1 2 1 2 2], # C
+    fill(0.1, 8, 6),
+    fill(0.9, 8, 6)
+)
+
+drs = DemandResponses{6,1,Hour,MW,MWh}(
+    ["DR1", "DR2", "DR3"],
+    ["DR_TYPE1", "DR_TYPE1", "DR_TYPE1"],
+    [fill(5, 1, 6);              # A borrow capacity
+    fill(4, 1, 6);                # B borrow capacity
+    fill(3, 1, 6);],              # C borrow capacity
+    [fill(5, 1, 6);              # A payback capacity
+    fill(4, 1, 6);                # B payback capacity
+    fill(3, 1, 6);],              # C payback capacity
+    [fill(10, 1, 6);              # A energy capacity
+    fill(8, 1, 6);                # B energy capacity
+    fill(6, 1, 6);],              # C energy capacity
+    fill(1.0, 3, 6),          # All regions 100% borrow efficiency
+    fill(1.0, 3, 6),          # All regions 100% payback efficiency
+    fill(0.0, 3, 6),          # All regions 0% borrowed energy interest
+    fill(4, 3, 6),          # All regions 3 allowable payback time periods
+    [fill(0.1, 1, 6);  # A
+        fill(0.1, 1, 6);  # B
+        fill(0.1, 1, 6)],  # C
+    [fill(0.9, 1, 6);  # A
+        fill(0.9, 1, 6);  # B
+        fill(0.9, 1, 6)]) # C)
+
+interfaces = Interfaces{6,MW}(
+    [1,1,2], [2,3,3], fill(100, 3, 6), fill(100, 3, 6))
+
+lines = Lines{6,1,Hour,MW}(
+    ["L1", "L2", "L3"], ["Lines", "Lines", "Lines"],
+    fill(100, 3, 6), fill(100, 3, 6), fill(0.1, 3, 6), fill(0.9, 3, 6))
+
+threenode_dr =
+    SystemModel(
+        regions, interfaces, generators, [1:2, 3:5, 6:8],
+        emptystors, fill(1:0, 3), emptygenstors, fill(1:0, 3),
+        drs, [1:1, 2:2, 3:3],
+        lines, [1:1, 2:2, 3:3],
+        ZonedDateTime(2018,10,30,0,tz):Hour(1):ZonedDateTime(2018,10,30,5,tz))
+
+threenode_dr_lole = 3.204734
+threenode_dr_lole_r = [2.749467; 2.0656159; 1.5787239]
+threenode_dr_lole_t = [0.0817; 0.2169519; 0.47371299; 0.843717; 0.588652; 1.0] 
+threenode_dr_lole_rt = [0.013778; 0.081317; 0.3802359; 0.3650310; 0.274108; 0.951144] 
+
+threenode_dr_eue = 53.0449649
+threenode_dr_eue_r = [26.54526199; 15.15617299; 11.34353]
+threenode_dr_eue_t = [0.566655; 1.82072; 5.47627; 9.7399670; 8.7754709; 26.66588199]
+threenode_dr_eue_rt = [0.16025; 0.510989; 2.446321; 6.235264; 5.0443439; 12.1480939]
+
+threenode_dr_esurplus_t = [6.066344; 0.805918; 0.148378; 0.03628699; 0.0952889; 0.10477099]
+threenode_dr_esurplus_rt = [2.574232; 0.545672; 0.0; 0.0; 0.0; 0.0]
+
+threenode_dr_flow = -1.0383633
+threenode_dr_flow_t = [-1.576781; -2.386248; -0.256078; -0.6453639; -0.728238; -0.6374709]  
+threenode_dr_util = 0.23285
+threenode_dr_util_t = [0.116007969;0.12482749;0.1083558;0.106341959;0.108113959; 0.107764689]
+
+threenode_dr_eenergy = 57.750022
 
 end 

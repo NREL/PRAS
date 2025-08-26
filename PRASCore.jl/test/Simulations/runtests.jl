@@ -508,4 +508,73 @@
 
     end
 
+    @testset "Test System 6: Gen + DR, 3 Regions" begin
+
+        simspec = SequentialMonteCarlo(samples=1_000_000, seed=112)
+        regions = TestData.threenode_dr.regions.names
+        dr = first(TestData.threenode_dr.demandresponses.names)
+        dts = TestData.threenode_dr.timestamps
+
+        shortfall, surplus, energy, flow, utilization =
+            assess(TestData.threenode_dr, simspec,
+                   Shortfall(), Surplus(), DemandResponseEnergy(), Flow(), Utilization())
+
+
+        # Shortfall - LOLE
+        @info "LOLE(shortfall): $(LOLE(shortfall))"
+        @info "TestData.threenode_dr_lole: $(TestData.threenode_dr_lole)"
+        @test withinrange(LOLE(shortfall),
+                          TestData.threenode_dr_lole, nstderr_tol)
+        @test all(withinrange.(LOLE.(shortfall, regions),
+                               TestData.threenode_dr_lole_r, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, dts),
+                               TestData.threenode_dr_lole_t, nstderr_tol))
+        @test all(withinrange.(LOLE.(shortfall, "Region 2", dts),
+                               TestData.threenode_dr_lole_rt, nstderr_tol))
+
+        # Shortfall - EUE
+        @info "eue(shortfall): $(EUE(shortfall))"
+        @info "TestData.threenode_dr_eue: $(TestData.threenode_dr_eue)"
+        @test withinrange(EUE(shortfall),
+                          TestData.threenode_dr_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(shortfall, regions),
+                               TestData.threenode_dr_eue_r, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, dts),
+                               TestData.threenode_dr_eue_t, nstderr_tol))
+        @test all(withinrange.(EUE.(shortfall, "Region 1", dts),
+                               TestData.threenode_dr_eue_rt, nstderr_tol))
+
+        # Surplus
+        @test all(withinrange.(getindex.(surplus, dts), 
+                               TestData.threenode_dr_esurplus_t,
+                               simspec.nsamples, nstderr_tol))
+        @test all(withinrange.(getindex.(surplus, "Region 2", dts),
+                               TestData.threenode_dr_esurplus_rt,
+                               simspec.nsamples, nstderr_tol))
+
+        # Flow
+        @test withinrange(flow["Region 1" => "Region 2"],
+                               TestData.threenode_dr_flow,
+                               simspec.nsamples, nstderr_tol)
+        @test all(withinrange.(getindex.(flow, "Region 1"=>"Region 2", dts),
+                               TestData.threenode_dr_flow_t,
+                               simspec.nsamples, nstderr_tol))
+
+        # Utilization
+        @test withinrange((sum(x[1] for x in getindex.(utilization, "Region 1"=>"Region 2")), sum(x[end] for x in getindex.(utilization, "Region 1"=>"Region 2"))),
+                               TestData.threenode_dr_util,
+                               simspec.nsamples, nstderr_tol)
+
+        @test all(withinrange.(getindex.(utilization, "Region 1"=>"Region 2",dts),
+                               TestData.threenode_dr_util_t,
+                               simspec.nsamples, nstderr_tol))
+        # Energy
+        @test withinrange((sum(x[1] for x in getindex.(energy, dts)), sum(x[end] for x in getindex.(energy, dts))), # fails?
+                               TestData.threenode_dr_eenergy,
+                               simspec.nsamples, nstderr_tol)
+
+
+    end
+
+
 end
