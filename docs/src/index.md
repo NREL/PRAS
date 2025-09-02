@@ -6,7 +6,7 @@ bulk power system.  It allows the user to simulate power system operations under
 PRAS is developed and maintained at the US
 [National Renewable Energy Laboratory](https://www.nrel.gov/) (NREL).
 
-To get started on using PRAS, see the [installation](./installation.md) and [getting Started](./getting-started.md) pages.
+To get started on using PRAS, see the [installation](@ref Installation) and [quick start](@ref quickstart) pages.
 
 ## Basic usage
 

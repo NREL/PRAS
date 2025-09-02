@@ -51,4 +51,9 @@ resource adequacy assessment.
 
 ## References
 
-1. de Mijolla, G., Bello, M., Danti Lopez, I., Entriken, R., Hytowitz, R., Lannoye, E., Ranola, J.A., Roark, J., Tuohy, A., & Wang, Q. (2022). Resource adequacy for a decarbonized future: A summary of existing and proposed resource adequacy metrics. Tech. Rep. 3002023230, Electric Power Research Institute (EPRI).
+1. de Mijolla, G., Bello, M., Danti Lopez, I., Entriken, R., Hytowitz, R., 
+    Lannoye, E., Ranola, J.A., Roark, J., Tuohy, A., & Wang, Q. (2022). 
+    [Resource adequacy for a decarbonized future: A summary of existing and 
+    proposed resource adequacy metrics]
+    (https://www.epri.com/research/products/000000003002023230). 
+    Tech. Rep. 3002023230, Electric Power Research Institute (EPRI).
