@@ -1,11 +1,11 @@
 # Shortfall
 
 function record!(
-    acc::Results.ShortfallAccumulator,
+    acc::Results.ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E}
+) where {N,L,T,P,E,S<:Results.Shortfall}
 
     totalshortfall = 0
     isshortfall = false
@@ -50,7 +50,52 @@ function record!(
 
 end
 
-function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
+# DemandResponseShortfall
+function record!(
+    acc::Results.ShortfallAccumulator{S},
+    system::SystemModel{N,L,T,P,E},
+    state::SystemState, problem::DispatchProblem,
+    sampleid::Int, t::Int
+) where {N,L,T,P,E,S<:Results.DemandResponseShortfall}
+
+    totalshortfall = 0
+    isshortfall = false
+
+    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
+
+        #count region shortfall and include dr shortfall
+        dr_shortfall = 0
+        for i in dr_idxs
+            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
+        end
+        regionshortfall = dr_shortfall
+        isregionshortfall = regionshortfall > 0
+
+        fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
+        fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
+
+        if isregionshortfall
+
+            isshortfall = true
+            totalshortfall += regionshortfall
+
+            acc.periodsdropped_region_currentsim[r] += 1
+            acc.unservedload_region_currentsim[r] += regionshortfall
+
+        end
+    end
+
+    if isshortfall
+        acc.periodsdropped_total_currentsim += 1
+        acc.unservedload_total_currentsim += totalshortfall
+    end
+    fit!(acc.periodsdropped_period[t], isshortfall)
+    fit!(acc.unservedload_period[t], totalshortfall)
+    return
+
+end
+
+function reset!(acc::Results.ShortfallAccumulator{S}, sampleid::Int) where {S}
 
     # Store regional / total sums for current simulation
     fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)
@@ -95,72 +140,6 @@ function record!(
 end
 
 reset!(acc::Results.ShortfallSamplesAccumulator, sampleid::Int) = nothing
-
-# DemandResponseShortfall
-
-function record!(
-    acc::Results.DemandResponseShortfallAccumulator,
-    system::SystemModel{N,L,T,P,E},
-    state::SystemState, problem::DispatchProblem,
-    sampleid::Int, t::Int
-) where {N,L,T,P,E}
-
-    totalshortfall = 0
-    isshortfall = false
-
-    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
-
-        #count region shortfall and include dr shortfall
-        dr_shortfall = 0
-        for i in dr_idxs
-            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
-        end
-        regionshortfall = dr_shortfall
-        isregionshortfall = regionshortfall > 0
-
-        fit!(acc.base.periodsdropped_regionperiod[r,t], isregionshortfall)
-        fit!(acc.base.unservedload_regionperiod[r,t], regionshortfall)
-
-        if isregionshortfall
-
-            isshortfall = true
-            totalshortfall += regionshortfall
-
-            acc.base.periodsdropped_region_currentsim[r] += 1
-            acc.base.unservedload_region_currentsim[r] += regionshortfall
-
-        end
-    end
-
-    if isshortfall
-        acc.base.periodsdropped_total_currentsim += 1
-        acc.base.unservedload_total_currentsim += totalshortfall
-    end
-    fit!(acc.base.periodsdropped_period[t], isshortfall)
-    fit!(acc.base.unservedload_period[t], totalshortfall)
-    return
-
-end
-
-function reset!(acc::Results.DemandResponseShortfallAccumulator, sampleid::Int)
-    # Store regional / total sums for current simulation
-    fit!(acc.base.periodsdropped_total, acc.base.periodsdropped_total_currentsim)
-    fit!(acc.base.unservedload_total, acc.base.unservedload_total_currentsim)
-
-    for r in eachindex(acc.base.periodsdropped_region)
-
-        fit!(acc.base.periodsdropped_region[r], acc.base.periodsdropped_region_currentsim[r])
-        fit!(acc.base.unservedload_region[r], acc.base.unservedload_region_currentsim[r])
-    end
-
-    # Reset for new simulation
-    acc.base.periodsdropped_total_currentsim = 0
-    fill!(acc.base.periodsdropped_region_currentsim, 0)
-    acc.base.unservedload_total_currentsim = 0
-    fill!(acc.base.unservedload_region_currentsim, 0)
-    return
-
-end
 
 # DemandResponseShortfallSamples
 function record!(

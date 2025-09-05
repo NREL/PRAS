@@ -82,7 +82,6 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
-include("DemandResponseShortfall.jl")
 include("DemandResponseShortfallSamples.jl")
 
 
