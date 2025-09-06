@@ -82,7 +82,6 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
-include("DemandResponseShortfallSamples.jl")
 
 
 abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end

@@ -119,8 +119,9 @@ function merge!(
 
 end
 
-accumulatortype(::Shortfall) = ShortfallAccumulator{Shortfall}
-accumulatortype(::DemandResponseShortfall) = ShortfallAccumulator{DemandResponseShortfall}
+accumulatortype(::S) where {
+        S<:Union{Shortfall,DemandResponseShortfall}
+    } = ShortfallAccumulator{S}
 
 struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
        AbstractShortfallResult{N, L, T}
@@ -200,47 +201,47 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
 
 end
 
-function getindex(x::ShortfallResult{S}) where {S}
+function getindex(x::ShortfallResult)  
     return sum(x.shortfall_mean), x.shortfall_std
 end
 
-function getindex(x::ShortfallResult{S}, r::AbstractString) where {S}
+function getindex(x::ShortfallResult, r::AbstractString)  
     i_r = findfirstunique(x.regions.names, r)
     return sum(view(x.shortfall_mean, i_r, :)), x.shortfall_region_std[i_r]
 end
 
-function getindex(x::ShortfallResult{S}, t::ZonedDateTime) where {S}
+function getindex(x::ShortfallResult, t::ZonedDateTime)  
     i_t = findfirstunique(x.timestamps, t)
     return sum(view(x.shortfall_mean, :, i_t)), x.shortfall_period_std[i_t]
 end
 
-function getindex(x::ShortfallResult{S}, r::AbstractString, t::ZonedDateTime) where {S}
+function getindex(x::ShortfallResult, r::AbstractString, t::ZonedDateTime)  
     i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return x.shortfall_mean[i_r, i_t], x.shortfall_regionperiod_std[i_r, i_t]
 end
 
 
-LOLE(x::ShortfallResult{N,L,T,S}) where {N,L,T,S} =
+LOLE(x::ShortfallResult{N,L,T}) where {N,L,T} =
     LOLE{N,L,T}(MeanEstimate(x.eventperiod_mean,
                              x.eventperiod_std,
                              x.nsamples))
 
-function LOLE(x::ShortfallResult{N,L,T,S}, r::AbstractString) where {N,L,T,S}
+function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
     return LOLE{N,L,T}(MeanEstimate(x.eventperiod_region_mean[i_r],
                                     x.eventperiod_region_std[i_r],
                                     x.nsamples))
 end
 
-function LOLE(x::ShortfallResult{N,L,T,S}, t::ZonedDateTime) where {N,L,T,S}
+function LOLE(x::ShortfallResult{N,L,T}, t::ZonedDateTime) where {N,L,T}
     i_t = findfirstunique(x.timestamps, t)
     return LOLE{1,L,T}(MeanEstimate(x.eventperiod_period_mean[i_t],
                                     x.eventperiod_period_std[i_t],
                                     x.nsamples))
 end
 
-function LOLE(x::ShortfallResult{N,L,T,S}, r::AbstractString, t::ZonedDateTime) where {N,L,T,S}
+function LOLE(x::ShortfallResult{N,L,T}, r::AbstractString, t::ZonedDateTime) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
     i_t = findfirstunique(x.timestamps, t)
     return LOLE{1,L,T}(MeanEstimate(x.eventperiod_regionperiod_mean[i_r, i_t],
@@ -249,23 +250,23 @@ function LOLE(x::ShortfallResult{N,L,T,S}, r::AbstractString, t::ZonedDateTime) 
 end
 
 
-EUE(x::ShortfallResult{N,L,T,E,S}) where {N,L,T,E,S} =
+EUE(x::ShortfallResult{N,L,T,E}) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E,S}, r::AbstractString) where {N,L,T,E,S} =
+EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E} =
     EUE{N,L,T,E}(MeanEstimate(x[r]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E,S}, t::ZonedDateTime) where {N,L,T,E,S} =
+EUE(x::ShortfallResult{N,L,T,E}, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[t]..., x.nsamples))
 
-EUE(x::ShortfallResult{N,L,T,E,S}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E,S} =
+EUE(x::ShortfallResult{N,L,T,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]..., x.nsamples))
 
-function NEUE(x::ShortfallResult{N,L,T,E,S}) where {N,L,T,E,S}
+function NEUE(x::ShortfallResult)  
     return NEUE(div(MeanEstimate(x[]..., x.nsamples),(sum(x.regions.load)/1e6)))
 end
 
-function NEUE(x::ShortfallResult{N,L,T,E,S}, r::AbstractString) where {N,L,T,E,S}
+function NEUE(x::ShortfallResult, r::AbstractString) 
     i_r = findfirstunique(x.regions.names, r)
     return NEUE(div(MeanEstimate(x[r]..., x.nsamples),(sum(x.regions.load[i_r,:])/1e6)))
 end

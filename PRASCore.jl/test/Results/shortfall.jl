@@ -101,7 +101,7 @@ end
     r, r_idx, r_bad = DD.testresource, DD.testresource_idx, DD.notaresource
     t, t_idx, t_bad = DD.testperiod, DD.testperiod_idx, DD.notaperiod
 
-    result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh}(
+    result = PRASCore.Results.ShortfallSamplesResult{N,1,Hour,MW,MWh,ShortfallSamples}(
         Regions{N,MW}(DD.resourcenames, DD.resource_vals), DD.periods, DD.d)
 
     # Overall
