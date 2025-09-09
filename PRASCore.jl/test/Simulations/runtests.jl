@@ -9,7 +9,8 @@
     simspec = SequentialMonteCarlo(samples=100_000, seed=1, threaded=false)
     smallsample = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
 
-    resultspecs = (Shortfall(), Surplus(), Flow(), Utilization(),
+    resultspecs = (Shortfall(), Surplus(), 
+                   Flow(), Utilization(),
                    ShortfallSamples(), SurplusSamples(),
                    FlowSamples(), UtilizationSamples(),
                    GeneratorAvailability())
@@ -46,7 +47,7 @@
     shortfall2_3, _, flow2_3, util2_3, _ =
         assess(TestData.threenode, simspec, resultspecs...)
 
-    assess(TestData.threenode, smallsample,
+    assess(TestData.threenode, smallsample, DemandResponseShortfall(),
            GeneratorAvailability(), LineAvailability(),
            StorageAvailability(), GeneratorStorageAvailability(),DemandResponseAvailability(),
            StorageEnergy(), GeneratorStorageEnergy(),DemandResponseEnergy(),
