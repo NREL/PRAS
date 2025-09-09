@@ -37,6 +37,27 @@ function Base.show(io::IO, a::AbstractAssets)
     
 end
 
+"""
+    Generators{N,L,T<:Period,P<:PowerUnit}
+
+A struct representing generating assets within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units 
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of generator
+ - `categories`: Category of generator
+ - `capacity`: Maximum available generation capacity in each timeperiod, expressed 
+   in units given by the `power_units` (`P`) type parameter
+ - `λ` (failure probability): probability the generator transitions from 
+   operational to forced outage during a given simulation timestep (unitless)
+ - `μ` (repair probability): probability the generator transitions from forced 
+   outage to operational during a given simulation timestep (unitless)
+"""
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
