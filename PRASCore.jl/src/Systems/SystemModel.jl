@@ -113,7 +113,7 @@ struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
 
 end
 
-    #base system constructor- no demand response devices
+#base system constructor- no demand response devices
 function SystemModel{}(
     regions::Regions{N,P}, interfaces::Interfaces{N,P},
     generators::Generators{N,L,T,P}, region_gen_idxs::Vector{UnitRange{Int}},
@@ -121,7 +121,8 @@ function SystemModel{}(
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     region_genstor_idxs::Vector{UnitRange{Int}},
     lines::Lines{N,L,T,P}, interface_line_idxs::Vector{UnitRange{Int}},
-    timestamps::StepRange{ZonedDateTime,T}
+    timestamps::StepRange{ZonedDateTime,T},
+    attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     return SystemModel(
@@ -135,7 +136,7 @@ function SystemModel{}(
             Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
             Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
         lines, interface_line_idxs,
-        timestamps)
+        timestamps, attrs)
 end
     
 # No time zone constructor - demand responses included
@@ -239,7 +240,8 @@ function SystemModel(
     storages::Storages{N,L,T,P,E},
     generatorstorages::GeneratorStorages{N,L,T,P,E},
     timestamps::StepRange{<:AbstractDateTime,T},
-    load::Vector{Int}
+    load::Vector{Int},
+    attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
     return SystemModel(
         Regions{N,P}(["Region"], reshape(load, 1, :)),
