@@ -264,7 +264,11 @@ end
 
 function NEUE(x::ShortfallResult{N,L,T,E}, r::AbstractString) where {N,L,T,E}
     i_r = findfirstunique(x.regions.names, r)
-    return NEUE(div(MeanEstimate(x[r]..., x.nsamples),(sum(x.regions.load[i_r,:])/1e6)))
+    if (izero(sum(x.regions.load[i_r,:])))
+        return NEUE(MeanEstimate(0.0, 0.0))
+    else
+        return NEUE(div(MeanEstimate(x[r]..., x.nsamples),(sum(x.regions.load[i_r,:])/1e6)))
+    end
 end
 
 function finalize(
