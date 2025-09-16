@@ -1,5 +1,5 @@
 # TODO
-0. Store DB as base64
+0. Store DB as base64, or data URL in the html
 1. Landing page shows most important characteristics like 
     - Number of events with total EUE exceeds the ## number
     - Same with LOLE
@@ -10,3 +10,4 @@
 4. Event selector creates a tab for an event to show regional shortfall and flows etc
 5. Does NEUE have to be reported as MWh/MWh
 6. Explore how a directed graph can be stored in DuckDB, and how it can be drawn on a webpage with WASM-DuckDB
+7. Julia indentation

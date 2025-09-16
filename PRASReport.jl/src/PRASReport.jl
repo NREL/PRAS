@@ -18,6 +18,6 @@ using JSON3
 
 include("events.jl")
 
-export Event, get_events
+export Event, get_events, event_length
 
 end # module PRASReport
