@@ -516,14 +516,15 @@
         dr = first(TestData.threenode_dr.demandresponses.names)
         dts = TestData.threenode_dr.timestamps
 
-        shortfall, surplus, energy, flow, utilization =
+        shortfall, surplus, dr_energy, dr_energy_samples, dr_shortfall, dr_shortfall_samples, flow, utilization =
             assess(TestData.threenode_dr, simspec,
-                   Shortfall(), Surplus(), DemandResponseEnergy(), Flow(), Utilization())
+                   Shortfall(), Surplus(), 
+                   DemandResponseEnergy(),DemandResponseEnergySamples(),
+                   DemandResponseShortfall(), DemandResponseShortfallSamples(),
+                   Flow(), Utilization())
 
 
         # Shortfall - LOLE
-        @info "LOLE(shortfall): $(LOLE(shortfall))"
-        @info "TestData.threenode_dr_lole: $(TestData.threenode_dr_lole)"
         @test withinrange(LOLE(shortfall),
                           TestData.threenode_dr_lole, nstderr_tol)
         @test all(withinrange.(LOLE.(shortfall, regions),
@@ -569,12 +570,26 @@
         @test all(withinrange.(getindex.(utilization, "Region 1"=>"Region 2",dts),
                                TestData.threenode_dr_util_t,
                                simspec.nsamples, nstderr_tol))
-        # Energy
-        @test withinrange((sum(x[1] for x in getindex.(energy, dts)), sum(x[end] for x in getindex.(energy, dts))), # fails?
-                               TestData.threenode_dr_eenergy,
+        # DR Energy
+        @test withinrange((sum(x[1] for x in getindex.(dr_energy, dts)), sum(x[end] for x in getindex.(dr_energy, dts))),
+                               TestData.threenode_dr_energy,
                                simspec.nsamples, nstderr_tol)
 
+        # DR Energy Samples
+        @test mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000) == TestData.threenode_dr_energy_samples
 
+        # DR Shortfall
+        @test withinrange(EUE(dr_shortfall),
+                          TestData.threenode_dr_shortfall_specific_eue, nstderr_tol)
+        @test all(withinrange.(EUE.(dr_shortfall, regions),
+                               TestData.threenode_dr_shortfall_specific_eue_r, nstderr_tol))
+        @test all(withinrange.(EUE.(dr_shortfall, dts),
+                               TestData.threenode_dr_shortfall_specific_eue_t, nstderr_tol))
+        @test all(withinrange.(EUE.(dr_shortfall, "Region 1", dts),
+                               TestData.threenode_dr_shortfall_specific_eue_rt, nstderr_tol))
+
+        # DR Shortfall Samples
+        @test sum(dr_shortfall_samples["Region 1",dts[5]]) == TestData.threenode_dr_shortfall_samples
     end
 
 

@@ -431,6 +431,15 @@ threenode_dr_flow_t = [-1.576781; -2.386248; -0.256078; -0.6453639; -0.728238; -
 threenode_dr_util = 0.23285
 threenode_dr_util_t = [0.116007969;0.12482749;0.1083558;0.106341959;0.108113959; 0.107764689]
 
-threenode_dr_eenergy = 57.750022
+threenode_dr_energy = 57.750022
+
+threenode_dr_energy_samples = 58.403
+
+threenode_dr_shortfall_specific_eue = 23.524975
+threenode_dr_shortfall_specific_eue_r = [10.196; 7.944; 5.385]
+threenode_dr_shortfall_specific_eue_t = [0.00; 0.00; 0.00; 0.00; 3.582; 19.943]
+threenode_dr_shortfall_specific_eue_rt = [0.0000; 0.0000; 0.0000; 0.0000; 1.895; 8.300]
+
+threenode_dr_shortfall_samples = 1895487
 
 end 
