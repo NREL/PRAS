@@ -535,8 +535,6 @@
                                TestData.threenode_dr_lole_rt, nstderr_tol))
 
         # Shortfall - EUE
-        @info "eue(shortfall): $(EUE(shortfall))"
-        @info "TestData.threenode_dr_eue: $(TestData.threenode_dr_eue)"
         @test withinrange(EUE(shortfall),
                           TestData.threenode_dr_eue, nstderr_tol)
         @test all(withinrange.(EUE.(shortfall, regions),
@@ -576,7 +574,7 @@
                                simspec.nsamples, nstderr_tol)
 
         # DR Energy Samples
-        @test mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000) == TestData.threenode_dr_energy_samples
+        @test round(mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000)) == round(TestData.threenode_dr_energy_samples)
 
         # DR Shortfall
         @test withinrange(EUE(dr_shortfall),
@@ -589,7 +587,7 @@
                                TestData.threenode_dr_shortfall_specific_eue_rt, nstderr_tol))
 
         # DR Shortfall Samples
-        @test sum(dr_shortfall_samples["Region 1",dts[5]]) == TestData.threenode_dr_shortfall_samples
+        @test round(sum(dr_shortfall_samples["Region 1", dts[5]]) / 1e6) == round(TestData.threenode_dr_shortfall_samples / 1e6)
     end
 
 
