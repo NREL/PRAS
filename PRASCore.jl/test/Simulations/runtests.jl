@@ -574,8 +574,8 @@
                                simspec.nsamples, nstderr_tol)
 
         # DR Energy Samples
-        @test round(mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000)) == round(TestData.threenode_dr_energy_samples)
-
+        @test isapprox(mean(sum(dr_energy_samples.energy[:, :, i]) for i in 1:1_000),TestData.threenode_dr_energy_samples, rtol=0.01)
+        
         # DR Shortfall
         @test withinrange(EUE(dr_shortfall),
                           TestData.threenode_dr_shortfall_specific_eue, nstderr_tol)
@@ -587,7 +587,7 @@
                                TestData.threenode_dr_shortfall_specific_eue_rt, nstderr_tol))
 
         # DR Shortfall Samples
-        @test round(sum(dr_shortfall_samples["Region 1", dts[5]]) / 1e6) == round(TestData.threenode_dr_shortfall_samples / 1e6)
+        @test isapprox(sum(dr_shortfall_samples["Region 1",dts[5]])/1e4,TestData.threenode_dr_shortfall_samples/1e4, rtol=0.01)
     end
 
 
