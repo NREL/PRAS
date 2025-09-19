@@ -4,7 +4,9 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, Lines,
                          timeunits, powerunits, energyunits, unitsymbol             
 
-import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, 
+import PRASCore.Simulations: assess
+
+import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, FlowResult,
                          ShortfallSamplesResult, AbstractShortfallResult, 
                          Result, MeanEstimate, findfirstunique,
                          val, stderror
