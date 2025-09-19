@@ -25,6 +25,36 @@ mutable struct Event{N,L,T,E}
     end
 end
 
+mutable struct sf_ts{}
+    name::String
+    timestamps::Vector{ZonedDateTime}
+    eue::Vector{Vector{EUE}}
+    lole::Vector{Vector{LOLE}}
+    neue::Vector{Vector{NEUE}}
+    regions::Vector{String}
+
+    function sf_ts(event,sf{N,L,T,E}) where {N,L,T,E}
+        name = event.name
+        timestamps = collect(event.timestamps)
+        eue = EUE{1,L,T,E}(MeanEstimate(val.(EUE.(sf,:,timestamps)))) 
+        lole = LOLE{1,L,T}(MeanEstimate(val.(LOLE.(sf,:,timestamps)))) 
+        neue = NEUE(MeanEstimate(val.(NEUE.(sf,:,timestamps)))) 
+        regions = event.regions[2:end]
+        new(name,timestamps,[eue],[lole],[neue],regions)
+    end
+end
+
+mutable struct flow_ts{}
+    name::String
+    timestamps::Vector{ZonedDateTime}
+    flow::Vector{Vector{NEUE}}
+    interfaces::Vector{String}
+    function flow_ts(timestamps::Vector{ZonedDateTime})
+        new(timestamps)
+    end
+end
+
+
 event_length(event::Event{N,L,T}) where {N,L,T} = T(N*L)
 
 function Event(sf::ShortfallResult{N,L,T,E}, 
