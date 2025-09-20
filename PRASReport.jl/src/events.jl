@@ -1,14 +1,20 @@
 mutable struct Event{N,L,T,E}
     name::String
     timestamps::StepRange{ZonedDateTime,T}
+    system_lole::LOLE
+    system_eue::EUE
+    system_neue::NEUE
     lole::Vector{LOLE}
     eue::Vector{EUE}
     neue::Vector{NEUE}
     regions::Vector{String}
 
     function Event{}(name::String, timestamps::StepRange{ZonedDateTime,T}, 
+                     system_lole::LOLE{N,L,T}, system_eue::EUE{N,L,T,E},
+                     system_neue::NEUE,
                      lole::Vector{LOLE{N,L,T}}, eue::Vector{EUE{N,L,T,E}}, 
-                     neue::Vector{NEUE}, regions::Vector{String}
+                     neue::Vector{NEUE}, 
+                     regions::Vector{String}
                     ) where {N,L,T,E}
 
         length(lole) != length(eue) != length(neue) != length(regions) && 
@@ -17,39 +23,40 @@ mutable struct Event{N,L,T,E}
         length(timestamps) != N &&
             error("Number of timesteps should match metrics event length")
 
-        length(regions) > 1 && !isapprox(val(eue[1]),sum(val.(eue[2:end]))) &&
-            error("First value in an event eue array should represent system EUE" 
-                    *"which is approximately the sum of EUE of all the regions")
+        length(regions) > 0 && !isapprox(val(system_eue),sum(val.(eue))) &&
+            error("System EUE should be approximately the sum of EUE of all the regions")
 
-        new{N,L,T,E}(name, timestamps, lole, eue, neue, regions)
+        new{N,L,T,E}(name, timestamps, 
+                    system_lole, system_eue, system_neue,
+                    lole, eue, neue, regions)
     end
 end
 
-mutable struct sf_ts{}
+mutable struct Shortfall_timeseries{}
     name::String
     timestamps::Vector{ZonedDateTime}
-    eue::Vector{Vector{EUE}}
-    lole::Vector{Vector{LOLE}}
-    neue::Vector{Vector{NEUE}}
+    eue::Vector{Vector{Float64}}
+    lole::Vector{Vector{Float64}}
+    neue::Vector{Vector{Float64}}
     regions::Vector{String}
 
-    function sf_ts(event,sf{N,L,T,E}) where {N,L,T,E}
+    function Shortfall_timeseries(event,sf::ShortfallResult{N,L,T,E}) where {N,L,T,E}
         name = event.name
         timestamps = collect(event.timestamps)
-        eue = EUE{1,L,T,E}(MeanEstimate(val.(EUE.(sf,:,timestamps)))) 
-        lole = LOLE{1,L,T}(MeanEstimate(val.(LOLE.(sf,:,timestamps)))) 
-        neue = NEUE(MeanEstimate(val.(NEUE.(sf,:,timestamps)))) 
-        regions = event.regions[2:end]
-        new(name,timestamps,[eue],[lole],[neue],regions)
+        eue = map(row->val.(row),(EUE.(sf,:,timestamps)))
+        lole = map(row->val.(row),(LOLE.(sf,:,timestamps)))
+        neue = map(row->val.(row),(NEUE.(sf,:,timestamps)))
+        regions = event.regions
+        new(name,timestamps,eue,lole,neue,regions)
     end
 end
 
-mutable struct flow_ts{}
+mutable struct Flow_timeseries{}
     name::String
     timestamps::Vector{ZonedDateTime}
     flow::Vector{Vector{NEUE}}
     interfaces::Vector{String}
-    function flow_ts(timestamps::Vector{ZonedDateTime})
+    function Flow_timeseries(timestamps::Vector{ZonedDateTime})
         new(timestamps)
     end
 end
@@ -70,25 +77,23 @@ function Event(sf::ShortfallResult{N,L,T,E},
     ts_first = findfirstunique(sf.timestamps,first(event_timestamps))
     ts_last = findfirstunique(sf.timestamps,last(event_timestamps))
 
-
-
-    lole = [LOLE{event_length,L,T}(
+    system_lole = LOLE{event_length,L,T}(
             MeanEstimate(sum(val.(LOLE.(sf,event_timestamps))))
-            )]
+            )
 
-    eue = [EUE{event_length,L,T,E}(
+    system_eue = EUE{event_length,L,T,E}(
             MeanEstimate(sum(val.(EUE.(sf,event_timestamps))))
-            )]
+            )
 
-    neue = [NEUE(
+    system_neue = NEUE(
             div(MeanEstimate(sum(val.(EUE.(sf,event_timestamps)))),
-                sum(sf.regions.load[:,ts_first:ts_last])/1e6))]
+                sum(sf.regions.load[:,ts_first:ts_last])/1e6))
+
+    lole = LOLE{event_length,L,T}[]
+    eue = EUE{event_length,L,T,E}[]
+    neue = NEUE[]
     
-    if length(sf.regions) == 1
-        # TODO: Change variable name
-        # TODO: Should all events have common region_names?
-        region_names = sf.regions.names
-    else
+    if length(sf.regions) > 1
         region_names = ["System"]
 
         for (r,region) in enumerate(sf.regions.names)
@@ -98,6 +103,7 @@ function Event(sf::ShortfallResult{N,L,T,E},
                 MeanEstimate(sum(val.(LOLE.(sf,region,event_timestamps))))
                 )
             )
+
             push!(eue,
                 EUE{event_length,L,T,E}(
                     MeanEstimate(sum(val.(EUE.(sf,region,event_timestamps))))
@@ -114,7 +120,10 @@ function Event(sf::ShortfallResult{N,L,T,E},
         end
     end
 
-    return Event(name,event_timestamps,lole,eue,neue,region_names)
+    return Event(name,event_timestamps,
+                system_lole, system_eue, system_neue,
+                lole,eue,neue,
+                sf.regions.names)
 end
 
 """

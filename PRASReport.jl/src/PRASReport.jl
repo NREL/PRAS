@@ -19,7 +19,10 @@ using Base64
 using JSON3
 
 include("events.jl")
+include("write.jl")
+include("report.jl")
 
-export Event, get_events, event_length
+export Event, get_events, event_length, sf_ts, flow_ts
+export write_db!, get_db, write_regions!, write_interfaces!
 
 end # module PRASReport
