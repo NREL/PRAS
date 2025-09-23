@@ -19,8 +19,6 @@ soc_mean, soc_std =
 ```
 
 See [`DemandResponseEnergySamples`](@ref) for sample-level demand response states of borrowed energy.
-
-See [`DemandResponseEnergy`](@ref) for average demand-response borrowed energy.
 """
 struct DemandResponseEnergy <: ResultSpec end
 
