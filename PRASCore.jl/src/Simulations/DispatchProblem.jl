@@ -2,11 +2,10 @@
     DispatchProblem(sys::SystemModel)
 
 Create a min-cost flow problem for the multi-region max power delivery problem
-with generation and storage discharging in decreasing order of priority, and
-storage charging with excess capacity. Storage and GeneratorStorage devices
-within a region are represented individually on the network. Demand Response
-devices will borrow energy in devices with the longest payback window first,
-and vice versa for payback energy.
+with generation and storage discharging in decreasing order of priority,
+storage charging with excess capacity and demand response devices enabling load shed and shift functionality.
+Storage, GeneratorStorage, and Demand Response devices within a region are represented individually on the network.
+
 
 This involves injections/withdrawals at one node (regional capacity
 surplus/shortfall) for each modelled region, as well as two/three nodes
@@ -24,8 +23,8 @@ capacity is exhausted (implying an operational strategy that prioritizes
 resource adequacy over economic arbitrage). This is based on the storage
 dispatch strategy of Evans, Tindemans, and Angeli, as outlined in "Minimizing
 Unserved Energy Using Heterogenous Storage Units" (IEEE Transactions on Power
-Systems, 2019).
-
+Systems, 2019). Demand Response devices will borrow energy in devices with the 
+longest payback window first, and vice versa for payback energy. 
 Demand Response devices are utilized only after discharging all storage/genstor
 and paid back before storage/genstor charging.
 
