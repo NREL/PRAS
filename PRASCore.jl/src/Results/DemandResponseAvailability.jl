@@ -1,5 +1,5 @@
 """
-    DemandResponse
+    DemandResponseAvailability
 
 The `DemandResponseAvailability` result specification reports the sample-level
 discrete availability of `DemandResponses`, producing a `DemandResponseAvailabilityResult`.
