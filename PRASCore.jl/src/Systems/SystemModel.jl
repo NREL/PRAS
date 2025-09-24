@@ -203,12 +203,12 @@ function Base.show(io::IO, sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:
     print(io, "SystemModel($(length(sys.regions)) regions, $(length(sys.interfaces)) interfaces, ",
           "$(length(sys.generators)) generators, $(length(sys.storages)) storages, ",
           "$(length(sys.generatorstorages)) generator-storages,",
-          "$(N) $(time_unit)s)")
+          " $(N) $(time_unit)s)")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
     time_unit = unitsymbol_long(T)
-    println(io, "\nPRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
+    println(io, "PRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
     println(io, "Region names: $(join(sys.regions.names, ", "))")
     println(io, "\nAssets: ")
     println(io, "  Generators: $(length(sys.generators)) units")

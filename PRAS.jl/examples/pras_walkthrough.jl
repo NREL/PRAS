@@ -1,19 +1,75 @@
-# # Additional Examples
+# # Quick PRAS walk-through  
 
 # This section provides a more complete example of running a PRAS assessment,
-# with a hypothetical analysis process making use of multiple different
-# results.
+# using the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system
+# making use of multiple different results.
 
-
+# Load the PRAS module
 using PRAS
+using Plots
 
-# Load in a system model from a .pras file.
-# This hypothetical system has an hourly time resolution with an
-# extent / simulation horizon of one year.
-sys = PRAS.rts_gmlc()
+# ## Read and explore a SystemModel
 
-# This system has multiple regions and relies on battery storage, so
-# run a sequential Monte Carlo analysis:
+# You can load in a system model from a .pras file if you have one like so:
+# ```julia
+# sys = SystemModel("mysystem.pras")
+# ```
+
+# For the purposes of this example, we'll just use the built-in RTS-GMLC model.
+sys = PRAS.rts_gmlc();
+
+# We see some information about the system by just typing its name
+# (or rather the variable that holds it):
+sys
+
+# This system has 3 regions, with multiple Generators, one GenerationStorage in 
+# region "2" and one Storage in region "3". We can see regional information by 
+# indexing the system with the region name:
+sys["2"]
+
+# We can find more information about all the Generators in the system by
+# retriving the `generators` in the SystemModel:
+system_generators = sys.generators
+
+# This returns an object of the asset type [Generators](@ref PRASCore.Systems.Generators)
+# and we can retrieve capacities of all generators in the system, which returns 
+# a Matrix with the shape (number of generators) x (number of timepoints):
+system_generators.capacity
+
+# We can visualize a time series of the total system capacity 
+# (sum over individual generators' capacity at each time step)
+plot(sys.timestamps, sum(system_generators.capacity, dims=1)', 
+     xlabel="Time", ylabel="Total system capacity (MW)", legend=false)
+
+# Or, by category of generators:
+category_indices = Dict([cat => findall(==(cat), system_generators.categories) 
+                    for cat in unique(system_generators.categories)]);
+capacity_matrix = Vector{Vector{Int}}();
+for (category,indices) in category_indices
+    push!(capacity_matrix, sum(system_generators.capacity[indices, :], dims=1)[1,:])
+end
+areaplot(sys.timestamps, hcat(capacity_matrix...),  
+        label=permutedims(collect(keys(category_indices))),
+        xlabel="Time", ylabel="Total system capacity (MW)")
+
+# Similarly we can also retrieve all the Storages in the system and 
+# GenerationStorages in the system using `sys.storages` and `sys.generatorstorages`, 
+# respectively.
+
+# To retrieve the assets in a particular region, we can index by the region name
+# and asset type (`Generators` here):
+region_2_generators = sys["2", Generators]
+
+# We get the storage device in region "3" like so:
+region_3_storage = sys["3", Storages]
+# and the generation-storage device in region "2" like so:
+region_2_genstorage = sys["2", GeneratorStorages]
+
+# ## Run a Sequential Monte Carlo simulation
+
+# We can run a Sequential Monte Carlo simulation on this system using the
+# [assess](@ref PRASCore.Simulations.assess) function. 
+# Here we will also use three different [result specifications](@ref results):
 shortfall, utilization, storage = assess(
     sys, SequentialMonteCarlo(samples=100, seed=1),
     Shortfall(), Utilization(), StorageEnergy());
