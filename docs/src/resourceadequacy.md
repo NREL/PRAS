@@ -3,7 +3,7 @@
 An electrical power system is considered resource adequate if it has procured
 sufficient resources (including supply, transmission, and responsive demand)
 such that it runs a sufficiently low risk of invoking emergency measures (such
-as involuntary load shedding) due to resource unavailablity or deliverability
+as involuntary load shedding) due to resource unavailability or deliverability
 constraints. Resource adequacy
 is a necessary (but not sufficient) condition for overall power system
 reliability, which considers a broader set of system constraints including

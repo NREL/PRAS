@@ -12,7 +12,7 @@ export JULIA_NUM_THREADS=36
 
 ## Power System Data
 
-The recommended way to store and retreive PRAS system data is in an HDF5 file that conforms to the [PRAS system data format](./SystemModel_HDF5_spec.md). Once your system is represented in that format you can load it into PRAS with:
+The recommended way to store and retrieve PRAS system data is in an HDF5 file that conforms to the [PRAS system data format](./SystemModel_HDF5_spec.md). Once your system is represented in that format you can load it into PRAS with:
 
 ```julia
 using PRAS
@@ -86,7 +86,7 @@ period_eue_a = EUE(shortfalls, "Region A", ZonedDateTime(2024, 4, 27, 13, tz"EST
 
 ## Capacity Credit Calculations
 
-Capacity credit calcuations build on probabilistic resource adequacy assessment to provided capacity-based quantifications of the marginal benefit to system resource adequacy associated with a specific resource or collection of resources. Two capacity credit metrics (EFC and ELCC) are currently supported.
+Capacity credit calculations build on probabilistic resource adequacy assessment to provide capacity-based quantifications of the marginal benefit to system resource adequacy associated with a specific resource or collection of resources. Two capacity credit metrics (EFC and ELCC) are currently supported.
 
 ### Equivalent Firm Capacity (EFC)
 
