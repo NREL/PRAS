@@ -7,6 +7,8 @@ using Literate
 # Building examples was inspired by COSMO.jl repo
 @info "Building example problems..."
 
+fix_suffix(filename) = replace(filename, ".jl" => ".md")
+
 example_path = joinpath(@__DIR__, "..","PRAS.jl","examples/")
 build_path =  joinpath(@__DIR__, "src", "examples/")
 files = readdir(example_path)
