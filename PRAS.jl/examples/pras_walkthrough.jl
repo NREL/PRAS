@@ -154,16 +154,17 @@ println(utilization_str)
 # We see that the interfaces are not fully utilized, meaning there is 
 # no excess generation in the system that could be wheeled into region "2"
 # and we can confirm this by looking at the surplus generation in each region
-println(@sprintf("%0.2f",surplus["1",max_lole_ts][1]))
-println(@sprintf("%0.2f",surplus["2",max_lole_ts][1]))
-println(@sprintf("%0.2f",surplus["3",max_lole_ts][1]))
+println("Surplus in")
+println(@sprintf("  region 1: %0.2f",surplus["1",max_lole_ts][1]))
+println(@sprintf("  region 2: %0.2f",surplus["2",max_lole_ts][1]))
+println(@sprintf("  region 3: %0.2f",surplus["3",max_lole_ts][1]))
 
 # Is local storage another alternative for region 3? One can check on the average 
 # state-of-charge of the existing battery in region "3", both in the 
 # hour before and during the problematic period:
 
-storage["313_STORAGE_1", max_lole_ts-Hour(1)][1]
-storage["313_STORAGE_1", max_lole_ts][1]
+println(@sprintf("Storage energy T-1: %0.2f",storage["313_STORAGE_1", max_lole_ts-Hour(1)][1]))
+println(@sprintf("Storage energy T: %0.2f",storage["313_STORAGE_1", max_lole_ts][1]))
 
 # It may be that the battery is on average charged going in to the event,
 # and perhaps retains some energy during the event, even as load is being
