@@ -1,16 +1,17 @@
-# # Quick PRAS walk-through  
+# # [PRAS walkthrough](@id pras_walkthrough)  
 
-# This section provides a more complete example of running a PRAS assessment,
+# This is a complete example of running a PRAS assessment,
 # using the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system
-# making use of multiple different results.
 
-# Load the PRAS module
+# Load the PRAS package and other tools necessary for analyses
 using PRAS
 using Plots
+using DataFrames
+using Printf
 
-# ## Read and explore a SystemModel
+# ## [Read and explore a SystemModel](@id explore_systemmodel)
 
-# You can load in a system model from a .pras file if you have one like so:
+# You can load in a system model from a [.pras file](@ref prasfile) if you have one like so:
 # ```julia
 # sys = SystemModel("mysystem.pras")
 # ```
@@ -22,10 +23,21 @@ sys = PRAS.rts_gmlc();
 # (or rather the variable that holds it):
 sys
 
+# We retrieve the parameters of the system using the `get_params` 
+# function and use this for the plots below to ensure we have 
+# correct units:
+(timesteps,periodlen,periodunit,powerunit,energyunit) = get_params(rts_gmlc())
+
 # This system has 3 regions, with multiple Generators, one GenerationStorage in 
 # region "2" and one Storage in region "3". We can see regional information by 
 # indexing the system with the region name:
 sys["2"]
+
+# We can visualize a time series of the regional load in region "2":
+region_2_load = sys.regions.load[sys["2"].index,:]
+plot(sys.timestamps, region_2_load, 
+     xlabel="Time", ylabel="Region 2 load ($(powerunit))", 
+     legend=false)
 
 # We can find more information about all the Generators in the system by
 # retriving the `generators` in the SystemModel:
@@ -69,55 +81,81 @@ region_2_genstorage = sys["2", GeneratorStorages]
 
 # We can run a Sequential Monte Carlo simulation on this system using the
 # [assess](@ref PRASCore.Simulations.assess) function. 
-# Here we will also use three different [result specifications](@ref results):
-shortfall, utilization, storage = assess(
+# Here we will also use four different [result specifications](@ref results):
+shortfall, surplus, utilization, storage = assess(
     sys, SequentialMonteCarlo(samples=100, seed=1),
-    Shortfall(), Utilization(), StorageEnergy());
+    Shortfall(), Surplus(), Utilization(), StorageEnergy());
 
 # Start by checking the overall system adequacy:
-lole = LOLE(shortfall) # event-hours per year
-eue = EUE(shortfall) # unserved energy per year
+lole = LOLE(shortfall); # event-hours per year
+eue = EUE(shortfall); # unserved energy per year
+println("System $(lole), $(eue)")
 
-# Suppose LOLE is below the target threshold but EUE seems high, suggesting large
-# amounts of unserved energy are concentrated in a small number of hours. What
-# do the hourly results show?
+# Given we use only 100 samples and the RTS-GMLC system is quite reliable,
+# we see a system which is reliable, with LOLE and EUE both near zero.
+# For the purposes of this example, let's increase the system load homogenously
+# by 1000MW in every hour and region, and re-run the assessment.
 
+sys.regions.load .+= 700.0
+shortfall, surplus, utilization, storage = assess(
+    sys, SequentialMonteCarlo(samples=100, seed=1),
+    Shortfall(), Surplus(), Utilization(), StorageEnergy());
+lole = LOLE(shortfall); # event-hours per year
+eue = EUE(shortfall); # unserved energy per year
+neue = NEUE(shortfall); # unserved energy per year
+println("System $(lole), $(eue), $(neue)")
 
-# Note 1: LOLE.(shortfall, many_hours) is Julia shorthand for calling LOLE
-#         on every timestep in the collection many_hours
-# Note 2: Here results are in terms of event-hours per hour, which is
-#         equivalent to the loss-of-load probability (LOLP) for each hour
+# Now we see a system which is slightly unreliable with a normalized 
+# expected unserved energy (NEUE) of close to 470 parts per million of total load.
+
+# We can now look at the hourly loss-of-load expectation (LOLE) to see when
+# when shortfalls are occurring.
+# `LOLE.(shortfall, many_hours)` is Julia shorthand for calling LOLE
+#  on every timestep in the collection many_hours
 lolps = LOLE.(shortfall, sys.timestamps)
 
-# One might see that a particular hour has an LOLP near 1.0, indicating that
-# load is consistently getting dropped in that period. Is this a local issue or
-# system-wide? One can check the unserved energy by region in that hour:
+# Here results are in terms of event-hours per hour, which is equivalent 
+# to the loss-of-load probability (LOLP) for each hour. The LOLE object is
+# shown as mean ± standard error. We are mostly interested in the mean here,
+# we can retrieve this using `val.(lolps)` and visualize this:
+plot(sys.timestamps, val.(lolps), 
+     xlabel="Time", ylabel="Hourly LOLE (event-hours/hour)", legend=false)
 
+# We see the shortfall is concentrated in a few hours and there are many 
+# hours with LOLE = 1, or which means that hour had a shortfall in every 
+# Monte Carlo sample.
 
-shortfall_period = ZonedDateTime(2020, 8, 21, 17, tz"America/Denver")
-unserved_by_region = EUE.(shortfall, sys.regions.names, shortfall_period)
+# We can find the regional EUE for the entire simulation period, 
+# and obtain it in as a DataFrame for easier viewing:
+regional_eue = DataFrame([(Region=reg_name, EUE=val(EUE(shortfall, reg_name))) 
+                          for reg_name in sys.regions.names],
+                         [:Region, :EUE])
 
-# Perhaps only one region (D) has non-zero EUE in that hour, indicating that this
-# must be a load pocket issue. We can also look at the utilization of interfaces
-# into that region in that period:
+# We may be interested in the EUE in the hour with highest LOLE
+# the unserved energy by region in that hour:
+max_lole_ts = sys.timestamps[findfirst(val.(lolps).==1)];
+println("Hour with first LOLE of 1.0: ", max_lole_ts)
 
+# And we can find the unserved energy by region in that hour:
+unserved_by_region = EUE.(shortfall, sys.regions.names, max_lole_ts)
+# which returns a Vector of EUE values for each region.
 
-utilization["1" => "2", shortfall_period]
-utilization["2" => "3", shortfall_period]
-utilization["3" => "1", shortfall_period]
+# Region 2 has highest EUE in that hour, and we can look at the 
+# utilization of interfaces into that region in that period:
+@printf "Interface between regions 1 and 2 utilization: %0.2f \n" utilization["1" => "2", max_lole_ts][1]
+@printf "Interface between regions 1 and 3 utilization: %0.2f" utilization["2" => "3", max_lole_ts][1]
 
-# These sample-averaged utilizations should all be very close to 1.0, indicating
-# that power transfers are consistently maxed out; neighbouring regions have
-# power available but can't send it to Region D.
+surplus["1",max_lole_ts][1]
+surplus["2",max_lole_ts][1]
+surplus["3",max_lole_ts][1]
 
 # Transmission expansion is clearly one solution to this adequacy issue. Is local
 # storage another alternative? One can check on the average state-of-charge of
 # the existing battery in that region, both in the hour before and during the
 # problematic period:
 
-
-storage["313_STORAGE_1", shortfall_period-Hour(1)]
-storage["313_STORAGE_1", shortfall_period]
+storage["313_STORAGE_1", max_lole_ts-Hour(1)][1]
+storage["313_STORAGE_1", max_lole_ts][1]
 
 # It may be that the battery is on average fully charged going in to the event,
 # and perhaps retains some energy during the event, even as load is being

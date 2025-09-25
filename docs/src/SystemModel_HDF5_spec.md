@@ -1,4 +1,4 @@
-# `SystemModel` HDF5 representation specification
+# [`SystemModel` HDF5 representation specification](@id prasfile)
 
 This document specifies a representation of the PRAS `SystemModel` data
 structure in terms of objects like 

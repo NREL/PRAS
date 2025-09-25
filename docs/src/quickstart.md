@@ -1,6 +1,6 @@
 # [Getting Started with PRAS](@id quickstart)
 
-Once you have PRAS [installed](@ref Installation), this page provides a brief overview to help you start running PRAS quickly.
+Once you have PRAS [installed](@ref Installation), this page provides a brief overview to help you start running PRAS quickly. A more detailed example with analyses is available at [PRAS walkthrough](@ref pras_walkthrough).
 
 ## Parallel Processing
 

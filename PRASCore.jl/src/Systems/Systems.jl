@@ -21,7 +21,7 @@ export
     unitsymbol, unitsymbol_long, conversionfactor, powertoenergy, energytopower,
 
     # Main data structure
-    SystemModel,
+    SystemModel, get_params,
 
     # Convenience re-exports
     ZonedDateTime, @tz_str

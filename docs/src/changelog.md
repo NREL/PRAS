@@ -7,8 +7,7 @@
 
 
 ## [0.7], 2024 - December
-- PRAS codebase refactored as a monorepo, and subpackages `PRAS.jl`, `PRASCore.jl`, 
-`PRASFiles.jl`, and `PRASCapacityCredits.jl` available through the Julia General registries.
+- PRAS codebase refactored as a monorepo, and subpackages `PRAS.jl`, `PRASCore.jl`, `PRASFiles.jl`, and `PRASCapacityCredits.jl` available through the Julia General registries.
 - Removed `Convolution` and `NonSequentialMonteCarlo` simulation capabilities to simplify codebase.
 - Bump Julia version required to `v1.10` 
 - Add results serialization capability for `ShortfallResults`

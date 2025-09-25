@@ -10,7 +10,7 @@ To get started on using PRAS, see the [installation](@ref Installation) and [qui
 
 ## Basic usage
 
-PRAS maps a provided representation of a power system to a probabilistic description of operational outcomes of interest, using a particular choice of operations simulation. The input system representation is called a "system model", the choice of operational representation is referred to as a "simulation specification", and different types of operating outcomes of interest are described by "result specifications".
+PRAS maps a provided representation of a power system to a probabilistic description of operational outcomes of interest, using a particular choice of operations simulation. The input system representation is called a "[system model](@ref system_specification)", the choice of operational representation is referred to as a "[simulation specification](@ref simulations)", and different types of operating outcomes of interest are described by "[result specifications](@ref results)".
 
 ```@raw html
 <figure>
@@ -31,5 +31,3 @@ shortfallresult, flowresult =
 
 eue, lole = EUE(shortfallresult), LOLE(shortfallresult)
 ```
-
-More details on running PRAS via Julia code are available in this documentaion. The [System Model Specification](@ref system_specification) page details the information contained in a system model input, the [Simulations Specifications](@ref simulations) page explains the built-in simulation specification options in PRAS and the various modelling assumptions associated with each, and the [Results Specification](@ref results) page will outline PRAS' available result specifications. The [Capacity Credit](@ref capacitycredit) page covers how PRAS can calculate the capacity credit of specific resources based on the results of resource adequacy assessments, and the [Extending](@ref extending) page provides information on extending PRAS beyond its built-in capabilities. 

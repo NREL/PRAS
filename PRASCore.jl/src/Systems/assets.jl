@@ -138,7 +138,7 @@ end
 """
     Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-A struct representing storage-only devices within a power system.
+A struct representing storage devices in the system.
 
 # Type Parameters
 - `N`: Number of timesteps in the system model
@@ -295,7 +295,7 @@ end
 """
     GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-A struct representing generator-storage combination resources within a power system.
+A struct representing generator-storage hybrid devices within a power system.
 
 # Type Parameters
 - `N`: Number of timesteps in the system model

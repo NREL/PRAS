@@ -11,7 +11,7 @@ on:
 jobs:
   docs:
     name: Documentation
-    runs-on: ubuntu-latest
+    runs-on: macOS-latest
     permissions:
       contents: write
     steps:

@@ -74,6 +74,9 @@ and their associated resource collections (regions or interfaces).
 
 *Table: PRAS resource parameters. Parameters in italic are fixed values; all others are provided as a time series.*
 
+The [system model exploration](@ref explore_systemmodel) section in the PRAS walkthrough 
+example shows different ways to retrieve and visualize information from these assets.
+
 ## Regions
 PRAS does not represent the power system's individual electrical buses. Intead,
 PRAS **regions** are used to represent a collection of electrical buses

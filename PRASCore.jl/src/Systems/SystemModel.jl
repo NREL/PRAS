@@ -183,6 +183,9 @@ unitsymbol(::SystemModel{N,L,T,P,E}) where {
 isnonnegative(x::Real) = x >= 0
 isfractional(x::Real) = 0 <= x <= 1
 
+get_params(::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
+    (N,L,T,P,E)
+
 function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::Int)
 
     length(idxss) == ngroups || return false
