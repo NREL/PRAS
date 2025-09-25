@@ -113,7 +113,7 @@ time series, and so may be different during different time periods.
 
 ```@raw html
 <figure>
-<img src="../../images/resourceparameters.pdf" alt="Relations between power and energy parameters for generator, storage, and generator-storage resources." style="max-width:2000px;  width:100%;"/>
+<img src="../../images/resourceparameters.svg" alt="Relations between power and energy parameters for generator, storage, and generator-storage resources." style="max-width:2000px;  width:100%;"/>
 <figcaption> Relations between power and energy parameters for generator, storage, and generator-storage resources</figcaption>
 </figure>
 ```
@@ -185,7 +185,7 @@ its state of charge during outages (subject to carryover losses).
 
 ```@raw html
 <figure>
-<img src="../../images/genstorexamples.pdf" alt="Example applications of the generator-storage resource type" style="max-width:2000px;  width:100%;"/>
+<img src="../../images/genstorexamples.svg" alt="Example applications of the generator-storage resource type" style="max-width:2000px;  width:100%;"/>
 <figcaption> Example applications of the generator-storage resource type </figcaption>
 </figure>
 ```

@@ -31,7 +31,7 @@ Each set of sampled parameters is used to formulate the "pipe-and-bubble" networ
 
 ```@raw html
 <figure>
-<img src="../../images/networkflow.pdf" alt="Example three-region network flow problem to be solved
+<img src="../../images/networkflow.svg" alt="Example three-region network flow problem to be solved
         by the Non-Sequential Monte Carlo simulation specification. Any
         load that cannot be served within the sampled generation
         and transmission constraints goes unserved." style="max-width:2000px;  width:50%;"/>

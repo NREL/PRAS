@@ -14,7 +14,7 @@ PRAS maps a provided representation of a power system to a probabilistic descrip
 
 ```@raw html
 <figure>
-<img src="images/inputoutput.pdf" alt="PRAS model structure and corresponding assessment function arguments" style="max-width:2000px;  width:100%;"/>
+<img src="images/inputoutput.svg" alt="PRAS model structure and corresponding assessment function arguments" style="max-width:2000px;  width:100%;"/>
 <figcaption> PRAS model structure and corresponding assessment function arguments </figcaption>
 </figure>
 ```
