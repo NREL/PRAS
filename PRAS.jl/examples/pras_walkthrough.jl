@@ -94,7 +94,7 @@ println("System $(lole), $(eue)")
 # Given we use only 100 samples and the RTS-GMLC system is quite reliable,
 # we see a system which is reliable, with LOLE and EUE both near zero.
 # For the purposes of this example, let's increase the system load homogenously
-# by 1000MW in every hour and region, and re-run the assessment.
+# by 700MW in every hour and region, and re-run the assessment.
 
 sys.regions.load .+= 700.0
 shortfall, surplus, utilization, storage = assess(
@@ -122,17 +122,18 @@ plot(sys.timestamps, val.(lolps),
      xlabel="Time", ylabel="Hourly LOLE (event-hours/hour)", legend=false)
 
 # We see the shortfall is concentrated in a few hours and there are many 
-# hours with LOLE = 1, or which means that hour had a shortfall in every 
+# hours with LOLE = 1, which means that hour had a shortfall in every 
 # Monte Carlo sample.
 
-# We can find the regional EUE for the entire simulation period, 
+# We can find the regional NEUE for the entire simulation period, 
 # and obtain it in as a DataFrame for easier viewing:
-regional_eue = DataFrame([(Region=reg_name, EUE=val(EUE(shortfall, reg_name))) 
+regional_eue = DataFrame([(Region=reg_name, NEUE=val(NEUE(shortfall, reg_name))) 
                           for reg_name in sys.regions.names],
-                         [:Region, :EUE])
+                         )
+# So, region "1" has the highest overall NEUE, and has a higher 
+# load normalized shortfall
 
 # We may be interested in the EUE in the hour with highest LOLE
-# the unserved energy by region in that hour:
 max_lole_ts = sys.timestamps[findfirst(val.(lolps).==1)];
 println("Hour with first LOLE of 1.0: ", max_lole_ts)
 
@@ -142,26 +143,33 @@ unserved_by_region = EUE.(shortfall, sys.regions.names, max_lole_ts)
 
 # Region 2 has highest EUE in that hour, and we can look at the 
 # utilization of interfaces into that region in that period:
-@printf "Interface between regions 1 and 2 utilization: %0.2f \n" utilization["1" => "2", max_lole_ts][1]
-@printf "Interface between regions 1 and 3 utilization: %0.2f" utilization["2" => "3", max_lole_ts][1]
+utilization_str = join([@sprintf("Interface between regions 1 and 2 utilization: %0.2f",
+                            utilization["1" => "2", max_lole_ts][1]),
+                    @sprintf("Interface between regions 3 and 2 utilization: %0.2f", 
+                            utilization["3" => "2", max_lole_ts][1]),
+                    @sprintf("Interface between regions 1 and 3 utilization: %0.2f", 
+                            utilization["1" => "3", max_lole_ts][1])], "\n");
+println(utilization_str)                            
 
-surplus["1",max_lole_ts][1]
-surplus["2",max_lole_ts][1]
-surplus["3",max_lole_ts][1]
+# We see that the interfaces are not fully utilized, meaning there is 
+# no excess generation in the system that could be wheeled into region "2"
+# and we can confirm this by looking at the surplus generation in each region
+println(@sprintf("%0.2f",surplus["1",max_lole_ts][1]))
+println(@sprintf("%0.2f",surplus["2",max_lole_ts][1]))
+println(@sprintf("%0.2f",surplus["3",max_lole_ts][1]))
 
-# Transmission expansion is clearly one solution to this adequacy issue. Is local
-# storage another alternative? One can check on the average state-of-charge of
-# the existing battery in that region, both in the hour before and during the
-# problematic period:
+# Is local storage another alternative for region 3? One can check on the average 
+# state-of-charge of the existing battery in region "3", both in the 
+# hour before and during the problematic period:
 
 storage["313_STORAGE_1", max_lole_ts-Hour(1)][1]
 storage["313_STORAGE_1", max_lole_ts][1]
 
-# It may be that the battery is on average fully charged going in to the event,
+# It may be that the battery is on average charged going in to the event,
 # and perhaps retains some energy during the event, even as load is being
 # dropped. The device's ability to mitigate the shortfall must then be limited
-# only by its discharge capacity, so given that the event doesn't last long,
-# adding additional short-duration storage in this region would help.
+# only by its discharge capacity, so increasing the regions storage
+# capacity by adding more storage devices may help mitigate some shortfall.
 
 # Note that if the event was less consistent, this analysis could also have been
 # performed on the subset of samples in which the event was observed, using the

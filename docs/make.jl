@@ -2,7 +2,7 @@ using Documenter
 using PRASCore
 using PRASFiles
 using PRASCapacityCredits
-using Plots, Literate
+using Literate
 
 @info "Building example problems..."
 
