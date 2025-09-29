@@ -10,15 +10,11 @@ import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, FlowResult,
                             Result, MeanEstimate, findfirstunique,
                             val, stderror
 import StatsBase: mean
-import Dates: @dateformat_str, format, now
+import Dates: @dateformat_str, format, now, DateTime
 import TimeZones: ZonedDateTime, @tz_str
-
-# TODO: Fix use only what imports are needed
+import Base64: base64encode
+import Tables: columntable
 import DuckDB
-using Base64
-using JSON3
-using Dates
-using Tables
 
 include("events.jl")
 include("writedb.jl")
@@ -26,5 +22,6 @@ include("report.jl")
 
 export Event, get_events, event_length, Shortfall_timeseries, Flow_timeseries
 export write_db!, get_db, write_regions!, write_interfaces!
+export create_html_report
 
 end # module PRASReport

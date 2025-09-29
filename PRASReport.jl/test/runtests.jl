@@ -3,6 +3,8 @@ using PRASReport
 using TimeZones
 using Dates
 
+# Test copperplate
+# Test get functions from database for wrong names
 
 @testset "PRASReport.jl Tests" begin
     @testset "Test events" begin
