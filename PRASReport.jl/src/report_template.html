@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PRAS Report</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .summary-card {
+            background: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #667eea;
+        }
+
+        .summary-card h2 {
+            color: #667eea;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .stat {
+            display: inline-block;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-right: 1rem;
+            min-width: 150px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #667eea;
+            display: block;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .table-header {
+            background: #667eea;
+            color: white;
+            padding: 1rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            border: 1px solid #f5c6cb;
+        }
+
+        .debug {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 1rem;
+            border-radius: 4px;
+            margin: 1rem 0;
+            border: 1px solid #bee5eb;
+            font-family: monospace;
+            white-space: pre-wrap;
+        }
+
+        .numeric {
+            text-align: right;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .event-name {
+            font-weight: 500;
+            color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            header h1 {
+                font-size: 2rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 8px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>PRAS Reliability Assessment Report</h1>
+        </header>
+
+        <div class="summary-card">
+            <h2>Simulation Summary</h2>
+            <div class="stat">
+                <span class="stat-value" id="sample-count">-</span>
+                <div class="stat-label">Samples</div>
+            </div>
+            <div class="stat">
+                <span class="stat-value" id="event-count">-</span>
+                <div class="stat-label">Events</div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <div class="table-header">
+                Reliability Events
+            </div>
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading data...</p>
+            </div>
+            <div id="error" class="error" style="display: none;"></div>
+            <div id="debug" class="debug" style="display: none;"></div>
+            <div id="table-wrapper" style="display: none;">
+                <table id="events-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th id="start-time-header">Start Time</th>
+                            <th id="end-time-header">End Time</th>
+                            <th id="duration-header">Event Duration</th>
+                            <th class="numeric" id="eue-header">EUE</th>
+                            <th class="numeric" id="lole-header">LOLE</th>
+                            <th class="numeric" id="neue-header">NEUE</th>
+                        </tr>
+                    </thead>
+                    <tbody id="events-tbody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as duckdb from 'https://cdn.jsdelivr.net/npm/@duckdb/duckdb-wasm@1.30.0/+esm';
+        
+        // Make duckdb available globally
+        window.duckdb = duckdb;
+        
+        // Placeholder for base64 database - this will be replaced by Julia
+        const BASE64_DB = "{{BASE64_DB_PLACEHOLDER}}";
+        
+        let db = null;
+        let conn = null;
+
+        function showError(message) {
+            console.error('Error:', message);
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('error').style.display = 'block';
+            document.getElementById('error').textContent = message;
+        }
+
+        function showDebug(message) {
+            console.log('Debug:', message);
+            const debugEl = document.getElementById('debug');
+            if (debugEl) {
+                debugEl.style.display = 'block';
+                debugEl.textContent += message + '\n';
+            }
+        }
+
+        function formatNumber(value, decimals = 2) {
+            if (value === null || value === undefined) return '-';
+            return Number(value).toLocaleString(undefined, {
+                minimumFractionDigits: decimals,
+                maximumFractionDigits: decimals
+            });
+        }
+
+        async function initializeDatabase() {
+            try {
+                // showDebug('Starting database initialization...');
+                
+                // Check if BASE64_DB is placeholder
+                if (BASE64_DB === "{{BASE64_DB_PLACEHOLDER}}") {
+                    throw new Error("Database not loaded. Please generate the report with actual data.");
+                }
+
+                // showDebug('Initializing DuckDB using JSDelivr bundles...');
+                
+                // Use the official recommended approach from npm documentation
+                const JSDELIVR_BUNDLES = duckdb.getJsDelivrBundles();
+                const bundle = await duckdb.selectBundle(JSDELIVR_BUNDLES);
+
+                const worker_url = URL.createObjectURL(
+                    new Blob([`importScripts("${bundle.mainWorker}");`], {type: 'text/javascript'})
+                );
+                
+                const worker = new Worker(worker_url);
+                const logger = new duckdb.ConsoleLogger();
+                db = new duckdb.AsyncDuckDB(logger, worker);
+                await db.instantiate(bundle.mainModule, bundle.pthreadWorker);
+                URL.revokeObjectURL(worker_url);
+                
+                conn = await db.connect();
+                // showDebug('DuckDB initialized successfully');
+
+                // Decode base64 database
+                // showDebug('Decoding base64 database...');
+                const binaryData = Uint8Array.from(atob(BASE64_DB), c => c.charCodeAt(0));
+                // showDebug(`Database size: ${binaryData.length} bytes`);
+                
+                // Register the database
+                await db.registerFileBuffer("report.db", binaryData);
+                await conn.query("ATTACH 'report.db' AS report_db");
+                // showDebug('Database attached successfully');
+
+                // List all tables to see what's available
+                const tablesResult = await conn.query("SELECT table_name FROM duckdb_tables() WHERE database_name='report_db'");
+                const tables = tablesResult.toArray();
+                // showDebug(`Available tables: ${tables.map(t => t.table_name).join(', ')}`);
+
+                await loadData();
+                
+            } catch (error) {
+                console.error('Database initialization error:', error);
+                showError(`Database initialization failed: ${error.message}`);
+            }
+        }
+
+        async function loadData() {
+            try {
+                // showDebug('Loading data...');
+
+                // Get parameters for units and calculations
+                let sampleCount = 'Unknown';
+                let stepSize = 1;
+                let timeUnit = 'periods';
+                let energyUnit = 'MWh';
+                
+                try {
+                    const paramsResult = await conn.query("SELECT n_samples, step_size, time_unit, energy_unit FROM report_db.parameters LIMIT 1");
+                    const params = paramsResult.toArray();
+                    if (params.length > 0) {
+                        sampleCount = params[0].n_samples;
+                        stepSize = params[0].step_size || 1;
+                        timeUnit = params[0].time_unit || 'periods';
+                        energyUnit = params[0].energy_unit || 'MWh';
+                    }                
+                } catch (e) {
+                        // showDebug(`Could not find parameters table: ${e.message}`);
+                }
+                
+                // Extract timezone from the data itself
+                let timezone = 'UTC';
+                try {
+                    const timezoneResult = await conn.query("SELECT start_timestamp FROM report_db.events LIMIT 1");
+                    const tzData = timezoneResult.toArray();
+                    if (tzData.length > 0) {
+                        const timestampStr = tzData[0].start_timestamp;
+                        // Extract timezone from timestamp string (e.g., "2025-09-29T14:30:00-07:00" -> "UTC-7")
+                        const tzMatch = timestampStr.match(/([+-]\d{2}):\d{2}$/);
+                        if (tzMatch) {
+                            const offsetHours = parseInt(tzMatch[1]);
+                            timezone = offsetHours === 0 ? 'UTC' : `UTC${offsetHours >= 0 ? '+' : ''}${offsetHours}`;
+                        } else if (timestampStr.includes('Z')) {
+                            timezone = 'UTC';
+                        }
+                    }
+                } catch (e) {
+                    // showDebug(`Could not determine timezone: ${e.message}`);
+                }
+
+                // Update column headers with units and timezone
+                document.getElementById('start-time-header').textContent = `Start Time (${timezone})`;
+                document.getElementById('end-time-header').textContent = `End Time (${timezone})`;
+                document.getElementById('duration-header').textContent = `Event Duration (${timeUnit})`;
+                document.getElementById('eue-header').textContent = `EUE`;
+                document.getElementById('lole-header').textContent = `LOLE`;
+                document.getElementById('neue-header').textContent = `NEUE`;
+
+                document.getElementById('sample-count').textContent = formatNumber(sampleCount, 0);
+                // showDebug(`Sample count: ${sampleCount}`);
+
+                // Get events with system shortfall metrics
+                const eventsQuery = `
+                    SELECT 
+                        e.id,
+                        e.start_timestamp,
+                        e.end_timestamp,
+                        e.time_period_count,
+                        ess.eue,
+                        ess.lole,
+                        ess.neue
+                    FROM report_db.events e
+                    LEFT JOIN report_db.event_system_shortfall ess ON e.id = ess.event_id
+                    ORDER BY e.start_timestamp
+                `;
+
+                // showDebug('Executing events query...');
+                const eventsResult = await conn.query(eventsQuery);
+                const events = eventsResult.toArray();
+                // showDebug(`Found ${events.length} events`);
+
+                // Update event count
+                document.getElementById('event-count').textContent = formatNumber(events.length, 0);
+
+                // Populate table
+                const tbody = document.getElementById('events-tbody');
+                tbody.innerHTML = '';
+
+                events.forEach((event, index) => {
+                    // showDebug(`Event ${index}: ${JSON.stringify(event)}`);
+                    
+                    // Calculate actual duration: time_period_count * step_size
+                    const actualDuration = (event.time_period_count || 0) * stepSize;
+                    
+                    // Format timestamps in 24-hour format, preserving timezone from data
+                    const formatTimestamp = (timestamp) => {
+                        if (!timestamp) return 'N/A';
+                        const date = new Date(timestamp);
+                        // Format as YYYY-MM-DD HH:mm:ss to preserve original timezone info
+                        const year = date.getFullYear();
+                        const month = String(date.getMonth() + 1).padStart(2, '0');
+                        const day = String(date.getDate()).padStart(2, '0');
+                        const hours = String(date.getHours()).padStart(2, '0');
+                        const minutes = String(date.getMinutes()).padStart(2, '0');
+                        const seconds = String(date.getSeconds()).padStart(2, '0');
+                        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+                    };
+                    
+                    const startTime = formatTimestamp(event.start_timestamp);
+                    const endTime = formatTimestamp(event.end_timestamp);
+                    
+                    // Format EUE with units showing rate per time unit
+                    const eueFormatted = event.eue ? `${formatNumber(event.eue, 3)} ${energyUnit}/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    // Format LOLE: (number) event-(time_unit)/(event_duration_value)(time_unit)
+                    const loleFormatted = event.lole ? `${formatNumber(event.lole, 3)} event-${timeUnit}/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    // Format NEUE: (number) ppm/(event_duration_value)(time_unit)
+                    const neueFormatted = event.neue ? `${formatNumber(event.neue, 3)} ppm/${actualDuration} ${timeUnit}` : 'N/A';
+                    
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="numeric">${event.id || index + 1}</td>
+                        <td>${startTime}</td>
+                        <td>${endTime}</td>
+                        <td class="numeric">${formatNumber(actualDuration, 0)}</td>
+                        <td class="numeric">${eueFormatted}</td>
+                        <td class="numeric">${loleFormatted}</td>
+                        <td class="numeric">${neueFormatted}</td>
+                    `;
+                    tbody.appendChild(row);
+                });
+
+                // Show table and hide loading
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('table-wrapper').style.display = 'block';
+                // showDebug('Data loading completed successfully');
+
+            } catch (error) {
+                console.error('Data loading error:', error);
+                showError(`Data loading failed: ${error.message}`);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // showDebug('DOM loaded, starting initialization...');
+            initializeDatabase();
+        });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', function() {
+            if (conn) conn.close();
+            if (db) db.terminate();
+        });
+    </script>
+</body>
+</html>
