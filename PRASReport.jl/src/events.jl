@@ -32,6 +32,8 @@ mutable struct Event{N,L,T,E}
     end
 end
 
+event_length(event::Event{N,L,T}) where {N,L,T} = T(N*L)
+
 mutable struct Shortfall_timeseries{}
     name::String
     timestamps::Vector{ZonedDateTime}
@@ -40,12 +42,12 @@ mutable struct Shortfall_timeseries{}
     neue::Vector{Vector{Float64}}
     regions::Vector{String}
 
-    function Shortfall_timeseries(event,sf::ShortfallResult{N,L,T,E}) where {N,L,T,E}
+    function Shortfall_timeseries(event,sfresult::ShortfallResult{N,L,T,E}) where {N,L,T,E}
         name = event.name
         timestamps = collect(event.timestamps)
-        eue = map(row->val.(row),(EUE.(sf,:,timestamps)))
-        lole = map(row->val.(row),(LOLE.(sf,:,timestamps)))
-        neue = map(row->val.(row),(NEUE.(sf,:,timestamps)))
+        eue = map(row->val.(row),(EUE.(sfresult,:,timestamps)))
+        lole = map(row->val.(row),(LOLE.(sfresult,:,timestamps)))
+        neue = map(row->val.(row),(NEUE.(sfresult,:,timestamps)))
         regions = event.regions
         new(name,timestamps,eue,lole,neue,regions)
     end
@@ -54,17 +56,19 @@ end
 mutable struct Flow_timeseries{}
     name::String
     timestamps::Vector{ZonedDateTime}
-    flow::Vector{Vector{NEUE}}
-    interfaces::Vector{String}
-    function Flow_timeseries(timestamps::Vector{ZonedDateTime})
-        new(timestamps)
+    flow::Vector{Vector{Float64}}
+    interfaces::Vector{Pair{String,String}}
+
+    function Flow_timeseries(event,flresult::FlowResult{N,L,T,P}) where {N,L,T,P}
+        name = event.name
+        timestamps = collect(event.timestamps)
+        flow = [first.(flresult[:, ts]) for ts in timestamps] 
+        interfaces = flresult.interfaces
+        new(name,timestamps,flow,interfaces)
     end
 end
 
-
-event_length(event::Event{N,L,T}) where {N,L,T} = T(N*L)
-
-function Event(sf::ShortfallResult{N,L,T,E}, 
+function Event(sfresult::ShortfallResult{N,L,T,E}, 
                 event_timestamps::StepRange{ZonedDateTime,T}, 
                 name::String=nothing
                 ) where {N,L,T,E}
@@ -74,46 +78,46 @@ function Event(sf::ShortfallResult{N,L,T,E},
     end
 
     event_length = length(event_timestamps)
-    ts_first = findfirstunique(sf.timestamps,first(event_timestamps))
-    ts_last = findfirstunique(sf.timestamps,last(event_timestamps))
+    ts_first = findfirstunique(sfresult.timestamps,first(event_timestamps))
+    ts_last = findfirstunique(sfresult.timestamps,last(event_timestamps))
 
     system_lole = LOLE{event_length,L,T}(
-            MeanEstimate(sum(val.(LOLE.(sf,event_timestamps))))
+            MeanEstimate(sum(val.(LOLE.(sfresult,event_timestamps))))
             )
 
     system_eue = EUE{event_length,L,T,E}(
-            MeanEstimate(sum(val.(EUE.(sf,event_timestamps))))
+            MeanEstimate(sum(val.(EUE.(sfresult,event_timestamps))))
             )
 
     system_neue = NEUE(
-            div(MeanEstimate(sum(val.(EUE.(sf,event_timestamps)))),
-                sum(sf.regions.load[:,ts_first:ts_last])/1e6))
+            div(MeanEstimate(sum(val.(EUE.(sfresult,event_timestamps)))),
+                sum(sfresult.regions.load[:,ts_first:ts_last])/1e6))
 
     lole = LOLE{event_length,L,T}[]
     eue = EUE{event_length,L,T,E}[]
     neue = NEUE[]
     
-    if length(sf.regions) > 1
+    if length(sfresult.regions) > 1
         region_names = ["System"]
 
-        for (r,region) in enumerate(sf.regions.names)
+        for (r,region) in enumerate(sfresult.regions.names)
 
             push!(lole,
                 LOLE{event_length,L,T}(
-                MeanEstimate(sum(val.(LOLE.(sf,region,event_timestamps))))
+                MeanEstimate(sum(val.(LOLE.(sfresult,region,event_timestamps))))
                 )
             )
 
             push!(eue,
                 EUE{event_length,L,T,E}(
-                    MeanEstimate(sum(val.(EUE.(sf,region,event_timestamps))))
+                    MeanEstimate(sum(val.(EUE.(sfresult,region,event_timestamps))))
                     )
                 )
 
             push!(neue,
                 NEUE(
-                    div(MeanEstimate(sum(val.(EUE.(sf,region,event_timestamps)))),
-                        sum(sf.regions.load[r,ts_first:ts_last])/1e6))
+                    div(MeanEstimate(sum(val.(EUE.(sfresult,region,event_timestamps)))),
+                        sum(sfresult.regions.load[r,ts_first:ts_last])/1e6))
                 )
             
             push!(region_names,region)
@@ -123,11 +127,11 @@ function Event(sf::ShortfallResult{N,L,T,E},
     return Event(name,event_timestamps,
                 system_lole, system_eue, system_neue,
                 lole,eue,neue,
-                sf.regions.names)
+                sfresult.regions.names)
 end
 
 """
-    get_events(sf::ShortfallResult{N,L,T,E}, event_threshold=0) where {N,L,T,E}
+    get_events(sfresult::ShortfallResult{N,L,T,E}, event_threshold=0) where {N,L,T,E}
 
 Extracts events from PRAS ShortfallResult objects where an event is a contiguous 
 period during which the system EUE exceeds a specified threshold, and 
@@ -137,18 +141,18 @@ If the PRAS simulation is hourly and event_threshold is 0, and there are
 5 consecutive hours where the system EUE exceeds the threshold, this returns a 
 vector with a single event. 
 """
-function get_events(sf::ShortfallResult{N,L,T,E}, event_threshold=0) where {N,L,T,E}
+function get_events(sfresult::ShortfallResult{N,L,T,E}, event_threshold=0) where {N,L,T,E}
     
     event_threshold < 0 && error("Event threshold must be non-negative")
 
-    eue_system = EUE.(sf,sf.timestamps)
+    eue_system = EUE.(sfresult,sfresult.timestamps)
     system_eue_above_threshold = findall(val.(eue_system) .> event_threshold)
 
     isempty(system_eue_above_threshold) && error("No shortfall events in this simulation")
 
-    event_timegroups = get_stepranges(sf.timestamps[system_eue_above_threshold],L,T)        
+    event_timegroups = get_stepranges(sfresult.timestamps[system_eue_above_threshold],L,T)        
     
-    return map(ts_group -> Event(sf,ts_group,
+    return map(ts_group -> Event(sfresult,ts_group,
                             format(first(ts_group),"yyyy-mm-dd HH:MM ZZZ")
                             ),
                 event_timegroups)
