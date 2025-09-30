@@ -12,4 +12,5 @@
 6. Explore how a directed graph can be stored in DuckDB, and how it can be drawn on a webpage with WASM-DuckDB
 7. Julia indentation
 8. Better names for Shortfall_timeseries and Flow_timeseries?
-9. Update glossary with event period definitions
+9. Update glossary with event period definitions, for example it says EUE per year, instead it should say per event period etc.
+10. Add a analysis narrative section to the report.
