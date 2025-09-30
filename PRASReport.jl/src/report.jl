@@ -30,6 +30,8 @@ function create_html_report(sf::ShortfallResult,
     report_html = replace(report_html, 
                             "const BASE64_DB = \"{{BASE64_DB_PLACEHOLDER}}\"" => "const BASE64_DB = \"$(base64_db)\"")
     
-    write(report_name * ".html", report_html);
+    write(report_name * ".html", report_html)
+
+    return
 
 end                          

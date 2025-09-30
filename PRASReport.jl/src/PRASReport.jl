@@ -11,7 +11,7 @@ import PRASCore.Results: EUE, LOLE, NEUE, ShortfallResult, FlowResult,
                             val, stderror
 import StatsBase: mean
 import Dates: @dateformat_str, format, now, DateTime
-import TimeZones: ZonedDateTime, @tz_str
+import TimeZones: ZonedDateTime, @tz_str, TimeZone
 import Base64: base64encode
 import Tables: columntable
 import DuckDB
