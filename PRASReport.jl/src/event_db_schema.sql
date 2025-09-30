@@ -1,15 +1,26 @@
 -- System and Simulation parameters 
-CREATE TABLE parameters (
+CREATE TABLE systemsiminfo (
+    timesteps INTEGER,
     step_size INTEGER NOT NULL,
     time_unit TEXT NOT NULL,
     power_unit TEXT NOT NULL,
     energy_unit TEXT NOT NULL,
+    start_timestamp TIMESTAMP WITHOUT TIME ZONE,
+    end_timestamp TIMESTAMP WITHOUT TIME ZONE,
+    timezone TEXT,
     n_samples INTEGER,
+    eue_mean REAL NOT NULL,
+    eue_stderr REAL NOT NULL,
+    lole_mean REAL NOT NULL,
+    lole_stderr REAL NOT NULL,
+    neue_mean REAL NOT NULL,
+    neue_stderr REAL NOT NULL,
+    eventthreshold INTEGER NOT NULL,
     
     -- Constraint to ensure valid ISO 8601 duration units
     CONSTRAINT valid_time_unit CHECK (
         time_unit IN ('Year', 'Day', 'Hour', 'Minute', 'Second')
-    ),
+    )
 );
 
 -- Regions lookup table
@@ -32,8 +43,8 @@ CREATE SEQUENCE eventid_sequence START 1;
 CREATE TABLE events (
     id INTEGER PRIMARY KEY DEFAULT nextval('eventid_sequence'),
     name TEXT NOT NULL,
-    start_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
-    end_timestamp TIMESTAMP WITH TIME ZONE NOT NULL,
+    start_timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    end_timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     time_period_count INTEGER NOT NULL   -- N parameter
 );
 
@@ -62,7 +73,7 @@ CREATE TABLE event_regional_shortfall (
 CREATE TABLE event_timeseries_shortfall (
     event_id INTEGER NOT NULL,
     region_id INTEGER NOT NULL,
-    timestamp_value TIMESTAMP WITH TIME ZONE NOT NULL,
+    timestamp_value TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     lole REAL NOT NULL,
     eue REAL NOT NULL,
     neue REAL NOT NULL,
@@ -76,7 +87,7 @@ CREATE TABLE event_timeseries_shortfall (
 CREATE TABLE event_timeseries_flows (
     event_id INTEGER NOT NULL,
     interface_id INTEGER NOT NULL,
-    timestamp_value TIMESTAMP WITH TIME ZONE NOT NULL,
+    timestamp_value TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     flow REAL NOT NULL, -- Flow value (NEUE units)
     FOREIGN KEY (event_id) REFERENCES events(id),
     FOREIGN KEY (interface_id) REFERENCES interfaces(id),

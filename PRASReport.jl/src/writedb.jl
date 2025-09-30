@@ -43,7 +43,7 @@ function get_db(sf::ShortfallResult{N,L,T,E},
     end
 
     # Write system & simulation parameters to database
-    write_db!(sf, flow, conn)
+    write_db!(sf, flow, threshold, conn)
     
     # Write region names to database
     write_db!(sf.regions.names, conn)
@@ -78,22 +78,44 @@ end
 # Setup Functions
 # ============================================================================
 """
-    write_db!(::ShortfallResult{N,L,T,E}, ::FlowResult{N,L,T,P}, conn::DuckDB.Connection)
+    write_db!(::ShortfallResult{N,L,T,E}, ::FlowResult{N,L,T,P}, 
+    threshold::Int, conn::DuckDB.Connection)
 
 Write system and simulation parameters to the parameters table.
 """
 function write_db!(sf::ShortfallResult{N,L,T,E}, 
-                    ::FlowResult{N,L,T,P}, 
+                    ::FlowResult{N,L,T,P},
+                    threshold::Int64, 
                     conn::DuckDB.Connection) where {N,L,T,P,E}
 
     try
-        DuckDB.execute(conn, 
-                        "INSERT INTO parameters 
-                        (step_size, time_unit, power_unit, 
-                        energy_unit, n_samples) 
-                        VALUES (?,?,?,?,?)", 
-                        [L,unitsymbol_long(T),unitsymbol(P),
-                        unitsymbol(E),sf.nsamples])
+        
+        appender = DuckDB.Appender(conn, "systemsiminfo")
+        
+        try
+            DuckDB.append(appender, N)
+            DuckDB.append(appender, L)
+            DuckDB.append(appender, unitsymbol_long(T))
+            DuckDB.append(appender, unitsymbol(P))
+            DuckDB.append(appender, unitsymbol(E))
+            DuckDB.append(appender, DateTime(first(sf.timestamps)))
+            DuckDB.append(appender, DateTime(last(sf.timestamps)))
+            DuckDB.append(appender, string(TimeZone(last(sf.timestamps))))
+            DuckDB.append(appender, sf.nsamples)
+            DuckDB.append(appender, val(EUE(sf)))
+            DuckDB.append(appender, stderror(EUE(sf)))
+            DuckDB.append(appender, val(LOLE(sf)))
+            DuckDB.append(appender, stderror(LOLE(sf)))
+            DuckDB.append(appender, val(NEUE(sf)))
+            DuckDB.append(appender, stderror(NEUE(sf)))
+            DuckDB.append(appender, threshold)
+            DuckDB.end_row(appender)
+            DuckDB.flush(appender)
+            
+        finally
+            # Always close the appender
+            DuckDB.close(appender)
+        end
     catch e 
         rethrow(e)
     end
