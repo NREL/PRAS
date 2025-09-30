@@ -153,6 +153,8 @@
             margin-bottom: 2rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
             overflow-x: auto;
+            overflow-y: auto;
+            max-height: 600px;
         }
 
         #table-wrapper[style*="display: none"] {
@@ -233,6 +235,7 @@
             width: 100%;
             border-collapse: collapse;
             font-size: 0.9rem;
+            position: relative;
         }
 
         th, td {
@@ -247,8 +250,9 @@
             color: #333;
             position: sticky;
             top: 0;
-            z-index: 10;
+            z-index: 100;
             text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         tr:hover {
@@ -303,6 +307,49 @@
 
         th.numeric {
             text-align: center;
+        }
+
+        /* Scrollable table enhancements */
+        #table-wrapper::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 4px;
+        }
+
+        #table-wrapper::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Add a subtle fade effect at the top when scrolled */
+        #table-wrapper {
+            position: relative;
+        }
+
+        #table-wrapper::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(to bottom, rgba(102, 126, 234, 0.1), transparent);
+            pointer-events: none;
+            z-index: 50;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        #table-wrapper.scrolled::before {
+            opacity: 1;
         }
 
         .event-name {
@@ -619,6 +666,27 @@
         window.exportDatabase = exportDatabase;
         window.showCharts = showCharts;
         window.showTable = showTable;
+
+        // Add scroll indicator for table
+        function setupTableScrollIndicator() {
+            const tableWrapper = document.getElementById('table-wrapper');
+            if (tableWrapper) {
+                tableWrapper.addEventListener('scroll', function() {
+                    if (this.scrollTop > 10) {
+                        this.classList.add('scrolled');
+                    } else {
+                        this.classList.remove('scrolled');
+                    }
+                });
+            }
+        }
+
+        // Call setup when table is shown
+        const originalShowTable = showTable;
+        showTable = function() {
+            originalShowTable();
+            setTimeout(setupTableScrollIndicator, 100); // Small delay to ensure DOM is ready
+        };
 
         // Format timestamps from DuckDB TIMESTAMP WITHOUT TIME ZONE
         // These come as naive timestamps that should be displayed as-is without timezone conversion
