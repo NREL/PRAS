@@ -34,40 +34,6 @@ end
 
 event_length(event::Event{N,L,T}) where {N,L,T} = T(N*L)
 
-mutable struct Shortfall_timeseries{}
-    name::String
-    timestamps::Vector{ZonedDateTime}
-    eue::Vector{Vector{Float64}}
-    lole::Vector{Vector{Float64}}
-    neue::Vector{Vector{Float64}}
-    regions::Vector{String}
-
-    function Shortfall_timeseries(event,sfresult::ShortfallResult{N,L,T,E}) where {N,L,T,E}
-        name = event.name
-        timestamps = collect(event.timestamps)
-        eue = map(row->val.(row),(EUE.(sfresult,:,timestamps)))
-        lole = map(row->val.(row),(LOLE.(sfresult,:,timestamps)))
-        neue = map(row->val.(row),(NEUE.(sfresult,:,timestamps)))
-        regions = event.regions
-        new(name,timestamps,eue,lole,neue,regions)
-    end
-end
-
-mutable struct Flow_timeseries{}
-    name::String
-    timestamps::Vector{ZonedDateTime}
-    flow::Vector{Vector{Float64}}
-    interfaces::Vector{Pair{String,String}}
-
-    function Flow_timeseries(event,flresult::FlowResult{N,L,T,P}) where {N,L,T,P}
-        name = event.name
-        timestamps = collect(event.timestamps)
-        flow = [first.(flresult[:, ts]) for ts in timestamps] 
-        interfaces = flresult.interfaces
-        new(name,timestamps,flow,interfaces)
-    end
-end
-
 function Event(sfresult::ShortfallResult{N,L,T,E}, 
                 event_timestamps::StepRange{ZonedDateTime,T}, 
                 name::String=nothing
@@ -174,4 +140,38 @@ function get_stepranges(vec::Vector{ZonedDateTime},L,T)
     end
     push!(groups, StepRange(start,T(L),final))
     return groups
+end
+
+mutable struct Shortfall_timeseries{}
+    name::String
+    timestamps::Vector{ZonedDateTime}
+    eue::Vector{Vector{Float64}}
+    lole::Vector{Vector{Float64}}
+    neue::Vector{Vector{Float64}}
+    regions::Vector{String}
+
+    function Shortfall_timeseries(event,sfresult::ShortfallResult{N,L,T,E}) where {N,L,T,E}
+        name = event.name
+        timestamps = collect(event.timestamps)
+        eue = map(row->val.(row),(EUE.(sfresult,:,timestamps)))
+        lole = map(row->val.(row),(LOLE.(sfresult,:,timestamps)))
+        neue = map(row->val.(row),(NEUE.(sfresult,:,timestamps)))
+        regions = event.regions
+        new(name,timestamps,eue,lole,neue,regions)
+    end
+end
+
+mutable struct Flow_timeseries{}
+    name::String
+    timestamps::Vector{ZonedDateTime}
+    flow::Vector{Vector{Float64}}
+    interfaces::Vector{Pair{String,String}}
+
+    function Flow_timeseries(event,flresult::FlowResult{N,L,T,P}) where {N,L,T,P}
+        name = event.name
+        timestamps = collect(event.timestamps)
+        flow = [first.(flresult[:, ts]) for ts in timestamps] 
+        interfaces = flresult.interfaces
+        new(name,timestamps,flow,interfaces)
+    end
 end

@@ -1,20 +1,28 @@
 """
     get_db(sf::ShortfallResult{N,L,T,E},
-                flow::FlowResult{N,L,T,P}=nothing;
-                conn::DuckDB.Connection=nothing,
-                threshold=0
+            flow::FlowResult{N,L,T,P}=nothing;
+            conn::DuckDB.Connection=nothing,
+            threshold=0)
 
 Extract events from PRAS results and write them to database.
-Returns the event IDs for further processing.
+Returns the database connection if provided.
+If connection is not provided, it creates and writes to a .duckdb
+database in the working directory of REPL or the julia call.
+
+# Arguments
+- `system::SystemModel`: PRAS system
+- `conn::Union{DuckDB.Connection,Nothing}`: DuckDB database connection (default: nothing)
+- `threshold`: Event threshold (default: 0)
 """
 function get_db(sf::ShortfallResult{N,L,T,E},
                 flow::Union{FlowResult{N,L,T,P},Nothing}=nothing;
                 conn::Union{DuckDB.Connection,Nothing}=nothing,
-                threshold=0) where {N,L,T,P,E}
+                threshold=0, 
+                samples=nothing, seed=nothing) where {N,L,T,P,E}
     
     if isnothing(conn)
         timenow = format(now(tz"UTC"), @dateformat_str"yyyy-mm-dd_HHMMSSZZZ")
-        dbfile = DuckDB.open(joinpath(@__DIR__, "$(timenow).duckdb"))
+        dbfile = DuckDB.open(joinpath(pwd(), "$(timenow).duckdb"))
         conn = DuckDB.connect(dbfile)
         internal_conn = true
     else
@@ -43,26 +51,26 @@ function get_db(sf::ShortfallResult{N,L,T,E},
     end
 
     # Write system & simulation parameters to database
-    write_db!(sf, flow, threshold, conn)
+    _write_db!(sf, flow, threshold, conn)
     
     # Write region names to database
-    write_db!(sf.regions.names, conn)
+    _write_db!(sf.regions.names, conn)
 
     # Extract events from shortfall results
     events = get_events(sf,threshold)
     
     # Write events to database (events, system metrics, regional metrics)
-    foreach(event -> write_db!(event,conn), events)
+    foreach(event -> _write_db!(event,conn), events)
     
     # Write time-series shortfall data for each event
     sf_timeseries_allevents = Shortfall_timeseries.(events, sf)
-    foreach(sf_ts -> write_db!(sf_ts,conn), sf_timeseries_allevents)
+    foreach(sf_ts -> _write_db!(sf_ts,conn), sf_timeseries_allevents)
     
     # Write flow data if provided
     if !isnothing(flow)
-        write_db!(flow.interfaces, conn) 
+        _write_db!(flow.interfaces, conn) 
         flow_timeseries_allevents = Flow_timeseries.(events, flow)
-        foreach(flow_ts -> write_db!(flow_ts,conn), flow_timeseries_allevents)
+        foreach(flow_ts -> _write_db!(flow_ts,conn), flow_timeseries_allevents)
     end
 
     if internal_conn
@@ -74,16 +82,76 @@ function get_db(sf::ShortfallResult{N,L,T,E},
     end
 
 end
+
+"""
+    get_db(system::SystemModel; 
+            conn::Union{DuckDB.Connection,Nothing}=nothing,
+            threshold=0,
+            samples=1000,
+            seed=1)
+
+Perform PRAS simulation on the given system and write results to database
+connection if provided or to a new database in the current working directory
+from which function is called.
+
+# Arguments
+- `system::SystemModel`: PRAS system
+- `samples`: Number of Monte Carlo samples (default: 1000)
+- `seed`: Random seed for MC simulation (default: 1)
+"""
+function get_db(system::SystemModel; 
+                conn::Union{DuckDB.Connection,Nothing}=nothing,
+                threshold=0,
+                samples=1000,
+                seed=1)
+    
+    # Run assessment with both Shortfall and Flow specifications
+    sf_result,flow_result = assess(system,
+                    SequentialMonteCarlo(samples=samples,seed=seed),
+                    Shortfall(),Flow()
+                    ); 
+    
+    # Call the main get_db function with the assessment results
+    return get_db(sf_result, flow_result; conn=conn, threshold=threshold)
+end
+
+"""
+    get_db(system_path::AbstractString; 
+            conn::Union{DuckDB.Connection,Nothing}=nothing,
+            threshold=0,
+            samples=1000,
+            seed=1)
+
+Load a SystemModel from file path, perform PRAS simulation on the given system.
+Write results to database connection if provided or to a new database in the 
+current working directory from which function is called.
+
+# Arguments
+- `system_path::AbstractString`: Path to the .pras file
+"""
+function get_db(system_path::AbstractString; 
+                conn::Union{DuckDB.Connection,Nothing}=nothing,
+                threshold=0,
+                samples=1000,
+                seed=1)
+    
+    # Load the system model from file
+    system = SystemModel(system_path)
+    
+    # Call the SystemModel dispatch version
+    return get_db(system; conn=conn, threshold=threshold, samples=samples, seed=seed)
+end
+
 # ============================================================================
-# Setup Functions
+# Write functions - system, simulation global info
 # ============================================================================
 """
-    write_db!(::ShortfallResult{N,L,T,E}, ::FlowResult{N,L,T,P}, 
+    _write_db!(::ShortfallResult{N,L,T,E}, ::FlowResult{N,L,T,P}, 
     threshold::Int, conn::DuckDB.Connection)
 
 Write system and simulation parameters to the parameters table.
 """
-function write_db!(sf::ShortfallResult{N,L,T,E}, 
+function _write_db!(sf::ShortfallResult{N,L,T,E}, 
                     ::FlowResult{N,L,T,P},
                     threshold::Int64, 
                     conn::DuckDB.Connection) where {N,L,T,P,E}
@@ -113,8 +181,7 @@ function write_db!(sf::ShortfallResult{N,L,T,E},
             DuckDB.flush(appender)
             
         finally
-            # Always close the appender
-            DuckDB.close(appender)
+                DuckDB.close(appender)
         end
     catch e 
         rethrow(e)
@@ -122,105 +189,153 @@ function write_db!(sf::ShortfallResult{N,L,T,E},
 end
 
 """
-    write_db!(region_names::Vector{String}, conn::DuckDB.Connection)
+    _write_db!(region_names::Vector{String}, conn::DuckDB.Connection)
 
 Write regions to the regions table. Call this once to populate the regions table.
-Ignores regions that already exist.
 """
-function write_db!(region_names::Vector{String}, conn::DuckDB.Connection)
-    for (idx,region_name) in enumerate(region_names)
-        try
-            DuckDB.execute(conn, "INSERT INTO regions (id, name) VALUES (?,?)", [idx,region_name])
-        catch e
-            # Region already exists, continue
-            if !occursin("UNIQUE constraint", string(e))
-                rethrow(e)
-            end
+function _write_db!(region_names::Vector{String}, conn::DuckDB.Connection)
+    appender = DuckDB.Appender(conn, "regions")
+    
+    try
+        for (idx, region_name) in enumerate(region_names)
+            DuckDB.append(appender, idx)
+            DuckDB.append(appender, region_name)
+            DuckDB.end_row(appender)
         end
+        
+        DuckDB.flush(appender)
+        
+    finally
+        DuckDB.close(appender)
     end
 end
 
 """
-    write_db!(interfaces::Vector{Pair{String,String}}, conn::DuckDB.Connection)
+    _write_db!(interfaces::Vector{Pair{String,String}}, conn::DuckDB.Connection)
 
 Write interfaces from region pairs to the interfaces table. 
 Each tuple should be (region_from, region_to).
 Assumes all regions already exist in the regions table.
 Call this once to populate the interfaces table.
 """
-function write_db!(interfaces::Vector{Pair{String,String}}, conn::DuckDB.Connection)
-    for (idx,interface_pair) in enumerate(interfaces)
-        region_from, region_to = interface_pair.first, interface_pair.second
-        # Get region IDs
-        interface_reg_ids = DuckDB.execute(conn, "SELECT id FROM regions WHERE name IN [?,?]", 
-                                            [region_from,region_to]
-                                            ) |> columntable
-                
-        from_id,to_id = [interface_reg_ids.id...]
-        
-        interface_name = "$region_from->$region_to"
-        
-        # Insert interface (ignore if already exists due to UNIQUE constraint)
-        try
-            DuckDB.execute(conn, """
-                INSERT INTO interfaces (id, region_from_id, region_to_id, name) 
-                VALUES (?, ?, ?, ?)
-            """, [idx, from_id, to_id, interface_name])
-        catch e
-            # Interface already exists, continue
-            if !occursin("UNIQUE constraint", string(e))
-                rethrow(e)
-            end
+function _write_db!(interfaces::Vector{Pair{String,String}}, conn::DuckDB.Connection)
+    # Get all region IDs and names once at the beginning
+    regions_result = DuckDB.execute(conn, "SELECT id, name FROM regions") |> columntable
+    region_name_to_id = Dict(zip(regions_result.name, regions_result.id))
+
+    appender = DuckDB.Appender(conn, "interfaces")
+    
+    try
+        for (idx, interface_pair) in enumerate(interfaces)
+            region_from, region_to = interface_pair.first, interface_pair.second
+            
+            from_id = get(region_name_to_id, region_from, nothing)
+            to_id = get(region_name_to_id, region_to, nothing)
+            
+            # Error if regions don't exist
+            isnothing(from_id) && error("Region '$region_from' not found in database")
+            isnothing(to_id) && error("Region '$region_to' not found in database")
+            
+            interface_name = "$region_from->$region_to"
+    
+            # Append row: id, region_from_id, region_to_id, name
+            DuckDB.append(appender, idx)
+            DuckDB.append(appender, from_id)
+            DuckDB.append(appender, to_id)
+            DuckDB.append(appender, interface_name)
+            DuckDB.end_row(appender)
         end
+        
+        DuckDB.flush(appender)
+        
+    finally
+        DuckDB.close(appender)
     end
 end
 
 # ============================================================================
-# Write Results
+# Write functions - events, event metrics, event time-series
 # ============================================================================
 """
-    write_db!(events::Vector{Event}, conn::DuckDB.Connection)
+    _write_db!(events::Vector{Event}, conn::DuckDB.Connection)
 
 Write a vector of Event objects to the database using DuckDB Appender API for efficient bulk inserts.
 Writes to: events, event_system_shortfall, event_regional_shortfall tables.
 """
-function write_db!(events::Vector{Event}, conn::DuckDB.Connection)
+function _write_db!(events::Vector{Event}, conn::DuckDB.Connection)
     # Write each event individually to avoid memory issues with large datasets
     for event in events
-        write_db!(event, conn)
+        _write_db!(event, conn)
     end
 end
 
 """
-    write_db!(event::Event, conn::DuckDB.Connection)
+    _write_db!(event::Event, conn::DuckDB.Connection)
 
 Write a single Event object to the database.
 """
-function write_db!(event::Event{N,L,T,E}, conn::DuckDB.Connection) where {N,L,T,E}
+function _write_db!(event::Event{N,L,T,E}, conn::DuckDB.Connection) where {N,L,T,E}
     # Get region IDs in the same order as event.regions array
     region_ids = get_region_ids_ordered(event.regions, conn)
+        
+    # Extract start and end timestamps
+    start_ts = DateTime(first(event.timestamps))
+    end_ts = DateTime(last(event.timestamps))
+    time_period_count = length(event.timestamps)
     
-    # Insert the event record
-    event_id = write_event!(event, conn)
+    result = DuckDB.execute(conn, 
+                    "INSERT INTO events (name, start_timestamp, end_timestamp, 
+                    time_period_count) VALUES (?, ?, ?, ?)
+                    RETURNING id",
+                    [event.name, start_ts, end_ts, time_period_count]
+                    ) |> columntable
+
+    event_id = first(result.id)
     
-    # Insert system-level metrics
-    write_system_shortfall!(event_id, event, conn)
-    
-    # Insert regional metrics if they exist
-    if !isempty(event.lole) && !isempty(event.eue) && !isempty(event.neue)
-        write_regional_shortfall!(event_id, event, region_ids, conn)
+    # Insert system-level metrics using Appender API
+    appender_system = DuckDB.Appender(conn, "event_system_shortfall")
+    try
+        DuckDB.append(appender_system, event_id)
+        DuckDB.append(appender_system, val(event.system_lole))
+        DuckDB.append(appender_system, val(event.system_eue))
+        DuckDB.append(appender_system, val(event.system_neue))
+        DuckDB.end_row(appender_system)
+        DuckDB.flush(appender_system)
+    finally
+        DuckDB.close(appender_system)
     end
-    
-    return event_id
+
+    # Insert regional metrics using Appender API
+
+    appender_regions = DuckDB.Appender(conn, "event_regional_shortfall")    
+    try
+        for (i, region_id) in enumerate(region_ids)
+            # Append row: event_id, region_id, lole, eue, neue
+            # Note: skipping the 'id' column since it's auto-generated
+            DuckDB.append(appender_regions, event_id)
+            DuckDB.append(appender_regions, region_id)
+            DuckDB.append(appender_regions, val(event.lole[i]))
+            DuckDB.append(appender_regions, val(event.eue[i]))
+            DuckDB.append(appender_regions, val(event.neue[i]))
+            DuckDB.end_row(appender_regions)
+        end
+        
+        DuckDB.flush(appender_regions)
+        
+    finally
+        DuckDB.close(appender_regions)
+    end
+
+    return 
 end
 
 """
-    write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
+    _write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
 
-Write sf_ts time-series data to event_timeseries_shortfall table.
+Write event shortfall time-series data to event_timeseries_shortfall table.
 Gets the event_id from the database using the event name for consistency.
 """
-function write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
+function _write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
     # Get event_id from database using event name
     event_result = DuckDB.execute(conn, "SELECT id FROM events WHERE name = ?", 
                         [sf_ts.name]) |> columntable
@@ -233,7 +348,6 @@ function write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
     
     # Use Appender for efficient bulk insert
     appender = DuckDB.Appender(conn, "event_timeseries_shortfall")
-    
     try
         # Iterate through timestamps and regions
         for (t_idx, timestamp) in enumerate(sf_ts.timestamps)
@@ -249,21 +363,19 @@ function write_db!(sf_ts::Shortfall_timeseries, conn::DuckDB.Connection)
             end
         end
         
-        # Flush the appender
         DuckDB.flush(appender)
         
     finally
-        # Always close the appender
         DuckDB.close(appender)
     end
 end
 
 """
-    write_db!(flow_ts::flow_ts, event_id::Integer, conn::DuckDB.Connection)
+    _write_db!(flow_ts::flow_ts, conn::DuckDB.Connection)
 
-Write flow_ts time-series data to event_timeseries_flows table.
+Write event flow time-series data to event_timeseries_flows table.
 """
-function write_db!(flow_ts::Flow_timeseries, conn::DuckDB.Connection)
+function _write_db!(flow_ts::Flow_timeseries, conn::DuckDB.Connection)
 
     # Get event_id from database using event name
     event_result = DuckDB.execute(conn, "SELECT id FROM events WHERE name = ?", 
@@ -277,7 +389,6 @@ function write_db!(flow_ts::Flow_timeseries, conn::DuckDB.Connection)
     
     # Use Appender for efficient bulk insert
     appender = DuckDB.Appender(conn, "event_timeseries_flows")
-    
     try
         # Iterate through timestamps and interfaces
         for (t_idx, timestamp) in enumerate(flow_ts.timestamps)
@@ -291,11 +402,9 @@ function write_db!(flow_ts::Flow_timeseries, conn::DuckDB.Connection)
             end
         end
         
-        # Flush the appender
         DuckDB.flush(appender)
         
     finally
-        # Always close the appender
         DuckDB.close(appender)
     end
 end
@@ -342,72 +451,4 @@ function get_interface_ids_ordered(interface_names::Vector{Pair{String,String}},
     
     return interface_ids
 end
-
-"""
-    write_event!(event::Event, conn::DuckDB.Connection) -> Int
-
-Write event record to events table and return the event ID.
-"""
-function write_event!(event::Event, conn::DuckDB.Connection)
-    # Extract start and end timestamps
-    start_ts = DateTime(first(event.timestamps))
-    end_ts = DateTime(last(event.timestamps))
-    time_period_count = length(event.timestamps)
-    
-    # Insert event and get the ID using RETURNING clause
-    result = DuckDB.execute(conn, 
-                """
-                INSERT INTO events (name, start_timestamp, end_timestamp, time_period_count) 
-                VALUES (?, ?, ?, ?)
-                RETURNING id
-                """, 
-                [event.name, start_ts, end_ts, time_period_count]) |> columntable
-    
-    event_id = first(result.id)
-    
-    return event_id
-end
-
-"""
-    write_system_shortfall!(event_id::Int, event::Event, conn::DuckDB.Connection)
-
-Write system-level shortfall metrics to event_system_shortfall table.
-"""
-function write_system_shortfall!(event_id::Int32, event::Event, conn::DuckDB.Connection)
-    DuckDB.execute(conn, """
-        INSERT INTO event_system_shortfall (event_id, lole, eue, neue) 
-        VALUES (?, ?, ?, ?)
-    """, [event_id, val(event.system_lole), val(event.system_eue), val(event.system_neue)])
-end
-
-"""
-    write_regional_shortfall!(event_id::Int, event::Event, region_ids::Vector{Int}, conn::DuckDB.Connection)
-
-Write regional shortfall metrics to event_regional_shortfall table.
-"""
-function write_regional_shortfall!(event_id::Int32, event::Event, region_ids::Vector{Int}, conn::DuckDB.Connection)
-    # Use Appender for efficient bulk insert
-    appender = DuckDB.Appender(conn, "event_regional_shortfall")
-    
-    try
-        for (i, region_id) in enumerate(region_ids)
-            # Append row: event_id, region_id, lole, eue, neue
-            # Note: skipping the 'id' column since it's auto-generated
-            DuckDB.append(appender, event_id)
-            DuckDB.append(appender, region_id)
-            DuckDB.append(appender, val(event.lole[i]))
-            DuckDB.append(appender, val(event.eue[i]))
-            DuckDB.append(appender, val(event.neue[i]))
-            DuckDB.end_row(appender)
-        end
-        
-        # Flush the appender
-        DuckDB.flush(appender)
-        
-    finally
-        # Always close the appender
-        DuckDB.close(appender)
-    end
-end
-
 
