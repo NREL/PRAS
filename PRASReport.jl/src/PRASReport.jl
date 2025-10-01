@@ -22,7 +22,7 @@ import DuckDB
 export 
     Event, get_events, event_length, 
     Shortfall_timeseries, Flow_timeseries,
-    get_db, create_html_report
+    get_db, create_pras_report
 
 include("events.jl")
 include("writedb.jl")

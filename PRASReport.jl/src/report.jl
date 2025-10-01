@@ -1,5 +1,5 @@
 """
-    create_html_report(sf::ShortfallResult, flow::FlowResult;
+    create_pras_report(sf::ShortfallResult, flow::FlowResult;
                         report_name::String,
                         report_path::String,
                         threshold::Int,
@@ -16,7 +16,7 @@ ShortfallResult and FlowResult objects.
 - `threshold::Int`: Event threshold for filtering events (default: 0)
 - `title::String`: Title to display in the report header (default: "Resource Adequacy Report")
 """
-function create_html_report(sf::ShortfallResult,
+function create_pras_report(sf::ShortfallResult,
                             flow::FlowResult;
                             report_name::String="report",
                             report_path::String=pwd(),
@@ -31,7 +31,7 @@ function create_html_report(sf::ShortfallResult,
                             title=title)
 end
 """
-    create_html_report(system::SystemModel;
+    create_pras_report(system::SystemModel;
                         samples,seed,
                         report_name::String="report",
                         report_path::String=pwd(),
@@ -45,7 +45,7 @@ Create a HTML report when a PRAS system and simulation parameters are provided.
 - `samples`: Number of Monte Carlo samples (default: 1000)
 - `seed`: Random seed for MC simulation (default: 1)
 """
-function create_html_report(system::SystemModel;
+function create_pras_report(system::SystemModel;
                             samples=1000,seed=1,
                             report_name::String="report",
                             report_path::String=pwd(),
@@ -62,7 +62,7 @@ function create_html_report(system::SystemModel;
 end
 
 """
-    create_html_report(system_path::String;
+    create_pras_report(system_path::String;
                         samples,seed,
                         report_name::String="report",
                         report_path::String=pwd(),
@@ -75,7 +75,7 @@ parameters are provided.
 # Arguments
 - `system_path::String`: Path to the .pras file
 """
-function create_html_report(system_path::String;
+function create_pras_report(system_path::String;
                             samples=1000,seed=1,
                             report_name::String="report",
                             report_path::String=pwd(),
