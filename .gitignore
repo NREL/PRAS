@@ -5,3 +5,7 @@ Manifest.toml
 *.DS_Store
 *.pras
 *.json
+
+# Any html and duckdb files generated during testing
+*.html 
+*.duckdb
