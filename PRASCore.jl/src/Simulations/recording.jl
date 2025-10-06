@@ -5,7 +5,7 @@ function record!(
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E,S<:Results.Shortfall}
+) where {N,L,T,P,E,S}
 
     totalshortfall = 0
     isshortfall = false
@@ -15,7 +15,11 @@ function record!(
     for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
 
         #count region shortfall and include dr shortfall
-        regionshortfall = edges[r].flow
+        #if shortfall include region and dr shortfall
+        #if drshortfall don't include region shortfall
+
+        regionshortfall = init_regionshortfall(S,edges,r)
+            
         dr_shortfall = 0
         for i in dr_idxs
             dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
@@ -50,51 +54,6 @@ function record!(
 
 end
 
-# DemandResponseShortfall
-function record!(
-    acc::Results.ShortfallAccumulator{S},
-    system::SystemModel{N,L,T,P,E},
-    state::SystemState, problem::DispatchProblem,
-    sampleid::Int, t::Int
-) where {N,L,T,P,E,S<:Results.DemandResponseShortfall}
-
-    totalshortfall = 0
-    isshortfall = false
-
-    for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
-
-        #count region shortfall and include dr shortfall
-        dr_shortfall = 0
-        for i in dr_idxs
-            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
-        end
-        regionshortfall = dr_shortfall
-        isregionshortfall = regionshortfall > 0
-
-        fit!(acc.periodsdropped_regionperiod[r,t], isregionshortfall)
-        fit!(acc.unservedload_regionperiod[r,t], regionshortfall)
-
-        if isregionshortfall
-
-            isshortfall = true
-            totalshortfall += regionshortfall
-
-            acc.periodsdropped_region_currentsim[r] += 1
-            acc.unservedload_region_currentsim[r] += regionshortfall
-
-        end
-    end
-
-    if isshortfall
-        acc.periodsdropped_total_currentsim += 1
-        acc.unservedload_total_currentsim += totalshortfall
-    end
-    fit!(acc.periodsdropped_period[t], isshortfall)
-    fit!(acc.unservedload_period[t], totalshortfall)
-    return
-
-end
-
 function reset!(acc::Results.ShortfallAccumulator, sampleid::Int) 
 
     # Store regional / total sums for current simulation
@@ -123,38 +82,18 @@ function record!(
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E,S<:Results.ShortfallSamples}
+) where {N,L,T,P,E,S}
 
-    for ((r, e),dr_idxs) in zip(enumerate(problem.region_unserved_edges),system.region_dr_idxs)
+    for (r,dr_idxs) in zip(problem.region_unserved_edges,system.region_dr_idxs)
         #getting dr shortfall
         dr_shortfall = 0
         for i in dr_idxs
             dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] : 0
         end
 
-        acc.shortfall[r, t, sampleid] = problem.fp.edges[e].flow + dr_shortfall
-    end
-
-    return
-
-end
-
-# DemandResponseShortfallSamples
-function record!(
-    acc::Results.ShortfallSamplesAccumulator{S},
-    system::SystemModel{N,L,T,P,E},
-    state::SystemState, problem::DispatchProblem,
-    sampleid::Int, t::Int
-) where {N,L,T,P,E,S<:Results.DemandResponseShortfallSamples}
-
-    for (r,dr_idxs) in enumerate(system.region_dr_idxs)
-        #getting dr shortfall
-        dr_shortfall = 0
-        for i in dr_idxs
-            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] : 0
-        end
-
-        acc.shortfall[r, t, sampleid] = dr_shortfall
+        acc.shortfall[r, t, sampleid] = 
+            init_regionshortfall(S,problem.fp.edges,r) +
+            dr_shortfall
     end
 
     return

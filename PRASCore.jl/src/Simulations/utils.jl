@@ -251,8 +251,23 @@ function minmax_payback_window_dr(system::SystemModel)
 
 end
 
+function init_regionshortfall(
+    ::Type{S},
+    edges,
+    region) where {S <: Union{
+                            Results.Shortfall,
+                            Results.ShortfallSamples}}
+    return edges[region].flow
+end
 
-
+function init_regionshortfall(
+    ::Type{S},
+    edges,
+    region) where {S <: Union{
+                            Results.DemandResponseShortfall,
+                            Results.DemandResponseShortfallSamples}}
+    return 0
+end
 
 function utilization(f::MinCostFlows.Edge, b::MinCostFlows.Edge)
 

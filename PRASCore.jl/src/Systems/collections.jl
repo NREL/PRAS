@@ -32,7 +32,12 @@ struct Regions{N,P<:PowerUnit}
 
 end
 
-Base.:(==)(x::T, y::T) where {T <: Regions} =
+# Empty Regions constructor
+function Regions{N,P}(load::Vector{Int}) where {N,P}
+    return Regions{N,P}(["Region"], reshape(load, 1, :))
+end
+
+    Base.:(==)(x::T, y::T) where {T <: Regions} =
     x.names == y.names &&
     x.load == y.load
 
@@ -79,6 +84,12 @@ struct Interfaces{N,P<:PowerUnit}
 
     end
 
+end
+
+# Empty Interfaces constructor
+function Interfaces{N,P}() where {N,P}
+    return Interfaces{N,P}(
+                Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Interfaces} =

@@ -100,9 +100,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        generators = Generators{N,L,T,P}(
-            String[], String[], zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        generators = Generators{N,L,T,P}()
 
         region_gen_idxs = fill(1:0, n_regions)
 
@@ -133,11 +131,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        storages = Storages{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        storages = Storages{N,L,T,P,E}()
 
         region_stor_idxs = fill(1:0, n_regions)
 
@@ -172,12 +166,7 @@ function _systemmodel_core(f::File)
 
     else
 
-        generatorstorages = GeneratorStorages{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        generatorstorages = GeneratorStorages{N,L,T,P,E}()
 
         region_genstor_idxs = fill(1:0, n_regions)
 
@@ -259,12 +248,9 @@ function _systemmodel_core(f::File)
 
     else
 
-        interfaces = Interfaces{N,P}(
-            Int[], Int[], zeros(Int, 0, N), zeros(Int, 0, N))
+        interfaces = Interfaces{N,P}()
 
-        lines = Lines{N,L,T,P}(
-            String[], String[], zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        lines = Lines{N,L,T,P}()
 
         interface_line_idxs = UnitRange{Int}[]
 
@@ -293,22 +279,18 @@ end
 Read a SystemModel from a PRAS file in version 0.8.x format.
 """
 function systemmodel_0_8(f::File)
-
-    has_demandresponses = haskey(f, "demandresponses")
     
     (regions, interfaces,
     generators, region_gen_idxs,
     storages, region_stor_idxs,
     generatorstorages, region_genstor_idxs,
     lines, interface_line_idxs,
-    timestamps), type_params = _systemmodel_core(f)
-
-    N, L, T, P, E = type_params
+    timestamps), (N,L,T,P,E) = _systemmodel_core(f)
 
     n_regions = length(regions)
     regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
 
-    if has_demandresponses
+    if haskey(f, "demandresponses")
 
 
         dr_core = read(f["demandresponses/_core"])

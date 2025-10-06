@@ -130,11 +130,7 @@ function SystemModel{}(
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
-        DemandResponses{N,L,T,P,E}(
-            String[], String[],
-            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
-            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
-            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
+        DemandResponses{N,L,T,P,E}(), repeat([1:0],length(regions)),
         lines, interface_line_idxs,
         timestamps, attrs)
 end
@@ -182,27 +178,14 @@ function SystemModel(
     attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
-    @warn "No time zone data provided - defaulting to UTC. To specify a " *
-          "time zone for the system timestamps, provide a range of " *
-          "`ZonedDateTime` instead of `DateTime`."
-
-    utc = tz"UTC"
-    time_start = ZonedDateTime(first(timestamps), utc)
-    time_end = ZonedDateTime(last(timestamps), utc)
-    timestamps_tz = time_start:step(timestamps):time_end
-
     return SystemModel(
         regions, interfaces,
         generators, region_gen_idxs,
         storages, region_stor_idxs,
         generatorstorages, region_genstor_idxs,
-        DemandResponses{N,L,T,P,E}(
-            String[], String[],
-            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
-            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
-            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), repeat([1:0],length(regions)),
+        DemandResponses{N,L,T,P,E}(), repeat([1:0],length(regions)),
         lines, interface_line_idxs,
-        timestamps_tz,attrs)
+        timestamps,attrs)
 
 end
 
@@ -218,18 +201,13 @@ function SystemModel(
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
 
     return SystemModel(
-        Regions{N,P}(["Region"], reshape(load, 1, :)),
-        Interfaces{N,P}(
-            Int[], Int[],
-            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N)),
+        Regions{N,P}(load),
+        Interfaces{N,P}(),
         generators, [1:length(generators)],
         storages, [1:length(storages)],
         generatorstorages, [1:length(generatorstorages)],
         demandresponses, [1:length(demandresponses)],
-        Lines{N,L,T,P}(
-            String[], String[],
-            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
-            Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
+        Lines{N,L,T,P}(),
         UnitRange{Int}[], timestamps, attrs)
 
 end
@@ -244,22 +222,13 @@ function SystemModel(
     attrs::Dict{String, String}=Dict{String, String}()
 ) where {N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
     return SystemModel(
-        Regions{N,P}(["Region"], reshape(load, 1, :)),
-        Interfaces{N,P}(
-            Int[], Int[],
-            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N)),
+        Regions{N,P}(load),
+        Interfaces{N,P}(),
         generators, [1:length(generators)],
         storages, [1:length(storages)],
         generatorstorages, [1:length(generatorstorages)],
-        DemandResponses{N,L,T,P,E}(
-            String[], String[],
-            Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
-            Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
-            Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N)), [1:0],
-        Lines{N,L,T,P}(
-            String[], String[],
-            Matrix{Int}(undef, 0, N), Matrix{Int}(undef, 0, N),
-            Matrix{Float64}(undef, 0, N), Matrix{Float64}(undef, 0, N)),
+        DemandResponses{N,L,T,P,E}(), [1:0],
+        Lines{N,L,T,P}(),
         UnitRange{Int}[], timestamps, attrs)
 end
 

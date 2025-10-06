@@ -91,6 +91,15 @@ struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
 end
 
+# Empty Generators constructor
+function Generators{N,L,T,P}() where {N,L,T,P}
+
+    return Generators{N,L,T,P}(
+            String[], String[], zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N))
+    
+end
+
 Base.:(==)(x::T, y::T) where {T <: Generators} =
     x.names == y.names &&
     x.categories == y.categories &&
@@ -224,6 +233,16 @@ struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,
 
     end
 
+end
+
+# Empty Storages constructor
+function Storages{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return Storages{N,L,T,P,E}(
+                String[], String[], 
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Storages} =
@@ -408,6 +427,18 @@ struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAs
 
 end
 
+# Empty GeneratorStorages constructor
+function GeneratorStorages{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return GeneratorStorages{N,L,T,P,E}(
+                String[], String[], 
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+                zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
+                zeros(Float64, 0, N), zeros(Float64, 0, N))
+    
+end
+
 Base.:(==)(x::T, y::T) where {T <: GeneratorStorages} =
     x.names == y.names &&
     x.categories == y.categories &&
@@ -552,6 +583,16 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
 
 end
 
+# Empty DemandResponses constructor
+function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
+
+    return DemandResponses{N,L,T,P,E}(
+                String[], String[],
+                Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
+                Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N),
+                Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N))
+end
+
 Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
     x.names == y.names &&
     x.categories == y.categories &&
@@ -684,6 +725,13 @@ struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     end
 
+end
+
+# Empty Lines constructor
+function Lines{N,L,T,P}() where {N,L,T,P}
+    return Lines{N,L,T,P}(
+            String[], String[], zeros(Int, 0, N), zeros(Int, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N))
 end
 
 Base.:(==)(x::T, y::T) where {T <: Lines} =
