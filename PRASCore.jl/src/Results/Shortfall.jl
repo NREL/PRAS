@@ -201,7 +201,7 @@ struct ShortfallResult{N, L, T <: Period, E <: EnergyUnit, S} <:
 
 end
 
-function getindex(x::ShortfallResult)  
+function getindex(x::ShortfallResult)
     return sum(x.shortfall_mean), x.shortfall_std
 end
 
@@ -274,7 +274,7 @@ end
 function finalize(
     acc::ShortfallAccumulator{S},
     system::SystemModel{N,L,T,P,E},
-) where {N,L,T,P,E,S<:Union{Shortfall,DemandResponseShortfall}}
+) where {N,L,T,P,E,S}
 
     ep_total_mean, ep_total_std = mean_std(acc.periodsdropped_total)
     ep_region_mean, ep_region_std = mean_std(acc.periodsdropped_region)
