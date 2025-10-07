@@ -463,7 +463,7 @@ function update_problem!(
             fp.nodes[payback_node], slack_node, -payback_capacity)
 
         # smallest allowable payback window = highest priority (payback first)
-        paybackcost = problem.min_paybackcost_dr + allowablepayback # Negative cost-mutliply by 10 for wheeling preventation
+        paybackcost = problem.min_paybackcost_dr + allowablepayback
         updateflowcost!(fp.edges[payback_edge], paybackcost)
 
         # Update borrowing-make sure no borrowing is allowed if allowable payback period is equal to zero
