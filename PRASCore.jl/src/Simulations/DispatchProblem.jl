@@ -134,6 +134,10 @@ struct DispatchProblem
         ngenstors = length(sys.generatorstorages)
         ndrs = length(sys.demandresponses)
 
+
+        #Implied merit order:
+        # dr payback_cost < stor/genstor charge cost < stor/genstor discharge cost < borrow cost < unserved energy
+
         #for storage/genstor
         maxchargetime, maxdischargetime = maxtimetocharge_discharge(sys)
         min_chargecost = - maxchargetime - 1
@@ -141,8 +145,8 @@ struct DispatchProblem
 
         #for demand response-we want to borrow energy in devices with the longest payback window, and payback energy from devices with the smallest payback window
         minpaybacktime_dr, maxpaybacktime_dr = minmax_payback_window_dr(sys)
-        min_paybackcost_dr = (- maxpaybacktime_dr - 50 + min_chargecost) #add min_chargecost to always have DR devices be paybacked first, and -50 for wheeling prevention
-        max_borrowcost_dr = - min_paybackcost_dr + minpaybacktime_dr + 1 + max_dischargecost #add max_dischargecost to always have DR devices be borrowed last
+        min_paybackcost_dr = min_chargecost- maxpaybacktime_dr - 50 #add min_chargecost to always have DR devices be paybacked first, and -50 for wheeling prevention
+        max_borrowcost_dr = max_dischargecost - min_paybackcost_dr + minpaybacktime_dr + 1 #add max_dischargecost to always have DR devices be borrowed last
 
         #for unserved energy
         shortagepenalty = 10 * (nifaces + max_borrowcost_dr)
