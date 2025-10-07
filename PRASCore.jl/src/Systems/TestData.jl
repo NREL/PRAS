@@ -274,7 +274,7 @@ test3_eenergy = [6.561, 7.682202]
 
 
 # Test System 4 (Gen + DR, 1 Region for 6 hours)
-
+# Copper plage, testing DR interactions in one system, that borrowing is occurring and payback is happening
 timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,1,6, tz)
 
 gen = Generators{6,1,Hour,MW}(
@@ -317,7 +317,7 @@ test4_eenergy = [0.89863, 2.45616, 4.2544, 0.997662, 2.673, 0.0]
 
 
 # Test System 5 (Gen + DR + Stor, 1 Region for 6 hours)
-
+#Copper plate, testing DR and storage interactions in one system
 timestamps = ZonedDateTime(2020,1,1,1, tz):Hour(1):ZonedDateTime(2020,1,1,6, tz)
 
 gen = Generators{6,1,Hour,MW}(
@@ -361,7 +361,7 @@ test5_eenergy = [0.89936, 1.86623, 3.66255, 5.05573, 1.54738, 0.0]
 
 
 # Multiregion with DR
-
+#testing multiple DR interactions and that intra dispatch priority is working properly
 regions = Regions{6,MW}(["Region 1", "Region 2", "Region 3"],
                   [19 20 25 26 24 25; 20 21 30 27 23 24; 22 26 27 25 23 24])
 
