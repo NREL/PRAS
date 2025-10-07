@@ -529,7 +529,6 @@ function update_state!(
     end
 
     #Demand Response Update
-    #borrowing (negative of the flows)
     for (i, e) in enumerate(problem.demandresponse_borrow_edges)
         state.drs_energy[i] +=
             ceil(Int, edges[e].flow * p2e * system.demandresponses.borrow_efficiency[i, t])
