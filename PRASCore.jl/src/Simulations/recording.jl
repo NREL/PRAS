@@ -54,7 +54,7 @@ function record!(
 
 end
 
-function reset!(acc::Results.ShortfallAccumulator, sampleid::Int) 
+function reset!(acc::Results.ShortfallAccumulator, sampleid::Int)
 
     # Store regional / total sums for current simulation
     fit!(acc.periodsdropped_total, acc.periodsdropped_total_currentsim)

@@ -205,7 +205,7 @@ function getindex(x::ShortfallResult)
     return sum(x.shortfall_mean), x.shortfall_std
 end
 
-function getindex(x::ShortfallResult, r::AbstractString)  
+function getindex(x::ShortfallResult, r::AbstractString)
     i_r = findfirstunique(x.regions.names, r)
     return sum(view(x.shortfall_mean, i_r, :)), x.shortfall_region_std[i_r]
 end
