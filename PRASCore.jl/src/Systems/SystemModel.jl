@@ -243,6 +243,7 @@ Base.:(==)(x::T, y::T) where {T <: SystemModel} =
     x.generatorstorages == y.generatorstorages &&
     x.region_genstor_idxs == y.region_genstor_idxs &&
     x.demandresponses == y.demandresponses &&
+    x.region_dr_idxs == y.region_dr_idxs &&
     x.lines == y.lines &&
     x.interface_line_idxs == y.interface_line_idxs &&
     x.timestamps == y.timestamps &&
@@ -280,6 +281,7 @@ function Base.show(io::IO, sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:
     print(io, "SystemModel($(length(sys.regions)) regions, $(length(sys.interfaces)) interfaces, ",
           "$(length(sys.generators)) generators, $(length(sys.storages)) storages, ",
           "$(length(sys.generatorstorages)) generator-storages,",
+          "$(length(sys.demandresponses)) demand-responses,",
           " $(N) $(time_unit)s)")
 end
 
@@ -291,6 +293,7 @@ function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) wher
     println(io, "  Generators: $(length(sys.generators)) units")
     println(io, "  Storages: $(length(sys.storages)) units")
     println(io, "  GeneratorStorages: $(length(sys.generatorstorages)) units")
+    println(io, "  DemandResponses: $(length(sys.demandresponses)) units")
     println(io, "  Lines: $(length(sys.lines))")
     println(io, "\nTime series:")
     println(io, "  Start time: $(first(sys.timestamps))")
@@ -315,6 +318,7 @@ struct RegionInfo
     generators::NamedTuple
     storages::NamedTuple
     generatorstorages::NamedTuple
+    demandresponses::NamedTuple
     peak_load::Int
     power_unit::String
 end
@@ -335,7 +339,8 @@ function Base.getindex(sys::SystemModel, region_idx::Int)
     gen_range = sys.region_gen_idxs[region_idx]
     stor_range = sys.region_stor_idxs[region_idx]
     genstor_range = sys.region_genstor_idxs[region_idx]
-    
+    dr_range = sys.region_dr_idxs[region_idx]
+
     # Get peak load for this region
     peak_load = maximum(sys.regions.load[region_idx, :])
     
@@ -354,6 +359,10 @@ function Base.getindex(sys::SystemModel, region_idx::Int)
         (
             indices = genstor_range,
             count = length(genstor_range),
+        ),
+        (
+            indices = dr_range,
+            count = length(dr_range),
         ),
         peak_load,
         power_unit,
@@ -378,7 +387,8 @@ function Base.show(io::IO, info::RegionInfo)
     println(io, "  Peak load: $(info.peak_load) $(info.power_unit)")
     println(io, "  Generators: $(info.generators.count) units [indices - $(info.generators.indices)]")
     println(io, "  Storages: $(info.storages.count) units [indices - $(info.storages.indices)]")
-    print(io, "  GeneratorStorages: $(info.generatorstorages.count) units [indices - $(info.generatorstorages.indices)]")
+    println(io, "  GeneratorStorages: $(info.generatorstorages.count) units [indices - $(info.generatorstorages.indices)]")
+    println(io, "  DemandResponses: $(info.demandresponses.count) units [indices - $(info.demandresponses.indices)]")
 end
 
 """
@@ -423,7 +433,12 @@ function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{GeneratorS
     return sys.generatorstorages[genstor_range]
 end
 
+function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{DemandResponses})
+    dr_range = sys.region_dr_idxs[region_idx]
+    return sys.demandresponses[dr_range]
+end
+
 # Fallback for unsupported types
 function _get_asset_by_type(sys::SystemModel, region_idx::Int, ::Type{T}) where {T}
-    error("Asset type $T is not supported. Supported types are: Generators, Storages, GeneratorStorages")
+    error("Asset type $T is not supported. Supported types are: Generators, Storages, GeneratorStorages, DemandResponses")
 end
