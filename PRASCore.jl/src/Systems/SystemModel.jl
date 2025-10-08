@@ -1,8 +1,47 @@
 """
-    SystemModel
+    SystemModel{N, L, T<:Period, P<:PowerUnit, E<:EnergyUnit}
 
-A `SystemModel` contains a representation of a power system to be studied
-with PRAS.
+A SystemModel struct contains a representation of a power system to be studied
+with PRAS. See [system specifications](@ref system_specification) for more 
+details on components of a system model.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units 
+- `T`: Time period type (e.g., `Hour`, `Minute`)
+- `P`: Power unit type (e.g., `MW`, `GW`)
+- `E`: Energy unit type (e.g., `MWh`, `GWh`)
+
+# Fields
+- `regions`: Representation of system regions (Type - [Regions](@ref))
+- `interfaces`: Information about connections between regions (Type - [Interfaces](@ref))
+- `generators`: Collection of system generators (Type - [Generators](@ref))
+- `region_gen_idxs`: Mapping of generators to their respective regions
+- `storages`: Collection of system storages (Type - [Storages](@ref))
+- `region_stor_idxs`: Mapping of storage resources to their respective regions
+- `generatorstorages`: Collection of system generation-storages (Type - [GeneratorStorages](@ref))
+- `region_genstor_idxs`: Mapping of hybrid resources to their respective regions
+- `lines`: Collection of transmission lines connecting regions (Type - [Lines](@ref))
+- `interface_line_idxs`: Mapping of transmission lines to interfaces
+- `timestamps`: Time range for the simulation period
+- `attrs`: Dictionary of system metadata and attributes
+
+# Constructors
+    SystemModel(regions, interfaces, generators, region_gen_idxs, storages, region_stor_idxs,
+                generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
+                timestamps, [attrs])
+
+Create a system model with all components specified.
+
+    SystemModel(generators, storages, generatorstorages, timestamps, load, [attrs])
+
+Create a single-node system model with specified generators, storage, and load profile.
+
+    SystemModel(regions, interfaces, generators, region_gen_idxs, storages, region_stor_idxs,
+                generatorstorages, region_genstor_idxs, lines, interface_line_idxs,
+                timestamps::StepRange{DateTime}, [attrs])
+
+Create a system model with `DateTime` timestamps (will be converted to UTC time zone).
 """
 struct SystemModel{N, L, T <: Period, P <: PowerUnit, E <: EnergyUnit}
     regions::Regions{N, P}
@@ -144,6 +183,9 @@ unitsymbol(::SystemModel{N,L,T,P,E}) where {
 isnonnegative(x::Real) = x >= 0
 isfractional(x::Real) = 0 <= x <= 1
 
+get_params(::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
+    (N,L,T,P,E)
+
 function consistent_idxs(idxss::Vector{UnitRange{Int}}, nitems::Int, ngroups::Int)
 
     length(idxss) == ngroups || return false
@@ -164,12 +206,12 @@ function Base.show(io::IO, sys::SystemModel{N,L,T,P,E}) where {N,L,T<:Period,P<:
     print(io, "SystemModel($(length(sys.regions)) regions, $(length(sys.interfaces)) interfaces, ",
           "$(length(sys.generators)) generators, $(length(sys.storages)) storages, ",
           "$(length(sys.generatorstorages)) generator-storages,",
-          "$(N) $(time_unit)s)")
+          " $(N) $(time_unit)s)")
 end
 
 function Base.show(io::IO, ::MIME"text/plain", sys::SystemModel{N,L,T,P,E}) where {N,L,T,P,E}
     time_unit = unitsymbol_long(T)
-    println(io, "\nPRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
+    println(io, "PRAS system with $(length(sys.regions)) regions, and $(length(sys.interfaces)) interfaces between these regions.")
     println(io, "Region names: $(join(sys.regions.names, ", "))")
     println(io, "\nAssets: ")
     println(io, "  Generators: $(length(sys.generators)) units")

@@ -6,7 +6,8 @@
 [![PRASCapacityCredits.jl Tests](https://github.com/NREL/PRAS/actions/workflows/PRASCapacityCredits.jl.yml/badge.svg?branch=main)](https://github.com/NREL/PRAS/actions/workflows/PRASCapacityCredits.jl.yml)
 
 [![codecov](https://codecov.io/gh/NREL/PRAS/branch/main/graph/badge.svg?token=WiP3quRaIA)](https://codecov.io/gh/NREL/PRAS)
-[![Documentation](https://img.shields.io/badge/docs-latest-blue.svg)](https://nrel.github.io/PRAS)
+[![docsstable](https://img.shields.io/badge/docs-stable-blue.svg)](https://nrel.github.io/PRAS/)
+[![docsdev](https://img.shields.io/badge/docs-dev-blue.svg)](https://nrel.github.io/PRAS/dev)
 [![DOI](https://img.shields.io/badge/DOI-10.11578/dc.20190814.1-blue.svg)](https://www.osti.gov/biblio/1557438)
 
 The Probabilistic Resource Adequacy Suite (PRAS) is a collection of tools for

@@ -37,6 +37,27 @@ function Base.show(io::IO, a::AbstractAssets)
     
 end
 
+"""
+    Generators{N,L,T<:Period,P<:PowerUnit}
+
+A struct representing generating assets within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units 
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of generator
+ - `categories`: Category of generator
+ - `capacity`: Maximum available generation capacity in each timeperiod, expressed 
+   in units given by the `power_units` (`P`) type parameter
+ - `λ` (failure probability): probability the generator transitions from 
+   operational to forced outage during a given simulation timestep (unitless)
+ - `μ` (repair probability): probability the generator transitions from forced 
+   outage to operational during a given simulation timestep (unitless)
+"""
 struct Generators{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -114,6 +135,41 @@ function Base.vcat(gs::Generators{N,L,T,P}...) where {N, L, T, P}
 
 end
 
+"""
+    Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing storage devices in the system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of storage device
+ - `categories`: Category of storage device
+ - `charge_capacity`: Maximum available charging capacity for each storage unit in each
+   timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `discharge_capacity`: Maximum available discharging capacity for each storage unit in
+   each timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `energy_capacity`: Maximum available energy storage capacity for each storage unit in
+   each timeperiod, expressed in units given by the `energy_units` (`E`) type parameter
+ - `charge_efficiency`: Ratio of power injected into the storage device's reservoir to
+   power withdrawn from the grid, for each storage unit in each timeperiod. Unitless.
+ - `discharge_efficiency`: Ratio of power injected into the grid to power withdrawn from
+   the storage device's reservoir, for each storage unit in each timeperiod. Unitless.
+ - `carryover_efficiency`: Ratio of energy available in the storage device's reservoir at
+   the beginning of one period to energy retained at the end of the previous period, for
+   each storage unit in each timeperiod. Unitless.
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each storage unit in each timeperiod.
+   Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each storage unit in each
+   timeperiod. Unitless.
+"""
 struct Storages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -236,6 +292,47 @@ function Base.vcat(stors::Storages{N,L,T,P,E}...) where {N, L, T, P, E}
 
 end
 
+"""
+    GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing generator-storage hybrid devices within a power system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of generator-storage unit
+ - `categories`: Category of generator-storage unit
+ - `charge_capacity`: Maximum available charging capacity for each generator-storage
+   unit in each timeperiod, in `power_units` (`P`)
+ - `discharge_capacity`: Maximum available discharging capacity for each generator-storage
+   unit in each timeperiod, in `power_units` (`P`)
+ - `energy_capacity`: Maximum available energy storage capacity for each generator-storage
+   unit in each timeperiod, in `energy_units` (`E`)
+ - `charge_efficiency`: Ratio of power injected into the device's reservoir to power
+   withdrawn from the grid, for each generator-storage unit in each timeperiod. Unitless.
+ - `discharge_efficiency`: Ratio of power injected into the grid to power withdrawn from
+   the device's reservoir, for each generator-storage unit in each timeperiod. Unitless.
+ - `carryover_efficiency`: Ratio of energy available in the device's reservoir at the
+   beginning of one period to energy retained at the end of the previous period, for each
+   generator-storage unit in each timeperiod. Unitless.
+ - `inflow`: Exogenous power inflow available to each generator-storage unit in each
+   timeperiod, in `power_units` (`P`)
+ - `gridwithdrawal_capacity`: Maximum available capacity to withdraw power from the grid
+   for each generator-storage unit in each timeperiod, in `power_units` (`P`)
+ - `gridinjection_capacity`: Maximum available capacity to inject power to the grid for
+   each generator-storage unit in each timeperiod, in `power_units` (`P`)
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each generator-storage unit in each
+   timeperiod. Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each generator-storage unit in each
+   timeperiod. Unitless.
+"""
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
@@ -390,6 +487,31 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
 end
 
+"""
+    Lines{N,L,T<:Period,P<:PowerUnit}
+
+A struct representing individual transmission lines between regions in a power
+system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+
+# Fields
+ - `names`: Name of line
+ - `categories`: Category of line
+ - `forward_capacity`: Maximum available power transfer capacity from `region_from` to
+   `region_to` along the line, for each line in each timeperiod, in `power_units` (`P`)
+ - `backward_capacity`: Maximum available power transfer capacity from `region_to` to
+   `region_from` along the line, for each line in each timeperiod, in `power_units` (`P`)
+ - `λ` (failure probability): Probability the line transitions from operational to forced
+   outage during a given simulation timestep, for each line in each timeperiod. Unitless.
+ - `μ` (repair probability): Probability the line transitions from forced outage to
+   operational during a given simulation timestep, for each line in each timeperiod.
+   Unitless.
+"""
 struct Lines{N,L,T<:Period,P<:PowerUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
