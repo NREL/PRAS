@@ -543,7 +543,9 @@ function update_state!(
 
         if (state.drs_paybackcounter[i] == 0) || (t == N)
             #if payback window is over or you reach the end of the sim, count the unserved energy in drs_unservedenergy state and reset energy
-            state.drs_unservedenergy[i] = state.drs_energy[i]
+            #adding to exisiting unserved energy as we count any unserved energy above soc during borrowed_energy_interest
+            #we want to keep a running total (will be either zero or the unserved energy above energy capacity)
+            state.drs_unservedenergy[i] += state.drs_energy[i]
             state.drs_energy[i] = 0
         end
     end

@@ -22,7 +22,7 @@ function record!(
             
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] :  0 
+            dr_shortfall += state.drs_unservedenergy[i]
         end
         regionshortfall += dr_shortfall
         isregionshortfall = regionshortfall > 0
@@ -88,7 +88,7 @@ function record!(
         #getting dr shortfall
         dr_shortfall = 0
         for i in dr_idxs
-            dr_shortfall += ((state.drs_paybackcounter[i] == 0) || (t == N)) ? state.drs_unservedenergy[i] : 0
+            dr_shortfall += state.drs_unservedenergy[i]
         end
 
         acc.shortfall[r, t, sampleid] = 

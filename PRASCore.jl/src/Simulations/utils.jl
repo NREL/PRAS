@@ -122,6 +122,7 @@ end
 
 function update_dr_energy!(
     drs_energy::Vector{Int},
+    drs_unservedenergy::Vector{Int},
     drs::AbstractAssets,
     t::Int
 )
@@ -129,15 +130,18 @@ function update_dr_energy!(
     for i in 1:length(drs_energy)
 
         soc = drs_energy[i]
-        efficiency = drs.borrowed_energy_interest[i,t] + 1.0
+        borrowed_energy_interest = drs.borrowed_energy_interest[i,t] + 1.0
         maxenergy = drs.energy_capacity[i,t]
 
         # Decay SoC
-        soc = round(Int, soc * efficiency)
+        soc = round(Int, soc * borrowed_energy_interest)
+
+        unserved_energy_above_max_energy = max(0, soc - maxenergy)
 
         # Shed SoC above current energy limit
         drs_energy[i] = min(soc, maxenergy)
 
+        drs_unservedenergy[i] = unserved_energy_above_max_energy
     end
 
 end

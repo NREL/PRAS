@@ -220,7 +220,7 @@ function advance!(
 
     update_energy!(state.stors_energy, system.storages, t)
     update_energy!(state.genstors_energy, system.generatorstorages, t)
-    update_dr_energy!(state.drs_energy, system.demandresponses, t)
+    update_dr_energy!(state.drs_energy, state.drs_unservedenergy, system.demandresponses, t)
 
     update_paybackcounter!(state.drs_paybackcounter,state.drs_energy, system.demandresponses,t)
 
