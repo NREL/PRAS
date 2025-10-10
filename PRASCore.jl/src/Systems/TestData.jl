@@ -294,7 +294,7 @@ emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
 dr = DemandResponses{6,1,Hour,MW,MWh}(
     ["DR1"], ["DemandResponse Category"],
     fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
-    fill(1., 1, 6), fill(1., 1, 6), fill(0.0, 1, 6),
+    fill(0.0, 1, 6),
     fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
 
@@ -337,7 +337,7 @@ emptygenstors = GeneratorStorages{6,1,Hour,MW,MWh}(
 dr = DemandResponses{6,1,Hour,MW,MWh}(
     ["DR1"], ["DemandResponse Category"],
     fill(10, 1, 6), fill(10, 1, 6), fill(10, 1, 6),
-    fill(1., 1, 6), fill(1., 1, 6), fill(0.0, 1, 6),
+    fill(0.0, 1, 6),
     fill(2, 1, 6), fill(0.1, 1, 6), fill(0.9, 1, 6))
 
 
@@ -387,8 +387,6 @@ drs = DemandResponses{6,1,Hour,MW,MWh}(
     [fill(10, 1, 6);              # A energy capacity
     fill(8, 1, 6);                # B energy capacity
     fill(6, 1, 6);],              # C energy capacity
-    fill(1.0, 3, 6),          # All regions 100% borrow efficiency
-    fill(1.0, 3, 6),          # All regions 100% payback efficiency
     fill(0.0, 3, 6),          # All regions 0% borrowed energy interest
     fill(4, 3, 6),          # All regions 3 allowable payback time periods
     [fill(0.1, 1, 6);  # A

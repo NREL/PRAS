@@ -470,7 +470,7 @@ function update_problem!(
         # Update borrowing-make sure no borrowing is allowed if allowable payback period is equal to zero
         maxborrow = system.demandresponses.allowable_payback_period[i,t] != 0 ? dr_online * system.demandresponses.borrow_capacity[i, t] : 0
         borrowefficiency = system.demandresponses.borrow_efficiency[i, t]
-        energyborrowable = (maxenergy - dr_energy) / borrowefficiency
+        energyborrowable = (maxenergy - dr_energy) * borrowefficiency
         borrow_capacity =  min(
             maxborrow, floor(Int, energytopower(
             energyborrowable, E, L, T, P))
