@@ -32,7 +32,7 @@ struct Regions{N,P<:PowerUnit}
 
 end
 
-# Empty Regions constructor
+# Single Regions constructor
 function Regions{N,P}(load::Vector{Int}) where {N,P}
     return Regions{N,P}(["Region"], reshape(load, 1, :))
 end
