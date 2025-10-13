@@ -256,6 +256,7 @@ unitsymbol(::SystemModel{N,L,T,P,E}) where {
     unitsymbol(T), unitsymbol(P), unitsymbol(E)
 
 isnonnegative(x::Real) = x >= 0
+ispositive(x::Real) = x > 0
 isfractional(x::Real) = 0 <= x <= 1
 
 get_params(::SystemModel{N,L,T,P,E}) where {N,L,T,P,E} = 
