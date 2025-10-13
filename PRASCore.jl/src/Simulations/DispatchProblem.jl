@@ -450,11 +450,7 @@ function update_problem!(
         paybackefficiency = system.demandresponses.payback_efficiency[i, t]
         energy_payback_allowed = dr_energy * paybackefficiency
 
-        if iszero(maxpayback)
-            allowablepayback = N + 1
-        else
-            allowablepayback = state.drs_paybackcounter[i]
-        end
+        allowablepayback = state.drs_paybackcounter[i]
 
         payback_capacity =  min(
             maxpayback, floor(Int, energytopower(
