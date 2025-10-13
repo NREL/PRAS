@@ -234,18 +234,9 @@ end
 function minmax_payback_window_dr(system::SystemModel)
 
     if length(system.demandresponses) > 0
-        if any(iszero, system.demandresponses.allowable_payback_period)
-            maxpaybacktime_dr = length(system.timestamps) + 1
-        else
-            maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
-        end
-
-        if any(iszero, system.demandresponses.payback_capacity)
-            minpaybacktime_dr = length(system.timestamps) + 1
-        else
-            minpaybacktime_dr = minimum(system.demandresponses.allowable_payback_period)
-        end
-
+        #no need to check for zero since allowable_payback_period is force to positive
+        maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
+        minpaybacktime_dr = minimum(system.demandresponses.allowable_payback_period)
     else
         minpaybacktime_dr = 0
         maxpaybacktime_dr = 0
