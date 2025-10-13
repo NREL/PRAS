@@ -146,8 +146,8 @@ struct DispatchProblem
         #for demand response-we want to borrow energy in devices with the longest payback window, and payback energy from devices with the smallest payback window
         wheeling_cost_prevention = 50
         minpaybacktime_dr, maxpaybacktime_dr = minmax_payback_window_dr(sys)
-        min_paybackcost_dr = min_chargecost- maxpaybacktime_dr - wheeling_cost_prevention #add min_chargecost to always have DR devices be paybacked first, and -50 for wheeling prevention
-        max_borrowcost_dr = max_dischargecost - min_paybackcost_dr + minpaybacktime_dr + 1 #add max_dischargecost to always have DR devices be borrowed last
+        min_paybackcost_dr = min_chargecost - max_dischargecost - maxpaybacktime_dr - wheeling_cost_prevention #add min_chargecost to always have DR devices be paybacked first, and -50 for wheeling prevention
+        max_borrowcost_dr = minpaybacktime_dr - min_paybackcost_dr + 1 #will always be greater than max_dischargecost and paybacktime
 
         #for unserved energy
         shortagepenalty = 10 * (nifaces + max_borrowcost_dr)
