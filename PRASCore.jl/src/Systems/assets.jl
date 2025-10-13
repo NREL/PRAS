@@ -543,12 +543,8 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
         allowablepaybackperiod::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64},
-        borrowefficiency::Union{Nothing,Matrix{Float64}}=nothing,paybackefficiency::Union{Nothing,Matrix{Float64}}=nothing
+        borrowefficiency::Matrix{Float64},paybackefficiency::Matrix{Float64}
     ) where {N,L,T,P,E}
-
-        borrowefficiency = isnothing(borrowefficiency) ? ones(Float64, size(borrowcapacity)) : borrowefficiency
-        paybackefficiency = isnothing(paybackefficiency) ? ones(Float64, size(paybackcapacity)) : paybackefficiency
-
 
         n_drs = length(names)
         @assert length(categories) == n_drs
@@ -598,7 +594,7 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
             borrowcapacity, paybackcapacity, energycapacity,
             borrowedenergyinterest, allowablepaybackperiod,
             λ, μ,
-            nothing, nothing
+            ones(Float64, size(borrowcapacity)), ones(Float64, size(paybackcapacity))
         )
     end
 

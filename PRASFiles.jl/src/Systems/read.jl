@@ -305,12 +305,12 @@ function systemmodel_0_8(f::File)
             load_matrix(f["demandresponses/borrowcapacity"], region_order, Int),
             load_matrix(f["demandresponses/paybackcapacity"], region_order, Int),
             load_matrix(f["demandresponses/energycapacity"], region_order, Int),
-            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
-            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
             load_matrix(f["demandresponses/borrowedenergyinterest"], region_order, Float64),
             load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
             load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
-            load_matrix(f["demandresponses/repairprobability"], region_order, Float64)
+            load_matrix(f["demandresponses/repairprobability"], region_order, Float64),
+            load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
+            load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
         )
 
         region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
@@ -319,8 +319,9 @@ function systemmodel_0_8(f::File)
         demandresponses = DemandResponses{N,L,T,P,E}(
             String[], String[], 
             zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N))
+            zeros(Float64, 0, N),
+            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
+            zeros(Float64, 0, N), zeros(Float64, 0, N))
 
         region_dr_idxs = fill(1:0, n_regions)
 
