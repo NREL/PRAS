@@ -37,7 +37,7 @@ function Regions{N,P}(load::Vector{Int}) where {N,P}
     return Regions{N,P}(["Region"], reshape(load, 1, :))
 end
 
-    Base.:(==)(x::T, y::T) where {T <: Regions} =
+Base.:(==)(x::T, y::T) where {T <: Regions} =
     x.names == y.names &&
     x.load == y.load
 
