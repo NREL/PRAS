@@ -1,4 +1,4 @@
-# # [PRAS walkthrough](@id pras_walkthrough)  
+# # [PRAS Walkthrough](@id pras_walkthrough)  
 
 # This is a complete example of running a PRAS assessment,
 # using the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system
@@ -9,7 +9,7 @@ using Plots
 using DataFrames
 using Printf
 
-# ## [Read and explore a SystemModel](@id explore_systemmodel)
+# ## [Read and Explore a SystemModel](@id explore_systemmodel)
 
 # You can load in a system model from a [.pras file](@ref prasfile) if you have one like so:
 # ```julia
@@ -77,7 +77,7 @@ region_3_storage = sys["3", Storages]
 # and the generation-storage device in region "2" like so:
 region_2_genstorage = sys["2", GeneratorStorages]
 
-# ## Run a Sequential Monte Carlo simulation
+# ## Run a Sequential Monte Carlo Simulation
 
 # We can run a Sequential Monte Carlo simulation on this system using the
 # [assess](@ref PRASCore.Simulations.assess) function. 
