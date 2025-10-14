@@ -518,6 +518,40 @@ function Base.vcat(gen_stors::GeneratorStorages{N,L,T,P,E}...) where {N, L, T, P
 
 end
 
+"""
+    DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit}
+
+A struct representing demand response devices in the system.
+
+# Type Parameters
+- `N`: Number of timesteps in the system model
+- `L`: Length of each timestep in T units
+- `T`: The time period type used for temporal representation, subtype of `Period`
+- `P`: The power unit used for capacity measurements, subtype of `PowerUnit`
+- `E`: The energy unit used for energy storage, subtype of `EnergyUnit`
+
+# Fields
+ - `names`: Name of demand response device
+ - `categories`: Category of demand response device
+ - `borrow_capacity`: Maximum available borrowing capacity for each demand response unit in each
+   timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `payback_capacity`: Maximum available payback capacity for each demand response unit in
+   each timeperiod, expressed in units given by the `power_units` (`P`) type parameter
+ - `energy_capacity`: Maximum available energy capable of being held for each demand response unit in
+   each timeperiod, expressed in units given by the `energy_units` (`E`) type parameter
+ - `borrowed_energy_interest`: Growth or decay rate of borrowed energy in the demand response device
+   from the beginning of one period to energy retained at the end of the previous period, for
+   each demand response unit in each timeperiod. A `borrowed_energy_interest` of 0.0 has no growth or decay. Unitless.
+ - `allowable_payback_period`: Maximum number of time steps a demand response device can hold borrowed load.
+    Any energy still contained at the end of the period will be counted as unserved load for that hour.
+    If borrowed load is paid back before the end of the `allowable_payback_period`, counter is reset upn further use. (`T`) type parameter
+ - `λ` (failure probability): Probability the unit transitions from operational to forced
+   outage during a given simulation timestep, for each storage unit in each timeperiod.
+   Unitless.
+ - `μ` (repair probability): Probability the unit transitions from forced outage to
+   operational during a given simulation timestep, for each storage unit in each
+   timeperiod. Unitless.
+"""
 struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
     names::Vector{String}
