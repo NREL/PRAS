@@ -197,7 +197,7 @@ its state of charge during outages (subject to carryover losses).
 ## Demand Responses
 
 Resources that can shift or shed electrical load forward in time but do
-not provide an overall net addition of energy into the system (e.g., a dr event programs)
+not provide an overall net addition of energy into the system (e.g., dr event programs)
 are referred to as **demand responses** in PRAS. Like storages, demand response components are
 associated with descriptive name and category metadata.
 Each demand response unit has both a load borrow and load payback capacity time series, representing the
@@ -213,17 +213,27 @@ state of load increases with borrowing and decreases with
 payback, and must always remain between zero and the maximum load
 capacity in that time period. The energy flow relationships between
 these capacities are depicted visually in the energy relation diagram.
+If the maximum load capacity is less than the previous hour's state, the load borrowed will
+be counted as unserved energy.
 
-Demand response units may incur losses or gains when moving load into or out of the device
-(borrow and payback efficiency), or forward in time (borrowed energy interest).
-When borrowing load, the effective increase to the load in the demand response
-is determined by multiplying the borrow power by the borrow
-efficiency. Similarly, when load is paid back from the unit, the effective decrease to the
-load borrowed is calculated by dividing the payback power by the payback
-efficiency. The available load borrowed in the next time
-period is calculated by multiplying the borrowed energy interest by the current load borrowed
-and adding to the current load borrowed. The borrowed energy interest may be positive or negative,
-indicating a growing or shrinking respectively borrowed load hour to hour.
+
+| **Demand Response Type**   | **Description** | **Relevance to PRAS?** |
+|:----------|:---------------|:----------------------|
+| **Shift**  | Demand response that encourages the movement of energy consumption from times of high demand to times of day when there is a surplus of generation.​   | Yes: can be dispatched as part of the PRAS optimization, to move load out of (net) peak periods.​           |
+| **Shed**   | Loads that can be curtailed to provide peak capacity reduction and support the system in emergency or contingency events with a range in advance notice times.​ | Yes: but caution must be used to avoid too frequent load shed and to capture only load that can truly be shed (i.e., not able to be paid back at a later time). Setting the `borrowed_energy_interest` to -0.99 will drop all effective borrowed load.​ |
+| **Shape**  | Demand response that reshapes customer load profiles through price response or behavioral campaigns — ‘load-modifying DR’ — with advance notice of months to days.​ | Only through pre-processing to load; no original implementation option within the PRAS optimization.|
+| **Shimmy** | Loads that dynamically adjust to alleviate short-run ramps and disturbances on the system at timescales ranging from seconds up to an hour.​ | No: the system conditions and ramping are more granular than what is possible in PRAS. |
+*Table: Common demand response categories and what is possible to model in PRAS. Demand Response type categories are taken from Piette, Mary Ann, et al. "2025 California Demand Response Potential Study.".*
+
+
+Demand response units may incur losses or gains forward in time (borrowed energy interest).
+The available load borrowed in the next time period is calculated by multiplying the borrowed energy interest 
+by the current load borrowed and adding to the current load borrowed. 
+The borrowed energy interest may be positive or negative,
+indicating a growing or shrinking respectively borrowed load hour to hour. Borrowed energy interest
+may lead to cases where the maximum load capacity of the demand response device is passed. If this occurs,
+any load above the maximum capacity will be tracked as unserved energy.
+
 
 Just as with storage, demand responses may be in available or unavailable states, and
 move between these states randomly over time, according to provided state
@@ -236,7 +246,8 @@ This cutoff, where borrowed load is unable to be repaid and transitions over to 
 is refereed to as the allowable payback period. This parameter can be time varying, and therefore
 enable unique tailoring to the real world device being modeled. The allowable payback window is a integer
 and follows the timestep units set for the system. If any surplus exists in the region, the demand response
-device will attempt to payback any borrowed load, before charging storage.
+device will attempt to payback any borrowed load, before charging storage. If the demand response device
+pays back all borrowed load before the end of the period, the counter is reset upon further use.
 
 ## Interfaces
 
