@@ -231,18 +231,16 @@ function maxtimetocharge_discharge(system::SystemModel)
 
 end
 
-function minmax_payback_window_dr(system::SystemModel)
+function max_payback_window_dr(system::SystemModel)
 
     if length(system.demandresponses) > 0
         #no need to check for zero since allowable_payback_period is force to positive
         maxpaybacktime_dr = maximum(system.demandresponses.allowable_payback_period)
-        minpaybacktime_dr = minimum(system.demandresponses.allowable_payback_period)
     else
-        minpaybacktime_dr = 0
         maxpaybacktime_dr = 0
     end
 
-    return (minpaybacktime_dr, maxpaybacktime_dr)
+    return maxpaybacktime_dr
 
 end
 
