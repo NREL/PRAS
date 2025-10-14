@@ -21,7 +21,7 @@ rts_gmlc_sys
 # First, we can now define our new demand response component. In accordance with the broader system
 # the component will have a simulation length of 8784 timesteps, hourly interval, and MW/MWh units.
 # We will then have a single demand response resource of type "DR_TYPE1" with a 50 MW borrow and payback capacity,
-# 200 MWh energy capacity, 100% borrow and payback efficiency, 0% borrowed energy interest, 6 hour allowable payback time periods,
+# 200 MWh energy capacity, 0% borrowed energy interest, 6 hour allowable payback time periods,
 # 10% outage probability, and 90% recovery probability. The setup below uses the `fill` function to create matrices
 # with the correct dimensions for each of the parameters, which can be extended to multiple demand response resources
 # by changing the `number_of_drs` variable and adjusting names and types accordingly.
@@ -33,8 +33,6 @@ new_drs = DemandResponses{sim_length,1,Hour,MW,MWh}(
     fill(50, number_of_drs, sim_length), #borrow capacity
     fill(50, number_of_drs, sim_length), #payback capacity
     fill(200, number_of_drs, sim_length),  #energy capacity
-    fill(1.0, number_of_drs, sim_length),          # 100% borrow efficiency
-    fill(1.0, number_of_drs, sim_length),          # 100% payback efficiency
     fill(0.0, number_of_drs, sim_length),          # 0% borrowed energy interest
     fill(6, number_of_drs, sim_length),          # 6 hour allowable payback time periods
     fill(0.1, number_of_drs, sim_length),  #10% outage probability
