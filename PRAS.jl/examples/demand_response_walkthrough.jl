@@ -3,11 +3,12 @@
 # This is a complete example of adding demand response to a system,
 # using the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system
 
-# Load the PRAS package and other tools necessary for analyses
+# Load the PRAS package and other tools necessary for analysis
 using PRAS
 using Plots
 using DataFrames
 using Printf
+using Dates
 
 # ## [Add Demand Response to the SystemModel]
 
@@ -99,7 +100,7 @@ print("EUE Demand Response Shortfall: ", EUE(dr_shortfall_with_dr))
 # Lets plot the borrowed energy of the demand response device over the simulation.
 borrowed_load = [x[1] for x in dr_energy_with_dr["DR1",:]]
 
-plot(rts_gmlc_sys.timestamps, test, xlabel="Timestamp", ylabel="DR1 Borrowed Load", title="DR1 Borrowed Load vs Time")
+plot(rts_gmlc_sys.timestamps, borrowed_load, xlabel="Timestamp", ylabel="DR1 Borrowed Load", title="DR1 Borrowed Load vs Time", label="")
 
 # We can see that the demand response device was utilized during the summer months, however never borrowing up to its full 200MWh capacity.
 
@@ -121,7 +122,7 @@ heatmap(
 
 # Maximum borrowed load occurs in the late afternoon July month, with a different peaking pattern as greater surplus exists in August, with reduced load constraints.
 
-#We can also back calculate the borrow energy and payback energy, by calculating timestep to timestep differences. Note, paback energy here will not capture any dr attributable shortfall
+#We can also back calculate the borrow energy and payback energy, by calculating timestep to timestep differences. Note, payback energy here will not capture any dr attributable shortfall
 
 borrow_energy = zeros(Float64, sim_length)
 payback_energy = zeros(Float64, sim_length)
@@ -139,7 +140,7 @@ for (b, p, m, h) in zip(borrow_energy, payback_energy, months[2:end], hours[2:en
 end
 
 
-p1 = heatmap(1:12, 0:23, borrow_heatmap; xlabel="Month", ylabel="Hour", title="DR1 Borrowed (MW)",
+p1 = heatmap(1:12, 0:23, borrow_heatmap; xlabel="Month", ylabel="Hour", title="DR1 Borrow (MW)",
     xticks=(1:12, ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]),
     colorbar_title="Borrow", color=cgrad([:white, :red]))
 p2 = heatmap(1:12, 0:23, payback_heatmap; xlabel="Month", ylabel="Hour", title="DR1 Payback (MW)",
