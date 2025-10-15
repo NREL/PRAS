@@ -26,18 +26,18 @@ rts_gmlc_sys
 # 10% outage probability, and 90% recovery probability. The setup below uses the `fill` function to create matrices
 # with the correct dimensions for each of the parameters, which can be extended to multiple demand response resources
 # by changing the `number_of_drs` variable and adjusting names and types accordingly.
-sim_length = 8784;
+(timesteps,periodlen,periodunit,powerunit,energyunit) = get_params(rts_gmlc_sys);
 number_of_drs = 1;
-new_drs = DemandResponses{sim_length,1,Hour,MW,MWh}(
+new_drs = DemandResponses{timesteps,periodlen,periodunit,powerunit,energyunit}(
     ["DR1"],
     ["DR_TYPE1"],
-    fill(50, number_of_drs, sim_length),   # borrow power capacity
-    fill(50, number_of_drs, sim_length),   # payback power capacity
-    fill(200, number_of_drs, sim_length),  # load energy capacity
-    fill(0.0, number_of_drs, sim_length),  # 0% borrowed energy interest
-    fill(6, number_of_drs, sim_length),    # 6 hour allowable payback time periods
-    fill(0.1, number_of_drs, sim_length),  # 10% outage probability
-    fill(0.9, number_of_drs, sim_length),  # 90% recovery probability
+    fill(50, number_of_drs, timesteps),   # borrow power capacity
+    fill(50, number_of_drs, timesteps),   # payback power capacity
+    fill(200, number_of_drs, timesteps),  # load energy capacity
+    fill(0.0, number_of_drs, timesteps),  # 0% borrowed energy interest
+    fill(6, number_of_drs, timesteps),    # 6 hour allowable payback time periods
+    fill(0.1, number_of_drs, timesteps),  # 10% outage probability
+    fill(0.9, number_of_drs, timesteps),  # 90% recovery probability
     );
 
 # We will also assign the demand response to region "2" of the system.
@@ -49,7 +49,7 @@ updated_load = Int.(round.(rts_gmlc_sys.regions.load .* 1.25));
 
 # Lets define our new regions with the updated load.
 
-new_regions = Regions{sim_length,MW}(["1","2","3"],updated_load);
+new_regions = Regions{timesteps,powerunit}(["1","2","3"],updated_load);
 
 # Finally, we create two new system models, one with dr and one without.
 modified_rts_with_dr  = SystemModel(
@@ -125,8 +125,8 @@ heatmap(
 # We can also back calculate the borrow power and payback power, by calculating timestep to timestep differences. 
 # Note, payback power here will not capture any dr attributable shortfall or the impact of `borrowed_energy_interest`.
 
-borrow_power = zeros(Float64, sim_length);
-payback_power= zeros(Float64, sim_length);
+borrow_power = zeros(Float64, timesteps);
+payback_power= zeros(Float64, timesteps);
 borrow_power = max.(0.0, borrowed_load[2:end] .- borrowed_load[1:end-1]);
 payback_power = max.(0.0, borrowed_load[1:end-1] .- borrowed_load[2:end]);
 
