@@ -597,7 +597,8 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         @assert size(borrowedenergyinterest) == (n_drs, N)
         @assert all(isfractional, borrowefficiency)
         @assert all(isfractional, paybackefficiency)
-        @assert all(isfractional, borrowedenergyinterest)
+        @assert all(borrowedenergyinterest .<= 1.0)
+        @assert all(borrowedenergyinterest .>= -1.0)
 
         @assert size(allowablepaybackperiod) == (n_drs, N)
         @assert all(ispositive, allowablepaybackperiod)
