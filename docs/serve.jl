@@ -2,11 +2,12 @@ using LiveServer
 using Pkg
 
 # Develop all packages
-for pkg in ["PRASCore.jl", "PRASFiles.jl", "PRASCapacityCredits.jl"]
-    pkg_path = joinpath("..", pkg)
-    isdir(pkg_path) || continue
-    Pkg.develop(PackageSpec(path=pkg_path))
-end
+Pkg.develop([
+    (path="../PRASCore.jl",),
+    (path="../PRASFiles.jl",),
+    (path="../PRASCapacityCredits.jl",),
+    (path="../PRAS.jl",)
+])
 
 # Build docs
 include("make.jl")
