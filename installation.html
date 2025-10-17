@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="UTF-8">
+
+<!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Installation | PRAS</title>
+<meta name="generator" content="Jekyll v3.10.0" />
+<meta property="og:title" content="Installation" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="The Probabilistic Resource Adequacy Suite" />
+<meta property="og:description" content="The Probabilistic Resource Adequacy Suite" />
+<link rel="canonical" href="https://nrel.github.io/PRAS/installation.html" />
+<meta property="og:url" content="https://nrel.github.io/PRAS/installation.html" />
+<meta property="og:site_name" content="PRAS" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Installation" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebPage","description":"The Probabilistic Resource Adequacy Suite","headline":"Installation","url":"https://nrel.github.io/PRAS/installation.html"}</script>
+<!-- End Jekyll SEO tag -->
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Open+Sans:400,700&display=swap" as="style" type="text/css" crossorigin>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#157878">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="stylesheet" href="/PRAS/assets/css/style.css?v=c56a2575d39da7415b283b74d69a06d8740f40dd">
+    <!-- start custom head snippets, customize with your own _includes/head-custom.html file -->
+
+<!-- Setup Google Analytics -->
+
+
+
+<!-- You can set your favicon here -->
+<!-- link rel="shortcut icon" type="image/x-icon" href="/PRAS/favicon.ico" -->
+
+<!-- end custom head snippets -->
+
+  </head>
+  <body>
+    <a id="skip-to-content" href="#content">Skip to the content.</a>
+
+    <header class="page-header" role="banner">
+      <h1 class="project-name">Installation</h1>
+      <h2 class="project-tagline">The Probabilistic Resource Adequacy Suite</h2>
+      
+        <a href="https://github.com/NREL/PRAS" class="btn">View on GitHub</a>
+      
+      
+    </header>
+
+    <main id="content" class="main-content" role="main">
+      <h1 id="installation">Installation</h1>
+
+<p>PRAS is written in the <a href="https://julialang.org/">Julia</a> numerical programming
+language. If you haven’t already, your first step should be to install Julia.
+Instructions are available at
+<a href="https://julialang.org/downloads/">julialang.org/downloads</a>.</p>
+
+<p>Once you have Julia installed, PRAS can be installed in two easy steps!</p>
+
+<p>First, add NREL’s Julia package registry to your Julia installation.
+From the main Julia prompt, type <code class="language-plaintext highlighter-rouge">]</code> to enter the package management REPL.
+The prompt should change from <code class="language-plaintext highlighter-rouge">julia&gt;</code> to something like <code class="language-plaintext highlighter-rouge">(v1.3) pkg&gt;</code>
+(your version number may be slightly different).
+Type (or paste) the following (minus the <code class="language-plaintext highlighter-rouge">pkg&gt;</code> prompt) - note that the first
+line is only necessary if your Julia installation is brand new and you’ve
+never installed a package before:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pkg&gt; registry add https://github.com/JuliaRegistries/General.git
+pkg&gt; registry add https://github.com/NREL/JuliaRegistry.git
+</code></pre></div></div>
+
+<p>Adding the NREL registry will allow you to easily add NREL-developed
+packages (like PRAS) that aren’t yet available in the main Julia registry.</p>
+
+<p>Now you can install the PRAS package. In the package REPL (<code class="language-plaintext highlighter-rouge">(v1.1) pkg&gt;</code>),
+simply type or paste:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>pkg&gt; add PRAS
+</code></pre></div></div>
+
+<p>This will automatically install the PRAS Julia module and all of its
+related dependencies. At this point you can hit Backspace to switch back to the
+main <code class="language-plaintext highlighter-rouge">julia&gt;</code> prompt.</p>
+
+<h1 id="usage">Usage</h1>
+
+<p>With PRAS installed, you can load it into Julia as follows:</p>
+
+<p><code class="language-plaintext highlighter-rouge">using PRAS</code></p>
+
+<p>This will make the core PRAS functions (most importantly, the <code class="language-plaintext highlighter-rouge">SystemModel</code>
+and <code class="language-plaintext highlighter-rouge">assess</code> functions) available for use in your Julia script or
+interactive REPL session.</p>
+
+<p>The <a href="./getting-started">Getting Started</a> page provides more information
+on using PRAS.</p>
+
+
+      <footer class="site-footer">
+        
+          <span class="site-footer-owner"><a href="https://github.com/NREL/PRAS">PRAS</a> is maintained by <a href="https://github.com/NREL">NREL</a>.</span>
+        
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a>.</span>
+      </footer>
+    </main>
+  </body>
+</html>
