@@ -7,13 +7,12 @@ on:
     tags: '*'
   pull_request:
 
-concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-
 jobs:
   docs:
     name: Documentation
+    concurrency:
+      group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+      cancel-in-progress: true
     runs-on: macOS-latest
     permissions:
       contents: write
