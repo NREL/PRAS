@@ -1,9 +1,11 @@
 # Changelog
 
-## [Unreleased]
-- Initial changelog created.
+## [0.8.0], 2025 - October
 
-## [0.8.0], 2025 - September
+- Add a demand response component which can model shift and shed type DR devices
+- Add SystemModel attributes
+- Enable pretty printing of different PRAS component information
+- Enable auto-generated documentation website with detailed tutorials and walk-throughs
 
 
 ## [0.7], 2024 - December

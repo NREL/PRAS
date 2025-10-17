@@ -44,21 +44,22 @@ Note that this result specification requires large amounts of memory for
 larger sample sizes. See [`Shortfall`](@ref) for average shortfall outcomes when sample-level granularity isn't required.
 """
 struct ShortfallSamples <: ResultSpec end
+struct DemandResponseShortfallSamples <: ResultSpec end
 
-struct ShortfallSamplesAccumulator <: ResultAccumulator{ShortfallSamples}
+struct ShortfallSamplesAccumulator{S} <: ResultAccumulator{ShortfallSamples}
 
     shortfall::Array{Int,3}
 
 end
 
 function accumulator(
-    sys::SystemModel{N}, nsamples::Int, ::ShortfallSamples
-) where {N}
+    sys::SystemModel{N}, nsamples::Int, ::S
+) where {N,S<:Union{ShortfallSamples,DemandResponseShortfallSamples}}
 
     nregions = length(sys.regions)
     shortfall = zeros(Int, nregions, N, nsamples)
 
-    return ShortfallSamplesAccumulator(shortfall)
+    return ShortfallSamplesAccumulator{S}(shortfall)
 
 end
 
@@ -71,9 +72,11 @@ function merge!(
 
 end
 
-accumulatortype(::ShortfallSamples) = ShortfallSamplesAccumulator
+accumulatortype(::S) where {
+        S<:Union{ShortfallSamples,DemandResponseShortfallSamples}
+    } = ShortfallSamplesAccumulator{S}
 
-struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractShortfallResult{N,L,T}
+struct ShortfallSamplesResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit, S} <: AbstractShortfallResult{N,L,T}
 
     regions::Regions{N,P}
     timestamps::StepRange{ZonedDateTime,T}
@@ -162,11 +165,11 @@ function NEUE(x::ShortfallSamplesResult{N,L,T,P,E}, r::AbstractString) where {N,
 end
 
 function finalize(
-    acc::ShortfallSamplesAccumulator,
+    acc::ShortfallSamplesAccumulator{S},
     system::SystemModel{N,L,T,P,E},
-) where {N,L,T,P,E}
+) where {N,L,T,P,E,S<:Union{ShortfallSamples,DemandResponseShortfallSamples}}
 
-    return ShortfallSamplesResult{N,L,T,P,E}(
+    return ShortfallSamplesResult{N,L,T,P,E,S}(
         system.regions, system.timestamps, acc.shortfall)
 
 end

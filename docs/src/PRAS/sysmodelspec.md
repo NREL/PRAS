@@ -44,33 +44,37 @@ methods -- while this is also possible with a single multi-year run, it
 requires some additional post-processing work.
 
 PRAS represents a power system as one or more **regions**, each containing
-zero or more **generators**, **storages**, and
-**generator-storages**. **Interfaces** contain **lines** and
+zero or more **generators**, **storages**,**generator-storages**, and 
+**demand responses**. **Interfaces** contain **lines** and
 allow power transfer between two regions. The table below summarizes
 the characteristics of the different resource types (generators, storages,
 generator-storages, and lines), and the
 remainder of this section provides more details about each resource type
 and their associated resource collections (regions or interfaces).
 
-| Parameter | Generator | Storage | Generator-Storage | Line |
-|-----------|-----------|---------|-------------------|------|
-| *Associated with a(n)...* | *Region* | *Region* | *Region* | *Interface* |
-| *Name* | • | • | • | • |
-| *Category* | • | • | • | • |
+| Parameter | Generator | Storage | Generator-Storage | Demand Response | Line |
+|-----------|-----------|---------|-------------------|-----------------|------|
+| *Associated with a(n)...* | *Region* | *Region* | *Region* | *Region* | *Interface* |
+| *Name* | • | • | • | • | • |
+| *Category* | • | • | • | • | • |
 | Generation Capacity | • | | | |
 | Inflow Capacity | | | • | |
 | Charge Capacity | | • | • | |
 | Discharge Capacity | | • | • | |
+| Load Borrow Capacity | | | | • | |
+| Load Payback Capacity | | | | • | |
 | Energy Capacity | | • | • | |
+| Borrowed Load Capacity | | | | • | |
 | Charge Efficiency | | • | • | |
 | Discharge Efficiency | | • | • | |
 | Carryover Efficiency | | • | • | |
+| Borrowed Energy Interest | | | | • | |
 | Grid Injection Capacity | | | • | |
 | Grid Withdrawal Capacity | | | • | |
-| Forward Transfer Capacity | | | | • |
-| Backward Transfer Capacity | | | | • |
-| Available→Unavailable Transition Probability | • | • | • | • |
-| Unavailable→Available Transition Probability | • | • | • | • |
+| Forward Transfer Capacity | | | | | • |
+| Backward Transfer Capacity | | | | | • |
+| Available→Unavailable Transition Probability | • | • | • | • | • |
+| Unavailable→Available Transition Probability | • | • | • | • | • |
 
 *Table: PRAS resource parameters. Parameters in italic are fixed values; all others are provided as a time series.*
 
@@ -113,8 +117,8 @@ time series, and so may be different during different time periods.
 
 ```@raw html
 <figure>
-<img src="../../images/resourceparameters.svg" alt="Relations between power and energy parameters for generator, storage, and generator-storage resources." style="max-width:2000px;  width:100%;"/>
-<figcaption> Relations between power and energy parameters for generator, storage, and generator-storage resources</figcaption>
+<img src="../../images/resourceparameters.png" alt="Relations between power and energy parameters for generator, storage, and generator-storage resources." style="max-width:2000px;  width:100%;"/>
+<figcaption> Relations between power and energy parameters for generator, storage, generator-storage, and demand response resources</figcaption>
 </figure>
 ```
 
@@ -157,7 +161,7 @@ Just as with generators, storages may be in available or unavailable states, and
 move between these states randomly over time, according to provided state
 transition probabilities. Unavailable storages cannot inject power into or
 withdraw power from the grid, but they do maintain their energy state of charge
-during an outage (minus any carryover losses occuring over time).
+during an outage (minus any carryover losses occurring over time).
 
 ## Generator-Storages
 
@@ -189,6 +193,61 @@ its state of charge during outages (subject to carryover losses).
 <figcaption> Example applications of the generator-storage resource type </figcaption>
 </figure>
 ```
+
+## Demand Responses
+
+Resources that can shift or shed electrical load forward in time but do
+not provide an overall net addition of energy into the system (e.g., dr event programs)
+are referred to as **demand responses** in PRAS. Like storages, demand response components are
+associated with descriptive name and category metadata.
+Each demand response unit has both a load borrow and load payback capacity time series, representing the
+device's maximum ability to borrow load from or payback load into the grid
+at a given point in time (as with storage capacity, these values may remain
+constant over the simulation or may vary to reflect external constraints).
+
+Demand response units also have a maximum load capacity time series, reflecting the
+maximum amount of borrowed load the device can hold at a given point in
+time (increasing or decreasing this value will change the duration of time for
+which the device could borrow or payback at maximum power). The demand response's
+state of load increases with borrowing and decreases with
+payback, and must always remain between zero and the maximum load
+capacity in that time period. The energy flow relationships between
+these capacities are depicted visually in the energy relation diagram.
+If the maximum load capacity is less than the previous hour's state, the load borrowed will
+be counted as unserved energy.
+
+
+| **Demand Response Type**   | **Description** | **Relevance to PRAS?** |
+|:----------|:---------------|:----------------------|
+| **Shift**  | Demand response that encourages the movement of energy consumption from times of high demand to times of day when there is a surplus of generation.​   | Yes: can be dispatched as part of the PRAS optimization, to move load out of (net) peak periods.​           |
+| **Shed**   | Loads that can be curtailed to provide peak capacity reduction and support the system in emergency or contingency events with a range in advance notice times.​ | Yes: but caution must be used to avoid too frequent load shed and to capture only load that can truly be shed (i.e., not able to be paid back at a later time). Setting the `borrowed_energy_interest` to -0.99 will drop all effective borrowed load.​ |
+| **Shape**  | Demand response that reshapes customer load profiles through price response or behavioral campaigns — ‘load-modifying DR’ — with advance notice of months to days.​ | Only through pre-processing to load; no original implementation option within the PRAS optimization.|
+| **Shimmy** | Loads that dynamically adjust to alleviate short-run ramps and disturbances on the system at timescales ranging from seconds up to an hour.​ | No: the system conditions and ramping are more granular than what is possible in PRAS. |
+*Table: Common demand response categories and what is possible to model in PRAS. Demand Response type categories are taken from Piette, Mary Ann, et al. "2025 California Demand Response Potential Study.".*
+
+
+Demand response units may incur losses or gains forward in time (borrowed energy interest).
+The available load borrowed in the next time period is calculated by multiplying the borrowed energy interest 
+by the current load borrowed and adding to the current load borrowed. 
+The borrowed energy interest may be positive or negative,
+indicating a growing or shrinking respectively borrowed load hour to hour. Borrowed energy interest
+may lead to cases where the maximum load capacity of the demand response device is passed. If this occurs,
+any load above the maximum capacity will be tracked as unserved energy.
+
+
+Just as with storage, demand responses may be in available or unavailable states, and
+move between these states randomly over time, according to provided state
+transition probabilities. Unavailable demand responses cannot pay back load into or
+withdraw load from the grid, but they do maintain their current borrowed load
+during an outage (plus or minus any borrowed energy interest occurring over time).
+
+Demand response devices also have a maximum amount of time that they can hold borrowed energy. 
+This cutoff, where borrowed load is unable to be repaid and transitions over to unserved_energy,
+is refereed to as the allowable payback period. This parameter can be time varying, and therefore
+enable unique tailoring to the real world device being modeled. The allowable payback window is a integer
+and follows the timestep units set for the system. If any surplus exists in the region, the demand response
+device will attempt to payback any borrowed load, before charging storage. If the demand response device
+pays back all borrowed load before the end of the period, the counter is reset upon further use.
 
 ## Interfaces
 

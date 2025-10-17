@@ -7,6 +7,7 @@ PRASCore.Systems.Regions
 PRASCore.Systems.Generators
 PRASCore.Systems.Storages
 PRASCore.Systems.GeneratorStorages
+PRASCore.Systems.DemandResponses
 PRASCore.Systems.Lines
 PRASCore.Systems.Interfaces
 ```
@@ -37,5 +38,8 @@ PRASCore.Results.GeneratorStorageEnergySamples
 PRASCore.Results.StorageAvailability
 PRASCore.Results.StorageEnergy
 PRASCore.Results.StorageEnergySamples
+PRASCore.Results.DemandResponseAvailability
+PRASCore.Results.DemandResponseEnergy
+PRASCore.Results.DemandResponseEnergySamples
 PRASCore.Results.LineAvailability
 ```

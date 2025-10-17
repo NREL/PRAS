@@ -16,12 +16,16 @@ export
     val, stderror,
 
     # Result specifications
-    Shortfall, ShortfallSamples, Surplus, SurplusSamples,
+    Shortfall, ShortfallSamples,
+    DemandResponseShortfall, DemandResponseShortfallSamples,
+    Surplus, SurplusSamples,
     Flow, FlowSamples, Utilization, UtilizationSamples,
     StorageEnergy, StorageEnergySamples,
     GeneratorStorageEnergy, GeneratorStorageEnergySamples,
+    DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
-    GeneratorStorageAvailability, LineAvailability
+    GeneratorStorageAvailability,DemandResponseAvailability,
+    LineAvailability
 
 include("utils.jl")
 include("metrics.jl")
@@ -78,6 +82,7 @@ NEUE(x::AbstractShortfallResult, ::Colon, ::Colon) =
 
 include("Shortfall.jl")
 include("ShortfallSamples.jl")
+
 
 abstract type AbstractSurplusResult{N,L,T} <: Result{N,L,T} end
 
@@ -144,6 +149,7 @@ getindex(x::AbstractAvailabilityResult, ::Colon, ::Colon) =
 include("GeneratorAvailability.jl")
 include("StorageAvailability.jl")
 include("GeneratorStorageAvailability.jl")
+include("DemandResponseAvailability.jl")
 include("LineAvailability.jl")
 
 abstract type AbstractEnergyResult{N,L,T} <: Result{N,L,T} end
@@ -162,8 +168,10 @@ getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
 
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
+include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
+include("DemandResponseEnergySamples.jl")
 
 function resultchannel(
     results::T, threads::Int

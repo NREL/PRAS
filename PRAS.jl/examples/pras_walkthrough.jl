@@ -1,4 +1,4 @@
-# # [PRAS walkthrough](@id pras_walkthrough)  
+# # [PRAS Walkthrough](@id pras_walkthrough)  
 
 # This is a complete example of running a PRAS assessment,
 # using the [RTS-GMLC](https://github.com/GridMod/RTS-GMLC) system
@@ -9,7 +9,7 @@ using Plots
 using DataFrames
 using Printf
 
-# ## [Read and explore a SystemModel](@id explore_systemmodel)
+# ## [Read and Explore a SystemModel](@id explore_systemmodel)
 
 # You can load in a system model from a [.pras file](@ref prasfile) if you have one like so:
 # ```julia
@@ -30,7 +30,7 @@ sys
 
 # This system has 3 regions, with multiple Generators, one GenerationStorage in 
 # region "2" and one Storage in region "3". We can see regional information by 
-# indexing the system with the region name:
+# indexing the system by region name:
 sys["2"]
 
 # We can visualize a time series of the regional load in region "2":
@@ -45,7 +45,7 @@ system_generators = sys.generators
 
 # This returns an object of the asset type [Generators](@ref PRASCore.Systems.Generators)
 # and we can retrieve capacities of all generators in the system, which returns 
-# a Matrix with the shape (number of generators) x (number of timepoints):
+# a Matrix with the shape (number of generators) x (number of timesteps):
 system_generators.capacity
 
 # We can visualize a time series of the total system capacity 
@@ -77,7 +77,7 @@ region_3_storage = sys["3", Storages]
 # and the generation-storage device in region "2" like so:
 region_2_genstorage = sys["2", GeneratorStorages]
 
-# ## Run a Sequential Monte Carlo simulation
+# ## Run a Sequential Monte Carlo Simulation
 
 # We can run a Sequential Monte Carlo simulation on this system using the
 # [assess](@ref PRASCore.Simulations.assess) function. 
@@ -151,20 +151,20 @@ utilization_str = join([@sprintf("Interface between regions 1 and 2 utilization:
                             utilization["1" => "3", max_lole_ts][1])], "\n");
 println(utilization_str)                            
 
-# We see that the interfaces are not fully utilized, meaning there is 
-# no excess generation in the system that could be wheeled into region "2"
+# We see that the interfaces are not fully utilized, which means there is 
+# no excess generation in the system that could be transferred into region "2"
 # and we can confirm this by looking at the surplus generation in each region
 println("Surplus in")
-println(@sprintf("  region 1: %0.2f",surplus["1",max_lole_ts][1]))
-println(@sprintf("  region 2: %0.2f",surplus["2",max_lole_ts][1]))
-println(@sprintf("  region 3: %0.2f",surplus["3",max_lole_ts][1]))
+@printf("  region 1: %0.2f\n",surplus["1",max_lole_ts][1])
+@printf("  region 2: %0.2f\n",surplus["2",max_lole_ts][1])
+@printf("  region 3: %0.2f\n",surplus["3",max_lole_ts][1])
 
 # Is local storage another alternative for region 3? One can check on the average 
 # state-of-charge of the existing battery in region "3", both in the 
 # hour before and during the problematic period:
 
-println(@sprintf("Storage energy T-1: %0.2f",storage["313_STORAGE_1", max_lole_ts-Hour(1)][1]))
-println(@sprintf("Storage energy T: %0.2f",storage["313_STORAGE_1", max_lole_ts][1]))
+@printf("Storage energy T-1: %0.2f\n",storage["313_STORAGE_1", max_lole_ts-Hour(1)][1])
+@printf("Storage energy T: %0.2f\n",storage["313_STORAGE_1", max_lole_ts][1])
 
 # It may be that the battery is on average charged going in to the event,
 # and perhaps retains some energy during the event, even as load is being

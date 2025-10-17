@@ -18,7 +18,6 @@ for file in files
       documenter = true, credit = true)
 end
 
-examples_nav = fix_suffix.("./examples/" .* files)
 
 # Generate the unified documentation
 makedocs(
@@ -33,7 +32,7 @@ makedocs(
         "Resource Adequacy" => "resourceadequacy.md",
         "Getting Started" => [
             "Installation" => "installation.md",
-            "Quick start" => "quickstart.md",
+            "Quick Start" => "quickstart.md",
         ],        
         "PRAS Components " => [
             "System Model Specification" => "PRAS/sysmodelspec.md",
@@ -42,7 +41,10 @@ makedocs(
             "Capacity Credit Calculation" => "PRAS/capacitycredit.md",            
         ],
         ".pras File Format" => "SystemModel_HDF5_spec.md",
-        "Tutorials" => examples_nav,
+        "Tutorials" => [
+            "PRAS 101 Walkthrough" => "examples/pras_walkthrough.md",
+            "Demand Response Walkthrough" => "examples/demand_response_walkthrough.md",
+        ],
         "Extending PRAS" => "extending.md",
 #        "Contributing" => "contributing.md",
         "Changelog" => "changelog.md",
