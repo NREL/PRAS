@@ -316,12 +316,7 @@ function systemmodel_0_8(f::File)
         region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
 
     else
-        demandresponses = DemandResponses{N,L,T,P,E}(
-            String[], String[], 
-            zeros(Int, 0, N), zeros(Int, 0, N), zeros(Int, 0, N),
-            zeros(Float64, 0, N),
-            zeros(Int, 0, N), zeros(Float64, 0, N), zeros(Float64, 0, N),
-            zeros(Float64, 0, N), zeros(Float64, 0, N))
+        demandresponses = DemandResponses{N,L,T,P,E}()
 
         region_dr_idxs = fill(1:0, n_regions)
 

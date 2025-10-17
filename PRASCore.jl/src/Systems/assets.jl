@@ -615,27 +615,25 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
                        allowablepaybackperiod,
                        λ, μ,borrowefficiency, paybackefficiency,)
     end
-
-    #second constructor if you pass nothing in for borrow and payback efficiencies
-    function DemandResponses{N,L,T,P,E}(
-      names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
-      borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
-      energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
-      allowablepaybackperiod::Matrix{Int},
-      λ::Matrix{Float64}, μ::Matrix{Float64}
-    ) where {N,L,T,P,E}
-        return DemandResponses{N,L,T,P,E}(
-            names, categories,
-            borrowcapacity, paybackcapacity, energycapacity,
-            borrowedenergyinterest, allowablepaybackperiod,
-            λ, μ,
-            ones(Float64, size(borrowcapacity)), ones(Float64, size(paybackcapacity))
-        )
-    end
-
-
-
 end
+
+# second constructor if borrow and payback efficiencies are not provided
+function DemandResponses{N,L,T,P,E}(
+  names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
+  borrowcapacity::Matrix{Int}, paybackcapacity::Matrix{Int},
+  energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
+  allowablepaybackperiod::Matrix{Int},
+  λ::Matrix{Float64}, μ::Matrix{Float64}
+) where {N,L,T,P,E}
+    return DemandResponses{N,L,T,P,E}(
+        names, categories,
+        borrowcapacity, paybackcapacity, energycapacity,
+        borrowedenergyinterest, allowablepaybackperiod,
+        λ, μ,
+        ones(Float64, size(borrowcapacity)), ones(Float64, size(paybackcapacity))
+    )
+end
+
 
 # Empty DemandResponses constructor
 function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
