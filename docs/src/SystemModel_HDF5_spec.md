@@ -26,9 +26,9 @@ will likely have ".h5" or ".hdf5" extensions), and is purely optional.
 ## PRAS terminology
 
 In the following specification, generators, generator-storage units, storage
-devices, and lines are sometimes refered to generically as "resources".
-Similarly, regions (a grouping of generators, generator-storage units, and
-storage devices) and interfaces (a grouping of lines) are sometimes referred
+devices, demand response devices, and lines are sometimes refered to generically as "resources".
+Similarly, regions (a grouping of generators, generator-storage units,
+storage, and demand response devices) and interfaces (a grouping of lines) are sometimes referred
 to generically as "resource collections".
 
 ## HDF5 File Structure
@@ -158,6 +158,7 @@ The file must include at least one of:
 The file may include (optional):
 
  - `storages`, containing datasets describing storage devices in the system
+ - `demandresponses`, containing datasets describing demand response devices in the system
  - `interfaces`, containing datasets describing collections of lines between
    regions in the system. This group **must** be included if `lines` is included
    and **must not** be included if `lines` is omitted.
@@ -360,6 +361,56 @@ generator-storage devices:
  - `repairprobability`, as 64-bit floats representing the probability the unit
    transitions from forced outage to operational during a given simulation
    timestep, for each generator-storage unit in each timeperiod. Unitless.
+
+#### `demandresponses` group
+
+Information relating to the demand response only devices of the represented system is
+stored in the `demandresponses` group inside the root group. This group should contain
+nine datasets, one (named `_core`) providing core static data about each region
+and nine providing (potentially) time-varying data.
+
+The `_core` dataset should be a vector / one-dimensional array storing instances of
+a compound datatype with the following fields (in order):
+
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each demand response.
+ 2. `category`: 128-byte ASCII string. Stores the category of each demand response.
+ 3. `region`: 128-byte ASCII string. Stores the region of each demand response.
+
+Each demand response in the system corresponds to a single instance of the compound
+datatype, so the vector should have as many elements as there are demand response in
+the system.
+
+The `demandresponse` group should also contain the following datasets describing
+(potentially) time-varying properties of the system demand resposne devices:
+
+ - `borrowcapacity`, as unsigned 32-bit integers representing maximum available
+   borrowing capacity for each demand response unit in each timeperiod, expressed in
+   units given by the `power_units` attribute.
+ - `paybackcapacity`, as unsigned 32-bit integers representing maximum
+   available payback capacity for each demand response unit in each timeperiod,
+   expressed in units given by the `power_units` attribute.
+ - `energycapacity`, as unsigned 32-bit integers representing maximum
+   available borrowed load demand response capacity for each demand response unit in each timeperiod,
+   expressed in units given by the `energy_units` attribute.
+ - `borrowefficiency`, as 64-bit floats representing the ratio of load
+   injected into the demand response device's reservoir to load withdrawn
+   from the grid, for each demand response unit in each timeperiod. Unitless.
+ - `paybackefficiency`, as 64-bit floats representing the ratio of load
+   injected into the grid to load withdrawn from the demand response device's
+   reservoir, for each demand response unit in each timeperiod. Unitless.
+ - `borrowed_energy_interest`, as 64-bit floats representing the interest borrowed load incurs
+   across each timestep for each demand response device. A value greater than zero is growth,
+   while a value less than zero is borrowed load decay. Unitless.
+ - `allowablepaybackperiod`, as unsigned 32-bit integers representing the maximum number
+   of time steps a demand response device can hold borrowed load. Any energy still
+   contained at the end of the period will be counted as unserved load for that hour.
+   Expressed in units given by the `timestep_unit` attribute.
+ - `failureprobability`, as 64-bit floats representing the probability the unit
+   transitions from operational to forced outage during a given simulation
+   timestep, for each demand response unit in each timeperiod. Unitless.
+ - `repairprobability`, as 64-bit floats representing the probability the unit
+   transitions from forced outage to operational during a given simulation
+   timestep, for each demand response unit in each timeperiod. Unitless.
 
 #### `interfaces` group
 
