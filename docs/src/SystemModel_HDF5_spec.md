@@ -261,9 +261,9 @@ and eight providing (potentially) time-varying data.
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
 
- 1. `name`: 128-byte ASCII string. Stores the **unique** name of each generator.
- 2. `category`: 128-byte ASCII string. Stores the category of each generator.
- 3. `region`: 128-byte ASCII string. Stores the region of each generator.
+ 1. `name`: 128-byte ASCII string. Stores the **unique** name of each storage.
+ 2. `category`: 128-byte ASCII string. Stores the category of each storage.
+ 3. `region`: 128-byte ASCII string. Stores the region of each storage.
 
 Each storage in the system corresponds to a single instance of the compound
 datatype, so the vector should have as many elements as there are storages in
