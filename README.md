@@ -11,8 +11,9 @@
 [![DOI](https://img.shields.io/badge/DOI-10.11578/dc.20190814.1-blue.svg)](https://www.osti.gov/biblio/1557438)
 
 The Probabilistic Resource Adequacy Suite (PRAS) is a collection of tools for
-bulk power system resource adequacy analysis and capacity credit calculation.
-The most recent documentation report (for version 0.6) is available
+bulk power system resource adequacy analysis and capacity credit calculation. Latest
+documentation is available [here](https://nrel.github.io/PRAS/).
+The citable documentation report for v0.6 is available
 [here](https://www.nrel.gov/docs/fy21osti/79698.pdf).
 
 # Installation
@@ -60,5 +61,5 @@ println("Total system $(EUE(shortfall))")
 # Total system EUE = 0.00000 MWh/8784h
 ```
 
-The [Getting Started](docs/getting-started.md) document provides more information
+The [Getting Started](https://nrel.github.io/PRAS/dev/quickstart/) page provides more information
 on using PRAS.
