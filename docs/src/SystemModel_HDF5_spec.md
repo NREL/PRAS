@@ -366,8 +366,8 @@ generator-storage devices:
 
 Information relating to the demand response only devices of the represented system is
 stored in the `demandresponses` group inside the root group. This group should contain
-nine datasets, one (named `_core`) providing core static data about each region
-and nine providing (potentially) time-varying data.
+eight datasets, one (named `_core`) providing core static data about each region
+and seven providing (potentially) time-varying data.
 
 The `_core` dataset should be a vector / one-dimensional array storing instances of
 a compound datatype with the following fields (in order):
@@ -392,12 +392,6 @@ The `demandresponse` group should also contain the following datasets describing
  - `energycapacity`, as unsigned 32-bit integers representing maximum
    available borrowed load capacity for each demand response unit in each timeperiod,
    expressed in units given by the `energy_units` attribute.
- - `borrowefficiency`, as 64-bit floats representing the ratio of load
-   injected into the demand response device's reservoir to load withdrawn
-   from the grid, for each demand response unit in each timeperiod. Unitless.
- - `paybackefficiency`, as 64-bit floats representing the ratio of load
-   injected into the grid to load withdrawn from the demand response device's
-   reservoir, for each demand response unit in each timeperiod. Unitless.
  - `borrowed_energy_interest`, as 64-bit floats representing the interest borrowed load incurs
    across each timestep for each demand response device. A value greater than zero is growth,
    while a value less than zero is decay. Unitless.
