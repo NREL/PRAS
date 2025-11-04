@@ -155,13 +155,34 @@ EUE(x::ShortfallSamplesResult{N,L,T,P,E}, t::ZonedDateTime) where {N,L,T,P,E} =
 EUE(x::ShortfallSamplesResult{N,L,T,P,E}, r::AbstractString, t::ZonedDateTime) where {N,L,T,P,E} =
     EUE{1,L,T,E}(MeanEstimate(x[r, t]))
 
-function NEUE(x::ShortfallSamplesResult{N,L,T,P,E}) where {N,L,T,P,E}
-    return NEUE(div(MeanEstimate(x[]),(sum(x.regions.load)/1e6)))
+function NEUE(x::ShortfallSamplesResult)
+
+    demand = sum(x.regions.load)
+
+    estimate = if demand > 0
+        div(MeanEstimate(x[]), demand/1e6)
+    else
+        MeanEstimate(0.)
+    end
+
+    return NEUE(estimate)
+
 end
 
-function NEUE(x::ShortfallSamplesResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
+function NEUE(x::ShortfallSamplesResult, r::AbstractString)
+
     i_r = findfirstunique(x.regions.names, r)
-    return NEUE(div(MeanEstimate(x[r]),(sum(x.regions.load[i_r,:])/1e6)))
+
+    demand = sum(x.regions.load[i_r, :])
+
+    estimate = if demand > 0
+        div(MeanEstimate(x[r]), demand/1e6)
+    else
+        MeanEstimate(0.)
+    end
+
+    return NEUE(estimate)
+
 end
 
 function finalize(
