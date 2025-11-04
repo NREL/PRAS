@@ -61,5 +61,5 @@ println("Total system $(EUE(shortfall))")
 # Total system EUE = 0.00000 MWh/8784h
 ```
 
-The [Getting Started](docs/src/quickstart.md) document provides more information
+The [Getting Started](https://nrel.github.io/PRAS/dev/quickstart/) page provides more information
 on using PRAS.
