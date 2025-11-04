@@ -390,7 +390,7 @@ The `demandresponse` group should also contain the following datasets describing
    available payback capacity for each demand response unit in each timeperiod,
    expressed in units given by the `power_units` attribute.
  - `energycapacity`, as unsigned 32-bit integers representing maximum
-   available borrowed load demand response capacity for each demand response unit in each timeperiod,
+   available borrowed load capacity for each demand response unit in each timeperiod,
    expressed in units given by the `energy_units` attribute.
  - `borrowefficiency`, as 64-bit floats representing the ratio of load
    injected into the demand response device's reservoir to load withdrawn
@@ -400,7 +400,7 @@ The `demandresponse` group should also contain the following datasets describing
    reservoir, for each demand response unit in each timeperiod. Unitless.
  - `borrowed_energy_interest`, as 64-bit floats representing the interest borrowed load incurs
    across each timestep for each demand response device. A value greater than zero is growth,
-   while a value less than zero is borrowed load decay. Unitless.
+   while a value less than zero is decay. Unitless.
  - `allowablepaybackperiod`, as unsigned 32-bit integers representing the maximum number
    of time steps a demand response device can hold borrowed load. Any energy still
    contained at the end of the period will be counted as unserved load for that hour.
