@@ -7,7 +7,10 @@ import PRASCore.Systems: SystemModel, Regions, Interfaces,
 import PRASCore.Results:
     EUE, LOLE, NEUE, LOLD,
     ShortfallResult, ShortfallSamplesResult,
-    AbstractShortfallResult, Result
+    AbstractShortfallResult, Result, ShortfallEventsResult,
+    ShortfallEvent, LOLEv, totalevents,
+    MeanEventDuration, MaxEventDuration,
+    MeanEventEnergy, MaxEventEnergy
 import StatsBase: mean
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime
@@ -21,6 +24,7 @@ import JSON3: pretty
 
 export savemodel
 export saveshortfall
+export saveevents
 export read_attrs
 
 include("Systems/read.jl")
