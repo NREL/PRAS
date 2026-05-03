@@ -2,7 +2,7 @@ module PRASFiles
 
 import PRASCore.Systems: SystemModel, Regions, Interfaces,
                          Generators, Storages, GeneratorStorages, DemandResponses, Lines,
-                         timeunits, powerunits, energyunits, unitsymbol
+                         timeunits, powerunits, energyunits, unitsymbol, conversionfactor
 
 import PRASCore.Results:
     EUE, LOLE, NEUE, LOLD,
@@ -10,7 +10,7 @@ import PRASCore.Results:
     AbstractShortfallResult, Result, ShortfallEventsResult,
     ShortfallEvent, LOLEv, totalevents,
     MeanEventDuration, MaxEventDuration,
-    MeanEventEnergy, MaxEventEnergy
+    MeanEventEnergy, MaxEventEnergy, findfirstunique
 import StatsBase: mean
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime
