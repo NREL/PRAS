@@ -601,12 +601,12 @@
         @testset "Whole-horizon equals sum over days" begin
             for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
                 days = unique(Date.(x.timestamps))
-    
+
                 @test isapprox(
                     val(LOLD(x)),
                     sum(val(LOLD(x, d)) for d in days)
                 )
-    
+
                 for r in x.regions.names
                     @test isapprox(
                         val(LOLD(x, r)),
@@ -615,11 +615,11 @@
                 end
             end
         end
-    
+
         @testset "Single-day query matches direct sample calculation" begin
             for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
                 days = unique(Date.(x.timestamps))
-    
+
                 # test first, middle, and last day
                 testdays = unique([first(days), days[cld(length(days), 2)], last(days)])
     
@@ -738,5 +738,22 @@
 
     end
 
-
+    @testset "Threaded sample result partitioning" begin
+        simspec_serial = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
+        simspec_threaded = SequentialMonteCarlo(samples=10, seed=123, threaded=true)
+    
+        serial_shortfall, serial_samples =
+            assess(TestData.singlenode_a, simspec_serial,
+                   Shortfall(), ShortfallSamples())
+    
+        threaded_shortfall, threaded_samples =
+            assess(TestData.singlenode_a, simspec_threaded,
+                   Shortfall(), ShortfallSamples())
+    
+        @test size(threaded_samples.shortfall) == size(serial_samples.shortfall)
+        @test length(threaded_samples[]) == simspec_threaded.nsamples
+    
+        @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+        @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+    end
 end

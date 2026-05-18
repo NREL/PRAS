@@ -26,7 +26,7 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability, ShortfallEvents
+    LineAvailability
 
 include("metrics.jl")
 include("utils.jl")
@@ -188,15 +188,12 @@ getindex(x::AbstractEnergyResult, name::String, ::Colon) =
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
-abstract type AbstractShortfallEventResult{N,L,T} <: Result{N,L,T} end
-
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
 include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
-include("ShortfallEvents.jl")
 
 issamplebased(::ShortfallSamples) = true
 issamplebased(::DemandResponseShortfallSamples) = true
