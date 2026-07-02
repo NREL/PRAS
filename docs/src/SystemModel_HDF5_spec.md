@@ -298,7 +298,7 @@ The `storages` group should also contain the following datasets describing
    transitions from forced outage to operational during a given simulation
    timestep, for each storage unit in each timeperiod. Unitless.
 
-An optional parameter is available to set the initial state of charge for the unit:
+An optional Vector parameter of length storage units, is available to set the initial state of charge for the unit:
 
  - `initialsoc`, as 64-bit floats representing the initial state of charge of
    the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each storage unit.
@@ -367,7 +367,7 @@ generator-storage devices:
    transitions from forced outage to operational during a given simulation
    timestep, for each generator-storage unit in each timeperiod. Unitless.
 
-An optional parameter is available to set the initial state of charge for the unit:
+An optional Vector parameter of length generator-storage units, is available to set the initial state of charge for the unit:
 
  - `initialsoc`, as 64-bit floats representing the initial state of charge of
    the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each generator-storage unit.
@@ -416,7 +416,7 @@ The `demandresponse` group should also contain the following datasets describing
    transitions from forced outage to operational during a given simulation
    timestep, for each demand response unit in each timeperiod. Unitless.
 
-An optional parameter is available to set the initial state of borrowed load for the unit:
+An optional Vector parameter of length demand response units, is available to set the initial state of borrowed load for the unit:
 
  - `initialborrowedload`, as 64-bit floats representing the initial borrowed load
    for the unit as a fraction [0.0, 1.0] of energy capacity at timestep 1, for each demand response unit.
