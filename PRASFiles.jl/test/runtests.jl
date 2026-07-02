@@ -31,22 +31,22 @@ using JSON3
     end
 
 
-    @testset "Read version 0.7.0 to 0.8.1 compatibility" begin
+    @testset "Read version 0.7.0 to 0.9.0 compatibility" begin
 
         path = dirname(@__FILE__)
         version_0_7_0 = SystemModel(path * "/versioned_toy/toymodel_v0_7_0.pras")
-        version_0_8_1 = SystemModel(path * "/versioned_toy/toymodel_v0_8_1.pras")
+        version_0_9_0 = SystemModel(path * "/versioned_toy/toymodel_v0_9_0.pras")
 
-        @test version_0_7_0 == version_0_8_1
+        @test version_0_7_0 == version_0_9_0
         end
 
-    @testset "Read version 0.8.0 to 0.8.1 compatibility" begin
+    @testset "Read version 0.8.0 to 0.9.0 compatibility" begin
 
         path = dirname(@__FILE__)
         version_0_8_0 = SystemModel(path * "/versioned_toy/toymodel_v0_8_0.pras")
-        version_0_8_1 = SystemModel(path * "/versioned_toy/toymodel_v0_8_1.pras")
+        version_0_9_0 = SystemModel(path * "/versioned_toy/toymodel_v0_9_0.pras")
 
-        @test version_0_8_0 == version_0_8_1
+        @test version_0_8_0 == version_0_9_0
         end
 
     @testset "Run RTS-GMLC" begin

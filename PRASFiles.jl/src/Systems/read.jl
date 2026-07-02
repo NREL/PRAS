@@ -22,8 +22,8 @@ function SystemModel(inputfile::String)
             systemmodel_0_5(f)
         elseif version == (0,8,0)
             systemmodel_0_8_0(f)
-        elseif version >= (0,8,1)
-            systemmodel_0_8_1(f)
+        elseif version >= (0,9,0)
+            systemmodel_0_9_0(f)
         else
             error("PRAS file format $versionstring not supported by this version of PRASBase.")
         end
@@ -36,7 +36,7 @@ end
 
 """
 Unexposed function which encapsulates the SystemModel reading logic from PRAS 
-versions 0.5.x to 0.7.x., and is also used in version 0.8.x+ to read the 
+versions 0.5.x to 0.7.x., and is also used in version 0.x.x+ to read the 
 components from the SystemModel which exist in the new format as well.
 """
 function _systemmodel_core(f::File)
@@ -417,9 +417,10 @@ function systemmodel_0_8_0(f::File)
 end
 
 """
-Read a SystemModel from a PRAS file in version 0.8.1+ format. Requires initial SOC levels for storages/generator-storages and initial borrowed load/efficiency parameters for demand responses.
+Read a SystemModel from a PRAS file in version 0.9.0+ format.\n
+Requires initial SOC levels for storages/generator-storages and initial borrowed load/efficiency parameters for demand responses.
 """
-function systemmodel_0_8_1(f::File)
+function systemmodel_0_9_0(f::File)
     
     (regions, interfaces,
     generators, region_gen_idxs,
