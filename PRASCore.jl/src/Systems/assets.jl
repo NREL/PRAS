@@ -369,7 +369,7 @@ A struct representing generator-storage hybrid devices within a power system.
    operational during a given simulation timestep, for each generator-storage unit in each
    timeperiod. Unitless.
  - `initial_soc`: Optional keyword for initial state of charge as a fraction [0.0, 1.0] of 
-   `energy_capacity` at the first timestep for each storage unit. Default is zero.
+   `energy_capacity` at the first timestep for each generator-storage unit. Default is zero.
 """
 struct GeneratorStorages{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAssets{N,L,T,P}
 
