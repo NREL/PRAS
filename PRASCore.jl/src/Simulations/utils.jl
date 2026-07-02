@@ -98,6 +98,22 @@ function available_capacity(
 
 end
 
+function initialize_energy!(
+    initial_values::Vector{Float64}, 
+    energy_state::Vector{Int64}, 
+    energy_capacity::Matrix{Int64}
+)
+
+    if size(energy_capacity, 1) > 0
+        # Set initial state of charge based on initial fraction and initial capacity
+        energy_state .= round.(Int, initial_values .* energy_capacity[:,1])
+    else
+        fill!(energy_state, 0.0)
+    end
+
+end
+
+
 function update_energy!(
     stors_energy::Vector{Int},
     stors::AbstractAssets,

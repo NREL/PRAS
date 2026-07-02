@@ -182,23 +182,10 @@ function initialize!(
         initialize_availability!(
             rng, state.lines_available, state.lines_nexttransition,
             system.lines, N)
-        if size(system.storages.energy_capacity, 1) > 0
-            state.stors_energy .= round.(Int, system.storages.initial_soc .* system.storages.energy_capacity[:,1])
-        else
-            fill!(state.stors_energy, 0.0)
-        end
 
-        if size(system.generatorstorages.energy_capacity, 1) > 0
-            state.genstors_energy .= round.(Int, system.generatorstorages.initial_soc .* system.generatorstorages.energy_capacity[:,1])
-        else
-            fill!(state.genstors_energy, 0.0)
-        end
-        
-        if size(system.demandresponses.energy_capacity, 1) > 0
-            state.drs_energy .= round.(Int, system.demandresponses.initial_borrowed_load .* system.demandresponses.energy_capacity[:,1])
-        else
-            fill!(state.drs_energy, 0.0)
-        end
+        initialize_energy!(system.storages.initial_soc, state.stors_energy, system.storages.energy_capacity)
+        initialize_energy!(system.generatorstorages.initial_soc, state.genstors_energy, system.generatorstorages.energy_capacity)
+        initialize_energy!(system.demandresponses.initial_borrowed_load, state.drs_energy, system.demandresponses.energy_capacity)
 
         fill!(state.drs_unservedenergy, 0)
         fill!(state.drs_paybackcounter, -1)
