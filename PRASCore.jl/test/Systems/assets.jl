@@ -135,19 +135,19 @@
 
         DemandResponses{10,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
+            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float, initial_borrowed_load =  vals_float_soc)
 
         @test_throws AssertionError DemandResponses{5,1,Hour,MW,MWh}(
             names, categories, vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
+            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float,initial_borrowed_load =  vals_float_soc)
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names, categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
+            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float,initial_borrowed_load =  vals_float_soc)
 
         @test_throws AssertionError DemandResponses{10,1,Hour,MW,MWh}(
             names[1:2], categories[1:2], vals_int, vals_int, vals_int,
-            vals_float, vals_int, vals_float, vals_float;initial_borrowed_load =  vals_float_soc, borrow_efficiency = vals_float, payback_efficiency = vals_float)
+            vals_float, vals_int, vals_float, vals_float;borrow_efficiency = vals_float, payback_efficiency = vals_float,initial_borrowed_load =  vals_float_soc)
     end
 
     @testset "Lines" begin

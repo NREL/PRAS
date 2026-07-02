@@ -600,10 +600,10 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
     λ::Matrix{Float64}
     μ::Matrix{Float64}
 
-    initial_borrowed_load::Vector{Float64} # energy
-
     borrow_efficiency::Matrix{Float64}
     payback_efficiency::Matrix{Float64}
+
+    initial_borrowed_load::Vector{Float64} # energy
 
     function DemandResponses{N,L,T,P,E}(
         names::Vector{<:AbstractString}, categories::Vector{<:AbstractString},
@@ -611,9 +611,9 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
         energycapacity::Matrix{Int}, borrowedenergyinterest::Matrix{Float64},
         allowablepaybackperiod::Matrix{Int},
         λ::Matrix{Float64}, μ::Matrix{Float64};
-        initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names)),
         borrow_efficiency::Matrix{Float64} = ones(Float64, size(borrowcapacity)),
-        payback_efficiency::Matrix{Float64} = ones(Float64, size(paybackcapacity)) 
+        payback_efficiency::Matrix{Float64} = ones(Float64, size(paybackcapacity)),
+        initial_borrowed_load::Vector{Float64} = zeros(Float64, length(names))
     ) where {N,L,T,P,E}
 
         n_drs = length(names)
@@ -653,9 +653,9 @@ struct DemandResponses{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: AbstractAsse
                       borrowedenergyinterest,
                        allowablepaybackperiod,
                        λ, μ,
-                       initial_borrowed_load,
                        borrow_efficiency,
-                       payback_efficiency)
+                       payback_efficiency,
+                       initial_borrowed_load)
     end
 end
 
@@ -667,9 +667,9 @@ function DemandResponses{N,L,T,P,E}() where {N,L,T,P,E}
               Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),Matrix{Int}(undef, 0, N),
               Matrix{Float64}(undef, 0, N),
               Matrix{Int}(undef, 0, N),Matrix{Float64}(undef, 0, N),Matrix{Float64}(undef, 0, N);
-              initial_borrowed_load = zeros(Float64, 0),
               borrow_efficiency = Matrix{Float64}(undef, 0, N),
-              payback_efficiency = Matrix{Float64}(undef, 0, N))
+              payback_efficiency = Matrix{Float64}(undef, 0, N),
+              initial_borrowed_load = zeros(Float64, 0))
 end
 
 Base.:(==)(x::T, y::T) where {T <: DemandResponses} =
@@ -690,9 +690,9 @@ Base.getindex(dr::DR, idxs::AbstractVector{Int}) where {DR <: DemandResponses} =
     DR(dr.names[idxs], dr.categories[idxs],dr.borrow_capacity[idxs,:],
       dr.payback_capacity[idxs, :],dr.energy_capacity[idxs, :],
       dr.borrowed_energy_interest[idxs, :],dr.allowable_payback_period[idxs, :],dr.λ[idxs, :], dr.μ[idxs, :];
-      initial_borrowed_load = dr.initial_borrowed_load[idxs],
       borrow_efficiency = dr.borrow_efficiency[idxs, :], 
-      payback_efficiency = dr.payback_efficiency[idxs, :])
+      payback_efficiency = dr.payback_efficiency[idxs, :],
+      initial_borrowed_load = dr.initial_borrowed_load[idxs])
 
 function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
@@ -748,9 +748,9 @@ function Base.vcat(drs::DemandResponses{N,L,T,P,E}...) where {N, L, T, P, E}
 
     return DemandResponses{N,L,T,P,E}(names, categories, borrow_capacity, payback_capacity, energy_capacity,
     borrowed_energy_interest,allowable_payback_period, λ, μ;
-    initial_borrowed_load = initial_borrowed_load,
     borrow_efficiency = borrow_efficiency, 
-    payback_efficiency = payback_efficiency)
+    payback_efficiency = payback_efficiency,
+    initial_borrowed_load = initial_borrowed_load)
 
 end
 

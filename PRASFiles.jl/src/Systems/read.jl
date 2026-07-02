@@ -520,9 +520,9 @@ function systemmodel_0_8_1(f::File)
             load_matrix(f["demandresponses/allowablepaybackperiod"], region_order, Int),
             load_matrix(f["demandresponses/failureprobability"], region_order, Float64),
             load_matrix(f["demandresponses/repairprobability"], region_order, Float64);
-            initial_borrowed_load = load_matrix(f["demandresponses/initialborrowedload"], region_order, Float64),
             borrow_efficiency = load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64),
             payback_efficiency = load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64),
+            initial_borrowed_load = load_matrix(f["demandresponses/initialborrowedload"], region_order, Float64)
         )
 
         region_dr_idxs = makeidxlist(dr_regions[region_order], n_regions)
