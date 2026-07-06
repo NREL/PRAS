@@ -197,10 +197,11 @@ function _systemmodel_core(f::File)
             timestamps),type_params
 end
 
-function read_storages(f::File, 
+function read_storages(f::File,
+    version::Tuple{Int, Int, Int},
     regionlookup::Dict{String, Int}, 
     n_regions::Int, 
-    type_params::Tuple{Int, Int, DataType, DataType, DataType}
+    type_params::Tuple{Int, Int, DataType, DataType, DataType},
     )
 
     N,L,T,P,E = type_params
@@ -216,7 +217,6 @@ function read_storages(f::File,
     region_order = sortperm(stor_regions)
 
     #read in optional params if version permits
-    version, versionstring = readversion(f)
     if version <= (0,8,0)
         initial_soc = zeros(Float64, length(stor_names))
     else
@@ -242,6 +242,7 @@ function read_storages(f::File,
 end
 
 function read_generator_storages(f::File, 
+    version::Tuple{Int, Int, Int},
     regionlookup::Dict{String, Int}, 
     n_regions::Int, 
     type_params::Tuple{Int, Int, DataType, DataType, DataType}
@@ -260,7 +261,6 @@ function read_generator_storages(f::File,
     region_order = sortperm(genstor_regions)
 
     #read in optional params if version permits
-    version, versionstring = readversion(f)
     if version <= (0,8,0)
         initial_soc = zeros(Float64, length(genstor_names))
     else
@@ -288,11 +288,13 @@ function read_generator_storages(f::File,
     return generatorstorages, region_genstor_idxs
 end
 
-function read_demand_responses(f::File, 
+function read_demand_responses(f::File,
+    version::Tuple{Int, Int, Int},
     regionlookup::Dict{String, Int}, 
     n_regions::Int, 
     type_params::Tuple{Int, Int, DataType, DataType, DataType}
     )
+
     N,L,T,P,E = type_params
     has_demandresponses = haskey(f, "demandresponses")
 
@@ -306,7 +308,6 @@ function read_demand_responses(f::File,
     region_order = sortperm(dr_regions)
 
     #read in optional params if version permits
-    version, versionstring = readversion(f)
     if version < (0,8,0)
         borrow_efficiency = ones(Float64, length(dr_names), N)
         payback_efficiency = ones(Float64, length(dr_names), N)
@@ -351,9 +352,10 @@ function systemmodel_0_5(f::File)
     n_regions = length(regions)
     regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
     attrs = read_attrs(f)
+    version, versionstring = readversion(f)
 
-    storages,region_stor_idxs = read_storages(f, regionlookup, n_regions, (N,L,T,P,E))
-    generatorstorages,region_genstor_idxs = read_generator_storages(f, regionlookup, n_regions, (N,L,T,P,E))
+    storages,region_stor_idxs = read_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
+    generatorstorages,region_genstor_idxs = read_generator_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
 
     return SystemModel(
         regions, interfaces,
@@ -378,10 +380,11 @@ function systemmodel_0_8_0(f::File)
     n_regions = length(regions)
     regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
     attrs = read_attrs(f)
+    version, versionstring = readversion(f)
 
-    storages,region_stor_idxs = read_storages(f, regionlookup, n_regions, (N,L,T,P,E))
-    generatorstorages,region_genstor_idxs = read_generator_storages(f, regionlookup, n_regions, (N,L,T,P,E))
-    demandresponses, region_dr_idxs = read_demand_responses(f, regionlookup, n_regions, (N,L,T,P,E))
+    storages,region_stor_idxs = read_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
+    generatorstorages,region_genstor_idxs = read_generator_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
+    demandresponses, region_dr_idxs = read_demand_responses(f, version, regionlookup, n_regions, (N,L,T,P,E))
 
     return SystemModel(
         regions, interfaces,
@@ -408,10 +411,11 @@ function systemmodel_0_9_0(f::File)
     n_regions = length(regions)
     regionlookup = Dict(n=>i for (i, n) in enumerate(regions.names))
     attrs = read_attrs(f)
+    version, versionstring = readversion(f)
 
-    storages,region_stor_idxs = read_storages(f, regionlookup, n_regions, (N,L,T,P,E))
-    generatorstorages,region_genstor_idxs = read_generator_storages(f, regionlookup, n_regions, (N,L,T,P,E))
-    demandresponses, region_dr_idxs = read_demand_responses(f, regionlookup, n_regions, (N,L,T,P,E))
+    storages,region_stor_idxs = read_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
+    generatorstorages,region_genstor_idxs = read_generator_storages(f, version, regionlookup, n_regions, (N,L,T,P,E))
+    demandresponses, region_dr_idxs = read_demand_responses(f, version, regionlookup, n_regions, (N,L,T,P,E))
 
     return SystemModel(
         regions, interfaces,
