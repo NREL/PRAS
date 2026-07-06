@@ -755,5 +755,13 @@
     
         @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
         @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+
+        simspec_few_samples = SequentialMonteCarlo(samples=5, seed=123, threaded=true)
+
+        few_samples_result, =
+            assess(TestData.singlenode_a, simspec_few_samples, ShortfallSamples())
+
+        @test size(few_samples_result.shortfall, 3) == simspec_few_samples.nsamples
+        @test length(few_samples_result[]) == simspec_few_samples.nsamples
     end
 end

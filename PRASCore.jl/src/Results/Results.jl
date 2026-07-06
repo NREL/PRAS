@@ -245,6 +245,11 @@ function finalize(
 
     first_recorders, first_sampleids = take!(results)
 
+    if threads == 1 && first_sampleids == 1:nsamples
+        close(results)
+        return finalize.(first_recorders, system)
+    end
+
     total_result = map(resultspecs, first_recorders) do spec, recorder
         issamplebased(spec) ? accumulator(system, nsamples, spec) : recorder
     end
