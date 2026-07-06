@@ -201,7 +201,7 @@ function read_storages(f::File,
     version::Tuple{Int, Int, Int},
     regionlookup::Dict{String, Int}, 
     n_regions::Int, 
-    type_params::Tuple{Int, Int, DataType, DataType, DataType},
+    type_params::Tuple{Int, Int, DataType, DataType, DataType}
     )
 
     N,L,T,P,E = type_params
