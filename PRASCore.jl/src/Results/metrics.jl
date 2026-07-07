@@ -30,7 +30,26 @@ function MeanEstimate(xs::AbstractArray{<:Real})
     end
 end
 
+"""
+    val(metric)
+
+Return the estimated value stored in a PRAS reliability metric or
+`MeanEstimate`.
+
+For reliability metrics such as `LOLE`, `EUE`, `NEUE`, `CVAR`, and `NCVAR`,
+this extracts the point estimate.
+"""
 val(est::MeanEstimate) = est.estimate
+
+"""
+    stderror(metric)
+
+Return the standard error stored in a PRAS reliability metric or
+`MeanEstimate`.
+
+For reliability metrics such as `LOLE`, `EUE`, `NEUE`, `CVAR`, and `NCVAR`,
+this extracts the standard error.
+"""
 stderror(est::MeanEstimate) = est.standarderror
 
 Base.isapprox(x::MeanEstimate, y::MeanEstimate) =
