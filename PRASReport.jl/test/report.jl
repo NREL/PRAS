@@ -28,17 +28,22 @@
     @test contains(html, "Adequacy Events")
     @test contains(html, "System-Level Events")
     @test contains(html, "Region-Level Events")
+    @test contains(html, "Flow Time Series by Interface")
+    @test contains(html, "interface-flow-timeseries")
+    @test contains(html, "Utilization Time Series by Interface")
+    @test contains(html, "interface-utilization-timeseries")
 end
 
 @testset "Result input to create_pras_report" begin
     sys = deepcopy(system)
     sys.regions.load .+= 375
 
-    sf, flow, events = assess(
+    sf, flow, utilization, events = assess(
         sys,
         SequentialMonteCarlo(samples=100, seed=1),
         Shortfall(),
         Flow(),
+        Utilization(),
         ShortfallEvents(),
     )
 
@@ -48,6 +53,7 @@ end
         create_pras_report(
             sf,
             flow,
+            utilization,
             events;
             report_name="results_test",
             report_path=report_dir,
@@ -64,4 +70,8 @@ end
     @test contains(html, "Results Test Report")
     @test contains(html, "Monte Carlo Average Results")
     @test contains(html, "Regional Mean Shortfall by Month and Hour")
+    @test contains(html, "Flow Time Series by Interface")
+    @test contains(html, "interface-flow-timeseries")
+    @test contains(html, "Utilization Time Series by Interface")
+    @test contains(html, "interface-utilization-timeseries")
 end

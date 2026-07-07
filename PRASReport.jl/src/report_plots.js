@@ -297,12 +297,13 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
 
 window.renderSystemShortfallTimeseries = function(rows, energyUnit) {
     Plotly.newPlot("system-shortfall-timeseries", [{
-        x: rows.map(r => r.timestamp),
+        x: rows.map(r => formatTimestamp(r.timestamp)),
+        customdata: rows.map(r => formatTimestamp(r.timestamp)),
         y: rows.map(r => Number(r.mean_shortfall || 0)),
         type: "scatter",
         mode: "lines",
         hovertemplate:
-            "Time: %{x}<br>Mean Shortfall: %{y:.3f} " + energyUnit + "<extra></extra>"
+            "Time: %{customdata}<br>Mean Shortfall: %{y:.3f} " + energyUnit + "<extra></extra>"
     }], {
         xaxis: {
             title: "",
@@ -317,6 +318,92 @@ window.renderSystemShortfallTimeseries = function(rows, energyUnit) {
             zeroline: false
         },
         margin: { t: 20, l: 70, r: 30, b: 60 }
+    }, { responsive: true });
+};
+
+window.renderInterfaceFlowTimeseries = function(rows, powerUnit) {
+    const byInterface = new Map();
+    rows.forEach(row => {
+        const interfaceName = row.interface_name || `Interface ${row.interface_id}`;
+        if (!byInterface.has(interfaceName)) {
+            byInterface.set(interfaceName, []);
+        }
+        byInterface.get(interfaceName).push(row);
+    });
+
+    const traces = Array.from(byInterface.entries()).map(([interfaceName, interfaceRows]) => ({
+        x: interfaceRows.map(r => formatTimestamp(r.timestamp)),
+        customdata: interfaceRows.map(r => formatTimestamp(r.timestamp)),
+        y: interfaceRows.map(r => Number(r.mean_flow || 0)),
+        name: interfaceName,
+        type: "scatter",
+        mode: "lines",
+        hovertemplate:
+            "Interface: " + interfaceName +
+            "<br>Time: %{customdata}<br>Flow: %{y:.3f} " + powerUnit + "<extra></extra>"
+    }));
+
+    Plotly.newPlot("interface-flow-timeseries", traces, {
+        xaxis: {
+            title: "",
+            showticklabels: false,
+            ticks: "",
+            showline: false,
+            zeroline: false
+        },
+        yaxis: {
+            title: `Flow (${powerUnit})`,
+            showline: false,
+            zeroline: true
+        },
+        legend: {
+            orientation: "h",
+            y: -0.2
+        },
+        margin: { t: 20, l: 70, r: 30, b: 90 }
+    }, { responsive: true });
+};
+
+window.renderInterfaceUtilizationTimeseries = function(rows) {
+    const byInterface = new Map();
+    rows.forEach(row => {
+        const interfaceName = row.interface_name || `Interface ${row.interface_id}`;
+        if (!byInterface.has(interfaceName)) {
+            byInterface.set(interfaceName, []);
+        }
+        byInterface.get(interfaceName).push(row);
+    });
+
+    const traces = Array.from(byInterface.entries()).map(([interfaceName, interfaceRows]) => ({
+        x: interfaceRows.map(r => formatTimestamp(r.timestamp)),
+        customdata: interfaceRows.map(r => formatTimestamp(r.timestamp)),
+        y: interfaceRows.map(r => 100 * Number(r.utilization || 0)),
+        name: interfaceName,
+        type: "scatter",
+        mode: "lines",
+        hovertemplate:
+            "Interface: " + interfaceName +
+            "<br>Time: %{customdata}<br>Utilization: %{y:.1f}%<extra></extra>"
+    }));
+
+    Plotly.newPlot("interface-utilization-timeseries", traces, {
+        xaxis: {
+            title: "",
+            showticklabels: false,
+            ticks: "",
+            showline: false,
+            zeroline: false
+        },
+        yaxis: {
+            title: "Utilization (%)",
+            showline: false,
+            zeroline: true
+        },
+        legend: {
+            orientation: "h",
+            y: -0.2
+        },
+        margin: { t: 20, l: 70, r: 30, b: 90 }
     }, { responsive: true });
 };
 

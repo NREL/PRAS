@@ -29,6 +29,23 @@ function create_pras_report(sf::ShortfallResult,
                             report_path=report_path,
                             title=title)
 end
+
+function create_pras_report(sf::ShortfallResult,
+                            flow::FlowResult,
+                            utilization::UtilizationResult,
+                            events::ShortfallEventsResult;
+                            report_name::String="report",
+                            report_path::String=pwd(),
+                            title::String="Resource Adequacy Report")
+
+    base64_db = _get_base64_db((sf,flow,utilization,events))
+
+    return  _html_report(base64_db,
+                            report_name=report_name,
+                            report_path=report_path,
+                            title=title)
+end
+
 """
     create_pras_report(system::SystemModel;
                         samples,seed,

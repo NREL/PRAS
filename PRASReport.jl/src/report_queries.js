@@ -1,6 +1,6 @@
 window.loadSimulationInfo = async function(conn) {
     const result = await conn.query(`
-        SELECT n_samples, step_size, time_unit, energy_unit, timesteps,
+        SELECT n_samples, step_size, time_unit, power_unit, energy_unit, timesteps,
                start_timestamp, end_timestamp, timezone,
                lole_mean, lole_stderr, neue_mean, neue_stderr,
                eue_mean, eue_stderr
@@ -295,6 +295,36 @@ window.loadSystemShortfallTimeseries = async function(conn) {
         FROM report_db.shortfall_mean_timeseries
         GROUP BY timestamp
         ORDER BY timestamp
+    `);
+    return result.toArray();
+};
+
+window.loadInterfaceFlowTimeseries = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            f.timestamp,
+            i.id AS interface_id,
+            i.name AS interface_name,
+            f.mean_flow
+        FROM report_db.flow_mean_timeseries f
+        JOIN report_db.interfaces i
+            ON f.interface_id = i.id
+        ORDER BY i.name, f.timestamp
+    `);
+    return result.toArray();
+};
+
+window.loadInterfaceUtilizationTimeseries = async function(conn) {
+    const result = await conn.query(`
+        SELECT
+            u.timestamp,
+            i.id AS interface_id,
+            i.name AS interface_name,
+            u.utilization
+        FROM report_db.utilization_mean_timeseries u
+        JOIN report_db.interfaces i
+            ON u.interface_id = i.id
+        ORDER BY i.name, u.timestamp
     `);
     return result.toArray();
 };

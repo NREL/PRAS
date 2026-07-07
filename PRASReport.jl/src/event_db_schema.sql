@@ -85,6 +85,18 @@ CREATE TABLE shortfall_mean_timeseries (
     mean_shortfall REAL NOT NULL
 );
 
+CREATE TABLE flow_mean_timeseries (
+    timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    interface_id INTEGER REFERENCES interfaces(id),
+    mean_flow REAL NOT NULL
+);
+
+CREATE TABLE utilization_mean_timeseries (
+    timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    interface_id INTEGER REFERENCES interfaces(id),
+    utilization REAL NOT NULL
+);
+
 CREATE TABLE load_timeseries (
     timestamp TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     region_id INTEGER REFERENCES regions(id),

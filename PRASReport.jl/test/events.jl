@@ -52,5 +52,15 @@
     )
     @test first(shortfall_ts.n) == length(sys.regions.names) * length(sys.timestamps)
 
+    flow_ts = Tables.columntable(
+        DuckDB.execute(conn, "SELECT COUNT(*) AS n FROM flow_mean_timeseries")
+    )
+    @test first(flow_ts.n) == length(sys.interfaces) * length(sys.timestamps)
+
+    utilization_ts = Tables.columntable(
+        DuckDB.execute(conn, "SELECT COUNT(*) AS n FROM utilization_mean_timeseries")
+    )
+    @test first(utilization_ts.n) == length(sys.interfaces) * length(sys.timestamps)
+
     DuckDB.DBInterface.close!(conn)
 end

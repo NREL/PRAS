@@ -18,14 +18,14 @@ function get_db(system::SystemModel;
                 samples=1000,
                 seed=1)
     
-    # Run assessment with both Shortfall and Flow specifications
-    sf_result, flow_result, events_result = assess(system,
+    # Run assessment with Shortfall, Flow, Utilization, and event specifications
+    sf_result, flow_result, utilization_result, events_result = assess(system,
         SequentialMonteCarlo(samples=samples, seed=seed),
-        Shortfall(), Flow(), ShortfallEvents()
+        Shortfall(), Flow(), Utilization(), ShortfallEvents()
     )
     
     # Call the main get_db function with the assessment results
-    return get_db(sf_result, flow_result, events_result; conn=conn)
+    return get_db(sf_result, flow_result, utilization_result, events_result; conn=conn)
 end
 
 """
@@ -61,6 +61,18 @@ function get_db(
     samples=nothing,
     seed=nothing,
 ) where {N,L,T,P,E}
+    return get_db(sf, flow, nothing, events; conn=conn, samples=samples, seed=seed)
+end
+
+function get_db(
+    sf::ShortfallResult{N,L,T,E},
+    flow::Union{FlowResult{N,L,T,P},Nothing},
+    utilization::Union{UtilizationResult{N,L,T},Nothing},
+    events::ShortfallEventsResult;
+    conn::Union{DuckDB.Connection,Nothing}=nothing,
+    samples=nothing,
+    seed=nothing,
+) where {N,L,T,P,E}
 
     if isnothing(conn)
         timenow = format(now(tz"UTC"), @dateformat_str"yyyy-mm-dd_HHMMSSZZZ")
@@ -91,15 +103,20 @@ function get_db(
 
     _write_db!(sf, flow, conn)
     _write_db!(sf.regions.names, conn)
+    if !isnothing(flow)
+        _write_db!(flow.interfaces, conn)
+    end
     _write_db!(events, conn)
     _write_db_event_metrics!(events, conn)
     _write_db_mc_regional_metrics!(sf, conn)
     _write_db_shortfall_mean_timeseries!(sf, conn)
-    _write_db_load_timeseries!(sf, conn)
-
     if !isnothing(flow)
-        _write_db!(flow.interfaces, conn)
+        _write_db_flow_mean_timeseries!(flow, conn)
     end
+    if !isnothing(utilization)
+        _write_db_utilization_mean_timeseries!(utilization, conn)
+    end
+    _write_db_load_timeseries!(sf, conn)
 
     if internal_conn
         DuckDB.DBInterface.close!(conn)
@@ -265,6 +282,54 @@ function _write_db_shortfall_mean_timeseries!(
                 DuckDB.append(appender, DateTime(sf.timestamps[t]))
                 DuckDB.append(appender, region_id)
                 DuckDB.append(appender, sf.shortfall_mean[r, t])
+                DuckDB.end_row(appender)
+            end
+        end
+
+        DuckDB.flush(appender)
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_flow_mean_timeseries!(
+    flow::FlowResult{N,L,T,P},
+    conn::DuckDB.Connection
+) where {N,L,T,P}
+    interface_ids = get_interface_ids_ordered(flow.interfaces, conn)
+
+    appender = DuckDB.Appender(conn, "flow_mean_timeseries")
+
+    try
+        for (i, interface_id) in enumerate(interface_ids)
+            for t in eachindex(flow.timestamps)
+                DuckDB.append(appender, DateTime(flow.timestamps[t]))
+                DuckDB.append(appender, interface_id)
+                DuckDB.append(appender, flow.flow_mean[i, t])
+                DuckDB.end_row(appender)
+            end
+        end
+
+        DuckDB.flush(appender)
+    finally
+        DuckDB.close(appender)
+    end
+end
+
+function _write_db_utilization_mean_timeseries!(
+    utilization::UtilizationResult{N,L,T},
+    conn::DuckDB.Connection
+) where {N,L,T}
+    interface_ids = get_interface_ids_ordered(utilization.interfaces, conn)
+
+    appender = DuckDB.Appender(conn, "utilization_mean_timeseries")
+
+    try
+        for (i, interface_id) in enumerate(interface_ids)
+            for t in eachindex(utilization.timestamps)
+                DuckDB.append(appender, DateTime(utilization.timestamps[t]))
+                DuckDB.append(appender, interface_id)
+                DuckDB.append(appender, utilization.utilization_mean[i, t])
                 DuckDB.end_row(appender)
             end
         end
@@ -463,4 +528,3 @@ function get_interface_ids_ordered(interface_names::Vector{Pair{String,String}},
     
     return interface_ids
 end
-

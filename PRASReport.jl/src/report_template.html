@@ -90,6 +90,20 @@
                                 <div id="system-shortfall-timeseries"></div>
                             </div>
                         </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Flow Time Series by Interface</h4>
+                            <div class="chart-wrapper" style="height: 420px;">
+                                <div id="interface-flow-timeseries"></div>
+                            </div>
+                        </div>
+
+                        <div class="subsection-part">
+                            <h4 class="subsection-part-title">Utilization Time Series by Interface</h4>
+                            <div class="chart-wrapper" style="height: 420px;">
+                                <div id="interface-utilization-timeseries"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <div id="mc-region-subsection" class="subsection-group">
@@ -716,7 +730,7 @@
             try {
                 // Get parameters for units and calculations
                 // and system simulation results
-                let sampleCount, stepSize, timeUnit, energyUnit, timesteps, timezone;
+                let sampleCount, stepSize, timeUnit, powerUnit, energyUnit, timesteps, timezone;
                 let startTimestamp, endTimestamp, loleMean, loleStderr, neueMean, neueStderr;
                 
                 logBenchmark("start loadData");    
@@ -729,6 +743,7 @@
                         sampleCount = simInfo.n_samples;
                         stepSize = simInfo.step_size;
                         timeUnit = simInfo.time_unit;
+                        powerUnit = simInfo.power_unit;
                         energyUnit = simInfo.energy_unit;
                         timesteps = simInfo.timesteps;
                         startTimestamp = simInfo.start_timestamp;
@@ -859,6 +874,22 @@
                         window.renderSystemShortfallTimeseries(systemShortfallTimeseriesRows, energyUnit);
                     });
 
+                    const interfaceFlowTimeseriesRows = await benchmarkStep("query interface flow timeseries", () =>
+                        window.loadInterfaceFlowTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render interface flow timeseries", async () => {
+                        window.renderInterfaceFlowTimeseries(interfaceFlowTimeseriesRows, powerUnit);
+                    });
+
+                    const interfaceUtilizationTimeseriesRows = await benchmarkStep("query interface utilization timeseries", () =>
+                        window.loadInterfaceUtilizationTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render interface utilization timeseries", async () => {
+                        window.renderInterfaceUtilizationTimeseries(interfaceUtilizationTimeseriesRows);
+                    });
+
                     const regionalHeatmapRows = await window.loadRegionalShortfallHeatmaps(conn);
                     window.renderRegionalShortfallHeatmaps(regionalHeatmapRows, energyUnit);
                     logBenchmark(`rendered regional shortfall heatmaps: ${regionalHeatmapRows.length} rows`);
@@ -871,6 +902,22 @@
 
                     document.getElementById("regional-shortfall-heatmaps").innerHTML =
                         "<p>Regional month-hour heatmaps are only shown for simulations containing all 12 months.</p>";
+
+                    const interfaceFlowTimeseriesRows = await benchmarkStep("query interface flow timeseries", () =>
+                        window.loadInterfaceFlowTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render interface flow timeseries", async () => {
+                        window.renderInterfaceFlowTimeseries(interfaceFlowTimeseriesRows, powerUnit);
+                    });
+
+                    const interfaceUtilizationTimeseriesRows = await benchmarkStep("query interface utilization timeseries", () =>
+                        window.loadInterfaceUtilizationTimeseries(conn)
+                    );
+
+                    await benchmarkStep("render interface utilization timeseries", async () => {
+                        window.renderInterfaceUtilizationTimeseries(interfaceUtilizationTimeseriesRows);
+                    });
                 }
 
                 // Populate table
