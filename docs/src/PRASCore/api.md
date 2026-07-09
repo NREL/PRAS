@@ -44,4 +44,6 @@ PRASCore.Results.DemandResponseEnergySamples
 PRASCore.Results.LineAvailability
 PRASCore.Results.CVAR
 PRASCore.Results.NCVAR
+PRASCore.Results.val
+PRASCore.Results.stderror
 ```
