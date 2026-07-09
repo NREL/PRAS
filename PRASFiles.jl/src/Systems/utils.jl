@@ -51,30 +51,3 @@ function load_matrix(data::HDF5.Dataset, roworder::Vector{Int}, T::DataType)
     return result
 
 end
-
-function load_vector(data::HDF5.Dataset, order::Vector{Int}, T::DataType)
-
-    result = read(data)
-
-    # Ensure the read data is genuinely 1D
-    if ndims(result) != 1
-        error("HDF5 dataset is not 1-dimensional (dimensions: $(size(result))).")
-    end
-
-    if order != 1:length(result)
-        @warn("HDF5 data is ordered differently from in-memory requirements. " *
-              "Data will be reordered, but this may temporarily " *
-              "consume large amounts of memory.")
-        result = result[order]
-    end
-
-    if eltype(result) != T
-        @warn("HDF5 data is typed differently from in-memory requirements. " *
-              "Data conversion will be attempted, but this may temporarily " *
-              "consume large amounts of memory.")
-        result = T.(result)
-    end
-
-    return result
-
-end

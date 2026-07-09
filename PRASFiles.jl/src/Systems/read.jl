@@ -220,7 +220,7 @@ function read_storages(f::File,
     if version <= (0,8,0)
         initial_soc = zeros(Float64, length(stor_names))
     else
-        initial_soc = load_vector(f["storages/initialsoc"], region_order, Float64)
+        initial_soc =  readvector(f["storages/initialsoc"], region_order)
     end
 
     storages = Storages{N,L,T,P,E}(
@@ -264,7 +264,7 @@ function read_generator_storages(f::File,
     if version <= (0,8,0)
         initial_soc = zeros(Float64, length(genstor_names))
     else
-        initial_soc = load_vector(f["generatorstorages/initialsoc"], region_order, Float64)
+        initial_soc =  readvector(f["generatorstorages/initialsoc"],region_order)
     end
 
     generatorstorages = GeneratorStorages{N,L,T,P,E}(
@@ -319,7 +319,7 @@ function read_demand_responses(f::File,
     else
         borrow_efficiency = load_matrix(f["demandresponses/borrowefficiency"], region_order, Float64)
         payback_efficiency = load_matrix(f["demandresponses/paybackefficiency"], region_order, Float64)
-        initial_borrowed_load = load_vector(f["demandresponses/initialborrowedload"], region_order, Float64)
+        initial_borrowed_load = readvector(f["demandresponses/initialborrowedload"],region_order)
     end
 
     demandresponses = DemandResponses{N,L,T,P,E}(
@@ -494,3 +494,4 @@ corresponding to `field`.
 """
 readvector(d::Dataset, field::Union{Symbol,Int}) = readvector(read(d), field)
 readvector(d::Vector{<:NamedTuple}, field::Union{Symbol,Int}) = getindex.(d, field)
+readvector(d::Dataset, roworder::Vector{Int}) = read(d)[roworder]
