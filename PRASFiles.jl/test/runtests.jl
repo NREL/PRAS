@@ -30,10 +30,78 @@ using JSON3
 
     end
 
+
+    @testset "Read version 0.7.0 to 0.9.0 compatibility" begin
+
+        path = dirname(@__FILE__)
+        version_0_7_0 = SystemModel(path * "/versioned_toy/toymodel_v0_7_0.pras")
+        version_0_9_0 = SystemModel(path * "/versioned_toy/toymodel_v0_9_0.pras")
+
+        @test version_0_7_0 == version_0_9_0
+        end
+
+    @testset "Read version 0.8.0 to 0.9.0 compatibility" begin
+
+        path = dirname(@__FILE__)
+        version_0_8_0 = SystemModel(path * "/versioned_toy/toymodel_v0_8_0.pras")
+        version_0_9_0 = SystemModel(path * "/versioned_toy/toymodel_v0_9_0.pras")
+
+        @test version_0_8_0 == version_0_9_0
+        end
+
     @testset "Run RTS-GMLC" begin
 
         assess(PRASFiles.rts_gmlc(), SequentialMonteCarlo(samples=100), Shortfall())
 
+    end
+
+    @testset "Test Optional Params Roundtrip" begin
+
+        path = dirname(@__FILE__)
+        rts = PRASFiles.rts_gmlc()
+
+        #create new dr
+        (timesteps,periodlen,periodunit,powerunit,energyunit) = get_params(rts);
+        number_of_drs = 2;
+        new_drs = DemandResponses{timesteps,periodlen,periodunit,powerunit,energyunit}(
+            ["DR1","DR2"],
+            ["DR_TYPE1","DR_TYPE2"],
+            fill(50, number_of_drs, timesteps),   # borrow power capacity
+            fill(50, number_of_drs, timesteps),   # payback power capacity
+            fill(200, number_of_drs, timesteps),  # load energy capacity
+            fill(0.0, number_of_drs, timesteps),  # 0% borrowed energy interest
+            fill(6, number_of_drs, timesteps),    # 6 hour allowable payback time periods
+            fill(0.1, number_of_drs, timesteps),  # 10% outage probability
+            fill(0.9, number_of_drs, timesteps);  # 90% recovery probability
+            initial_borrowed_load = fill(0.6, number_of_drs),
+            borrow_efficiency = fill(0.95, number_of_drs, timesteps),
+            payback_efficiency = fill(0.99, number_of_drs, timesteps),
+            );
+
+        dr_region_indices = [1:0,1:1,2:2];
+
+        rts.storages.initial_soc[:] .= 0.4;
+        rts.generatorstorages.initial_soc[:] .= 0.5;
+
+        new_rts  = SystemModel(
+            rts.regions, rts.interfaces,
+            rts.generators, rts.region_gen_idxs,
+            rts.storages, rts.region_stor_idxs,
+            rts.generatorstorages, rts.region_genstor_idxs,
+            new_drs, dr_region_indices,
+            rts.lines, rts.interface_line_idxs,
+            rts.timestamps);
+
+        savemodel(new_rts,path * "/opt_param_test.pras")
+
+        rt_rts = SystemModel(path * "/opt_param_test.pras")
+        @test all(rt_rts.storages.initial_soc .== 0.4)
+        @test all(rt_rts.generatorstorages.initial_soc .== 0.5)
+        @test all(rt_rts.demandresponses.initial_borrowed_load .== 0.6)
+        @test all(rt_rts.demandresponses.borrow_efficiency .== 0.95)
+        @test all(rt_rts.demandresponses.payback_efficiency .== 0.99)
+
+        @test rt_rts == new_rts
     end
 
     @testset "Save Aggregate Results" begin
