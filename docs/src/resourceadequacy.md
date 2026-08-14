@@ -34,6 +34,8 @@ of event-periods (e.g. event-hours per year, event-days per year). When
 reported in terms of event-hours, LOLE is sometimes referred to as LOLH
 (loss-of-load hours).
 
+For a practical comparison of resource adequacy metrics, see [Multi-Metric Resource Adequacy Analyses with PRAS](@ref multi_metric_resource_adequacy).
+
 While a system's shortfall risk can never be eliminated entirely, if these
 risk metrics are assessed to be lower than some predetermined threshold, the
 system is considered resource adequate.

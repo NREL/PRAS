@@ -112,6 +112,9 @@ using JSON3
         end
         results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), ShortfallSamples(), Surplus());
         shortfall = results[1];
+        lold_message = r"LOLD is not implemented for ShortfallResult"
+        @test_logs (:info, lold_message) PRASFiles.generate_systemresult(shortfall, rts_sys)
+        @test_logs (:info, lold_message) PRASFiles.generate_systemresult(shortfall, rts_sys)
         path = joinpath(dirname(@__FILE__),"PRAS_Results_Export");
         exp_location_1 = PRASFiles.saveshortfall(shortfall, rts_sys, path);
         @test isfile(joinpath(exp_location_1, "pras_results.json"))

@@ -112,16 +112,14 @@ function get_nsamples(shortfall::ShortfallSamplesResult)
     return size(shortfall.shortfall,3)
 end
 
-const _lold_warned = Ref(false)
-function get_lold_result(shortfall::ShortfallResult; region::Union{Nothing,String}=nothing)
-    if !_lold_warned[]
+function get_lold_result(shortfall::ShortfallResult, warn_lold::Bool; region::Union{Nothing,String}=nothing)
+    if warn_lold
         @info "LOLD is not implemented for ShortfallResult and will not be included in the JSON export. Use ShortfallSamplesResult to compute LOLD."
-        _lold_warned[] = true
     end
     return nothing
 end
 
-function get_lold_result(shortfall::ShortfallSamplesResult; region::Union{Nothing,String}=nothing)
+function get_lold_result(shortfall::ShortfallSamplesResult, ::Bool; region::Union{Nothing,String}=nothing)
     return LOLDResult(shortfall; region=region)
 end
 
