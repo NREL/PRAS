@@ -16,12 +16,14 @@
 
 # ## Temporal Occurrence of Shortfall
 #
-# Resource adequacy metrics can be understood by first defining two related concepts ([Stephen et al. 2022](https://doi.org/10.1109/PMAPS53380.2022.9810615)):
+# Resource adequacy metrics can be understood by first defining three related concepts ([Stephen et al. 2022](https://doi.org/10.1109/PMAPS53380.2022.9810615)):
 #
 # - An **event-period** is a simulation time step in which a shortfall occurs.
 # - An **event-day** is a day containing at least one event-period.
+# - An **adequacy event** is a set of event-periods that are contiguous at the highest available temporal resolution.
 #
-# These distinctions are important because LOLE and LOLD count different quantities:
+# These distinctions are important because different metrics count different temporal quantities.
+# LOLE and LOLD correspond to the first two concepts:
 #
 # - **LOLE** is the expected number of event-periods
 # - **LOLD** is the expected number of event-days
@@ -85,6 +87,7 @@
 # - ``t`` indexes timestamps
 # - ``d`` indexes calendar days
 # - ``s`` indexes Monte Carlo samples
+# - ``e`` indexes adequacy events
 # - ``S_{r,t,s}`` denotes the shortfall in region ``r``, at timestamp ``t``,
 #   in Monte Carlo sample ``s``
 # - ``T(d)`` is the set of timestamps in day ``d``

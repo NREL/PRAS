@@ -63,7 +63,8 @@ struct LOLDResult
     stderror::Float64
 end
 
-function LOLDResult(shortfall::ShortfallSamplesResult; region::Union{Nothing,String}=nothing)
+function LOLDResult(shortfall::ShortfallSamplesResult; region::Union{Nothing, String} = nothing)
+
     lold = (region === nothing) ? LOLD(shortfall) : LOLD(shortfall, region)
     return LOLDResult(
         lold.lold.estimate,
@@ -76,7 +77,7 @@ struct RegionResult
     eue::EUEResult
     lole::LOLEResult
     neue::NEUEResult
-    lold::Union{Nothing,LOLDResult}
+    lold::Union{Nothing, LOLDResult}
     load::Vector{Int64}
     peak_load::Float64
     capacity::Dict{String,Vector{Int64}}
@@ -92,7 +93,7 @@ struct SystemResult
     eue::EUEResult
     lole::LOLEResult
     neue::NEUEResult
-    lold::Union{Nothing,LOLDResult}
+    lold::Union{Nothing, LOLDResult}
     region_results::Vector{RegionResult}
 end
 
@@ -112,15 +113,25 @@ function get_nsamples(shortfall::ShortfallSamplesResult)
     return size(shortfall.shortfall,3)
 end
 
-function get_lold_result(shortfall::ShortfallResult, warn_lold::Bool; region::Union{Nothing,String}=nothing)
-    if warn_lold
-        @info "LOLD is not implemented for ShortfallResult and will not be included in the JSON export. Use ShortfallSamplesResult to compute LOLD."
+function get_lold_result(
+    shortfall::ShortfallResult,
+    log_lold_info::Bool;
+    region::Union{Nothing, String} = nothing,
+)
+    if log_lold_info
+        @info "LOLD is not implemented for ShortfallResult and will not be " *
+              "included in the JSON export. Use ShortfallSamplesResult to " *
+              "compute LOLD."
     end
     return nothing
 end
 
-function get_lold_result(shortfall::ShortfallSamplesResult, ::Bool; region::Union{Nothing,String}=nothing)
-    return LOLDResult(shortfall; region=region)
+function get_lold_result(
+    shortfall::ShortfallSamplesResult,
+    ::Bool;
+    region::Union{Nothing, String} = nothing,
+)
+    return LOLDResult(shortfall; region = region)
 end
 
 # Define structtypes for different structs defined above

@@ -2,7 +2,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
     
     region_results = RegionResult[]
     shortfall_mean = get_shortfall_mean(shortfall)
-    warn_lold = true
+    log_lold_info = true
     for (idx,reg_name) in enumerate(pras_sys.regions.names)
         region_gen_cats = unique(pras_sys.generators.categories[pras_sys.region_gen_idxs[idx]])
         region_stor_cats = unique(pras_sys.storages.categories[pras_sys.region_stor_idxs[idx]])
@@ -22,8 +22,6 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
         peak_load = maximum(pras_sys.regions.load[idx,:])
         reg_shortfall_mean = shortfall_mean[idx,:]
         shortfall_timestamps = collect(shortfall.timestamps)[findall(reg_shortfall_mean .!= 0.0)]
-        lold = get_lold_result(shortfall, warn_lold; region=reg_name)
-        warn_lold = false
 
         push!(region_results,
         RegionResult(
@@ -31,7 +29,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
             EUEResult(shortfall, region = reg_name),
             LOLEResult(shortfall, region = reg_name),
             NEUEResult(shortfall, region = reg_name),
-            lold,
+            get_lold_result(shortfall, log_lold_info; region = reg_name),
             pras_sys.regions.load[idx,:],
             peak_load,
             capacity,
@@ -39,6 +37,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
             shortfall_timestamps,
         )
         )
+        log_lold_info = false
 
     end
 
@@ -50,7 +49,7 @@ function generate_systemresult(shortfall::AbstractShortfallResult, pras_sys::Sys
         EUEResult(shortfall),
         LOLEResult(shortfall),
         NEUEResult(shortfall),
-        get_lold_result(shortfall, warn_lold),
+        get_lold_result(shortfall, log_lold_info),
         region_results,
     )
 
