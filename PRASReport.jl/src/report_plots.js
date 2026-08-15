@@ -62,7 +62,7 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
 };
 
 window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, timeUnit) {
-    const regions = [...regionalData.keys()].sort();
+    const regions = [...regionalData.keys()].sort(naturalNameCompare);
 
     const traces = [];
     const layout = {
@@ -227,7 +227,7 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
         byRegion.get(region).push(row);
     });
 
-    [...byRegion.keys()].sort().forEach((region, idx) => {
+    [...byRegion.keys()].sort(naturalNameCompare).forEach((region, idx) => {
         const div = document.createElement("div");
         const plotId = `regional-shortfall-heatmap-${idx}`;
         div.id = plotId;
@@ -331,7 +331,9 @@ window.renderInterfaceFlowTimeseries = function(rows, powerUnit) {
         byInterface.get(interfaceName).push(row);
     });
 
-    const traces = Array.from(byInterface.entries()).map(([interfaceName, interfaceRows]) => ({
+    const interfaces = Array.from(byInterface.entries())
+        .sort(([a], [b]) => naturalNameCompare(a, b));
+    const traces = interfaces.map(([interfaceName, interfaceRows]) => ({
         x: interfaceRows.map(r => formatTimestamp(r.timestamp)),
         customdata: interfaceRows.map(r => formatTimestamp(r.timestamp)),
         y: interfaceRows.map(r => Number(r.mean_flow || 0)),
@@ -374,7 +376,9 @@ window.renderInterfaceUtilizationTimeseries = function(rows) {
         byInterface.get(interfaceName).push(row);
     });
 
-    const traces = Array.from(byInterface.entries()).map(([interfaceName, interfaceRows]) => ({
+    const interfaces = Array.from(byInterface.entries())
+        .sort(([a], [b]) => naturalNameCompare(a, b));
+    const traces = interfaces.map(([interfaceName, interfaceRows]) => ({
         x: interfaceRows.map(r => formatTimestamp(r.timestamp)),
         customdata: interfaceRows.map(r => formatTimestamp(r.timestamp)),
         y: interfaceRows.map(r => 100 * Number(r.utilization || 0)),

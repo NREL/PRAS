@@ -32,6 +32,9 @@
     @test contains(html, "interface-flow-timeseries")
     @test contains(html, "Utilization Time Series by Interface")
     @test contains(html, "interface-utilization-timeseries")
+    @test contains(html, "const naturalNameCollator = new Intl.Collator")
+    @test contains(html, "numeric: true")
+    @test contains(html, ".sort(naturalNameCompare)")
 end
 
 @testset "Result input to create_pras_report" begin

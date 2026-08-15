@@ -547,6 +547,15 @@
             }
             if (typeof timestamp === 'string') return timestamp;
         }
+
+        const naturalNameCollator = new Intl.Collator("en", {
+            numeric: true,
+            sensitivity: "variant"
+        });
+
+        function naturalNameCompare(a, b) {
+            return naturalNameCollator.compare(String(a), String(b));
+        }
         
         {{REPORT_QUERIES_JS_PLACEHOLDER}}
 
@@ -655,7 +664,15 @@
             const regionalTbody = document.getElementById("regional-events-tbody");
             regionalTbody.innerHTML = "";
 
-            const rowsToShow = regionalEvents.slice(0, MAX_TABLE_ROWS);
+            const sortedRegionalEvents = [...regionalEvents].sort((a, b) => {
+                const aName = a.region_name || `Region ${a.region_id}`;
+                const bName = b.region_name || `Region ${b.region_id}`;
+                const nameOrder = naturalNameCompare(aName, bName);
+
+                if (nameOrder !== 0) return nameOrder;
+                return String(a.start_timestamp).localeCompare(String(b.start_timestamp));
+            });
+            const rowsToShow = sortedRegionalEvents.slice(0, MAX_TABLE_ROWS);
 
             rowsToShow.forEach((event, index) => {
                 const actualDuration = (event.duration_periods || 0) * window._stepSize;
@@ -694,7 +711,12 @@
             const tbody = document.getElementById("regional-event-metrics-tbody");
             tbody.innerHTML = "";
 
-            metrics.forEach(row => {
+            const sortedMetrics = [...metrics].sort((a, b) => naturalNameCompare(
+                a.region_name || `Region ${a.region_id}`,
+                b.region_name || `Region ${b.region_id}`
+            ));
+
+            sortedMetrics.forEach(row => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${row.region_name || `Region ${row.region_id}`}</td>
@@ -713,7 +735,11 @@
             const tbody = document.getElementById("mc-regional-metrics-tbody");
             tbody.innerHTML = "";
 
-            metrics.forEach(row => {
+            const sortedMetrics = [...metrics].sort(
+                (a, b) => naturalNameCompare(a.region_name, b.region_name)
+            );
+
+            sortedMetrics.forEach(row => {
                 const tr = document.createElement("tr");
                 tr.innerHTML = `
                     <td>${row.region_name}</td>
