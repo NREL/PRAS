@@ -739,22 +739,89 @@
     end
 
     @testset "Threaded sample result partitioning" begin
-        simspec_serial = SequentialMonteCarlo(samples=10, seed=123, threaded=false)
-        simspec_threaded = SequentialMonteCarlo(samples=10, seed=123, threaded=true)
-    
-        serial_shortfall, serial_samples =
-            assess(TestData.singlenode_a, simspec_serial,
-                   Shortfall(), ShortfallSamples())
-    
-        threaded_shortfall, threaded_samples =
-            assess(TestData.singlenode_a, simspec_threaded,
-                   Shortfall(), ShortfallSamples())
-    
-        @test size(threaded_samples.shortfall) == size(serial_samples.shortfall)
-        @test length(threaded_samples[]) == simspec_threaded.nsamples
-    
-        @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
-        @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+        simspec_serial =
+            SequentialMonteCarlo(samples=100, seed=123, threaded=false)
+        simspec_threaded =
+            SequentialMonteCarlo(samples=100, seed=123, threaded=true)
+
+        @testset "Shortfall" begin
+            serial_shortfall, serial_samples =
+                assess(TestData.singlenode_a, simspec_serial,
+                       Shortfall(), ShortfallSamples())
+
+            threaded_shortfall, threaded_samples =
+                assess(TestData.singlenode_a, simspec_threaded,
+                       Shortfall(), ShortfallSamples())
+
+            region = first(TestData.singlenode_a.regions.names)
+
+            @test threaded_samples.shortfall == serial_samples.shortfall
+            @test threaded_shortfall.shortfall_samples ==
+                  serial_shortfall.shortfall_samples
+            @test threaded_shortfall.shortfall_region_samples ==
+                  serial_shortfall.shortfall_region_samples
+            @test threaded_shortfall.shortfall_samples == threaded_samples[]
+            @test vec(threaded_shortfall.shortfall_region_samples[1, :]) ==
+                  vec(sum(view(
+                      threaded_samples.shortfall, 1, :, :
+                  ), dims=1))
+
+            serial_cvar = CVAR(:energy, serial_shortfall, alpha)
+            threaded_cvar = CVAR(:energy, threaded_shortfall, alpha)
+            serial_region_cvar =
+                CVAR(:energy, serial_shortfall, alpha, region)
+            threaded_region_cvar =
+                CVAR(:energy, threaded_shortfall, alpha, region)
+
+            @test threaded_cvar ≈ serial_cvar
+            @test threaded_region_cvar ≈ serial_region_cvar
+            @test NCVAR(threaded_shortfall, threaded_cvar) ≈
+                  NCVAR(serial_shortfall, serial_cvar)
+            @test NCVAR(threaded_shortfall, threaded_region_cvar, region) ≈
+                  NCVAR(serial_shortfall, serial_region_cvar, region)
+
+            @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+            @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+        end
+
+        @testset "Demand response shortfall" begin
+            serial_shortfall, serial_samples =
+                assess(TestData.test4, simspec_serial,
+                       DemandResponseShortfall(),
+                       DemandResponseShortfallSamples())
+
+            threaded_shortfall, threaded_samples =
+                assess(TestData.test4, simspec_threaded,
+                       DemandResponseShortfall(),
+                       DemandResponseShortfallSamples())
+
+            region = first(TestData.test4.regions.names)
+
+            @test threaded_samples.shortfall == serial_samples.shortfall
+            @test threaded_shortfall.shortfall_samples ==
+                  serial_shortfall.shortfall_samples
+            @test threaded_shortfall.shortfall_region_samples ==
+                  serial_shortfall.shortfall_region_samples
+            @test threaded_shortfall.shortfall_samples == threaded_samples[]
+            @test vec(threaded_shortfall.shortfall_region_samples[1, :]) ==
+                  vec(sum(view(
+                      threaded_samples.shortfall, 1, :, :
+                  ), dims=1))
+
+            serial_cvar = CVAR(:energy, serial_shortfall, alpha)
+            threaded_cvar = CVAR(:energy, threaded_shortfall, alpha)
+            serial_region_cvar =
+                CVAR(:energy, serial_shortfall, alpha, region)
+            threaded_region_cvar =
+                CVAR(:energy, threaded_shortfall, alpha, region)
+
+            @test threaded_cvar ≈ serial_cvar
+            @test threaded_region_cvar ≈ serial_region_cvar
+            @test NCVAR(threaded_shortfall, threaded_cvar) ≈
+                  NCVAR(serial_shortfall, serial_cvar)
+            @test NCVAR(threaded_shortfall, threaded_region_cvar, region) ≈
+                  NCVAR(serial_shortfall, serial_region_cvar, region)
+        end
 
         simspec_few_samples = SequentialMonteCarlo(samples=5, seed=123, threaded=true)
 

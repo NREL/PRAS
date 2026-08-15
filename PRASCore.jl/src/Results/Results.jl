@@ -195,6 +195,8 @@ include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
 
+issamplebased(::Shortfall) = true
+issamplebased(::DemandResponseShortfall) = true
 issamplebased(::ShortfallSamples) = true
 issamplebased(::DemandResponseShortfallSamples) = true
 issamplebased(::SurplusSamples) = true
@@ -214,7 +216,7 @@ function resultchannel(
 ) where T <: Tuple{Vararg{ResultSpec}}
 
     types = accumulatortype.(results)
-    return Channel{Tuple{types...}}(threads)
+    return Channel{Tuple{Tuple{types...},UnitRange{Int}}}(threads)
 
 end
 
@@ -256,7 +258,9 @@ function finalize(
 
     for i in eachindex(total_result)
         if issamplebased(resultspecs[i])
-            copy_sample_partition!(total_result[i], first_recorders[i], first_sampleids)
+            copy_sample_partition!(
+                total_result[i], first_recorders[i], first_sampleids
+            )
         end
     end
 
@@ -265,7 +269,9 @@ function finalize(
 
         for i in eachindex(total_result)
             if issamplebased(resultspecs[i])
-                copy_sample_partition!(total_result[i], thread_recorders[i], sampleids)
+                copy_sample_partition!(
+                    total_result[i], thread_recorders[i], sampleids
+                )
             else
                 merge!(total_result[i], thread_recorders[i])
             end

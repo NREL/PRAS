@@ -5,7 +5,7 @@ import ..Systems: SystemModel, AbstractAssets, Generators, Lines,
 
 import ..Results
 import ..Results: ResultSpec,
-                  accumulator, finalize, issamplebased
+                  accumulator, finalize, issamplebased, resultchannel
 
 import Base: broadcastable
 import Base.Threads: nthreads, @spawn
@@ -130,7 +130,7 @@ function assess(
     ranges = sample_ranges(method.nsamples, threads)
     actual_threads = length(ranges)
 
-    results = Channel{Any}(actual_threads)
+    results = resultchannel(resultspecs, actual_threads)
 
     for sampleids in ranges
         if method.threaded

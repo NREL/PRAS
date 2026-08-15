@@ -108,7 +108,7 @@ function accumulator(
 
 end
 
-function merge!(
+function merge_shortfall_statistics!(
     x::ShortfallAccumulator, y::ShortfallAccumulator
 )
 
@@ -122,8 +122,36 @@ function merge!(
     foreach(merge!, x.unservedload_period, y.unservedload_period)
     foreach(merge!, x.unservedload_regionperiod, y.unservedload_regionperiod)
 
+    return
+
+end
+
+
+function merge!(
+    x::ShortfallAccumulator, y::ShortfallAccumulator
+)
+
+    merge_shortfall_statistics!(x, y)
+
     x.unservedload_sample .+= y.unservedload_sample
     x.unservedload_region_sample .+= y.unservedload_region_sample
+
+    return
+
+end
+
+
+function copy_sample_partition!(
+    x::ShortfallAccumulator,
+    y::ShortfallAccumulator,
+    sampleids::UnitRange{Int},
+)
+
+    merge_shortfall_statistics!(x, y)
+
+    @views x.unservedload_sample[sampleids] .= y.unservedload_sample
+    @views x.unservedload_region_sample[:, sampleids] .=
+           y.unservedload_region_sample
 
     return
 
