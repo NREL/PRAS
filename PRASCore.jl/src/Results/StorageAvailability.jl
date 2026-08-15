@@ -30,6 +30,8 @@ struct StorAvailabilityAccumulator <: ResultAccumulator{StorageAvailability}
 
 end
 
+sampledata(acc::StorAvailabilityAccumulator) = acc.available
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::StorageAvailability
 ) where {N}

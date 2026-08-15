@@ -32,6 +32,8 @@ struct StorageEnergySamplesAccumulator <: ResultAccumulator{StorageEnergySamples
 
 end
 
+sampledata(acc::StorageEnergySamplesAccumulator) = acc.energy
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::StorageEnergySamples
 ) where {N}

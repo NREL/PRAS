@@ -42,6 +42,8 @@ struct GenAvailabilityAccumulator <:
 
 end
 
+sampledata(acc::GenAvailabilityAccumulator) = acc.available
+
 function merge!(
     x::GenAvailabilityAccumulator, y::GenAvailabilityAccumulator
 )

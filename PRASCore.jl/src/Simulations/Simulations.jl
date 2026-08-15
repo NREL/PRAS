@@ -5,7 +5,7 @@ import ..Systems: SystemModel, AbstractAssets, Generators, Lines,
 
 import ..Results
 import ..Results: ResultSpec,
-                  accumulator, finalize, issamplebased, resultchannel
+                  accumulator, finalize, resultchannel, usesamplepartitions
 
 import Base: broadcastable
 import Base.Threads: nthreads, @spawn
@@ -95,7 +95,11 @@ function partition_recorders(
     resultspecs::Tuple{Vararg{ResultSpec}},
 )
     return map(resultspecs) do spec
-        accumulator(system, issamplebased(spec) ? local_nsamples : nsamples, spec)
+        accumulator(
+            system,
+            usesamplepartitions(spec) ? local_nsamples : nsamples,
+            spec,
+        )
     end
 end
 

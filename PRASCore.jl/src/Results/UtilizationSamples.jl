@@ -49,6 +49,8 @@ struct UtilizationSamplesAccumulator <: ResultAccumulator{UtilizationSamples}
 
 end
 
+sampledata(acc::UtilizationSamplesAccumulator) = acc.utilization
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::UtilizationSamples
 ) where {N}

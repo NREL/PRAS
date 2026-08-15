@@ -35,7 +35,7 @@ abstract type ResultSpec end
 
 abstract type ResultAccumulator{R<:ResultSpec} end
 
-issamplebased(::ResultSpec) = false
+usesamplepartitions(::ResultSpec) = false
 
 abstract type Result{
     N, # Number of timesteps simulated
@@ -195,21 +195,21 @@ include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
 
-issamplebased(::Shortfall) = true
-issamplebased(::DemandResponseShortfall) = true
-issamplebased(::ShortfallSamples) = true
-issamplebased(::DemandResponseShortfallSamples) = true
-issamplebased(::SurplusSamples) = true
-issamplebased(::FlowSamples) = true
-issamplebased(::UtilizationSamples) = true
-issamplebased(::StorageEnergySamples) = true
-issamplebased(::GeneratorStorageEnergySamples) = true
-issamplebased(::DemandResponseEnergySamples) = true
-issamplebased(::GeneratorAvailability) = true
-issamplebased(::StorageAvailability) = true
-issamplebased(::GeneratorStorageAvailability) = true
-issamplebased(::DemandResponseAvailability) = true
-issamplebased(::LineAvailability) = true
+usesamplepartitions(::Shortfall) = true
+usesamplepartitions(::DemandResponseShortfall) = true
+usesamplepartitions(::ShortfallSamples) = true
+usesamplepartitions(::DemandResponseShortfallSamples) = true
+usesamplepartitions(::SurplusSamples) = true
+usesamplepartitions(::FlowSamples) = true
+usesamplepartitions(::UtilizationSamples) = true
+usesamplepartitions(::StorageEnergySamples) = true
+usesamplepartitions(::GeneratorStorageEnergySamples) = true
+usesamplepartitions(::DemandResponseEnergySamples) = true
+usesamplepartitions(::GeneratorAvailability) = true
+usesamplepartitions(::StorageAvailability) = true
+usesamplepartitions(::GeneratorStorageAvailability) = true
+usesamplepartitions(::DemandResponseAvailability) = true
+usesamplepartitions(::LineAvailability) = true
 
 function resultchannel(
     results::T, threads::Int
@@ -229,9 +229,8 @@ function copy_sample_partition!(
     sampleids::UnitRange{Int},
 ) where {A<:ResultAccumulator}
 
-    field = fieldnames(A)[1]
-    xarr = getfield(x, field)
-    yarr = getfield(y, field)
+    xarr = sampledata(x)
+    yarr = sampledata(y)
 
     @views xarr[:, :, sampleids] .= yarr
     return
@@ -253,11 +252,11 @@ function finalize(
     end
 
     total_result = map(resultspecs, first_recorders) do spec, recorder
-        issamplebased(spec) ? accumulator(system, nsamples, spec) : recorder
+        usesamplepartitions(spec) ? accumulator(system, nsamples, spec) : recorder
     end
 
     for i in eachindex(total_result)
-        if issamplebased(resultspecs[i])
+        if usesamplepartitions(resultspecs[i])
             copy_sample_partition!(
                 total_result[i], first_recorders[i], first_sampleids
             )
@@ -268,7 +267,7 @@ function finalize(
         thread_recorders, sampleids = take!(results)
 
         for i in eachindex(total_result)
-            if issamplebased(resultspecs[i])
+            if usesamplepartitions(resultspecs[i])
                 copy_sample_partition!(
                     total_result[i], thread_recorders[i], sampleids
                 )

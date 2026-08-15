@@ -39,6 +39,8 @@ struct FlowSamplesAccumulator <: ResultAccumulator{FlowSamples}
 
 end
 
+sampledata(acc::FlowSamplesAccumulator) = acc.flow
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::FlowSamples
 ) where {N}
