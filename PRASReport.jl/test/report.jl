@@ -16,9 +16,12 @@
     end
 
     report_path = joinpath(report_dir, "sysmodel_test.html")
+    database_path = joinpath(report_dir, "sysmodel_test.duckdb")
 
     @test contains(output, "Writing report to:")
+    @test contains(output, "Writing database to:")
     @test isfile(report_path)
+    @test isfile(database_path)
 
     html = read(report_path, String)
     @test contains(html, "Test Report")
@@ -69,11 +72,17 @@ end
     end
 
     report_path = joinpath(report_dir, "results_test.html")
+    database_path = joinpath(report_dir, "results_test.duckdb")
 
     @test contains(output, "Writing report to:")
+    @test contains(output, "Writing database to:")
     @test isfile(report_path)
+    @test isfile(database_path)
 
     html = read(report_path, String)
+    embedded_database = only(match(r"const BASE64_DB = \"([^\"]+)\"", html).captures)
+    @test base64decode(embedded_database) == read(database_path)
+
     @test contains(html, "Results Test Report")
     @test contains(html, "Monte Carlo Average Results")
     @test contains(html, "Regional Mean Shortfall by Month and Hour")
@@ -81,4 +90,16 @@ end
     @test contains(html, "interface-flow-timeseries")
     @test contains(html, "Utilization Time Series by Interface")
     @test contains(html, "interface-utilization-timeseries")
+
+    create_pras_report(
+        sf,
+        flow,
+        utilization,
+        events;
+        report_name="results_test",
+        report_path=report_dir,
+        title="Replacement Report",
+    )
+    @test contains(read(report_path, String), "Replacement Report")
+    @test isfile(database_path)
 end

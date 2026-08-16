@@ -12,7 +12,7 @@ ShortfallResult and FlowResult objects.
 - `flow::FlowResult`: Simulation FlowResult
 - `events::ShortfallEventsResult`:
 - `report_name::String`: Base name for the generated HTML file (default: "report")
-- `report_path::String`: Directory path where the report will be saved (default: pwd())
+- `report_path::String`: Directory path where the HTML report and DuckDB database will be saved (default: pwd())
 - `title::String`: Title to display in the report header (default: "Resource Adequacy Report")
 """
 function create_pras_report(sf::ShortfallResult,
@@ -22,12 +22,12 @@ function create_pras_report(sf::ShortfallResult,
                             report_path::String=pwd(),
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((sf,flow,events))
-
-    return  _html_report(base64_db,
-                            report_name=report_name,
-                            report_path=report_path,
-                            title=title)
+    return _create_report(
+        (sf, flow, events);
+        report_name,
+        report_path,
+        title,
+    )
 end
 
 function create_pras_report(sf::ShortfallResult,
@@ -38,12 +38,12 @@ function create_pras_report(sf::ShortfallResult,
                             report_path::String=pwd(),
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((sf,flow,utilization,events))
-
-    return  _html_report(base64_db,
-                            report_name=report_name,
-                            report_path=report_path,
-                            title=title)
+    return _create_report(
+        (sf, flow, utilization, events);
+        report_name,
+        report_path,
+        title,
+    )
 end
 
 """
@@ -66,13 +66,14 @@ function create_pras_report(system::SystemModel;
                             report_path::String=pwd(),
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((system,);
-                                samples=samples,seed=seed)
-
-    return  _html_report(base64_db,
-                            report_name=report_name,
-                            report_path=report_path,
-                            title=title)
+    return _create_report(
+        (system,);
+        samples,
+        seed,
+        report_name,
+        report_path,
+        title,
+    )
 end
 
 """
@@ -94,35 +95,69 @@ function create_pras_report(system_path::String;
                             report_path::String=pwd(),
                             title::String="Resource Adequacy Report")
 
-    base64_db = _get_base64_db((system_path,);
-                                samples=samples,seed=seed)
-    
-    return  _html_report(base64_db,
-                            report_name=report_name,
-                            report_path=report_path,
-                            title=title)
+    return _create_report(
+        (system_path,);
+        samples,
+        seed,
+        report_name,
+        report_path,
+        title,
+    )
 end
 
 """
-Internal function to get events database for different types of inputs.
-"""    
-function _get_base64_db(get_db_args; 
-                        samples=1000,seed=1)
+Internal function to create the matched report database and HTML outputs.
+"""
+function _create_report(
+    get_db_args;
+    samples=1000,
+    seed=1,
+    report_name::String,
+    report_path::String,
+    title,
+)
+    mkpath(report_path)
 
-    tempdb_path = tempname() * ".db"
-    dbfile = DuckDB.open(tempdb_path)
-    conn = DuckDB.connect(dbfile)    
-    conn = get_db(get_db_args...; conn,
-                    samples=samples, seed=seed)
+    full_report_path = joinpath(report_path, report_name * ".html")
+    database_path = joinpath(report_path, report_name * ".duckdb")
 
-    DuckDB.DBInterface.close!(conn)
-    DuckDB.close_database(dbfile)
+    rm(database_path; force=true)
 
-    # Convert temp db to base64 string and delete temp file
-    base64_db = base64encode(read(tempdb_path))
-    rm(tempdb_path; force=true)
-    
-    return base64_db
+    base64_db = _write_report_db(
+        get_db_args,
+        database_path;
+        samples,
+        seed,
+    )
+
+    return _html_report(
+        base64_db;
+        full_report_path,
+        title,
+    )
+end
+
+"""
+Internal function to write a report database and return its base64 representation.
+"""
+function _write_report_db(
+    get_db_args,
+    database_path::String;
+    samples=1000,
+    seed=1,
+)
+    println("Writing database to: ", database_path)
+    dbfile = DuckDB.open(database_path)
+    conn = DuckDB.connect(dbfile)
+
+    try
+        get_db(get_db_args...; conn, samples, seed)
+    finally
+        DuckDB.DBInterface.close!(conn)
+        DuckDB.close_database(dbfile)
+    end
+
+    return base64encode(read(database_path))
 
 end
 
@@ -130,9 +165,9 @@ end
 Internal function to create a HTML report from PRAS simulation results stored in a 
 base64-encoded DuckDB database string.
 """
-function _html_report(base64_db::String;
-    report_name::String,
-    report_path::String,
+function _html_report(
+    base64_db::String;
+    full_report_path::String,
     title)
 
     queries_js = read(joinpath(@__DIR__, "report_queries.js"), String)
@@ -164,7 +199,6 @@ function _html_report(base64_db::String;
     @assert !contains(report_html, "{{REPORT_QUERIES_JS_PLACEHOLDER}}")
     @assert !contains(report_html, "{{REPORT_PLOTS_JS_PLACEHOLDER}}")
 
-    full_report_path = joinpath(report_path, report_name * ".html")
     println("Writing report to: ", full_report_path)
     write(full_report_path, report_html)
 

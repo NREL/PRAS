@@ -7,6 +7,7 @@ using TimeZones
 using Suppressor
 using DuckDB
 using Tables
+using Base64: base64decode
 
 # Test copperplate
 # Test get functions from database for wrong names
