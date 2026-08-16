@@ -90,16 +90,4 @@ end
     @test contains(html, "interface-flow-timeseries")
     @test contains(html, "Utilization Time Series by Interface")
     @test contains(html, "interface-utilization-timeseries")
-
-    create_pras_report(
-        sf,
-        flow,
-        utilization,
-        events;
-        report_name="results_test",
-        report_path=report_dir,
-        title="Replacement Report",
-    )
-    @test contains(read(report_path, String), "Replacement Report")
-    @test isfile(database_path)
 end
