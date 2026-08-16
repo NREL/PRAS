@@ -69,7 +69,7 @@ header h1 {
 
 .section-heading h2 {
     margin: 0;
-    font-size: 1.65rem;
+    font-size: 1.75rem;
     font-weight: 700;
 }
 
@@ -222,7 +222,7 @@ header h1 {
     flex-direction: column;
     justify-content: space-between;
     height: 220px;
-    font-size: 12px;
+    font-size: 13px;
 }
 
 .regional-heatmap-colorbar-title {
@@ -331,7 +331,8 @@ tr:hover {
 
 .numeric {
     text-align: center;
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+    font-family: inherit;
+    font-variant-numeric: tabular-nums;
 }
 
 th.numeric {
@@ -447,7 +448,7 @@ th.numeric {
 .subsection-group > h3,
 .subsection-group-title {
     color: #2d3748;
-    font-size: 1.35rem;
+    font-size: 1.45rem;
     font-weight: 650;
 
     padding-bottom: 0.2rem;
@@ -473,7 +474,7 @@ th.numeric {
 
 .subsection-part-title {
     color: #2d3748;
-    font-size: 1.05rem;
+    font-size: 1.15rem;
     font-weight: 650;
     margin: 0 0 1rem;
 }

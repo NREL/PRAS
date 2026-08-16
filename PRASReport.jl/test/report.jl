@@ -41,7 +41,8 @@
     @test contains(html, "regional-shortfall-colorbar")
     @test contains(html, "zmax: showColorbar ? regionalShortfallMax : 1")
     @test contains(html, "showscale: false")
-    @test contains(html, "bgcolor: \"rgba(24, 24, 24, 0.85)\"")
+    @test contains(html, "bgcolor: \"rgba(24, 24, 24, 0.60)\"")
+    @test contains(html, "bordercolor: \"rgba(0, 0, 0, 0)\"")
 end
 
 @testset "Result input to create_pras_report" begin

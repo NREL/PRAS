@@ -4,6 +4,14 @@ const monthHourHeatmapColorscale = [
     [1, "#d7301f"]
 ];
 
+function reportHoverLabel() {
+    return {
+        bgcolor: "rgba(24, 24, 24, 0.60)",
+        bordercolor: "rgba(0, 0, 0, 0)",
+        font: { color: "#ffffff", size: 13 }
+    };
+}
+
 window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
     const durations = systemData.duration;
     const energies = systemData.energy;
@@ -19,9 +27,10 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
         hovertemplate: "Duration: %{x}<br>Count: %{y}<extra></extra>"
     }], {
         title: "System Event Duration Distribution",
-        xaxis: { title: `Duration (${timeUnit})` },
-        yaxis: { title: "Number of Events" },
-        margin: { t: 50, l: 60, r: 20, b: 60 }
+        xaxis: { title: `Duration (${timeUnit})`, tickfont: { size: 13 } },
+        yaxis: { title: "Number of Events", tickfont: { size: 13 } },
+        margin: { t: 50, l: 60, r: 20, b: 60 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 
     Plotly.newPlot("energy-scatter", [{
@@ -44,6 +53,7 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
                         size: 12
                     }
                 },
+                tickfont: { size: 13 },
                 len: 0.85,
                 thickness: 12,
                 outlinewidth: 0,
@@ -56,27 +66,37 @@ window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
         title: "System Event Energy vs Duration",
         xaxis: {
             title: `Duration (${timeUnit})`,
+            tickfont: { size: 13 },
             constrain: "domain"
         },
         yaxis: {
             title: `Energy (${energyUnit})`,
+            tickfont: { size: 13 },
             showline: false,
             zeroline: false
         },
-        margin: { t: 60, l: 80, r: 140, b: 80 }
+        margin: { t: 60, l: 80, r: 140, b: 80 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 };
 
 window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, timeUnit) {
     const regions = [...regionalData.keys()].sort(naturalNameCompare);
+    const axisTitleFont = {
+        family: '"Open Sans", verdana, arial, sans-serif',
+        size: 14,
+        color: "#2a3f5f"
+    };
 
     const traces = [];
     const layout = {
         title: "Regional Event Duration and Energy",
         showlegend: false,
         height: Math.max(700, 300 * Math.ceil(regions.length / 4)),
-        margin: { t: 70, l: 60, r: 120, b: 60 },
-        annotations: []
+        margin: { t: 70, l: 50, r: 70, b: 60 },
+        annotations: [],
+        shapes: [],
+        hoverlabel: reportHoverLabel()
     };
 
     const cols = Math.min(4, Math.max(1, regions.length));
@@ -98,9 +118,11 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
     regions.forEach((region, idx) => {
         const facetRow = Math.floor(idx / cols);
         const facetCol = idx % cols;
+        const cellX0 = facetCol * colWidth;
+        const cellX1 = (facetCol + 1) * colWidth;
 
-        const x0 = facetCol * colWidth + 0.04;
-        const x1 = (facetCol + 1) * colWidth - 0.03;
+        const x0 = cellX0 + 0.038;
+        const x1 = cellX1 - 0.012;
 
         const histRow = facetRow * 2;
         const scatterRow = histRow + 1;
@@ -110,6 +132,49 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
 
         const yScat0 = 1 - (scatterRow + 1) * rowHeight + 0.04;
         const yScat1 = 1 - scatterRow * rowHeight - 0.04;
+
+        layout.shapes.push({
+            type: "rect",
+            x0: cellX0 + 0.006,
+            x1: cellX1 - 0.006,
+            y0: Math.max(0, yScat0 - 0.025),
+            y1: Math.min(1, yHist1 + 0.045),
+            xref: "paper",
+            yref: "paper",
+            line: {
+                color: "rgba(102, 126, 234, 0.14)",
+                width: 1
+            },
+            fillcolor: "rgba(102, 126, 234, 0.012)",
+            layer: "below"
+        });
+
+        if (facetCol === 0) {
+            const axisTitleX = -0.02;
+            const axisTitleStyle = {
+                x: axisTitleX,
+                xref: "paper",
+                yref: "paper",
+                xanchor: "center",
+                yanchor: "middle",
+                textangle: -90,
+                showarrow: false,
+                font: { ...axisTitleFont }
+            };
+
+            layout.annotations.push(
+                {
+                    ...axisTitleStyle,
+                    text: "Events",
+                    y: (yHist0 + yHist1) / 2
+                },
+                {
+                    ...axisTitleStyle,
+                    text: `Energy (${energyUnit})`,
+                    y: (yScat0 + yScat1) / 2
+                }
+            );
+        }
 
         const xaxisName = idx === 0 ? "xaxis" : `xaxis${2 * idx + 1}`;
         const yaxisName = idx === 0 ? "yaxis" : `yaxis${2 * idx + 1}`;
@@ -121,15 +186,34 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
         const xref2 = `x${2 * idx + 2}`;
         const yref2 = `y${2 * idx + 2}`;
 
-        layout[xaxisName] = { domain: [x0, x1], anchor: yref };
-        layout[yaxisName] = { domain: [yHist0, yHist1], anchor: xref, title: facetCol === 0 ? "Events" : "" };
+        layout[xaxisName] = {
+            domain: [x0, x1],
+            anchor: yref,
+            tickfont: { size: 13 }
+        };
+        layout[yaxisName] = {
+            domain: [yHist0, yHist1],
+            anchor: xref,
+            title: "",
+            tickfont: { size: 13 },
+            automargin: true
+        };
 
         layout[xaxisName2] = {
             domain: [x0, x1],
             anchor: yref2,
-            title: (facetRow === facetRows - 1) ? `Duration (${timeUnit})` : ""
+            title: facetRow === facetRows - 1
+                ? { text: `Duration (${timeUnit})`, font: { ...axisTitleFont } }
+                : "",
+            tickfont: { size: 13 }
         };
-        layout[yaxisName2] = { domain: [yScat0, yScat1], anchor: xref2, title: facetCol === 0 ? `Energy (${energyUnit})` : "" };
+        layout[yaxisName2] = {
+            domain: [yScat0, yScat1],
+            anchor: xref2,
+            title: "",
+            tickfont: { size: 13 },
+            automargin: true
+        };
 
         const data = regionalData.get(region);
 
@@ -167,7 +251,7 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
                             side: "right",
                             font: { size: 12 }
                         },
-                        tickfont: { size: 12 },
+                        tickfont: { size: 13 },
                         len: 0.85,
                         thickness: 12,
                         outlinewidth: 0,
@@ -177,13 +261,13 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
             },
             customdata: data.sample_id,
             hovertemplate:
-                "Region: " + region + "<br>Sample %{customdata}<br>Duration: %{x}<br>Energy: %{y:.2f} " + energyUnit + "<extra></extra>"
+                "Sample %{customdata}<br>Duration: %{x}<br>Energy: %{y:.2f} " + energyUnit + "<extra></extra>"
         });
 
         layout.annotations.push({
-            text: `<b><span style="text-decoration: underline;">${region}</span></b>`,
+            text: `<b>${region}</b>`,
             x: (x0 + x1) / 2,
-            y: yHist1 + 0.001,
+            y: yHist1 + 0.008,
             xref: "paper",
             yref: "paper",
             xanchor: "center",
@@ -191,8 +275,11 @@ window.renderRegionalEventPlots = function(regionalData, stepSize, energyUnit, t
             align: "center",
             showarrow: false,
             font: {
+                color: "#2d3748",
                 size: 14
-            }
+            },
+            bgcolor: "rgba(255, 255, 255, 0.9)",
+            borderpad: 3
         });
     });
 
@@ -291,25 +378,22 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
                 font: { size: 12 }
             },
             xaxis: {
-                title: {text: "Hour", font: {size: 11}},
-                tickfont: {size: 11},
+                title: {text: "Hour", font: {size: 11}, standoff: 8},
+                tickfont: {size: 12},
+                automargin: true,
                 showline: false,
                 zeroline: false
             },
             yaxis: {
                 title: {text: "Month", font: {size: 11}},
-                tickfont: {size: 11},
+                tickfont: {size: 12},
                 autorange: "reversed",
                 showline: false,
                 zeroline: false
             },
             plot_bgcolor: "#f5f5f5",
             paper_bgcolor: "white",
-            hoverlabel: {
-                bgcolor: "rgba(24, 24, 24, 0.85)",
-                bordercolor: "rgba(24, 24, 24, 0.85)",
-                font: {color: "#ffffff", size: 11}
-            },
+            hoverlabel: reportHoverLabel(),
             margin: { t: 32, l: 32, r: 10, b: 32 }
         }, { responsive: true });
     });
@@ -334,10 +418,12 @@ window.renderSystemShortfallTimeseries = function(rows, energyUnit) {
         },
         yaxis: {
             title: `Mean Shortfall (${energyUnit})`,
+            tickfont: { size: 13 },
             showline: false,
             zeroline: false
         },
-        margin: { t: 20, l: 70, r: 30, b: 60 }
+        margin: { t: 20, l: 70, r: 30, b: 60 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 };
 
@@ -375,6 +461,7 @@ window.renderInterfaceFlowTimeseries = function(rows, powerUnit) {
         },
         yaxis: {
             title: `Flow (${powerUnit})`,
+            tickfont: { size: 13 },
             showline: false,
             zeroline: true
         },
@@ -382,7 +469,8 @@ window.renderInterfaceFlowTimeseries = function(rows, powerUnit) {
             orientation: "h",
             y: -0.2
         },
-        margin: { t: 20, l: 70, r: 30, b: 90 }
+        margin: { t: 20, l: 70, r: 30, b: 90 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 };
 
@@ -420,6 +508,7 @@ window.renderInterfaceUtilizationTimeseries = function(rows) {
         },
         yaxis: {
             title: "Utilization (%)",
+            tickfont: { size: 13 },
             showline: false,
             zeroline: true
         },
@@ -427,7 +516,8 @@ window.renderInterfaceUtilizationTimeseries = function(rows) {
             orientation: "h",
             y: -0.2
         },
-        margin: { t: 20, l: 70, r: 30, b: 90 }
+        margin: { t: 20, l: 70, r: 30, b: 90 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 };
 
@@ -469,6 +559,7 @@ function renderSystemMonthHourHeatmap({
                 text: `${label} (${unit})`,
                 side: "right"
             },
+            tickfont: { size: 13 },
             len: 0.85,
             thickness: 12,
             outlinewidth: 0,
@@ -477,11 +568,23 @@ function renderSystemMonthHourHeatmap({
         hovertemplate:
             `Month: %{y}<br>Hour: %{x}<br>${label}: %{z:.${precision}f} ${unit}<extra></extra>`
     }], {
-        xaxis: { title: "Hour of day", showline: false, zeroline: false },
-        yaxis: { title: "Month", autorange: "reversed", showline: false, zeroline: false },
+        xaxis: {
+            title: "Hour of day",
+            tickfont: { size: 13 },
+            showline: false,
+            zeroline: false
+        },
+        yaxis: {
+            title: "Month",
+            tickfont: { size: 13 },
+            autorange: "reversed",
+            showline: false,
+            zeroline: false
+        },
         plot_bgcolor: "#f5f5f5",
         paper_bgcolor: "white",
-        margin: { t: 20, l: 60, r: 120, b: 60 }
+        margin: { t: 20, l: 60, r: 120, b: 60 },
+        hoverlabel: reportHoverLabel()
     }, { responsive: true });
 }
 
