@@ -1,3 +1,9 @@
+const monthHourHeatmapColorscale = [
+    [0, "#ffffff"],
+    [0.5, "#fdae6b"],
+    [1, "#d7301f"]
+];
+
 window.renderEventPlots = function(systemData, stepSize, energyUnit, timeUnit) {
     const durations = systemData.duration;
     const energies = systemData.energy;
@@ -215,9 +221,35 @@ function wrapPlotTitle(text, maxChars = 18) {
 
 window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
     const container = document.getElementById("regional-shortfall-heatmaps");
+    const layout = document.getElementById("regional-shortfall-heatmap-layout");
+    const colorbar = document.getElementById("regional-shortfall-colorbar");
     container.innerHTML = "";
 
     const byRegion = new Map();
+    const regionalShortfallMax = rows.reduce((maximum, row) => {
+        const value = Number(row.mean_shortfall);
+        return Number.isFinite(value) ? Math.max(maximum, value) : maximum;
+    }, 0);
+    const showColorbar = regionalShortfallMax > 0;
+
+    layout.classList.toggle("has-colorbar", showColorbar);
+    colorbar.hidden = !showColorbar;
+    if (showColorbar) {
+        colorbar.querySelector(".regional-heatmap-colorbar-gradient").style.background =
+            `linear-gradient(to top, ${monthHourHeatmapColorscale
+                .map(([position, color]) => `${color} ${position * 100}%`)
+                .join(", ")})`;
+        document.getElementById("regional-shortfall-colorbar-maximum").textContent =
+            formatNumber(regionalShortfallMax, 3);
+        document.getElementById("regional-shortfall-colorbar-midpoint").textContent =
+            formatNumber(regionalShortfallMax / 2, 3);
+        document.getElementById("regional-shortfall-colorbar-title").textContent =
+            `Mean Shortfall (${energyUnit})`;
+        colorbar.setAttribute(
+            "aria-label",
+            `Mean Shortfall scale from 0 to ${regionalShortfallMax} ${energyUnit}`
+        );
+    }
 
     rows.forEach(row => {
         const region = row.region_name || "Unknown";
@@ -242,32 +274,15 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
             x: Array.from({ length: 24 }, (_, i) => i),
             y: Array.from({ length: 12 }, (_, i) => i + 1),
             type: "heatmap",
+            zauto: false,
+            zmin: 0,
+            zmax: showColorbar ? regionalShortfallMax : 1,
             xgap: 1,
             ygap: 1,
-            colorscale: [
-                [0, "#ffffff"],
-                [0.5, "#fdae6b"],
-                [1, "#d7301f"]
-            ],
-            showscale: idx === byRegion.size - 1,
-            colorbar: idx === byRegion.size - 1
-                ? {
-                    title: {
-                        text: `Mean Shortfall (${energyUnit})`,
-                        side: "right",
-                        font: {size: 11}
-                    },
-                    tickfont: {size: 11},
-                    len: 0.85,
-                    x: 1.08,
-                    thickness: 12,
-                    outlinewidth: 0,
-                    ticks: ""
-                }
-                : undefined,
+            colorscale: monthHourHeatmapColorscale,
+            showscale: false,
             hovertemplate:
-                "Region: " + region +
-                "<br>Month: %{y}<br>Hour: %{x}<br>Mean Shortfall: %{z:.3f} " +
+                "Month: %{y}<br>Hour: %{x}<br>Mean Shortfall: %{z:.3f} " +
                 energyUnit +
                 "<extra></extra>"
         }], {
@@ -290,6 +305,11 @@ window.renderRegionalShortfallHeatmaps = function(rows, energyUnit) {
             },
             plot_bgcolor: "#f5f5f5",
             paper_bgcolor: "white",
+            hoverlabel: {
+                bgcolor: "rgba(24, 24, 24, 0.85)",
+                bordercolor: "rgba(24, 24, 24, 0.85)",
+                font: {color: "#ffffff", size: 11}
+            },
             margin: { t: 32, l: 32, r: 10, b: 32 }
         }, { responsive: true });
     });
@@ -443,11 +463,7 @@ function renderSystemMonthHourHeatmap({
         type: "heatmap",
         xgap: 1,
         ygap: 1,
-        colorscale: [
-            [0, "#ffffff"],
-            [0.5, "#fdae6b"],
-            [1, "#d7301f"]
-        ],
+        colorscale: monthHourHeatmapColorscale,
         colorbar: {
             title: {
                 text: `${label} (${unit})`,

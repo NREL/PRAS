@@ -35,6 +35,10 @@
     @test contains(html, "const naturalNameCollator = new Intl.Collator")
     @test contains(html, "numeric: true")
     @test contains(html, ".sort(naturalNameCompare)")
+    @test contains(html, "regional-shortfall-colorbar")
+    @test contains(html, "zmax: showColorbar ? regionalShortfallMax : 1")
+    @test contains(html, "showscale: false")
+    @test contains(html, "bgcolor: \"rgba(24, 24, 24, 0.85)\"")
 end
 
 @testset "Result input to create_pras_report" begin

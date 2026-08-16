@@ -232,6 +232,13 @@ header h1 {
     gap: 2rem;
 }
 
+.regional-heatmap-layout.has-colorbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 90px;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .regional-heatmap-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -240,7 +247,39 @@ header h1 {
 }
 
 .regional-heatmap {
-    height: 330px;
+    height: 290px;
+}
+
+.regional-heatmap-colorbar {
+    display: grid;
+    grid-template-columns: 14px auto auto;
+    align-items: center;
+    gap: 6px;
+    height: 220px;
+    justify-self: center;
+}
+
+.regional-heatmap-colorbar[hidden] {
+    display: none;
+}
+
+.regional-heatmap-colorbar-gradient {
+    width: 14px;
+    height: 220px;
+}
+
+.regional-heatmap-colorbar-ticks {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 220px;
+    font-size: 12px;
+}
+
+.regional-heatmap-colorbar-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 12px;
 }
 
 @media (max-width: 1000px) {

@@ -126,7 +126,18 @@
 
                         <div class="subsection-part">
                             <h4 class="subsection-part-title">Regional Mean Shortfall by Month and Hour</h4>
-                            <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
+                            <div id="regional-shortfall-heatmap-layout" class="regional-heatmap-layout">
+                                <div id="regional-shortfall-heatmaps" class="regional-heatmap-grid"></div>
+                                <div id="regional-shortfall-colorbar" class="regional-heatmap-colorbar" role="img" hidden>
+                                    <div class="regional-heatmap-colorbar-gradient"></div>
+                                    <div class="regional-heatmap-colorbar-ticks">
+                                        <span id="regional-shortfall-colorbar-maximum"></span>
+                                        <span id="regional-shortfall-colorbar-midpoint"></span>
+                                        <span>0</span>
+                                    </div>
+                                    <div id="regional-shortfall-colorbar-title" class="regional-heatmap-colorbar-title"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
