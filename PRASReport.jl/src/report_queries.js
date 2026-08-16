@@ -35,13 +35,11 @@ window.loadSystemEventMetrics = async function(conn) {
 window.loadSystemPlotEvents = async function(conn) {
     const result = await conn.query(`
         SELECT
-            e.sample_id,
-            e.duration_periods * s.step_size AS duration,
-            CAST(e.energy AS DOUBLE) AS energy
-        FROM report_db.shortfall_events e
-        CROSS JOIN (SELECT step_size FROM report_db.systemsiminfo LIMIT 1) s
-        WHERE e.scope = 'system'
-        ORDER BY e.start_timestamp
+            sample_id,
+            duration,
+            energy
+        FROM report_db.system_shortfall_events
+        ORDER BY start_timestamp
     `);
 
     const rows = result.toArray();
@@ -56,15 +54,12 @@ window.loadSystemPlotEvents = async function(conn) {
 window.loadRegionalPlotEvents = async function(conn) {
     const result = await conn.query(`
         SELECT
-            r.name AS region_name,
-            e.sample_id,
-            e.duration_periods * s.step_size AS duration,
-            CAST(e.energy AS DOUBLE) AS energy
-        FROM report_db.shortfall_events e
-        CROSS JOIN (SELECT step_size FROM report_db.systemsiminfo LIMIT 1) s
-        LEFT JOIN report_db.regions r ON e.region_id = r.id
-        WHERE e.scope = 'region'
-        ORDER BY r.name, e.start_timestamp
+            region_name,
+            sample_id,
+            duration,
+            energy
+        FROM report_db.regional_shortfall_events
+        ORDER BY region_name, start_timestamp
     `);
 
     const rows = result.toArray();
@@ -93,22 +88,20 @@ window.loadRegionalPlotEvents = async function(conn) {
 window.loadRegionalEventMetricsTable = async function(conn) {
     const result = await conn.query(`
         SELECT
-            r.name AS region_name,
-            m.n_events,
-            m.lolev_mean,
-            m.lolev_stderr,
-            m.mean_duration,
-            m.mean_duration_stderr,
-            m.max_duration,
-            m.max_duration_stderr,
-            m.mean_energy,
-            m.mean_energy_stderr,
-            m.max_energy,
-            m.max_energy_stderr
-        FROM report_db.event_metrics m
-        LEFT JOIN report_db.regions r ON m.region_id = r.id
-        WHERE m.scope = 'region'
-        ORDER BY r.name
+            region_name,
+            n_events,
+            lolev_mean,
+            lolev_stderr,
+            mean_duration_periods AS mean_duration,
+            mean_duration_stderr_periods AS mean_duration_stderr,
+            max_duration_periods AS max_duration,
+            max_duration_stderr_periods AS max_duration_stderr,
+            mean_energy,
+            mean_energy_stderr,
+            max_energy,
+            max_energy_stderr
+        FROM report_db.regional_event_metrics
+        ORDER BY region_name
     `);
     return result.toArray();
 };
@@ -116,16 +109,15 @@ window.loadRegionalEventMetricsTable = async function(conn) {
 window.loadRegionalMCMetrics = async function(conn) {
     const result = await conn.query(`
         SELECT
-            r.name AS region_name,
-            m.eue_mean,
-            m.eue_stderr,
-            m.lole_mean,
-            m.lole_stderr,
-            m.neue_mean,
-            m.neue_stderr
-        FROM report_db.mc_regional_metrics m
-        LEFT JOIN report_db.regions r ON m.region_id = r.id
-        ORDER BY r.name
+            region_name,
+            eue_mean,
+            eue_stderr,
+            lole_mean,
+            lole_stderr,
+            neue_mean,
+            neue_stderr
+        FROM report_db.regional_adequacy_metrics
+        ORDER BY region_name
     `);
     return result.toArray();
 };
@@ -136,7 +128,7 @@ window.loadSystemShortfallHeatmap = async function(conn) {
             SELECT
                 timestamp,
                 SUM(mean_shortfall) AS mean_shortfall
-            FROM report_db.shortfall_mean_timeseries
+            FROM report_db.regional_shortfall_timeseries
             GROUP BY timestamp
         )
         SELECT
@@ -153,14 +145,13 @@ window.loadSystemShortfallHeatmap = async function(conn) {
 window.loadRegionalShortfallHeatmaps = async function(conn) {
     const result = await conn.query(`
         SELECT
-            r.name AS region_name,
-            month(s.timestamp) AS month,
-            hour(s.timestamp) AS hour,
-            AVG(s.mean_shortfall) AS mean_shortfall
-        FROM report_db.shortfall_mean_timeseries s
-        LEFT JOIN report_db.regions r ON s.region_id = r.id
-        GROUP BY r.name, month, hour
-        ORDER BY r.name, month, hour
+            region_name,
+            month(timestamp) AS month,
+            hour(timestamp) AS hour,
+            AVG(mean_shortfall) AS mean_shortfall
+        FROM report_db.regional_shortfall_timeseries
+        GROUP BY region_name, month, hour
+        ORDER BY region_name, month, hour
     `);
     return result.toArray();
 };
@@ -168,7 +159,7 @@ window.loadRegionalShortfallHeatmaps = async function(conn) {
 window.hasFullYearShortfallHeatmapData = async function(conn) {
     const result = await conn.query(`
         SELECT COUNT(DISTINCT month(timestamp)) AS n_months
-        FROM report_db.shortfall_mean_timeseries
+        FROM report_db.regional_shortfall_timeseries
     `);
 
     return Number(result.toArray()[0].n_months) === 12;
@@ -212,7 +203,7 @@ window.loadSystemShortfallTimeseries = async function(conn) {
         SELECT
             timestamp,
             SUM(mean_shortfall) AS mean_shortfall
-        FROM report_db.shortfall_mean_timeseries
+        FROM report_db.regional_shortfall_timeseries
         GROUP BY timestamp
         ORDER BY timestamp
     `);
@@ -222,14 +213,12 @@ window.loadSystemShortfallTimeseries = async function(conn) {
 window.loadInterfaceFlowTimeseries = async function(conn) {
     const result = await conn.query(`
         SELECT
-            f.timestamp,
-            i.id AS interface_id,
-            i.name AS interface_name,
-            f.mean_flow
-        FROM report_db.flow_mean_timeseries f
-        JOIN report_db.interfaces i
-            ON f.interface_id = i.id
-        ORDER BY i.name, f.timestamp
+            timestamp,
+            interface_id,
+            interface_name,
+            mean_flow
+        FROM report_db.interface_flow_timeseries
+        ORDER BY interface_name, timestamp
     `);
     return result.toArray();
 };
@@ -237,14 +226,12 @@ window.loadInterfaceFlowTimeseries = async function(conn) {
 window.loadInterfaceUtilizationTimeseries = async function(conn) {
     const result = await conn.query(`
         SELECT
-            u.timestamp,
-            i.id AS interface_id,
-            i.name AS interface_name,
-            u.utilization
-        FROM report_db.utilization_mean_timeseries u
-        JOIN report_db.interfaces i
-            ON u.interface_id = i.id
-        ORDER BY i.name, u.timestamp
+            timestamp,
+            interface_id,
+            interface_name,
+            utilization
+        FROM report_db.interface_utilization_timeseries
+        ORDER BY interface_name, timestamp
     `);
     return result.toArray();
 };

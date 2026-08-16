@@ -62,5 +62,44 @@
     )
     @test first(utilization_ts.n) == length(sys.interfaces) * length(sys.timestamps)
 
+    views = Tables.columntable(
+        DuckDB.execute(conn, """
+            SELECT table_name
+            FROM information_schema.views
+            WHERE table_schema = 'main'
+        """)
+    )
+    @test issubset(Set([
+        "system_shortfall_events",
+        "regional_shortfall_events",
+        "regional_event_metrics",
+        "regional_adequacy_metrics",
+        "regional_shortfall_timeseries",
+        "interface_flow_timeseries",
+        "interface_utilization_timeseries",
+        "regional_load_timeseries",
+    ]), Set(views.table_name))
+
+    regional_event_counts = Tables.columntable(
+        DuckDB.execute(conn, """
+            SELECT
+                (
+                    SELECT COUNT(*)
+                    FROM regional_shortfall_events
+                    WHERE region_name IS NOT NULL
+                      AND duration = duration_periods * (
+                          SELECT step_size FROM systemsiminfo LIMIT 1
+                      )
+                ) AS view_count,
+                (
+                    SELECT COUNT(*)
+                    FROM shortfall_events
+                    WHERE scope = 'region'
+                ) AS table_count
+        """)
+    )
+    @test first(regional_event_counts.view_count) ==
+          first(regional_event_counts.table_count)
+
     DuckDB.DBInterface.close!(conn)
 end

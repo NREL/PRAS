@@ -83,7 +83,7 @@ function get_db(
         internal_conn = false
     end
 
-    schema_file = joinpath(dirname(@__FILE__), "event_db_schema.sql")
+    schema_file = joinpath(dirname(@__FILE__), "report_db_schema.sql")
     schema_sql = read(schema_file, String)
 
     schema_sql = join(filter(line -> !startswith(strip(line), "--"), split(schema_sql, '\n')), '\n')
