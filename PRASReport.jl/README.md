@@ -13,6 +13,8 @@ An example showcasing how to create a report can be found at:
 
 `PRASReport.jl/examples/run_report.jl`
 
+The example writes `example_rts_report.html` and `example_rts_report.duckdb` together under `pras_report_results` in the current working directory.
+
 And an example output report for a modified version of RTS-GMLC can be found at:
 
 `PRASReport.jl/examples/example_rts_report.html`
