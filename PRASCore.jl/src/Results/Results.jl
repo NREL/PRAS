@@ -212,11 +212,11 @@ usesamplepartitions(::DemandResponseAvailability) = true
 usesamplepartitions(::LineAvailability) = true
 
 function resultchannel(
-    results::T, threads::Int
+    results::T, nworkers::Int
 ) where T <: Tuple{Vararg{ResultSpec}}
 
     types = accumulatortype.(results)
-    return Channel{Tuple{Tuple{types...},UnitRange{Int}}}(threads)
+    return Channel{Tuple{Tuple{types...},UnitRange{Int}}}(nworkers)
 
 end
 
@@ -232,21 +232,21 @@ function copy_sample_partition!(
     xarr = sampledata(x)
     yarr = sampledata(y)
 
-    @views xarr[:, :, sampleids] .= yarr
+    xarr[:, :, sampleids] .= yarr
     return
 end
 
 function finalize(
-    results::Channel,
+    results::Channel{Tuple{A,UnitRange{Int}}},
     system::SystemModel{N,L,T,P,E},
-    threads::Int,
+    nworkers::Int,
     nsamples::Int,
     resultspecs::Tuple{Vararg{ResultSpec}},
-) where {N,L,T,P,E}
+) where {A<:Tuple{Vararg{ResultAccumulator}},N,L,T,P,E}
 
     first_recorders, first_sampleids = take!(results)
 
-    if threads == 1 && first_sampleids == 1:nsamples
+    if nworkers == 1 && first_sampleids == 1:nsamples
         close(results)
         return finalize.(first_recorders, system)
     end
@@ -263,7 +263,7 @@ function finalize(
         end
     end
 
-    for _ in 2:threads
+    for _ in 2:nworkers
         thread_recorders, sampleids = take!(results)
 
         for i in eachindex(total_result)

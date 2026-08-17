@@ -4,7 +4,7 @@ import ..Systems: SystemModel, AbstractAssets, Generators, Lines,
                   conversionfactor, energytopower
 
 import ..Results
-import ..Results: ResultSpec,
+import ..Results: ResultSpec, ResultAccumulator,
                   accumulator, finalize, resultchannel, usesamplepartitions
 
 import Base: broadcastable
@@ -132,9 +132,9 @@ function assess(
     end
 
     ranges = sample_ranges(method.nsamples, threads)
-    actual_threads = length(ranges)
+    nworkers = length(ranges)
 
-    results = resultchannel(resultspecs, actual_threads)
+    results = resultchannel(resultspecs, nworkers)
 
     for sampleids in ranges
         if method.threaded
@@ -144,7 +144,7 @@ function assess(
         end
     end
 
-    return finalize(results, system, actual_threads, method.nsamples, resultspecs)
+    return finalize(results, system, nworkers, method.nsamples, resultspecs)
 
 end
 
@@ -152,9 +152,9 @@ function assess(
     system::SystemModel{N},
     method::SequentialMonteCarlo,
     sampleids::UnitRange{Int},
-    results::Channel,
+    results::Channel{Tuple{A,UnitRange{Int}}},
     resultspecs::ResultSpec...
-) where N
+) where {A<:Tuple{Vararg{ResultAccumulator}},N}
 
     dispatchproblem = DispatchProblem(system)
     systemstate = SystemState(system)

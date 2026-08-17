@@ -149,9 +149,9 @@ function copy_sample_partition!(
 
     merge_shortfall_statistics!(x, y)
 
-    @views x.unservedload_sample[sampleids] .= y.unservedload_sample
-    @views x.unservedload_region_sample[:, sampleids] .=
-           y.unservedload_region_sample
+    x.unservedload_sample[sampleids] .= y.unservedload_sample
+    x.unservedload_region_sample[:, sampleids] .=
+        y.unservedload_region_sample
 
     return
 

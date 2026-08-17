@@ -882,8 +882,10 @@
                     @test size(source_data, 3) == length(sampleids)
 
                     fill!(source_data, one(eltype(source_data)))
-                    expected = zero(destination_data)
-                    @views expected[:, :, sampleids] .= source_data
+                    expected = zeros(
+                        eltype(destination_data), size(destination_data)
+                    )
+                    expected[:, :, sampleids] .= source_data
 
                     PRASCore.Results.copy_sample_partition!(
                         destination, source, sampleids
