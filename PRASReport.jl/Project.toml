@@ -1,6 +1,6 @@
 name = "PRASReport"
 uuid = "c003f3f0-f5d5-4077-8f93-207e59ecb3ff"
-authors = ["Hari Sundar <Hari.Sundar@nrel.gov>"]
+authors = ["Hari Sundar <Hari.Sundar@nlr.gov>"]
 version = "0.1.0"
 
 [deps]
