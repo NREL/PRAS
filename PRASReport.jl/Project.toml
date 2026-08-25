@@ -15,8 +15,8 @@ TimeZones = "f269a46b-ccf7-5d73-abea-4c690281aa53"
 
 [compat]
 Dates = "1"
-PRASCore = "0.8.0"
-PRASFiles = "0.8.0"
+PRASCore = "0.9.0"
+PRASFiles = "0.9.0"
 StatsBase = "0.34"
 TimeZones = "^1.14"
 julia = "1.10"
