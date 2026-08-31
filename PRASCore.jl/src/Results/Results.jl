@@ -195,22 +195,6 @@ include("StorageEnergySamples.jl")
 include("GeneratorStorageEnergySamples.jl")
 include("DemandResponseEnergySamples.jl")
 
-usesamplepartitions(::Shortfall) = true
-usesamplepartitions(::DemandResponseShortfall) = true
-usesamplepartitions(::ShortfallSamples) = true
-usesamplepartitions(::DemandResponseShortfallSamples) = true
-usesamplepartitions(::SurplusSamples) = true
-usesamplepartitions(::FlowSamples) = true
-usesamplepartitions(::UtilizationSamples) = true
-usesamplepartitions(::StorageEnergySamples) = true
-usesamplepartitions(::GeneratorStorageEnergySamples) = true
-usesamplepartitions(::DemandResponseEnergySamples) = true
-usesamplepartitions(::GeneratorAvailability) = true
-usesamplepartitions(::StorageAvailability) = true
-usesamplepartitions(::GeneratorStorageAvailability) = true
-usesamplepartitions(::DemandResponseAvailability) = true
-usesamplepartitions(::LineAvailability) = true
-
 function resultchannel(
     results::T, nworkers::Int
 ) where T <: Tuple{Vararg{ResultSpec}}

@@ -31,6 +31,7 @@ struct StorAvailabilityAccumulator <: ResultAccumulator{StorageAvailability}
 end
 
 sampledata(acc::StorAvailabilityAccumulator) = acc.available
+usesamplepartitions(::StorageAvailability) = true
 
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::StorageAvailability

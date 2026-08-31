@@ -33,6 +33,7 @@ struct StorageEnergySamplesAccumulator <: ResultAccumulator{StorageEnergySamples
 end
 
 sampledata(acc::StorageEnergySamplesAccumulator) = acc.energy
+usesamplepartitions(::StorageEnergySamples) = true
 
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::StorageEnergySamples

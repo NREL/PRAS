@@ -43,6 +43,7 @@ struct GenAvailabilityAccumulator <:
 end
 
 sampledata(acc::GenAvailabilityAccumulator) = acc.available
+usesamplepartitions(::GeneratorAvailability) = true
 
 function merge!(
     x::GenAvailabilityAccumulator, y::GenAvailabilityAccumulator

@@ -40,6 +40,7 @@ struct FlowSamplesAccumulator <: ResultAccumulator{FlowSamples}
 end
 
 sampledata(acc::FlowSamplesAccumulator) = acc.flow
+usesamplepartitions(::FlowSamples) = true
 
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::FlowSamples

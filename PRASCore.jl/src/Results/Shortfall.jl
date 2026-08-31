@@ -157,6 +157,9 @@ function copy_sample_partition!(
 
 end
 
+usesamplepartitions(::Shortfall) = true
+usesamplepartitions(::DemandResponseShortfall) = true
+
 accumulatortype(::S) where {
         S<:Union{Shortfall,DemandResponseShortfall}
     } = ShortfallAccumulator{S}
