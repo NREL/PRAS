@@ -4,7 +4,7 @@ using PRASFiles
 using PRASCapacityCredits
 using Literate
 
-ENV["GKSwstype"] = "100"  # Prevent GR from opening gksqt GUI
+ENV["GKSwstype"] = "100"  # Prevent GR from opening gksqt GUI when building locally
 
 # Building examples was inspired by COSMO.jl repo
 @info "Building example problems..."
