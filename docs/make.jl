@@ -4,6 +4,8 @@ using PRASFiles
 using PRASCapacityCredits
 using Literate
 
+ENV["GKSwstype"] = "100"  # Prevent GR from opening gksqt GUI when building locally
+
 # Building examples was inspired by COSMO.jl repo
 @info "Building example problems..."
 
@@ -24,6 +26,7 @@ makedocs(
     sitename = "PRAS",
     format = Documenter.HTML(
         prettyurls = true,
+        size_threshold = nothing,
         canonical = "https://natlabrockies.github.io/PRAS/stable"
     ),
     modules = [PRASCore, PRASFiles, PRASCapacityCredits],
@@ -44,6 +47,7 @@ makedocs(
         "Tutorials" => [
             "PRAS 101 Walkthrough" => "examples/pras_walkthrough.md",
             "Demand Response Walkthrough" => "examples/demand_response_walkthrough.md",
+            "Multi-Metric Resource Adequacy Analyses" => "examples/pras_adequacy_metrics.md",
         ],
         "Extending PRAS" => "extending.md",
 #        "Contributing" => "contributing.md",

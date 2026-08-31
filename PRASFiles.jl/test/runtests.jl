@@ -112,6 +112,9 @@ using JSON3
         end
         results = assess(rts_sys, SequentialMonteCarlo(samples=10, threaded = false, seed = 1), Shortfall(), ShortfallSamples(), Surplus());
         shortfall = results[1];
+        lold_message = r"LOLD is not implemented for ShortfallResult"
+        @test_logs (:info, lold_message) PRASFiles.generate_systemresult(shortfall, rts_sys)
+        @test_logs (:info, lold_message) PRASFiles.generate_systemresult(shortfall, rts_sys)
         path = joinpath(dirname(@__FILE__),"PRAS_Results_Export");
         exp_location_1 = PRASFiles.saveshortfall(shortfall, rts_sys, path);
         @test isfile(joinpath(exp_location_1, "pras_results.json"))
@@ -122,6 +125,8 @@ using JSON3
         @test exp_results_1.region_results[1].lole.mean == PRASCore.LOLE(shortfall, exp_results_1.region_results[1].name).lole.estimate
         @test exp_results_1.region_results[1].eue.mean == PRASCore.EUE(shortfall, exp_results_1.region_results[1].name).eue.estimate
         @test exp_results_1.region_results[1].neue.mean == PRASCore.NEUE(shortfall, exp_results_1.region_results[1].name).neue.estimate
+        @test exp_results_1.lold === nothing
+        @test exp_results_1.region_results[1].lold === nothing
 
         shortfall_samples = results[2];
         exp_location_2 = PRASFiles.saveshortfall(shortfall_samples, rts_sys, path);
@@ -133,6 +138,11 @@ using JSON3
         @test exp_results_2.region_results[1].lole.mean == PRASCore.LOLE(shortfall_samples, exp_results_2.region_results[1].name).lole.estimate
         @test exp_results_2.region_results[1].eue.mean == PRASCore.EUE(shortfall_samples, exp_results_2.region_results[1].name).eue.estimate
         @test exp_results_2.region_results[1].neue.mean == PRASCore.NEUE(shortfall_samples, exp_results_2.region_results[1].name).neue.estimate
+        @test exp_results_2.lold.mean == PRASCore.LOLD(shortfall_samples).lold.estimate
+        @test exp_results_2.lold.stderror == PRASCore.LOLD(shortfall_samples).lold.standarderror
+        region_name = exp_results_2.region_results[1].name
+        @test exp_results_2.region_results[1].lold.mean == PRASCore.LOLD(shortfall_samples, region_name).lold.estimate
+        @test exp_results_2.region_results[1].lold.stderror == PRASCore.LOLD(shortfall_samples, region_name).lold.standarderror
 
         @test exp_results_1.lole.mean ≈ exp_results_2.lole.mean
         @test exp_results_1.eue.mean ≈ exp_results_2.eue.mean
@@ -140,6 +150,10 @@ using JSON3
         @test exp_results_1.region_results[1].lole.mean ≈ exp_results_2.region_results[1].lole.mean
         @test exp_results_1.region_results[1].eue.mean ≈ exp_results_2.region_results[1].eue.mean
         @test exp_results_1.region_results[1].neue.mean ≈ exp_results_2.region_results[1].neue.mean
+
+        @test exp_results_1.lold === nothing
+        @test exp_results_2.lold !== nothing
+        @test exp_results_2.region_results[1].lold !== nothing
 
         surplus = results[3]
         @test_throws "saveshortfall is not implemented for" PRASFiles.saveshortfall(surplus, rts_sys, path)

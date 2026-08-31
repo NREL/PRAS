@@ -189,6 +189,34 @@ function Base.show(io::IO, x::NEUE)
 
 end
 
+"""
+    LOLD
+
+`LOLD` reports loss of load days over a particular time period
+and regional extent.
+
+Contains both the estimated value itself as well as the standard error
+of that estimate, which can be extracted with `val` and `stderror`,
+respectively.
+"""
+struct LOLD{D} <: ReliabilityMetric
+    lold::MeanEstimate
+
+    function LOLD{D}(lold::MeanEstimate) where {D}
+        val(lold) >= 0 || throw(DomainError(val(lold),
+            "$(val(lold)) is not a valid expected count of event-days"))
+        new{D}(lold)
+    end
+end
+
+val(x::LOLD) = val(x.lold)
+stderror(x::LOLD) = stderror(x.lold)
+
+function Base.show(io::IO, x::LOLD{D}) where {D}
+    print(io, "LOLD = ", x.lold, " event-day/",
+          D == 1 ? "day" : string(D) * "days")
+end
+
 const CVAR_QUANTITIES = (:energy,)
 
 _cvar_quantity_unitsymbol(::Val{:energy}, ::Type{E}, ::Type) where {E<:EnergyUnit} = unitsymbol(E)
