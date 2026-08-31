@@ -780,6 +780,7 @@
 
             @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
             @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+            @test NEUE(threaded_shortfall) ≈ NEUE(threaded_samples)
         end
 
         @testset "Demand response shortfall" begin
@@ -811,6 +812,10 @@
             @test LOLE(threaded_shortfall) ≈ LOLE(serial_shortfall)
             @test EUE(threaded_shortfall) ≈ EUE(serial_shortfall)
             @test NEUE(threaded_shortfall) ≈ NEUE(serial_shortfall)
+
+            @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+            @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+            @test NEUE(threaded_shortfall) ≈ NEUE(threaded_samples)
         end
 
         @testset "Transmission sample assembly" begin
