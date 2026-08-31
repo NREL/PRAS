@@ -19,7 +19,7 @@ details on components of a system model.
 - `region_gen_idxs`: Mapping of generators to their respective regions
 - `storages`: Collection of system storages (Type - [Storages](@ref))
 - `region_stor_idxs`: Mapping of storage resources to their respective regions
-- `generatorstorages`: Collection of system generation-storages (Type - [GeneratorStorages](@ref))
+- `generatorstorages`: Collection of system generation-storages (Type - [GeneratorStorages](@ref Generator-Storages))
 - `region_genstor_idxs`: Mapping of hybrid resources to their respective regions
 - `lines`: Collection of transmission lines connecting regions (Type - [Lines](@ref))
 - `interface_line_idxs`: Mapping of transmission lines to interfaces
