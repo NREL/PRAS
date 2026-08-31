@@ -774,6 +774,10 @@
             @test threaded_cvar ≈ serial_cvar
             @test threaded_region_cvar ≈ serial_region_cvar
 
+            @test LOLE(threaded_shortfall) ≈ LOLE(serial_shortfall)
+            @test EUE(threaded_shortfall) ≈ EUE(serial_shortfall)
+            @test NEUE(threaded_shortfall) ≈ NEUE(serial_shortfall)
+
             @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
             @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
         end
@@ -804,6 +808,9 @@
             threaded_cvar = CVAR(:energy, threaded_shortfall, alpha)
 
             @test threaded_cvar ≈ serial_cvar
+            @test LOLE(threaded_shortfall) ≈ LOLE(serial_shortfall)
+            @test EUE(threaded_shortfall) ≈ EUE(serial_shortfall)
+            @test NEUE(threaded_shortfall) ≈ NEUE(serial_shortfall)
         end
 
         @testset "Transmission sample assembly" begin
