@@ -204,9 +204,6 @@ function resultchannel(
 
 end
 
-merge!(xs::T, ys::T) where T <: Tuple{Vararg{ResultAccumulator}} =
-    foreach(merge!, xs, ys)
-
 function copy_sample_partition!(
     x::A,
     y::A,

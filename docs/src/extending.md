@@ -202,17 +202,21 @@ samples are performed.
 
 ```julia
 # Define the accumulator structure
-struct SMCMyResultAccumulator <: ResultAccumulator{SequentialMonteCarlo,MyResultSpec}
+struct SMCMyResultAccumulator <:
+       PRASCore.Results.ResultAccumulator{MyResultSpec}
     # fields for holding intermediate data go here
 end
 
 # Help PRAS know which accumulator type to expect before one's created
-PRAS.ResourceAdequacy.accumulatortype(::SequentialMonteCarlo, ::MyResultSpec) =
+PRASCore.Results.accumulatortype(::MyResultSpec) =
     SMCMyResultAccumulator
 
 # Initialize a new accumulator
-function PRAS.ResourceAdequacy.accumulator(
-    sys::SystemModel, simspec::SequentialMonteCarlo, resultspec::MyResultSpec)
+function PRASCore.Results.accumulator(
+    sys::SystemModel,
+    nsamples::Int,
+    ::MyResultSpec,
+)
     return SMCMyResultAccumulator(...)
 end
 ```
@@ -227,9 +231,10 @@ current `state` and the solution to the period's dispatch problem
 in-place.
 
 ```julia
-PRAS.ResourceAdequacy.record!(
-    acc::SMCMyResultAccumulator, sys::SystemModel, state::SystemState,
-    prob::DispatchProblem, s::Int, t::Int)
+PRASCore.Simulations.record!(
+    acc::SMCMyResultAccumulator, sys::SystemModel,
+    state::PRASCore.Simulations.SystemState,
+    prob::PRASCore.Simulations.DispatchProblem, s::Int, t::Int)
 ```
 
 #### reset!
@@ -241,31 +246,56 @@ and prepare the accumulator to start receiving values from a new chronological
 simulation sequence.
 
 ```julia
-PRAS.ResourceAdequacy.reset!(acc::SMCMyResultAccumulator, s::Int)
+PRASCore.Simulations.reset!(acc::SMCMyResultAccumulator, s::Int)
 
 # Often no action is required here,
 # so a simple one-line implementation is possible
-PRAS.ResourceAdequacy.reset!(acc::SMCMyResultAccumulator, s::Int) = nothing
+PRASCore.Simulations.reset!(acc::SMCMyResultAccumulator, s::Int) = nothing
 ```
 
 #### merge!
 
-For multithreaded assessments PRAS creates one accumulator per worker thread (parallel task) and merges each thread's accumulator information togther once work is completed. `merge!` defines how an accumulator `a` should be updated in-place to incorporate the results obtained by another accumulator `b`.
+For multithreaded assessments PRAS creates one accumulator per worker task.
+For result specifications that do not use sample partitions, `merge!` defines how an accumulator `a` should be updated in-place to incorporate the results obtained by another accumulator `b`.
 
 ```julia
-PRAS.ResourceAdequacy.merge!(
+Base.merge!(
     a::SMCMyResultAccumulator, b::SMCMyResultAccumulator)
 ```
 
-#### finalize!
+#### finalize
 
-Once all of the thread accumulators have been merged down to a single accumulator reflecting results from all of the threads, this final accumulator `acc` is mapped to the final result output through a `finalize` method.
+Once the worker accumulators have been combined into a single accumulator, this final accumulator `acc` is mapped to the result output through a `finalize` method.
 
 ```julia
-function PRAS.ResourceAdequacy.finalize(
+function PRASCore.Results.finalize(
     acc::SMCMyResultAccumulator, sys::SystemModel)
 
     return MyResult(...)
 
 end
+```
+
+#### sample partitioning
+
+For multithreaded assessments, a result specification that stores sample-indexed values should indicate that its accumulator can be partitioned by sample.
+PRAS will then allocate each worker accumulator for only its assigned samples and assemble the complete sample axis during finalization.
+
+For an accumulator containing one three-dimensional array with samples on the final axis, define the following methods alongside the result specification:
+
+```julia
+PRASCore.Results.usesamplepartitions(::MyResultSpec) = true
+PRASCore.Results.sampledata(acc::SMCMyResultAccumulator) = acc.samples
+```
+
+During threaded execution the `nsamples` argument passed to `accumulator` and the sample index passed to `record!` refer to the worker's local sample partition.
+The generic partition copier places each worker's `sampledata` in the corresponding sample range of the final accumulator.
+
+For accumulators with multiple sample arrays, non-three-dimensional arrays or additional statistics, define a specialized `copy_sample_partition!` method instead of `sampledata`.
+`ShortfallAccumulator` is an example of this case because `Shortfall()` stores per-sample system and regional totals for CVaR together with aggregate statistics.
+
+```julia
+PRASCore.Results.copy_sample_partition!(
+    a::SMCMyResultAccumulator, b::SMCMyResultAccumulator,
+    sampleids::UnitRange{Int})
 ```
