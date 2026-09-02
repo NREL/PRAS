@@ -601,12 +601,12 @@
         @testset "Whole-horizon equals sum over days" begin
             for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
                 days = unique(Date.(x.timestamps))
-    
+
                 @test isapprox(
                     val(LOLD(x)),
                     sum(val(LOLD(x, d)) for d in days)
                 )
-    
+
                 for r in x.regions.names
                     @test isapprox(
                         val(LOLD(x, r)),
@@ -615,11 +615,11 @@
                 end
             end
         end
-    
+
         @testset "Single-day query matches direct sample calculation" begin
             for x in (shortfall2_1a, shortfall2_1a5, shortfall2_1b, shortfall2_3)
                 days = unique(Date.(x.timestamps))
-    
+
                 # test first, middle, and last day
                 testdays = unique([first(days), days[cld(length(days), 2)], last(days)])
     
@@ -738,5 +738,174 @@
 
     end
 
+    @testset "Threaded sample result partitioning" begin
+        simspec_serial =
+            SequentialMonteCarlo(samples=100, seed=123, threaded=false)
+        simspec_threaded =
+            SequentialMonteCarlo(samples=100, seed=123, threaded=true)
 
+        @testset "Shortfall" begin
+            serial_shortfall, serial_samples =
+                assess(TestData.singlenode_a, simspec_serial,
+                       Shortfall(), ShortfallSamples())
+
+            threaded_shortfall, threaded_samples =
+                assess(TestData.singlenode_a, simspec_threaded,
+                       Shortfall(), ShortfallSamples())
+
+            region = first(TestData.singlenode_a.regions.names)
+
+            @test threaded_samples.shortfall == serial_samples.shortfall
+            @test threaded_shortfall.shortfall_samples ==
+                  serial_shortfall.shortfall_samples
+            @test threaded_shortfall.shortfall_region_samples ==
+                  serial_shortfall.shortfall_region_samples
+            @test threaded_shortfall.shortfall_samples == threaded_samples[]
+            @test threaded_shortfall.shortfall_region_samples[1, :] ==
+                  threaded_samples[region]
+
+            serial_cvar = CVAR(:energy, serial_shortfall, alpha)
+            threaded_cvar = CVAR(:energy, threaded_shortfall, alpha)
+            serial_region_cvar =
+                CVAR(:energy, serial_shortfall, alpha, region)
+            threaded_region_cvar =
+                CVAR(:energy, threaded_shortfall, alpha, region)
+
+            @test threaded_cvar ≈ serial_cvar
+            @test threaded_region_cvar ≈ serial_region_cvar
+
+            @test LOLE(threaded_shortfall) ≈ LOLE(serial_shortfall)
+            @test EUE(threaded_shortfall) ≈ EUE(serial_shortfall)
+            @test NEUE(threaded_shortfall) ≈ NEUE(serial_shortfall)
+
+            @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+            @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+            @test NEUE(threaded_shortfall) ≈ NEUE(threaded_samples)
+        end
+
+        @testset "Demand response shortfall" begin
+            serial_shortfall, serial_samples =
+                assess(TestData.test4, simspec_serial,
+                       DemandResponseShortfall(),
+                       DemandResponseShortfallSamples())
+
+            threaded_shortfall, threaded_samples =
+                assess(TestData.test4, simspec_threaded,
+                       DemandResponseShortfall(),
+                       DemandResponseShortfallSamples())
+
+            region = first(TestData.test4.regions.names)
+
+            @test threaded_samples.shortfall == serial_samples.shortfall
+            @test threaded_shortfall.shortfall_samples ==
+                  serial_shortfall.shortfall_samples
+            @test threaded_shortfall.shortfall_region_samples ==
+                  serial_shortfall.shortfall_region_samples
+            @test threaded_shortfall.shortfall_samples == threaded_samples[]
+            @test threaded_shortfall.shortfall_region_samples[1, :] ==
+                  threaded_samples[region]
+
+            serial_cvar = CVAR(:energy, serial_shortfall, alpha)
+            threaded_cvar = CVAR(:energy, threaded_shortfall, alpha)
+
+            @test threaded_cvar ≈ serial_cvar
+            @test LOLE(threaded_shortfall) ≈ LOLE(serial_shortfall)
+            @test EUE(threaded_shortfall) ≈ EUE(serial_shortfall)
+            @test NEUE(threaded_shortfall) ≈ NEUE(serial_shortfall)
+
+            @test LOLE(threaded_shortfall) ≈ LOLE(threaded_samples)
+            @test EUE(threaded_shortfall) ≈ EUE(threaded_samples)
+            @test NEUE(threaded_shortfall) ≈ NEUE(threaded_samples)
+        end
+
+        @testset "Transmission sample assembly" begin
+            serial_shortfall, serial_samples =
+                assess(TestData.threenode, simspec_serial,
+                       Shortfall(), ShortfallSamples())
+
+            threaded_shortfall, threaded_samples =
+                assess(TestData.threenode, simspec_threaded,
+                       Shortfall(), ShortfallSamples())
+
+            @test threaded_shortfall.shortfall_samples ==
+                  serial_shortfall.shortfall_samples
+            @test threaded_samples[] == serial_samples[]
+
+            @test threaded_shortfall.shortfall_samples == threaded_samples[]
+
+            # Regional dispatch may differ between equivalent optimal solutions.
+            for (i, region) in enumerate(regionscol)
+                @test threaded_shortfall.shortfall_region_samples[i, :] ==
+                      threaded_samples[region]
+            end
+        end
+
+        @testset "Uneven sample partition" begin
+            simspec_few_samples_serial =
+                SequentialMonteCarlo(samples=5, seed=123, threaded=false)
+            simspec_few_samples_threaded =
+                SequentialMonteCarlo(samples=5, seed=123, threaded=true)
+
+            serial_result, = assess(
+                TestData.singlenode_a,
+                simspec_few_samples_serial,
+                ShortfallSamples(),
+            )
+            threaded_result, = assess(
+                TestData.singlenode_a,
+                simspec_few_samples_threaded,
+                ShortfallSamples(),
+            )
+
+            @test threaded_result.shortfall == serial_result.shortfall
+        end
+
+        @testset "Sample accumulator partition copying" begin
+            sampleids = 2:3
+            accumulator_cases = (
+                (ShortfallSamples(), TestData.threenode),
+                (DemandResponseShortfallSamples(), TestData.threenode_dr),
+                (SurplusSamples(), TestData.threenode),
+                (FlowSamples(), TestData.threenode),
+                (UtilizationSamples(), TestData.threenode),
+                (StorageEnergySamples(), TestData.singlenode_stor),
+                (GeneratorStorageEnergySamples(), TestData.singlenode_stor),
+                (DemandResponseEnergySamples(), TestData.threenode_dr),
+                (GeneratorAvailability(), TestData.threenode),
+                (StorageAvailability(), TestData.singlenode_stor),
+                (GeneratorStorageAvailability(), TestData.singlenode_stor),
+                (DemandResponseAvailability(), TestData.threenode_dr),
+                (LineAvailability(), TestData.threenode),
+            )
+
+            for (spec, system) in accumulator_cases
+                @testset "$(nameof(typeof(spec)))" begin
+                    destination =
+                        PRASCore.Results.accumulator(system, 4, spec)
+                    source, = PRASCore.Simulations.partition_recorders(
+                        system,
+                        4,
+                        length(sampleids),
+                        (spec,),
+                    )
+                    destination_data = PRASCore.Results.sampledata(destination)
+                    source_data = PRASCore.Results.sampledata(source)
+
+                    @test size(source_data, 3) == length(sampleids)
+
+                    fill!(source_data, one(eltype(source_data)))
+                    expected = zeros(
+                        eltype(destination_data), size(destination_data)
+                    )
+                    expected[:, :, sampleids] .= source_data
+
+                    PRASCore.Results.copy_sample_partition!(
+                        destination, source, sampleids
+                    )
+
+                    @test destination_data == expected
+                end
+            end
+        end
+    end
 end

@@ -30,6 +30,9 @@ struct DRAvailabilityAccumulator <: ResultAccumulator{DemandResponseAvailability
 
 end
 
+sampledata(acc::DRAvailabilityAccumulator) = acc.available
+usesamplepartitions(::DemandResponseAvailability) = true
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::DemandResponseAvailability
 ) where {N}

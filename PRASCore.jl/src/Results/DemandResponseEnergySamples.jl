@@ -32,6 +32,9 @@ struct DemandResponseEnergySamplesAccumulator <: ResultAccumulator{DemandRespons
 
 end
 
+sampledata(acc::DemandResponseEnergySamplesAccumulator) = acc.energy
+usesamplepartitions(::DemandResponseEnergySamples) = true
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::DemandResponseEnergySamples
 ) where {N}

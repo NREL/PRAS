@@ -57,6 +57,10 @@ struct ShortfallSamplesAccumulator{S} <: ResultAccumulator{ShortfallSamples}
 
 end
 
+sampledata(acc::ShortfallSamplesAccumulator) = acc.shortfall
+usesamplepartitions(::ShortfallSamples) = true
+usesamplepartitions(::DemandResponseShortfallSamples) = true
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::S
 ) where {N,S<:Union{ShortfallSamples,DemandResponseShortfallSamples}}

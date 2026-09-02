@@ -47,6 +47,9 @@ struct LineAvailabilityAccumulator <: ResultAccumulator{LineAvailability}
 
 end
 
+sampledata(acc::LineAvailabilityAccumulator) = acc.available
+usesamplepartitions(::LineAvailability) = true
+
 accumulatortype(::LineAvailability) = LineAvailabilityAccumulator
 
 function accumulator(

@@ -33,6 +33,9 @@ struct GenStorageEnergySamplesAccumulator <: ResultAccumulator{GeneratorStorageE
 
 end
 
+sampledata(acc::GenStorageEnergySamplesAccumulator) = acc.energy
+usesamplepartitions(::GeneratorStorageEnergySamples) = true
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::GeneratorStorageEnergySamples
 ) where {N}

@@ -32,6 +32,9 @@ struct SurplusSamplesAccumulator <: ResultAccumulator{SurplusSamples}
 
 end
 
+sampledata(acc::SurplusSamplesAccumulator) = acc.surplus
+usesamplepartitions(::SurplusSamples) = true
+
 function accumulator(
     sys::SystemModel{N}, nsamples::Int, ::SurplusSamples
 ) where {N}
