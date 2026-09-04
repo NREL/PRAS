@@ -106,15 +106,13 @@ function saveshortfall(
 end
 
 function generate_eventresult(
-    events::ShortfallEventsResult{N,L,T,P,E},
+    events::ShortfallEventsResult,
     pras_sys::SystemModel;
     include_events::Bool = false,
-) where {N,L,T,P,E}
-
-    p2e = conversionfactor(L, T, P, E)
+)
 
     system_event_records = include_events ?
-        get_eventrecords(events.system_events, events.timestamps, p2e) :
+        get_eventrecords(events) :
         EventRecord[]
 
     region_results = RegionEventResult[]

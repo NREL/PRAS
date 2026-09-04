@@ -10,7 +10,9 @@ import PRASCore.Results:
     AbstractShortfallResult, Result, ShortfallEventsResult,
     ShortfallEvent, LOLEv, totalevents,
     MeanEventDuration, MaxEventDuration,
-    MeanEventEnergy, MaxEventEnergy, findfirstunique
+    MeanEventEnergy, MaxEventEnergy, findfirstunique,
+    duration_periods, event_energy,
+    start_event_timestamp, end_event_timestamp
 import StatsBase: mean
 import Dates: @dateformat_str, format, now
 import TimeZones: ZonedDateTime

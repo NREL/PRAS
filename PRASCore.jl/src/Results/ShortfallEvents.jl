@@ -65,7 +65,7 @@ _event_meanestimate(xs::AbstractVector{<:Real}) =
 _event_maxestimate(xs::AbstractVector{<:Real}) =
     isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(maximum(xs))
 
-mutable struct ShortfallEventsAccumulator{S} <: ResultAccumulator{ShortfallEvents}
+mutable struct ShortfallEventsAccumulator <: ResultAccumulator{ShortfallEvents}
 
     system_events::Vector{Vector{ShortfallEvent}}
     region_events::Matrix{Vector{ShortfallEvent}}
@@ -82,8 +82,8 @@ mutable struct ShortfallEventsAccumulator{S} <: ResultAccumulator{ShortfallEvent
 end
 
 function accumulator(
-    sys::SystemModel{N}, nsamples::Int, ::S
-) where {N,S<:ShortfallEvents}
+    sys::SystemModel{N}, nsamples::Int, ::ShortfallEvents
+) where {N}
 
     nregions = length(sys.regions)
 
@@ -98,7 +98,7 @@ function accumulator(
     region_event_start = zeros(Int, nregions)
     region_event_energy = zeros(Int, nregions)
 
-    return ShortfallEventsAccumulator{S}(
+    return ShortfallEventsAccumulator(
         system_events, region_events,
         in_system_event, system_event_start, system_event_energy,
         in_region_event, region_event_start, region_event_energy,
@@ -123,11 +123,9 @@ function copy_sample_partition!(
     return
 end
 
-accumulatortype(::S) where {
-        S<:ShortfallEvents
-    } = ShortfallEventsAccumulator{S}
+accumulatortype(::ShortfallEvents) = ShortfallEventsAccumulator
 
-struct ShortfallEventsResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit,S} <: AbstractShortfallEventResult{N,L,T}
+struct ShortfallEventsResult{N,L,T<:Period,P<:PowerUnit,E<:EnergyUnit} <: Result{N,L,T}
     regions::Regions
     timestamps::StepRange{ZonedDateTime,T}
 
@@ -178,12 +176,12 @@ function LOLEv(x::ShortfallEventsResult{N,L,T}, r::AbstractString) where {N,L,T}
 end
 
 function finalize(
-    acc::ShortfallEventsAccumulator{S},
+    acc::ShortfallEventsAccumulator,
     system::SystemModel{N,L,T,P,E},
-) where {N,L,T,P,E,S<:ShortfallEvents}
+) where {N,L,T,P,E}
 
 
-    return ShortfallEventsResult{N,L,T,P,E,S}(
+    return ShortfallEventsResult{N,L,T,P,E}(
         system.regions, system.timestamps,
         acc.system_events, acc.region_events)
 end

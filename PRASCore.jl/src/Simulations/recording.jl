@@ -517,11 +517,11 @@ reset!(acc::Results.DemandResponseEnergySamplesAccumulator, sampleid::Int) = not
 # ShortfallEvents
 
 function record!(
-    acc::Results.ShortfallEventsAccumulator{S},
+    acc::Results.ShortfallEventsAccumulator,
     system::SystemModel{N,L,T,P,E},
     state::SystemState, problem::DispatchProblem,
     sampleid::Int, t::Int
-) where {N,L,T,P,E,S}
+) where {N,L,T,P,E}
 
     isshortfall = false
     totalshortfall = 0
@@ -529,7 +529,7 @@ function record!(
 
     for (r, dr_idxs) in zip(problem.region_unserved_edges, system.region_dr_idxs)
 
-        regionshortfall = init_regionshortfall(S, edges, r)
+        regionshortfall = init_regionshortfall(Results.ShortfallEvents, edges, r)
 
         dr_shortfall = 0
         for i in dr_idxs

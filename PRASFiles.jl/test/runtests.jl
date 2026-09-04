@@ -159,4 +159,79 @@ using JSON3
         @test_throws "saveshortfall is not implemented for" PRASFiles.saveshortfall(surplus, rts_sys, path)
     end
 
+    @testset "Save Event Results" begin
+        rts_sys = PRASFiles.rts_gmlc()
+        # Make load in all regions 10 times the original load for meaningful results
+        for i in 1:length(rts_sys.regions.names)
+            rts_sys.regions.load[i, :] = 10 * rts_sys.regions.load[i, :]
+        end
+
+        events, = assess(
+            rts_sys,
+            SequentialMonteCarlo(samples = 10, threaded = false, seed = 1),
+            ShortfallEvents(),
+        )
+
+        summary_result = PRASFiles.generate_eventresult(events, rts_sys)
+        event_result = PRASFiles.generate_eventresult(
+            events,
+            rts_sys;
+            include_events = true,
+        )
+
+        @test summary_result.total_events == event_result.total_events
+        @test isempty(summary_result.system_events)
+        @test all(isempty(region.events) for region in summary_result.region_results)
+        @test length(event_result.system_events) == event_result.total_events
+        @test all(
+            length(region.events) == region.total_events
+            for region in event_result.region_results
+        )
+        @test event_result.lolev.mean == PRASCore.LOLEv(events).lolev.estimate
+        @test event_result.mean_event_duration.mean ==
+            PRASCore.MeanEventDuration(events).duration.estimate
+        @test event_result.mean_event_energy.mean ==
+            PRASCore.MeanEventEnergy(events).energy.estimate
+
+        @test !isempty(event_result.system_events)
+        first_record = first(event_result.system_events)
+        first_event = first(events.system_events[first_record.sample_id])
+        @test first_record.start_timestamp == events.timestamps[first_event.start_idx]
+        @test first_record.end_timestamp == events.timestamps[first_event.end_idx]
+        @test first_record.duration_periods ==
+            PRASCore.Results.duration_periods(first_event)
+        (_, period_length, period_unit, power_unit, energy_unit) = get_params(rts_sys)
+        @test first_record.energy ==
+            conversionfactor(period_length, period_unit, power_unit, energy_unit) *
+            PRASCore.Results.event_energy(first_event)
+
+        path = joinpath(dirname(@__FILE__), "PRAS_Results_Export")
+        exp_location = PRASFiles.saveevents(
+            events,
+            rts_sys,
+            path;
+            include_events = true,
+        )
+        result_path = joinpath(exp_location, "pras_event_results.json")
+        @test isfile(result_path)
+        exp_result = JSON3.read(result_path, PRASFiles.SystemEventResult)
+        @test exp_result.total_events == event_result.total_events
+        @test length(exp_result.system_events) == event_result.total_events
+
+        empty_sys = PRASFiles.rts_gmlc()
+        fill!(empty_sys.regions.load, 0)
+        empty_events, = assess(
+            empty_sys,
+            SequentialMonteCarlo(samples = 2, threaded = false, seed = 1),
+            ShortfallEvents(),
+        )
+        empty_result = PRASFiles.generate_eventresult(
+            empty_events,
+            empty_sys;
+            include_events = true,
+        )
+        @test isempty(empty_result.system_events)
+        @test all(isempty(region.events) for region in empty_result.region_results)
+    end
+
 end

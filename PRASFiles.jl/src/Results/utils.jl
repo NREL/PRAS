@@ -233,49 +233,43 @@ function get_lold_result(
     return LOLDResult(shortfall; region = region)
 end
 
-function get_eventrecords(
-    events_by_sample::Vector{Vector{ShortfallEvent}},
-    timestamps,
-    p2e,
-)
-    records = EventRecord[]
+function _get_eventrecords(
+    events::ShortfallEventsResult{N,L,T,P,E},
+    events_by_sample::AbstractVector{<:AbstractVector{ShortfallEvent}},
+) where {N,L,T,P,E}
+    p2e = conversionfactor(L, T, P, E)
+    nrecords = sum(length, events_by_sample)
+    iszero(nrecords) && return EventRecord[]
+
+    records = Vector{EventRecord}(undef, nrecords)
+    record_idx = 1
 
     for (sample_id, evts) in enumerate(events_by_sample)
         for ev in evts
-            push!(records, EventRecord(
+            records[record_idx] = EventRecord(
                 sample_id,
-                timestamps[ev.start_idx],
-                timestamps[ev.end_idx],
-                ev.end_idx - ev.start_idx + 1,
-                p2e * ev.energy,
-            ))
+                start_event_timestamp(events, ev),
+                end_event_timestamp(events, ev),
+                duration_periods(ev),
+                p2e * event_energy(ev),
+            )
+            record_idx += 1
         end
     end
 
     return records
 end
 
+function get_eventrecords(events::ShortfallEventsResult)
+    return _get_eventrecords(events, events.system_events)
+end
+
 function get_eventrecords(
-    events::ShortfallEventsResult{N,L,T,P,E},
+    events::ShortfallEventsResult,
     region::String,
-) where {N,L,T,P,E}
+)
     i_r = findfirstunique(events.regions.names, region)
-    p2e = conversionfactor(L, T, P, E)
-
-    records = EventRecord[]
-    for sample_id in axes(events.region_events, 2)
-        for ev in events.region_events[i_r, sample_id]
-            push!(records, EventRecord(
-                sample_id,
-                events.timestamps[ev.start_idx],
-                events.timestamps[ev.end_idx],
-                ev.end_idx - ev.start_idx + 1,
-                p2e * ev.energy,
-            ))
-        end
-    end
-
-    return records
+    return _get_eventrecords(events, view(events.region_events, i_r, :))
 end
 
 # Define structtypes for different structs defined above

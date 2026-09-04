@@ -189,8 +189,6 @@ getindex(x::AbstractEnergyResult, name::String, ::Colon) =
 getindex(x::AbstractEnergyResult, ::Colon, ::Colon) =
     getindex.(x, names(x), permutedims(x.timestamps))
 
-abstract type AbstractShortfallEventResult{N,L,T} <: Result{N,L,T} end
-
 include("StorageEnergy.jl")
 include("GeneratorStorageEnergy.jl")
 include("DemandResponseEnergy.jl")
