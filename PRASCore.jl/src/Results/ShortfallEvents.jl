@@ -5,10 +5,40 @@ The `ShortfallEvents` result specification reports sample-level shortfall
 events, producing a `ShortfallEventsResult`.
 
 A shortfall event is a contiguous run of one or more simulation timesteps
-with positive shortfall.
+with positive shortfall. A `ShortfallEventsResult` can be indexed by sample
+number to retrieve system-wide events or by region name and sample number to
+retrieve regional events. Each event records its starting timestep, ending
+timestep and unserved energy.
 
-This result can be used to inspect event start/end times and to compute
-event-based reliability metrics such as [`LOLEv`](@ref).
+Example:
+
+```julia
+events, =
+    assess(sys, SequentialMonteCarlo(samples=1000), ShortfallEvents())
+
+# Events for the first sample
+system_events = events[1]
+regional_events = events["Region A", 1]
+
+# Each event has start_idx, end_idx and energy fields
+first_system_event = first(system_events)
+start_idx = first_system_event.start_idx
+end_idx = first_system_event.end_idx
+energy = first_system_event.energy
+
+# System-wide event metrics
+lolev = LOLEv(events)
+mean_duration = MeanEventDuration(events)
+max_duration = MaxEventDuration(events)
+mean_energy = MeanEventEnergy(events)
+max_energy = MaxEventEnergy(events)
+
+# Regional event metrics
+regional_lolev = LOLEv(events, "Region A")
+```
+
+This result stores every shortfall event for every sample and can require
+significant memory for simulations with many samples or events.
 """
 struct ShortfallEvents <: ResultSpec end
 
