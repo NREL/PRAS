@@ -794,11 +794,33 @@
         @test val(LOLEv(events_3, "Region A")) >= 0
         @test val(MeanEventDuration(events_3, "Region A")) >= 0
 
-        @test val(LOLEv(events_3)) >= val(LOLEv(events_3, "Region A"))
-
         @test Results.totalevents(events_1a) >= 0
         @test Results.totalevents(events_3, "Region A") >= 0
 
+    end
+
+    @testset "System events remain continuous across regions" begin
+        sys = deepcopy(TestData.threenode)
+        sys.generators.capacity .= 0
+        sys.interfaces.limit_forward .= 0
+        sys.interfaces.limit_backward .= 0
+        sys.regions.load .= [1 0 1 0; 0 1 0 0; 0 0 0 0]
+
+        spec = SequentialMonteCarlo(samples=2, seed=42, threaded=false)
+        events, = assess(sys, spec, ShortfallEvents())
+
+        # Region B bridges the gap between Region A's two events.
+        for s in 1:spec.nsamples
+            @test [(ev.start_idx, ev.end_idx) for ev in events[s]] == [(1, 3)]
+            @test [(ev.start_idx, ev.end_idx) for ev in events["Region A", s]] ==
+                  [(1, 1), (3, 3)]
+            @test [(ev.start_idx, ev.end_idx) for ev in events["Region B", s]] ==
+                  [(2, 2)]
+        end
+
+        @test val(LOLEv(events)) == 1.0
+        @test val(LOLEv(events, "Region A")) == 2.0
+        @test val(LOLEv(events, "Region B")) == 1.0
     end
 
     @testset "Event metrics return zero when no events exist" begin
