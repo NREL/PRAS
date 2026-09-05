@@ -62,9 +62,6 @@ event_energy(ev::ShortfallEvent) = ev.energy
 _event_meanestimate(xs::AbstractVector{<:Real}) =
     isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(xs)
 
-_event_maxestimate(xs::AbstractVector{<:Real}) =
-    isempty(xs) ? MeanEstimate(0.0) : MeanEstimate(maximum(xs))
-
 mutable struct ShortfallEventsAccumulator <: ResultAccumulator{ShortfallEvents}
 
     system_events::Vector{Vector{ShortfallEvent}}
@@ -206,22 +203,22 @@ function MeanEventDuration(x::ShortfallEventsResult{N,L,T}, r::AbstractString) w
 end
 
 function MaxEventDuration(x::ShortfallEventsResult{N,L,T}) where {N,L,T}
-    durations = [
+    duration = maximum((
         duration_periods(ev)
         for events in x.system_events
         for ev in events
-    ]
-    return MaxEventDuration{N,L,T}(_event_maxestimate(durations))
+    ); init=0)
+    return MaxEventDuration{N,L,T}(MeanEstimate(duration))
 end
 
 function MaxEventDuration(x::ShortfallEventsResult{N,L,T}, r::AbstractString) where {N,L,T}
     i_r = findfirstunique(x.regions.names, r)
-    durations = [
+    duration = maximum((
         duration_periods(ev)
         for s in axes(x.region_events, 2)
         for ev in x.region_events[i_r, s]
-    ]
-    return MaxEventDuration{N,L,T}(_event_maxestimate(durations))
+    ); init=0)
+    return MaxEventDuration{N,L,T}(MeanEstimate(duration))
 end
 
 function MeanEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
@@ -247,23 +244,23 @@ end
 
 function MaxEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}) where {N,L,T,P,E}
     p2e = conversionfactor(L, T, P, E)
-    energies = [
+    energy = maximum((
         p2e * event_energy(ev)
         for events in x.system_events
         for ev in events
-    ]
-    return MaxEventEnergy{N,L,T,E}(_event_maxestimate(energies))
+    ); init=0.0)
+    return MaxEventEnergy{N,L,T,E}(MeanEstimate(energy))
 end
 
 function MaxEventEnergy(x::ShortfallEventsResult{N,L,T,P,E}, r::AbstractString) where {N,L,T,P,E}
     i_r = findfirstunique(x.regions.names, r)
     p2e = conversionfactor(L, T, P, E)
-    energies = [
+    energy = maximum((
         p2e * event_energy(ev)
         for s in axes(x.region_events, 2)
         for ev in x.region_events[i_r, s]
-    ]
-    return MaxEventEnergy{N,L,T,E}(_event_maxestimate(energies))
+    ); init=0.0)
+    return MaxEventEnergy{N,L,T,E}(MeanEstimate(energy))
 end
 
 

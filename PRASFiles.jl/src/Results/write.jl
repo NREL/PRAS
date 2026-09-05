@@ -136,7 +136,7 @@ function generate_eventresult(
     end
 
     sys_result = SystemEventResult(
-        length(events.system_events),
+        get_nsamples(events),
         TypeParams(pras_sys),
         pras_sys.attrs,
         collect(events.timestamps),

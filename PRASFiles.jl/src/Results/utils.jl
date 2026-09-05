@@ -212,6 +212,10 @@ function get_nsamples(shortfall::ShortfallSamplesResult)
     return size(shortfall.shortfall,3)
 end
 
+function get_nsamples(events::ShortfallEventsResult)
+    return length(events.system_events)
+end
+
 function get_lold_result(
     shortfall::ShortfallResult,
     log_lold_info::Bool;
