@@ -200,8 +200,10 @@ function get_shortfall_mean(shortfall::ShortfallResult)
     return shortfall.shortfall_mean
 end
 
-function get_shortfall_mean(shortfall::ShortfallSamplesResult)
-    return mean(shortfall.shortfall, dims = 3)
+function get_shortfall_mean(shortfall::ShortfallSamplesResult{N,L,T,P,E}) where {N,L,T,P,E}
+    shortfall_mean = mean(shortfall.shortfall, dims = 3)
+    shortfall_mean .*= conversionfactor(L, T, P, E)
+    return shortfall_mean
 end
 
 function get_nsamples(shortfall::ShortfallResult)
