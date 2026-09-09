@@ -163,6 +163,59 @@ end
 start_event_timestamp(x::ShortfallEventsResult, ev::ShortfallEvent) = x.timestamps[ev.start_idx]
 end_event_timestamp(x::ShortfallEventsResult, ev::ShortfallEvent) = x.timestamps[ev.end_idx]
 
+"""
+    eventsinterval(x::ShortfallEventsResult, t::StepRange{ZonedDateTime})
+    eventsinterval(x::ShortfallEventsResult, r::AbstractString, t::StepRange{ZonedDateTime})
+
+Return system-wide events, or events in region `r`, fully contained between the first and last timestamps of `t`, inclusive.
+The interval must be nonempty and forward in time with endpoints present in `x.timestamps`.
+All simulation timesteps between the endpoints are considered, regardless of the step of `t`.
+
+The returned vector contains a new event list for each original sample, including empty lists.
+Event boundaries and stored energy are unchanged.
+An `@info` message reports the number of overlapping events excluded because they start before or end after the interval, including events spanning the entire interval.
+An empty list therefore means no fully contained events, not necessarily no shortfall.
+
+For example, `eventsinterval(x, x.timestamps[2:7])` excludes events at timesteps 1–3 and 6–8 but includes an event at timesteps 3–6.
+"""
+function eventsinterval(x::ShortfallEventsResult, t::StepRange{ZonedDateTime})
+    return _eventsinterval(x, t, x.system_events)
+end
+
+function eventsinterval(
+    x::ShortfallEventsResult, r::AbstractString, t::StepRange{ZonedDateTime}
+)
+    i_r = findfirstunique(x.regions.names, r)
+    return _eventsinterval(x, t, view(x.region_events, i_r, :))
+end
+
+function _eventsinterval(
+    x::ShortfallEventsResult, t::StepRange{ZonedDateTime},
+    sample_events::AbstractVector{Vector{ShortfallEvent}}
+)
+    (isempty(t) || first(t) > last(t)) &&
+        throw(ArgumentError("The event interval must be nonempty and forward in time"))
+    i_t0 = findfirstunique(x.timestamps, first(t))
+    i_tf = findlastunique(x.timestamps, last(t))
+
+    selected = [ShortfallEvent[] for _ in eachindex(sample_events)]
+    nexcluded = 0
+    for (included, events) in zip(selected, sample_events)
+        for ev in events
+            if i_t0 <= ev.start_idx && ev.end_idx <= i_tf
+                push!(included, ev)
+            elseif ev.start_idx <= i_tf && i_t0 <= ev.end_idx
+                nexcluded += 1
+            end
+        end
+    end
+
+    if nexcluded > 0
+        @info "Excluded $nexcluded overlapping events that extend beyond the requested interval. Only fully contained events are returned."
+    end
+    return selected
+end
+
 LOLEv(x::ShortfallEventsResult{N,L,T}) where {N,L,T} =
     LOLEv{N,L,T}(MeanEstimate(length.(x.system_events)))
 

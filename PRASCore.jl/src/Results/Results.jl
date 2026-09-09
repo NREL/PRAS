@@ -17,7 +17,7 @@ export
     MeanEventDuration, MaxEventDuration, MeanEventEnergy, MaxEventEnergy,
     val, stderror, CVAR, NCVAR,
 
-    # Result specifications
+    # Result specifications and accessors
     Shortfall, ShortfallSamples,
     DemandResponseShortfall, DemandResponseShortfallSamples,
     Surplus, SurplusSamples,
@@ -27,7 +27,8 @@ export
     DemandResponseEnergy, DemandResponseEnergySamples,
     GeneratorAvailability, StorageAvailability,
     GeneratorStorageAvailability,DemandResponseAvailability,
-    LineAvailability, ShortfallEvents
+    LineAvailability, ShortfallEvents,
+    eventsinterval
 
 include("metrics.jl")
 include("utils.jl")

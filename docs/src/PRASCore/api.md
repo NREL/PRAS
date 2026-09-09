@@ -48,6 +48,7 @@ PRASCore.Results.NCVAR
 PRASCore.Results.val
 PRASCore.Results.stderror
 PRASCore.Results.ShortfallEvents
+PRASCore.Results.eventsinterval
 PRASCore.Results.LOLEv
 PRASCore.Results.MeanEventDuration
 PRASCore.Results.MaxEventDuration
