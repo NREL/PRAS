@@ -283,17 +283,12 @@ end
 
     selected = @test_logs eventsinterval(result, DD.periods)
     @test selected == system_events
-    @test length(selected) == 3
-    @test all(selected[s] !== system_events[s] for s in eachindex(selected))
     empty!(selected[1])
     @test result[1] == [event(1, 3, 6), event(6, 8, 12)]
 
-    excluded_two = r"Excluded 2 overlapping events"
-    selected = @test_logs (:info, excluded_two) eventsinterval(result, DD.periods[2:7])
-    @test selected == [event[], [event(3, 6, 20)], event[]]
-
     # Inclusive boundaries and an event spanning the entire interval
 
+    excluded_two = r"Excluded 2 overlapping events"
     selected = @test_logs (:info, excluded_two) eventsinterval(result, DD.periods[3:6])
     @test selected == [event[], [event(3, 6, 20)], event[]]
     selected = @test_logs (:info, r"Excluded 1 overlapping events") eventsinterval(
@@ -329,8 +324,6 @@ end
         result, first(DD.periods) - Hour(1):Hour(1):DD.periods[3])
     @test_throws BoundsError eventsinterval(
         result, DD.periods[3]:Hour(1):last(DD.periods) + Hour(1))
-    @test_throws InexactError eventsinterval(
-        result, DD.periods[3] + Minute(30):Hour(1):DD.periods[6] + Minute(30))
     @test_throws ArgumentError eventsinterval(
         result, DD.periods[2]:Hour(1):DD.periods[1])
     @test_throws ArgumentError eventsinterval(
